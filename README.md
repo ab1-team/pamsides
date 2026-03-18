@@ -2,6 +2,11 @@
 
 Selamat datang di repositori **Pamsides**. Ikuti langkah-langkah di bawah ini untuk melakukan setup awal setelah melakukan clone repositori ini.
 
+## 📖 Dokumentasi Proyek
+
+- [🚀 Roadmap Proyek](file:///f:/Workspace/laragon/www/pamsides/docs/roadmap.md)
+- [🗄️ Struktur Database](file:///f:/Workspace/laragon/www/pamsides/docs/database.md)
+
 ## 🛠 Prasyarat (Prerequisites)
 
 Pastikan Anda sudah menginstal software berikut di komputer Anda:
