@@ -12,8 +12,9 @@
   },
   "lint-staged": {
     "frontend/**/*.{js,vue,json}": [
-      "pnpm --dir frontend lint",
-      "pnpm --dir frontend format"
+      "pnpm --dir frontend exec oxlint --fix",
+      "pnpm --dir frontend exec eslint --fix --cache",
+      "pnpm --dir frontend exec prettier --write"
     ],
     "backend/**/*.php": [
       "php backend/vendor/bin/pint"
