@@ -18,12 +18,39 @@ Pastikan Anda sudah menginstal software berikut di komputer Anda:
 
 ### 1. Clone Repositori
 
+Clone repositori dari branch `develop`:
+
 ```bash
-git clone git@github.com:ab1-team/pamsides.git
+git clone -b develop git@github.com:ab1-team/pamsides.git
 cd pamsides
 ```
 
-### 2. Setup Root (Husky & Git Hooks)
+### 2. Alur Kerja Git (Git Workflow)
+
+Untuk perbaikan, update, atau penambahan fitur apapun, **wajib** membuat branch baru dari `develop` dengan format:
+`feature/[nama-fitur]` atau `fix/[nama-bug]`.
+
+Contoh:
+```bash
+git checkout develop
+git pull origin develop
+git checkout -b feature/update-dokumentasi
+```
+
+Setelah selesai, lakukan push dan buat **Pull Request** ke branch `develop`.
+
+### 3. Pesan Commit (Conventional Commits)
+
+Gunakan standar [Conventional Commits](https://www.conventionalcommits.org/) dalam setiap pesan commit. Format umum:
+`<type>[optional scope]: <description>`
+
+Contoh:
+- `feat(auth): tambah integrasi login google`
+- `fix(ui): perbaiki padding sidebar yang tidak rata`
+- `docs: update panduan setup awal`
+- `chore: update dependensi husky`
+
+### 4. Setup Root (Husky & Git Hooks)
 
 Di direktori utama (root), jalankan pnpm install untuk mengaktifkan Husky.
 
