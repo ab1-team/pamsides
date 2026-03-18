@@ -2,7 +2,7 @@
 
 Selamat datang di repositori **Pamsides**. Ikuti langkah-langkah di bawah ini untuk melakukan setup awal setelah melakukan clone repositori ini.
 
-## 🛠 Prasyarat (Prerequisites)
+## 🛠 Prasyarat
 
 Pastikan Anda sudah menginstal software berikut di komputer Anda:
 
