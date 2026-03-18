@@ -1,0 +1,27 @@
+{
+  "name": "pamsides-root",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Root configuration for Husky and lint-staged",
+  "scripts": {
+    "prepare": "husky"
+  },
+  "devDependencies": {
+    "husky": "^9.1.7",
+    "lint-staged": "^15.4.3"
+  },
+  "lint-staged": {
+    "frontend/**/*.{js,vue,json}": [
+      "pnpm --dir frontend lint",
+      "pnpm --dir frontend format"
+    ],
+    "backend/**/*.php": [
+      "php backend/vendor/bin/pint"
+    ]
+  },
+  "packageManager": "pnpm@10.24.0+sha512.01ff8ae71b4419903b65c60fb2dc9d34cf8bb6e06d03bde112ef38f7a34d6904c424ba66bea5cdcf12890230bf39f9580473140ed9c946fef328b6e5238a345a",
+  "dependencies": {
+    "@tailwindcss/vite": "^4.2.1",
+    "tailwindcss": "^4.2.1"
+  }
+}
