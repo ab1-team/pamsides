@@ -36,6 +36,7 @@ Untuk perbaikan, update, atau penambahan fitur apapun, **wajib** membuat branch 
 `feature/[nama-fitur]` atau `fix/[nama-bug]`.
 
 Contoh:
+
 ```bash
 git checkout develop
 git pull origin develop
@@ -50,6 +51,7 @@ Gunakan standar [Conventional Commits](https://www.conventionalcommits.org/) dal
 `<type>[optional scope]: <description>`
 
 Contoh:
+
 - `feat(auth): tambah integrasi login google`
 - `fix(ui): perbaiki padding sidebar yang tidak rata`
 - `docs: update panduan setup awal`
