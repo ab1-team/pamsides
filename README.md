@@ -2,6 +2,11 @@
 
 Selamat datang di repositori **Pamsides**. Ikuti langkah-langkah di bawah ini untuk melakukan setup awal setelah melakukan clone repositori ini.
 
+## 📖 Dokumentasi Proyek
+
+- [🚀 Roadmap Proyek](docs/roadmap.md)
+- [🗄️ Struktur Database](docs/database.md)
+
 ## 🛠 Prasyarat (Prerequisites)
 
 Pastikan Anda sudah menginstal software berikut di komputer Anda:
