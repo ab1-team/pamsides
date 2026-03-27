@@ -4,8 +4,8 @@ Selamat datang di repositori **Pamsides**. Ikuti langkah-langkah di bawah ini un
 
 ## 📖 Dokumentasi Proyek
 
-- [🚀 Roadmap Proyek](file:///f:/Workspace/laragon/www/pamsides/docs/roadmap.md)
-- [🗄️ Struktur Database](file:///f:/Workspace/laragon/www/pamsides/docs/database.md)
+- [🚀 Roadmap Proyek](docs/roadmap.md)
+- [🗄️ Struktur Database](docs/database.md)
 
 ## 🛠 Prasyarat (Prerequisites)
 
