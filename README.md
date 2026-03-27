@@ -2,16 +2,12 @@
 
 Selamat datang di repositori **Pamsides**. Ikuti langkah-langkah di bawah ini untuk melakukan setup awal setelah melakukan clone repositori ini.
 
-<<<<<<< HEAD
-## 🛠 Prasyarat
-=======
 ## 📖 Dokumentasi Proyek
 
 - [🚀 Roadmap Proyek](docs/roadmap.md)
 - [🗄️ Struktur Database](docs/database.md)
 
 ## 🛠 Prasyarat (Prerequisites)
->>>>>>> 7f289e80559b8b69f1a9f24815a897ce46eb17af
 
 Pastikan Anda sudah menginstal software berikut di komputer Anda:
 
@@ -40,6 +36,7 @@ Untuk perbaikan, update, atau penambahan fitur apapun, **wajib** membuat branch 
 `feature/[nama-fitur]` atau `fix/[nama-bug]`.
 
 Contoh:
+
 ```bash
 git checkout develop
 git pull origin develop
@@ -54,6 +51,7 @@ Gunakan standar [Conventional Commits](https://www.conventionalcommits.org/) dal
 `<type>[optional scope]: <description>`
 
 Contoh:
+
 - `feat(auth): tambah integrasi login google`
 - `fix(ui): perbaiki padding sidebar yang tidak rata`
 - `docs: update panduan setup awal`
