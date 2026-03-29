@@ -22,6 +22,25 @@ class User extends Authenticatable
      *
      * @return array<string, string>
      */
+     public function tickets()
+    {
+        return $this->hasMany(InstallationTicket::class, 'created_by');
+    }
+
+    public function surveys()
+    {
+        return $this->hasMany(SurveyResult::class, 'surveyor_id');
+    }
+
+    public function meterReadings()
+    {
+        return $this->hasMany(MeterReading::class, 'recorded_by');
+    }
+
+    public function customers()
+    {
+        return $this->hasMany(Customer::class, 'user_id');
+    }
     protected function casts(): array
     {
         return [
