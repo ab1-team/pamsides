@@ -1,0 +1,63 @@
+services:
+  # PHP Service
+  app:
+    build:
+      args:
+        user: sam
+        uid: 1000
+      context: ./backend
+      dockerfile: docker/Dockerfile
+    image: pamsides-app
+    container_name: pamsides-app
+    restart: unless-stopped
+    working_dir: /var/www
+    volumes:
+      - ./backend:/var/www
+    networks:
+      - pamsides
+
+  # Nginx Service
+  web:
+    image: nginx:alpine
+    container_name: pamsides-nginx
+    restart: unless-stopped
+    ports:
+      - "8000:80"
+    volumes:
+      - ./backend:/var/www
+      - ./backend/docker/nginx/conf.d/:/etc/nginx/conf.d/
+    networks:
+      - pamsides
+
+  # MySQL Service
+  db:
+    image: mysql:8.0
+    container_name: pamsides-db
+    restart: unless-stopped
+    ports:
+      - "3307:3306"
+    environment:
+      MYSQL_DATABASE: ${DB_DATABASE:-pamsides}
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-secret}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-secret}
+      MYSQL_USER: ${DB_USERNAME:-pamsides_user}
+      SERVICE_TAGS: dev
+      SERVICE_NAME: mysql
+    volumes:
+      - ./backend/docker/mysql:/var/lib/mysql
+    networks:
+      - pamsides
+
+  # Redis Service
+  redis:
+    image: redis:alpine
+    container_name: pamsides-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    networks:
+      - pamsides
+
+networks:
+  pamsides:
+    driver: bridge
