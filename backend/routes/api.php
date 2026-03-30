@@ -11,3 +11,25 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/refresh', [AuthController::class, 'refresh']);
     Route::get('/me',       [AuthController::class, 'me']);
 });
+
+
+    Route::middleware('role:admin')->group(function () {
+        Route::get('/test-admin', fn() => response()->json(['message' => 'Kamu admin!']));
+        // route admin lainnya...
+    });
+
+    Route::middleware('role:surveyor')->group(function () {
+        Route::get('/test-surveyor', fn() => response()->json(['message' => 'Kamu surveyor!']));
+        // route surveyor lainnya...
+    });
+
+    Route::middleware('role:teknisi')->group(function () {
+        Route::get('/test-teknisi', fn() => response()->json(['message' => 'Kamu teknisi!']));
+        // route teknisi lainnya...
+    });
+
+    Route::middleware('role:pelanggan')->group(function () {
+        Route::get('/test-pelanggan', fn() => response()->json(['message' => 'Kamu pelanggan!']));
+        // route pelanggan lainnya...
+    });
+});
