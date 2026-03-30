@@ -22,4 +22,8 @@ class InstallationPackage extends Model
     {
         return $this->hasMany(InstallationTicket::class, 'package_id');
     }
+    public function waterTariffBlocks()
+    {
+        return $this->hasMany(WaterTariffBlock::class, 'package_id');
+    }
 }
