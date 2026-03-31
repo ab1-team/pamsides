@@ -25,6 +25,8 @@ Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
     Route::get('installation-tickets',  [InstallationTicketController::class, 'index']);
     Route::post('installation-tickets', [InstallationTicketController::class, 'store']);
     Route::get('installation-tickets/{installationTicket}', [InstallationTicketController::class, 'show']);
+    Route::patch('installation-tickets/{installationTicket}/transition', [InstallationTicketController::class, 'transition']);
+
 
     // route admin lainnya...
 });

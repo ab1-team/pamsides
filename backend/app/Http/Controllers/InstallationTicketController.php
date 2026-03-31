@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\InstallationTicket;
+use App\StateMachines\TicketStateMachine;
 use Illuminate\Http\Request;
 
 class InstallationTicketController extends Controller
@@ -84,6 +85,25 @@ class InstallationTicketController extends Controller
                 'payments',
                 'customer',
             ]),
+        ]);
+    }
+
+    public function transition(Request $request, InstallationTicket $installationTicket)
+    {
+        $request->validate([
+            'status' => 'required|string|in:pending,surveyed,unpaid,processing,completed',
+        ], [
+            'status.required' => 'Status wajib diisi.',
+            'status.in'       => 'Status tidak valid.',
+        ]);
+
+        TicketStateMachine::validate($installationTicket->status, $request->status);
+
+        $installationTicket->update(['status' => $request->status]);
+
+        return response()->json([
+            'success' => true,
+            'data'    => $installationTicket,
         ]);
     }
 }
