@@ -4,6 +4,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\InstallationPackageController;
+use App\Http\Controllers\InstallationResultController;
 use App\Http\Controllers\InstallationTicketController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\SurveyResultController;
@@ -29,7 +30,6 @@ Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
     Route::get('installation-tickets/{installationTicket}', [InstallationTicketController::class, 'show']);
     Route::patch('installation-tickets/{installationTicket}/transition', [InstallationTicketController::class, 'transition']);
     Route::post('installation-tickets/{installationTicket}/payment',[PaymentController::class, 'store']);
-
     // route admin lainnya...
 
 });
@@ -43,9 +43,10 @@ Route::middleware(['auth:sanctum', 'role:surveyor'])->group(function () {
 
 });
 
-Route::middleware('role:teknisi')->group(function () {
+Route::middleware(['auth:sanctum', 'role:teknisi'])->group(function () {
     Route::get('/test-teknisi', fn() => response()->json(['message' => 'Kamu teknisi!']));
-
+    
+    Route::post('installation-tickets/{installationTicket}/installation-result',[InstallationResultController::class, 'store']);
     // route teknisi lainnya...
 
 });
