@@ -3,6 +3,8 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\InstallationPackageController;
+use App\Http\Controllers\WaterTariffBlockController;
 
 Route::post('/login', [AuthController::class, 'login']);
 
@@ -13,8 +15,12 @@ Route::middleware('auth:sanctum')->group(function () {
 });
 
 
-Route::middleware('role:admin')->group(function () {
+Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
     Route::get('/test-admin', fn() => response()->json(['message' => 'Kamu admin!']));
+
+    Route::apiResource('installation-packages', InstallationPackageController::class);
+    Route::apiResource('installation-packages.water-tariff-blocks', WaterTariffBlockController::class);
+
     // route admin lainnya...
 });
 
