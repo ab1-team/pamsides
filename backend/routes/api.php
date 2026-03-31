@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\InstallationPackageController;
 use App\Http\Controllers\InstallationTicketController;
+use App\Http\Controllers\SurveyResultController;
 use App\Http\Controllers\WaterTariffBlockController;
 
 Route::post('/login', [AuthController::class, 'login']);
@@ -29,19 +30,28 @@ Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
 
 
     // route admin lainnya...
+
 });
 
-Route::middleware('role:surveyor')->group(function () {
+Route::middleware(['auth:sanctum', 'role:surveyor'])->group(function () {
     Route::get('/test-surveyor', fn() => response()->json(['message' => 'Kamu surveyor!']));
+
+    Route::post('installation-tickets/{installationTicket}/survey',[SurveyResultController::class, 'store'] );
+
     // route surveyor lainnya...
+
 });
 
 Route::middleware('role:teknisi')->group(function () {
     Route::get('/test-teknisi', fn() => response()->json(['message' => 'Kamu teknisi!']));
+
     // route teknisi lainnya...
+
 });
 
 Route::middleware('role:pelanggan')->group(function () {
     Route::get('/test-pelanggan', fn() => response()->json(['message' => 'Kamu pelanggan!']));
+
     // route pelanggan lainnya...
+
 });
