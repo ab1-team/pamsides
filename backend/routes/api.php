@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\InstallationPackageController;
 use App\Http\Controllers\InstallationTicketController;
+use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\SurveyResultController;
 use App\Http\Controllers\WaterTariffBlockController;
 
@@ -27,7 +28,7 @@ Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
     Route::post('installation-tickets', [InstallationTicketController::class, 'store']);
     Route::get('installation-tickets/{installationTicket}', [InstallationTicketController::class, 'show']);
     Route::patch('installation-tickets/{installationTicket}/transition', [InstallationTicketController::class, 'transition']);
-
+    Route::post('installation-tickets/{installationTicket}/payment',[PaymentController::class, 'store']);
 
     // route admin lainnya...
 
