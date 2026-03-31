@@ -2,6 +2,7 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\ActivationController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\InstallationPackageController;
 use App\Http\Controllers\InstallationResultController;
@@ -30,6 +31,8 @@ Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
     Route::get('installation-tickets/{installationTicket}', [InstallationTicketController::class, 'show']);
     Route::patch('installation-tickets/{installationTicket}/transition', [InstallationTicketController::class, 'transition']);
     Route::post('installation-tickets/{installationTicket}/payment',[PaymentController::class, 'store']);
+    Route::post('installation-tickets/{installationTicket}/activate',[ActivationController::class, 'activate']);
+
     // route admin lainnya...
 
 });
