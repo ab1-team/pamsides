@@ -21,6 +21,8 @@ Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
 
     Route::apiResource('installation-packages', InstallationPackageController::class);
     Route::apiResource('installation-packages.water-tariff-blocks', WaterTariffBlockController::class);
+
+    Route::get('installation-tickets',  [InstallationTicketController::class, 'index']);
     Route::post('installation-tickets', [InstallationTicketController::class, 'store']);
 
     // route admin lainnya...

@@ -7,6 +7,32 @@ use Illuminate\Http\Request;
 
 class InstallationTicketController extends Controller
 {
+    public function index(Request $request)
+    {
+        $query = InstallationTicket::with('package')
+            ->orderBy('created_at', 'desc');
+
+        // Filter status
+        if ($request->has('status')) {
+            $query->where('status', $request->status);
+        }
+
+        // Pencarian by nama atau NIK
+        if ($request->has('search')) {
+            $query->where(function ($q) use ($request) {
+                $q->where('applicant_name', 'like', '%' . $request->search . '%')
+                  ->orWhere('nik', 'like', '%' . $request->search . '%');
+            });
+        }
+
+        $tickets = $query->paginate(10);
+
+        return response()->json([
+            'success' => true,
+            'data'    => $tickets,
+        ]);
+    }
+
     public function store(Request $request)
     {
         $request->validate([
