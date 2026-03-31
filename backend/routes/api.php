@@ -4,6 +4,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\InstallationPackageController;
+use App\Http\Controllers\InstallationTicketController;
 use App\Http\Controllers\WaterTariffBlockController;
 
 Route::post('/login', [AuthController::class, 'login']);
@@ -20,6 +21,7 @@ Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
 
     Route::apiResource('installation-packages', InstallationPackageController::class);
     Route::apiResource('installation-packages.water-tariff-blocks', WaterTariffBlockController::class);
+    Route::post('installation-tickets', [InstallationTicketController::class, 'store']);
 
     // route admin lainnya...
 });
