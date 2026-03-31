@@ -73,4 +73,17 @@ class InstallationTicketController extends Controller
             'data'    => $ticket->load('package'),
         ], 201);
     }
+
+    public function show(InstallationTicket $installationTicket)
+    {
+        return response()->json([
+            'success' => true,
+            'data'    => $installationTicket->load([
+                'package',
+                'survey',
+                'payments',
+                'customer',
+            ]),
+        ]);
+    }
 }
