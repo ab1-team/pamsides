@@ -35,6 +35,7 @@ Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
     Route::post('installation-tickets/{installationTicket}/activate',[ActivationController::class, 'activate']);
 
     Route::post('bills/generate', [BillingController::class, 'generate']);
+    Route::get('bills/{monthlyBill}', [BillingController::class, 'show']);
 
     // route admin lainnya...
 

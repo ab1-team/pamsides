@@ -12,6 +12,16 @@ class BillingController extends Controller
 {
     public function __construct(protected BillingService $billingService) {}
 
+    public function show(MonthlyBill $monthlyBill)
+    {
+        return response()->json([
+            'success' => true,
+            'data'    => $monthlyBill->load([
+                'customer.ticket.package',
+                'customer.user',
+            ]),
+        ]);
+    }
     public function generate(Request $request)
     {
         $request->validate([
