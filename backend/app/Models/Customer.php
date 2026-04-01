@@ -12,7 +12,7 @@ class Customer extends Model
         'customer_code',
         'initial_meter_reading',
         'meter_photo_url',
-        'activated_at'
+        'activated_at',
     ];
 
     public function ticket()
@@ -20,13 +20,18 @@ class Customer extends Model
         return $this->belongsTo(InstallationTicket::class, 'ticket_id');
     }
 
-    public function bills()
+    public function user()
     {
-        return $this->hasMany(MonthlyBill::class, 'customer_id');
+        return $this->belongsTo(User::class, 'user_id');
     }
 
     public function meterReadings()
     {
         return $this->hasMany(MeterReading::class, 'customer_id');
+    }
+
+    public function monthlyBills()
+    {
+        return $this->hasMany(MonthlyBill::class, 'customer_id');
     }
 }
