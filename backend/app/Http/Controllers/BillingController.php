@@ -22,6 +22,53 @@ class BillingController extends Controller
             ]),
         ]);
     }
+
+    public function recap(Request $request)
+    {
+        $request->validate([
+            'year'   => 'sometimes|integer|min:2000',
+            'month'  => 'sometimes|integer|between:1,12',
+            'status' => 'sometimes|string|in:unpaid,paid',
+        ], [
+            'year.integer'    => 'Tahun harus berupa angka.',
+            'month.between'   => 'Bulan harus antara 1-12.',
+            'status.in'       => 'Status harus unpaid atau paid.',
+        ]);
+
+        $query = MonthlyBill::with(['customer.user'])
+            ->orderBy('billing_period_year', 'desc')
+            ->orderBy('billing_period_month', 'desc');
+
+        if ($request->has('year')) {
+            $query->where('billing_period_year', $request->year);
+        }
+
+        if ($request->has('month')) {
+            $query->where('billing_period_month', $request->month);
+        }
+
+        if ($request->has('status')) {
+            $query->where('status', $request->status);
+        }
+
+        $bills = $query->paginate(10);
+
+        // Ringkasan
+        $summary = [
+            'total_tagihan'  => $query->count(),
+            'total_unpaid'   => (clone $query)->where('status', 'unpaid')->count(),
+            'total_paid'     => (clone $query)->where('status', 'paid')->count(),
+            'total_nominal'  => (clone $query)->sum('total_amount'),
+        ];
+
+        return response()->json([
+            'success' => true,
+            'data'    => [
+                'summary' => $summary,
+                'bills'   => $bills,
+            ],
+        ]);
+    }
     public function generate(Request $request)
     {
         $request->validate([

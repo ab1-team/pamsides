@@ -33,8 +33,9 @@ Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
     Route::patch('installation-tickets/{installationTicket}/transition', [InstallationTicketController::class, 'transition']);
     Route::post('installation-tickets/{installationTicket}/payment',[PaymentController::class, 'store']);
     Route::post('installation-tickets/{installationTicket}/activate',[ActivationController::class, 'activate']);
-
-    Route::post('bills/generate', [BillingController::class, 'generate']);
+    
+    Route::get('bills/recap',         [BillingController::class, 'recap']);
+    Route::post('bills/generate',     [BillingController::class, 'generate']);
     Route::get('bills/{monthlyBill}', [BillingController::class, 'show']);
 
     // route admin lainnya...
