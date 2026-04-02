@@ -26,7 +26,7 @@ class MonthlyBill extends Model
         return $this->belongsTo(Customer::class, 'customer_id');
     }
 
-    public function payments()
+    public function billPayments()
     {
         return $this->hasMany(BillPayment::class, 'bill_id');
     }
