@@ -43,6 +43,7 @@ Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
     Route::get('monthly-bills', [MonthlyBillController::class, 'index']);
     Route::post('monthly-bills/{id}/pay', [MonthlyBillController::class, 'pay']);
     Route::post('monthly-bills/generate', [MonthlyBillController::class, 'generate']);
+    Route::get('reports/bills', [MonthlyBillController::class, 'report']);
     
     // route admin lainnya...
 
