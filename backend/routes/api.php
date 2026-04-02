@@ -4,6 +4,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ActivationController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\BillingController;
 use App\Http\Controllers\InstallationPackageController;
 use App\Http\Controllers\InstallationResultController;
 use App\Http\Controllers\InstallationTicketController;
@@ -34,6 +35,11 @@ Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
     Route::patch('installation-tickets/{installationTicket}/transition', [InstallationTicketController::class, 'transition']);
     Route::post('installation-tickets/{installationTicket}/payment',[PaymentController::class, 'store']);
     Route::post('installation-tickets/{installationTicket}/activate',[ActivationController::class, 'activate']);
+    
+    Route::get('bills/recap',         [BillingController::class, 'recap']);
+    Route::post('bills/generate',     [BillingController::class, 'generate']);
+    Route::get('bills/{monthlyBill}', [BillingController::class, 'show']);
+
     Route::get('monthly-bills', [MonthlyBillController::class, 'index']);
     Route::post('monthly-bills/{id}/pay', [MonthlyBillController::class, 'pay']);
     Route::post('monthly-bills/generate', [MonthlyBillController::class, 'generate']);
