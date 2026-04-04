@@ -117,17 +117,15 @@ class InstallationTicketController extends Controller
             ->whereYear('created_at', $request->year)
             ->get();
 
+        $summary = $tickets->groupBy('status')->map->count();
+
         return response()->json([
-            'message' => 'Laporan instalasi',
-            'periode' => $request->month . '-' . $request->year,
-            'summary' => [
-                'total' => $tickets->count(),
-                'pending' => $tickets->where('status', 'pending')->count(),
-                'surveyed' => $tickets->where('status', 'surveyed')->count(),
-                'processing' => $tickets->where('status', 'processing')->count(),
-                'completed' => $tickets->where('status', 'completed')->count(),
-            ],
-            'data' => $tickets
+            'success' => true,
+            'data' => [
+                'periode' => $request->month . '-' . $request->year,
+                'summary' => $summary,
+                'tickets' => $tickets
+            ]
         ]);
     }
 }

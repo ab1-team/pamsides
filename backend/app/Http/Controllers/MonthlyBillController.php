@@ -19,17 +19,14 @@ class MonthlyBillController extends Controller
     {
         $query = MonthlyBill::query();
 
-        // filter by customer
         if ($request->customer_id) {
             $query->where('customer_id', $request->customer_id);
         }
 
-        // filter by status
         if ($request->status) {
             $query->where('status', $request->status);
         }
 
-        // filter by bulan & tahun
         if ($request->month && $request->year) {
             $query->where('billing_period_month', $request->month)
                 ->where('billing_period_year', $request->year);
@@ -38,20 +35,22 @@ class MonthlyBillController extends Controller
         $bills = $query->latest()->get();
 
         return response()->json([
-            'message' => 'Daftar tagihan',
-            'data' => $bills
+            'success' => true,
+            'data' => [
+                'bills' => $bills
+            ]
         ]);
     }
 
+    //konfirmasi pembayaran
     public function pay($id)
     {
-        //konfirmasi pembayaran
-        //update status
-        //simpan payment
+
         $bill = MonthlyBill::findOrFail($id);
 
         if ($bill->status == 'paid') {
             return response()->json([
+                'success' => false,
                 'message' => 'Tagihan sudah dibayar'
             ], 400);
         }
@@ -70,21 +69,26 @@ class MonthlyBillController extends Controller
         ]);
 
         return response()->json([
+            'success' => true,
             'message' => 'Pembayaran berhasil dikonfirmasi'
         ]);
     }
-
+    
     public function generate()
     {
         $result = $this->monthlyBillService->generate();
 
         if (!$result['status']) {
             return response()->json([
+                'success' => false,
                 'message' => $result['message']
             ], 400);
         }
 
-        return response()->json($result);
+        return response()->json([
+            'success' => true,
+            'message' => $result['message']
+        ]);
     }
     //laporan tagihan
     public function report(Request $request)
@@ -98,20 +102,18 @@ class MonthlyBillController extends Controller
             ->where('billing_period_year', $request->year)
             ->get();
 
-        // hitung total
-        $total = $bills->sum('total_amount');
-        $paid = $bills->where('status', 'paid')->sum('total_amount');
-        $unpaid = $bills->where('status', 'unpaid')->sum('total_amount');
+        $summary = [
+            'total_tagihan' => $bills->sum('total_amount'),
+            'total_dibayar' => $bills->where('status', 'paid')->sum('total_amount'),
+            'total_belum_dibayar' => $bills->where('status', 'unpaid')->sum('total_amount'),
+        ];
 
         return response()->json([
-            'message' => 'Laporan tagihan',
-            'periode' => $request->month . '-' . $request->year,
-            'summary' => [
-                'total_tagihan' => $total,
-                'total_dibayar' => $paid,
-                'total_belum_dibayar' => $unpaid,
-            ],
-            'data' => $bills
+            'success' => true,
+            'data' => [
+                'summary' => $summary,
+                'bills' => $bills
+            ]
         ]);
     }
 }
