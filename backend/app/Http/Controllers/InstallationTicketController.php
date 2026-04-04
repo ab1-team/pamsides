@@ -106,4 +106,26 @@ class InstallationTicketController extends Controller
             'data'    => $installationTicket,
         ]);
     }
+    public function report(Request $request)
+    {
+        $request->validate([
+            'month' => 'required|integer',
+            'year' => 'required|integer',
+        ]);
+
+        $tickets = InstallationTicket::whereMonth('created_at', $request->month)
+            ->whereYear('created_at', $request->year)
+            ->get();
+
+        $summary = $tickets->groupBy('status')->map->count();
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'periode' => $request->month . '-' . $request->year,
+                'summary' => $summary,
+                'tickets' => $tickets
+            ]
+        ]);
+    }
 }

@@ -33,6 +33,7 @@ Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
 
     Route::get('installation-tickets',  [InstallationTicketController::class, 'index']);
     Route::post('installation-tickets', [InstallationTicketController::class, 'store']);
+    Route::get('reports/installations', [InstallationTicketController::class, 'report']);
     Route::get('installation-tickets/{installationTicket}', [InstallationTicketController::class, 'show']);
     Route::patch('installation-tickets/{installationTicket}/transition', [InstallationTicketController::class, 'transition']);
     Route::post('installation-tickets/{installationTicket}/payment',[PaymentController::class, 'store']);
@@ -55,6 +56,7 @@ Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
     Route::get('monthly-bills', [MonthlyBillController::class, 'index']);
     Route::post('monthly-bills/{id}/pay', [MonthlyBillController::class, 'pay']);
     Route::post('monthly-bills/generate', [MonthlyBillController::class, 'generate']);
+    Route::get('reports/bills', [MonthlyBillController::class, 'report']);
     
     // route admin lainnya...
 
