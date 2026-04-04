@@ -4,11 +4,13 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ActivationController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\BillingController;
 use App\Http\Controllers\InstallationPackageController;
 use App\Http\Controllers\InstallationResultController;
 use App\Http\Controllers\InstallationTicketController;
 use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SurveyResultController;
 use App\Http\Controllers\WaterTariffBlockController;
 use App\Http\Controllers\MeterReadingController;
@@ -39,6 +41,16 @@ Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
     Route::get('bills/recap',         [BillingController::class, 'recap']);
     Route::post('bills/generate',     [BillingController::class, 'generate']);
     Route::get('bills/{monthlyBill}', [BillingController::class, 'show']);
+
+    Route::get('dashboard/statistics', [DashboardController::class, 'statistics']);
+
+
+    Route::get('reports/billing',                  [ReportController::class, 'billing']);
+    Route::get('reports/installation',             [ReportController::class, 'installation']);
+    Route::get('reports/billing/export-csv',       [ReportController::class, 'exportBillingCsv']);
+    Route::get('reports/billing/export-pdf',       [ReportController::class, 'exportBillingPdf']);
+    Route::get('reports/installation/export-csv',  [ReportController::class, 'exportInstallationCsv']);
+    Route::get('reports/installation/export-pdf',  [ReportController::class, 'exportInstallationPdf']);
 
     Route::get('monthly-bills', [MonthlyBillController::class, 'index']);
     Route::post('monthly-bills/{id}/pay', [MonthlyBillController::class, 'pay']);
