@@ -1,0 +1,9 @@
+git pull origin develop
+git checkout -b feature/nama-fitur
+git add .
+git commit -m "pesannya..."
+git push origin feature/nama-fitur || git push -u origin feature/nama-fitur
+git checkout develop
+git branch -D feature/nama-fitur
+
+git pull origin feature/nama-fitur

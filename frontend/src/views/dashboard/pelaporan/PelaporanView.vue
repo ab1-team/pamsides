@@ -17,7 +17,7 @@
           <p class="text-blue-100 text-sm">Pilih parameter laporan yang ingin ditampilkan</p>
         </div>
         <div
-          class="absolute top-4 right-4 bg-white bg-opacity-20 backdrop-blur-sm text-white px-2 py-1 rounded-full text-sm font-medium flex items-center border border-white border-opacity-30"
+          class="absolute top-4 right-4 bg-white/20 backdrop-blur-sm text-white px-2 py-1 rounded-full text-sm font-medium flex items-center border border-white/30"
         >
           <font-awesome-icon icon="info-circle" class="mr-1" />
           Wajib diisi semua

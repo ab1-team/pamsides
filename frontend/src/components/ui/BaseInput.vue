@@ -127,6 +127,8 @@ const handleInput = (event) => {
 </script>
 
 <style scoped>
+@reference "../../assets/main.css";
+
 /* =============================================
    BASE INPUT - STATIC COMPONENT
    ============================================= */
@@ -157,7 +159,7 @@ const handleInput = (event) => {
 }
 
 .base-input__field {
-  @apply block w-full px-3 py-2 bg-white border border-slate-200 rounded-md text-sm shadow-sm placeholder-slate-400 focus:outline-none focus:border-[#0B7A9E] focus:ring-1 focus:ring-[#0B7A9E] transition-colors;
+  @apply block w-full px-3 py-2 bg-white border border-slate-200 rounded-md text-sm shadow-sm placeholder:text-slate-400 focus:outline-none focus:border-[#0B7A9E] focus:ring-1 focus:ring-[#0B7A9E] transition-colors;
 }
 
 .base-input__field--sm {

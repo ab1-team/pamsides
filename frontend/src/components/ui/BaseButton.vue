@@ -104,6 +104,8 @@ const handleClick = (event) => {
 </script>
 
 <style scoped>
+@reference "../../assets/main.css";
+
 .base-button {
   @apply inline-flex items-center justify-center font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed;
 }
@@ -163,7 +165,7 @@ const handleClick = (event) => {
 
 /* Elements */
 .base-button__icon {
-  @apply flex-shrink-0;
+  @apply shrink-0;
 }
 
 .base-button__icon:first-child:not(:last-child) {

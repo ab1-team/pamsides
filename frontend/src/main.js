@@ -156,6 +156,12 @@ app.use(VueSweetalert2)
 app.use(PrimeVue, {
   theme: {
     preset: Aura,
+    options: {
+      cssLayer: {
+        name: 'primevue',
+        order: 'base, primevue, utilities',
+      },
+    },
   },
 })
 

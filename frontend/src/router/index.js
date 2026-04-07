@@ -49,71 +49,56 @@ const router = createRouter({
           name: 'dashboard',
           component: DashboardIndex,
         },
-        // {
-        //   path: '/settings',
-        //   name: 'settings',
-        //   component: SopView,
-        // },
-        // {
-        //   path: '/settings',
-        //   name: 'settings',
-        //   component: COAView,
-        // },
-        // {
-        //   path: '/settings',
-        //   name: 'settings',
-        //   component: KelasBiayaView,
-        // },
-        // {
-        //   path: '/BasisData',
-        //   name: 'BasisData',
-        //   component: cretaepelangganView,
-        // },
-        // {
-        //   path: '/BasisData',
-        //   name: 'BasisData',
-        //   component: editpelangganView,
-        // },
-        // {
-        //   path: '/BasisData',
-        //   name: 'BasisData',
-        //   component: pelangganView,
-        // },
-        // {
-        //   path: '/BasisData',
-        //   name: 'BasisData',
-        //   component: createdesaView,
-        // },
-        // {
-        //   path: '/BasisData',
-        //   name: 'BasisData',
-        //   component: editdesaView,
-        // },
-        // {
-        //   path: '/BasisData',
-        //   name: 'BasisData',
-        //   component: desaView,
-        // },
-        // {
-        //   path: '/BasisData',
-        //   name: 'BasisData',
-        //   component: createcaterView,
-        // },
-        // {
-        //   path: '/BasisData',
-        //   name: 'BasisData',
-        //   component: createcaterView,
-        // },
-        // {
-        //   path: '/BasisData',
-        //   name: 'BasisData',
-        //   component: caterView,
-        // },
-        // {
-        //   path: '/BasisData',
-        //   name: 'BasisData',
-        //   component: datainstalasiView,
-        // },
+        {
+          path: '/settings/personalisasi-sop',
+          name: 'personalisasi-sop',
+          component: () => import('@/views/dashboard/settings/SopView.vue'),
+        },
+        {
+          path: '/settings/coa',
+          name: 'coa',
+          component: () => import('@/views/dashboard/settings/COAView.vue'),
+        },
+        {
+          path: '/settings/kelas-biaya',
+          name: 'kelas-biaya',
+          component: () => import('@/views/dashboard/settings/KelasBiayaView.vue'),
+        },
+        {
+          path: '/data/pelanggan/create',
+          name: 'create-pelanggan',
+          component: () => import('@/views/dashboard/basis-data/pelanggan/CreateView.vue'),
+        },
+        {
+          path: '/data/pelanggan',
+          name: 'pelanggan',
+          component: () => import('@/views/dashboard/basis-data/pelanggan/IndexView.vue'),
+        },
+        {
+          path: '/data/desa/create',
+          name: 'create-desa',
+          component: () => import('@/views/dashboard/basis-data/desa/CreateView.vue'),
+        },
+        {
+          path: '/data/desa',
+          name: 'desa',
+          component: () => import('@/views/dashboard/basis-data/desa/IndexView.vue'),
+        },
+        {
+          path: '/data/caters/create',
+          name: 'create-caters',
+          component: () => import('@/views/dashboard/basis-data/cater/CreateView.vue'),
+        },
+        {
+          path: '/data/caters',
+          name: 'caters',
+          component: () => import('@/views/dashboard/basis-data/cater/IndexView.vue'),
+        },
+        {
+          path: '/data/instalasi',
+          name: 'data-instalasi',
+          component: () => import('@/views/dashboard/basis-data/data-instalasi/IndexView.vue'),
+        },
         {
           path: '/instalasi/register',
           name: 'Register Instalasi',
@@ -150,7 +135,7 @@ const router = createRouter({
           component: tagihanBulanan,
         },
         {
-          path: '/transaksi/E-budgeting',
+          path: '/transaksi/e-budgeting',
           name: 'transaksi E-Budgeting',
           component: EBudgetingView,
         },
