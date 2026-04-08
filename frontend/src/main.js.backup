@@ -1,6 +1,4 @@
 import './assets/main.css'
-import './assets/datepicker.css'
-import './assets/stat-card.css'
 
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
@@ -10,12 +8,6 @@ import router from './router'
 import VueSweetalert2 from 'vue-sweetalert2'
 import Swal from 'sweetalert2'
 import 'sweetalert2/dist/sweetalert2.min.css'
-
-import PrimeVue from 'primevue/config'
-import Aura from '@primeuix/themes/aura'
-import Button from 'primevue/button'
-import DatePicker from 'primevue/datepicker'
-import InputNumber from 'primevue/inputnumber'
 
 // Font Awesome
 import { library } from '@fortawesome/fontawesome-svg-core'
@@ -55,6 +47,7 @@ import {
   faArrowRight,
   faArrowDown,
   faArrowUp,
+  faArrowUp,
   faInfoCircle,
   faWater,
   faChartColumn,
@@ -74,8 +67,6 @@ import {
   faIdCard,
   faMapMarkerAlt,
   faQrcode,
-  faFrown,
-  faCheck,
 } from '@fortawesome/free-solid-svg-icons'
 
 // Tambahkan icons ke library
@@ -114,6 +105,7 @@ library.add(
   faArrowRight,
   faArrowDown,
   faArrowUp,
+  faArrowUp,
   faInfoCircle,
   faWater,
   faChartColumn,
@@ -133,8 +125,6 @@ library.add(
   faIdCard,
   faMapMarkerAlt,
   faQrcode,
-  faFrown,
-  faCheck,
 )
 
 const options = {
@@ -153,16 +143,6 @@ const pinia = createPinia()
 app.use(pinia)
 app.use(router)
 app.use(VueSweetalert2)
-app.use(PrimeVue, {
-  theme: {
-    preset: Aura,
-  },
-})
-
-// Register PrimeVue components
-app.component('PrimeButton', Button)
-app.component('DatePicker', DatePicker)
-app.component('InputNumber', InputNumber)
 
 // Register Font Awesome component
 app.component('font-awesome-icon', FontAwesomeIcon)
