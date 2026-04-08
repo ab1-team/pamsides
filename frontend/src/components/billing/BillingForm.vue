@@ -111,7 +111,7 @@ import { reactive, watch } from 'vue'
 import BaseInput from '../ui/BaseInput.vue'
 import BaseButton from '../ui/BaseButton.vue'
 import AppDatePicker from '../AppDatePicker.vue'
-import MaksMoneyInput from '../MaksMoneyInput.vue'
+import MaksMoneyInput from '../../MaksMoneyInput.vue'
 
 // Props untuk initial data
 const props = defineProps({

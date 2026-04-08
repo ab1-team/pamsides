@@ -1,6 +1,6 @@
 /**
  * =============================================
-   CURRENCY FORMATTING UTILITY - MAKS MONEY
+   CURRENCY FORMATTING UTILITY - MAKSMONEY
    =============================================
  */
 
@@ -125,9 +125,7 @@ export function formatLargeAmount(amount) {
   } else if (absAmount >= 1000) {
     return `Rp ${(amount / 1000).toFixed(1)}RB`
   } else {
-    return useCurrencyFormat(amount, {
-      maximumFractionDigits: 0,
-    })
+    return useCurrencyFormat(amount, { maximumFractionDigits: 0 })
   }
 }
 

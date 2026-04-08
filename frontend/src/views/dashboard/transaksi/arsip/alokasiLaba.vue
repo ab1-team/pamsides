@@ -93,7 +93,7 @@
         </div>
 
         <div
-          class="bg-linear-to-br from-cyan-50 to-cyan-100 border-2 border-dashed border-cyan-300 rounded-xl p-3.5 mt-2 shadow-md"
+          class="bg-gradient-to-br from-cyan-50 to-cyan-100 border-2 border-dashed border-cyan-300 rounded-xl p-3.5 mt-2 shadow-md"
         >
           <div class="text-xs font-semibold text-cyan-600 mb-1.5">Estimasi Pertumbuhan Aset</div>
           <div class="flex items-center justify-between">
@@ -109,7 +109,7 @@
     <ContentCard variant="bordered" padding="normal" hoverable>
       <div class="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
         <div class="flex flex-col sm:flex-row items-start sm:items-center gap-5 w-full lg:w-auto">
-          <div class="w-18 h-18 shrink-0">
+          <div class="w-18 h-18 flex-shrink-0">
             <svg viewBox="0 0 80 80" class="w-full h-full">
               <circle cx="40" cy="40" r="30" fill="none" stroke="#e2e8f0" stroke-width="10" />
               <circle
@@ -206,7 +206,7 @@
 
 <script setup>
 import { ref, computed } from 'vue'
-import MaksMoneyInput from '@/components/MaksMoneyInput.vue'
+import MaksMoneyInput from '../../../../components/MaksMoneyInput.vue'
 import ContentCard from '@/components/ui/ContentCard.vue'
 
 const selectedTahun = ref(2026)

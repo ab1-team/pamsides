@@ -133,7 +133,7 @@
             Total Bill to Pay
           </div>
           <div class="text-2xl sm:text-3xl font-black text-white tracking-tight leading-tight mb-4">
-            Rp {{ billingStore.formatAmount(grandTotal) }}
+            Rp {{ formatBillAmount(grandTotal) }}
           </div>
 
           <div class="text-xs text-white/70 mb-3">
@@ -317,6 +317,7 @@ const billingItems = computed(() => {
 
 const grandTotal = computed(() => billingItems.value.reduce((sum, item) => sum + item.subtotal, 0))
 
+// Removed unused selectedPaket, paketSearchQuery, detailInstalasi
 const pelangganSearchQuery = ref('')
 const filteredPelangganList = ref([])
 
@@ -360,6 +361,20 @@ const selectPelanggan = (pelanggan) => {
   billingStore.selectedCustomer = pelanggan
   console.log('Pelanggan selected:', pelanggan)
 }
+
+// Remove unused resetDetailInstalasi
+
+// Remove unused saveDetailInstalasi
+
+// Remove unused formatRupiah
+
+const formatBillAmount = (val) => {
+  return Number(val).toLocaleString('id-ID')
+}
+
+// Remove unused handlePaketChange
+
+// Remove unused filterPaketList
 
 const handlePayNow = () => {
   console.log('Pay now clicked')

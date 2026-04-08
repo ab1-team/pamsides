@@ -1,0 +1,123 @@
+.stat-card {
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 50%, #f1f5f9 100%);
+  border-radius: var(--card-radius);
+  box-shadow:
+    0 4px 6px -1px rgba(0, 0, 0, 0.1),
+    0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  transition: var(--transition-normal);
+  padding: 0.75rem;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.stat-card:hover {
+  box-shadow:
+    0 10px 15px -3px rgba(0, 0, 0, 0.1),
+    0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  transform: translateY(-2px);
+  background: linear-gradient(135deg, #ffffff 0%, #f0f9ff 50%, #e0f2fe 100%);
+}
+
+.stat-card--instalasi {
+  background: linear-gradient(135deg, #ffffff 0%, #dbeafe 50%, #bfdbfe 100%);
+}
+
+.stat-card--instalasi:hover {
+  background: linear-gradient(135deg, #ffffff 0%, #eff6ff 50%, #dbeafe 100%);
+}
+
+.stat-card--pemakaian {
+  background: linear-gradient(135deg, #ffffff 0%, #cffafe 50%, #a5f3fc 100%);
+}
+
+.stat-card--pemakaian:hover {
+  background: linear-gradient(135deg, #ffffff 0%, #f0fdfa 50%, #ccfbf1 100%);
+}
+
+.stat-card--tunggakan {
+  background: linear-gradient(135deg, #ffffff 0%, #fed7aa 50%, #fdba74 100%);
+}
+
+.stat-card--tunggakan:hover {
+  background: linear-gradient(135deg, #ffffff 0%, #fff7ed 50%, #fed7aa 100%);
+}
+
+.stat-card--tagihan {
+  background: linear-gradient(135deg, #ffffff 0%, #bbf7d0 50%, #86efac 100%);
+}
+
+.stat-card--tagihan:hover {
+  background: linear-gradient(135deg, #ffffff 0%, #f0fdf4 50%, #dcfce7 100%);
+}
+
+.stat-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1rem;
+}
+
+.stat-card-title {
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-main);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.stat-card-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.stat-card-value {
+  font-size: var(--text-3xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-main);
+  line-height: var(--line-height-tight);
+}
+
+.stat-card-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: var(--border-radius-md);
+  backdrop-filter: blur(10px);
+  flex-shrink: 0;
+}
+
+.stat-card-progress {
+  background-color: rgba(255, 255, 255, 0.3);
+  border-radius: var(--border-radius-full);
+  height: 0.375rem;
+  overflow: hidden;
+}
+
+.stat-card-progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #0ea5e9 0%, #0284c7 100%);
+  border-radius: var(--border-radius-full);
+  transition: var(--transition-slow);
+}
+
+.stat-card--instalasi .stat-card-progress-bar {
+  background: linear-gradient(90deg, #3b82f6 0%, #2563eb 100%);
+}
+
+.stat-card--pemakaian .stat-card-progress-bar {
+  background: linear-gradient(90deg, #06b6d4 0%, #0891b2 100%);
+}
+
+.stat-card--tunggakan .stat-card-progress-bar {
+  background: linear-gradient(90deg, #f97316 0%, #ea580c 100%);
+}
+
+.stat-card--tagihan .stat-card-progress-bar {
+  background: linear-gradient(90deg, #10b981 0%, #059669 100%);
+}

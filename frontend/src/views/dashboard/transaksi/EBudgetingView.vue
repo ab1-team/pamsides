@@ -13,12 +13,12 @@
           :disabled="!selectedTahun || !selectedBulan || isProcessing"
           class="w-full sm:w-auto h-[38px] px-4 flex items-center justify-center bg-blue-600 text-white border border-blue-600 rounded-lg text-sm font-medium transition-colors hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
         >
-          {{ isProcessing ? 'Menyimpan...' : 'Tentukan Rencana Anggaran' }}
+          {{ isProcessing ? 'Memproses...' : 'Tentukan Rencana Anggaran' }}
         </button>
       </div>
     </ContentCard>
 
-    <NotificationDialog
+    <AppNotification
       v-bind="notificationState"
       @close="() => {}"
       @confirm="() => {}"
@@ -30,7 +30,7 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { useNotification } from '@/composables/useNotification'
-import NotificationDialog from '@/components/ui/NotificationDialog.vue'
+import AppNotification from '@/components/ui/AppNotification.vue'
 import SelectSearch from '@/components/SelectSearch.vue'
 import ContentCard from '@/components/ui/ContentCard.vue'
 

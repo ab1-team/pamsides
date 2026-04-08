@@ -127,6 +127,8 @@ const handleInput = (event) => {
 </script>
 
 <style scoped>
+@reference "../../assets/main.css";
+
 /* =============================================
    BASE INPUT - STATIC COMPONENT
    ============================================= */
