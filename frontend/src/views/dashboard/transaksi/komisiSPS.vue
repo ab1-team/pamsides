@@ -1,9 +1,12 @@
 <template>
   <div>
     <div class="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-4 lg:gap-5 items-start">
+      <!-- ... existing grid ... -->
       <ContentCard variant="elevated" padding="large" hoverable>
         <div class="flex items-center gap-3 mb-6">
-          <div class="w-9 h-9 bg-blue-400 rounded-full flex items-center justify-center shrink-0">
+          <div
+            class="w-9 h-9 bg-blue-400 rounded-full flex items-center justify-center flex-shrink-0"
+          >
             <span class="text-lg">💧</span>
           </div>
           <h1 class="text-base font-bold text-gray-800">Transaksi Komisi SPS</h1>
@@ -76,7 +79,7 @@
           <button
             @click="simpanTransaksi"
             :disabled="isProcessing"
-            class="ml-auto px-6 sm:px-8 py-2 bg-linear-to-r from-gray-500 to-gray-600 text-white rounded-lg font-semibold transition-all hover:from-gray-600 hover:to-gray-700 hover:shadow-lg hover:-translate-y-0.5 text-sm sm:text-base disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:transform-none disabled:hover:shadow-none"
+            class="ml-auto px-6 sm:px-8 py-2 bg-gradient-to-r from-gray-500 to-gray-600 text-white rounded-lg font-semibold transition-all hover:from-gray-600 hover:to-gray-700 hover:shadow-lg hover:-translate-y-0.5 text-sm sm:text-base disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:transform-none disabled:hover:shadow-none"
           >
             {{ isProcessing ? 'Menyimpan...' : 'Simpan Komisi SPS' }}
           </button>
@@ -86,7 +89,7 @@
       <div class="flex flex-col gap-4 lg:sticky lg:top-8">
         <ContentCard variant="minimal" padding="normal" hoverable>
           <div class="flex gap-3 items-start">
-            <div class="text-base shrink-0 mt-0.5">ℹ️</div>
+            <div class="text-base flex-shrink-0 mt-0.5">ℹ️</div>
             <div class="text-xs text-slate-600 leading-relaxed">
               <strong>Bantuan Komisi SPS</strong><br />
               Pastikan data petugas dan nominal komisi sudah benar sebelum menyimpan transaksi.
@@ -96,7 +99,7 @@
       </div>
     </div>
 
-    <NotificationDialog
+    <AppNotification
       v-bind="notificationState"
       @close="() => {}"
       @confirm="() => {}"
@@ -108,10 +111,10 @@
 <script setup>
 import { ref } from 'vue'
 import { useNotification } from '@/composables/useNotification'
-import NotificationDialog from '@/components/ui/NotificationDialog.vue'
+import AppNotification from '@/components/ui/AppNotification.vue'
 import SelectSearch from '@/components/SelectSearch.vue'
 import AppDatePicker from '@/components/AppDatePicker.vue'
-import MaksMoneyInput from '@/components/MaksMoneyInput.vue'
+import MaksMoneyInput from '../../../../components/MaksMoneyInput.vue'
 import ContentCard from '@/components/ui/ContentCard.vue'
 
 const { notificationState, success, error } = useNotification()

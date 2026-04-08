@@ -1,7 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import LoginView from '@/views/auth/LoginView.vue'
 import MainView from '@/views/dashboard/layout/MainView.vue'
-import DashboardIndex from '@/views/dashboard/DashboardIndex.vue'
+import Dashbord from '@/views/dashboard/DashboardMain.vue'
 // import SopView from '@/views/dashboard/settings/SopView.vue'
 // import COAView from '@/views/dashboard/settings/COAView.vue'
 // import KelasBiayaView from '@/views/dashboard/settings/KelasBiayaView.vue'
@@ -15,17 +15,17 @@ import DashboardIndex from '@/views/dashboard/DashboardIndex.vue'
 // import caterView from '@/views/dashboard/basis-data/cater/IndexView.vue'
 // import datainstalasiView from '@/views/dashboard/basis-data/data-instalasi/IndexView.vue'
 import registerInstalasi from '@/views/dashboard/instalasi/registrasi.vue'
-import statusInstalasi from '@/views/dashboard/instalasi/status.vue'
+import statusInstalasi from '@/views/dashboard/instalasi/InstalasiStatus.vue'
 import pemakaianair from '@/views/dashboard/instalasi/pemakaianAir.vue'
 import retribusisampah from '@/views/dashboard/instalasi/retribusiSampah.vue'
-import JurnalUmum from '@/views/dashboard/transaksi/jurnalUmum/JurnalUmum.vue'
+import jurnalUmum from '@/views/dashboard/transaksi/jurnalUmum/JurnalUmumIndex.vue'
 import tagihanInstalasi from '@/views/dashboard/transaksi/Tagihan/tagihanInstalasi.vue'
 import tagihanBulanan from '@/views/dashboard/transaksi/Tagihan/tagihanBulanan.vue'
 import alokasiLaba from '@/views/dashboard/transaksi/arsip/alokasiLaba.vue'
-import EBudgetingView from '@/views/dashboard/transaksi/EBudgetingView.vue'
+import ebudgeting from '@/views/dashboard/transaksi/EBudgetingView.vue'
 import tutupBuku from '@/views/dashboard/transaksi/tutupBuku.vue'
 import komisiSPS from '@/views/dashboard/transaksi/komisiSPS.vue'
-import PelaporanView from '@/views/dashboard/pelaporan/PelaporanView.vue'
+import laporan from '@/views/dashboard/pelaporan/PelaporanIndex.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -47,7 +47,7 @@ const router = createRouter({
         {
           path: '',
           name: 'dashboard',
-          component: DashboardIndex,
+          component: Dashbord,
         },
         // {
         //   path: '/settings',
@@ -137,7 +137,7 @@ const router = createRouter({
         {
           path: '/transaksi/jurnal-umum',
           name: 'transaksi jurnal umum',
-          component: JurnalUmum,
+          component: jurnalUmum,
         },
         {
           path: '/transaksi/tagihan-instalasi',
@@ -152,7 +152,7 @@ const router = createRouter({
         {
           path: '/transaksi/E-budgeting',
           name: 'transaksi E-Budgeting',
-          component: EBudgetingView,
+          component: ebudgeting,
         },
         {
           path: '/transaksi/tutup-buku',
@@ -172,7 +172,7 @@ const router = createRouter({
         {
           path: '/Pelaporan',
           name: 'Pelaporan',
-          component: PelaporanView,
+          component: laporan,
         },
       ],
     },

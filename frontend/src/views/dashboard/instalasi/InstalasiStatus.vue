@@ -293,10 +293,6 @@ import { ref, computed, watch } from 'vue'
 import DataTable from '@/components/ui/DataTable.vue'
 import ContentCard from '@/components/ui/ContentCard.vue'
 
-defineOptions({
-  name: 'InstalasiStatus',
-})
-
 const activeStatus = ref('permohonan')
 const currentPage = ref(1)
 const perPage = 10

@@ -1,6 +1,7 @@
 <template>
   <div>
     <ContentCard variant="bordered" padding="normal" hoverable>
+      <!-- ... existing content card 1 ... -->
       <div class="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4">
         <div class="w-full lg:flex-1">
           <SelectSearch v-model="selectedTahun" :options="tahunOptions" placeholder="Pilih Tahun" />
@@ -29,6 +30,7 @@
       hoverable
       v-if="bookStatus !== 'open' || isProcessing"
     >
+      <!-- ... existing content card 2 ... -->
       <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-4">
         <div
           class="flex items-center gap-3 text-base font-semibold text-gray-900"
@@ -164,7 +166,7 @@
       <span class="sm:hidden">Simpan</span>
     </button>
 
-    <NotificationDialog
+    <AppNotification
       v-bind="notificationState"
       @close="() => {}"
       @confirm="() => {}"
@@ -176,9 +178,9 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { useNotification } from '@/composables/useNotification'
-import NotificationDialog from '@/components/ui/NotificationDialog.vue'
+import AppNotification from '@/components/ui/AppNotification.vue'
 import SelectSearch from '@/components/SelectSearch.vue'
-import MaksMoneyInput from '@/components/MaksMoneyInput.vue'
+import MaksMoneyInput from '../../../../components/MaksMoneyInput.vue'
 import ContentCard from '@/components/ui/ContentCard.vue'
 
 const { notificationState, success, error } = useNotification()

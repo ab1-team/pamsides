@@ -4,7 +4,9 @@
   "private": true,
   "description": "Root configuration for Husky and lint-staged",
   "scripts": {
-    "prepare": "husky"
+    "prepare": "husky",
+    "dev": "pnpm --dir frontend run dev",
+    "build": "pnpm --dir frontend run build"
   },
   "devDependencies": {
     "husky": "^9.1.7",

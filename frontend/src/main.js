@@ -160,7 +160,7 @@ app.use(PrimeVue, {
 })
 
 // Register PrimeVue components
-app.component('PButton', Button)
+app.component('PrimeButton', Button)
 app.component('DatePicker', DatePicker)
 app.component('InputNumber', InputNumber)
 

@@ -200,10 +200,6 @@
 import { ref, onMounted } from 'vue'
 import statCard from '../../components/stat-card.vue'
 
-defineOptions({
-  name: 'DashboardIndex',
-})
-
 const financialData = ref({
   pendapatan: 2300000,
   beban: 0,

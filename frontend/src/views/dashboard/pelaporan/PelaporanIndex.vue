@@ -147,10 +147,6 @@ import { ref } from 'vue'
 import ContentCard from '../../../components/ui/ContentCard.vue'
 import SelectSearch from '../../../components/SelectSearch.vue'
 
-defineOptions({
-  name: 'PelaporanIndex',
-})
-
 const selectedTahun = ref('')
 const selectedBulan = ref('')
 const selectedTanggal = ref('')
