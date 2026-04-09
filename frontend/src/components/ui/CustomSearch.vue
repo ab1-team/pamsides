@@ -1,24 +1,32 @@
 <template>
-  <div class="custom-search">
-    <div class="custom-search__icon">
-      <font-awesome-icon icon="search" class="text-sm" />
+  <div
+    class="relative! flex! items-center! bg-white! rounded-full! shadow-md! border! border-slate-100! p-1! group! transition-all! duration-300! focus-within:ring-2! focus-within:ring-blue-100! focus-within:border-blue-300!"
+  >
+    <div class="pl-4! pr-1! text-slate-400! group-focus-within:text-blue-500! transition-colors!">
+      <font-awesome-icon icon="search" class="text-sm!" />
     </div>
     <input
       v-model="searchQuery"
       type="text"
       :placeholder="placeholder"
-      class="custom-search__input"
+      class="flex-1! bg-transparent! border-0! ring-0! focus:ring-0! text-sm! py-2! px-3! text-slate-700! placeholder-slate-400! outline-none!"
       @input="handleInput"
     />
-    <button class="custom-search__button" @click="handleSearch">
+    <BaseButton
+      variant="danger"
+      size="md"
+      class="rounded-full! shadow-md! min-w-[40px]! sm:min-w-[140px]! py-2.5!"
+      @click="handleSearch"
+    >
       <span class="hidden sm:inline">{{ buttonText }}</span>
-      <font-awesome-icon icon="arrow-right" class="sm:hidden" />
-    </button>
+      <font-awesome-icon icon="arrow-right" class="sm:hidden!" />
+    </BaseButton>
   </div>
 </template>
 
 <script setup>
 import { ref, watch } from 'vue'
+import BaseButton from './BaseButton.vue'
 
 const props = defineProps({
   placeholder: {
@@ -62,82 +70,10 @@ const handleSearch = () => {
 </script>
 
 <style scoped>
-/* =============================================
-   CUSTOM SEARCH - REUSABLE COMPONENT
-   ============================================= */
+@reference "../../assets/main.css";
 
-.custom-search {
-  display: flex;
-  align-items: center;
-  background-color: white;
-  border-radius: 9999px;
-  box-shadow:
-    0 4px 6px -1px rgba(0, 0, 0, 0.1),
-    0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  overflow: hidden;
-}
-
-.custom-search__icon {
-  padding-left: 1.25rem;
-  padding-right: 0.5rem;
-  color: #94a3b8;
-}
-
-.custom-search__input {
-  flex: 1;
-  padding: 0.5rem 1rem 0.5rem 1rem !important;
-  font-size: var(--text-sm) !important;
-  color: #494b50 !important;
-  background-color: #ffffff !important;
-  outline: none;
-  border: 1px solid #ffffff !important;
-  border-radius: 0.6rem !important;
-  transition: all 0.2s ease !important;
-  height: 38px !important;
-  margin: 0 1rem !important;
-  width: calc(100% - 2rem) !important;
-}
-
-.custom-search__input::placeholder {
-  color: #94a3b8;
-}
-
-.custom-search__input:focus {
-  outline: none;
-}
-
-.custom-search__button {
-  padding: 0.75rem 1.5rem;
-  background-color: #0b7a9e;
-  color: white;
-  font-size: 0.875rem;
-  font-weight: 600;
-  transition: all 0.2s ease;
-  border-radius: 9999px;
-  margin: 0.25rem;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 2.5rem;
-}
-
-@media (max-width: 640px) {
-  .custom-search__button {
-    padding: 0.75rem;
-    min-width: 2.5rem;
-  }
-}
-
-.custom-search__button:hover {
-  background-color: #094e67;
-  transform: translateY(-1px);
-  box-shadow:
-    0 10px 15px -3px rgba(11, 122, 158, 0.3),
-    0 4px 6px -2px rgba(11, 122, 158, 0.2);
-}
-
-.custom-search__button:active {
-  transform: translateY(0);
+/* Scoped styles kept minimal as we use utility classes */
+input::placeholder {
+  @apply text-slate-400 font-normal italic opacity-70;
 }
 </style>

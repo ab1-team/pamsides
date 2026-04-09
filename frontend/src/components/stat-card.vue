@@ -5,7 +5,13 @@
     </div>
 
     <div class="stat-card-content">
-      <div class="stat-card-value">{{ value }}</div>
+      <div class="stat-card-value-container">
+        <div class="stat-card-value">{{ value }}</div>
+        <router-link :to="link || '#'" class="stat-card-link">
+          <span>Lihat Detail</span>
+          <font-awesome-icon icon="arrow-right" class="link-icon" />
+        </router-link>
+      </div>
       <div class="stat-card-icon">
         <template v-if="!!$slots.default">
           <slot />
@@ -28,6 +34,10 @@ import { computed } from 'vue'
 const props = defineProps({
   label: String,
   value: Number,
+  link: {
+    type: String,
+    default: '#',
+  },
 })
 
 const statCardClasses = computed(() => {

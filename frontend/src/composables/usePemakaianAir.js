@@ -3,7 +3,7 @@ import { STATUS_TYPES, STATUS_COLORS } from '@/types/pemakaianAir'
 
 export function usePemakaianAir() {
   // Filter state
-  const filter = ref({ tahun: 2024, bulan: 'Januari', cater: '' })
+  const filter = ref({ tahun: '', bulan: '', cater: '' })
   const searchQuery = ref('')
   const currentPage = ref(1)
   const perPage = 10

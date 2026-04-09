@@ -1,5 +1,6 @@
 <template>
   <div class="login-container">
+    <!-- Background is handled via CSS pseudo-elements for performance -->
     <div class="wrapper">
       <div class="left">
         <div class="badge">
@@ -12,41 +13,41 @@
         </div>
 
         <p class="desc">
-          Kelola kebutuhan air bersih dengan lebih<br />
-          transparan, mudah, dan terintegrasi dalam satu<br />
+          Kelola kebutuhan air bersih dengan lebih transparan, mudah, dan terintegrasi dalam satu
           sentuhan digital.
         </p>
 
         <div class="chips">
           <div class="chip">
             <font-awesome-icon icon="shield-halved" class="icon-blue" />
-            Kualitas Terjamin
+            <span>Kualitas Terjamin</span>
           </div>
           <div class="chip">
             <font-awesome-icon icon="check-circle" class="icon-green" />
-            Respon Cepat
+            <span>Respon Cepat</span>
           </div>
         </div>
       </div>
 
       <div class="right">
         <div class="card">
-          <p class="card-title">Selamat Datang</p>
-          <p class="card-sub">Silakan masuk ke akun Anda</p>
+          <h2 class="card-title">Selamat Datang</h2>
+          <p class="card-sub">Silakan masuk untuk mengakses dashboard</p>
 
           <form @submit.prevent="handleLogin" class="form">
             <div class="form-group">
-              <label for="email">ID Pelanggan / Email</label>
+              <label for="username">ID Pelanggan / Username</label>
               <div class="input-wrap">
                 <span class="icon-left">
                   <font-awesome-icon icon="user" />
                 </span>
                 <input
-                  id="email"
-                  v-model="form.email"
+                  id="username"
+                  v-model="form.username"
                   type="text"
                   placeholder="Masukkan ID anda"
                   required
+                  autocomplete="username"
                 />
               </div>
             </div>
@@ -66,15 +67,22 @@
                   :type="showPassword ? 'text' : 'password'"
                   placeholder="••••••••"
                   required
+                  autocomplete="current-password"
                 />
-                <button type="button" class="eye-btn" @click="togglePassword">
+                <button
+                  type="button"
+                  class="eye-btn"
+                  @click="togglePassword"
+                  aria-label="Toggle password visibility"
+                >
                   <font-awesome-icon :icon="showPassword ? 'eye-slash' : 'eye'" />
                 </button>
               </div>
             </div>
 
             <button type="submit" class="btn-submit" :disabled="loading">
-              {{ loading ? 'Memproses...' : 'Masuk Sekarang' }}
+              <span v-if="!loading">Masuk Sekarang</span>
+              <span v-else> <font-awesome-icon icon="spinner" spin /> Memproses... </span>
             </button>
           </form>
 
@@ -82,17 +90,17 @@
             <p class="quick-label">AKSES CEPAT</p>
             <div class="quick-btns">
               <button class="quick-btn">
-                <span class="q-icon">
+                <div class="q-icon">
                   <font-awesome-icon icon="credit-card" />
-                </span>
-                Bayar Cepat
+                </div>
+                <span>Bayar Cepat</span>
               </button>
 
               <button class="quick-btn">
-                <span class="q-icon">
+                <div class="q-icon">
                   <font-awesome-icon icon="user-plus" />
-                </span>
-                Daftar Akun
+                </div>
+                <span>Daftar Akun</span>
               </button>
             </div>
           </div>
@@ -112,7 +120,7 @@ const router = useRouter()
 const route = useRoute()
 
 const form = ref({
-  email: '',
+  username: '',
   password: '',
 })
 
@@ -127,7 +135,7 @@ onMounted(() => {
   if (route.query.logout === 'success') {
     MySwal.fire({
       toast: true,
-      position: 'top-end',
+      position: 'top-start',
       icon: 'success',
       title: 'Logout Berhasil',
       text: 'Anda telah keluar dari sistem',
@@ -148,10 +156,10 @@ const handleLogin = async () => {
   try {
     await new Promise((resolve) => setTimeout(resolve, 1500))
 
-    if (form.value.email && form.value.password) {
+    if (form.value.username && form.value.password) {
       router.push('/dashboard?login=success')
     } else {
-      throw new Error('Email atau kata sandi tidak boleh kosong')
+      throw new Error('username atau kata sandi tidak boleh kosong')
     }
   } catch (error) {
     MySwal.fire({

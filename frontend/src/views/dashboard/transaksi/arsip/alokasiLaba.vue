@@ -1,18 +1,18 @@
 <template>
   <div>
-    <div class="text-sm text-gray-500 font-medium mb-3 flex items-center gap-1">
+    <div class="text-sm text-gray-500 font-medium mb-3! flex items-center gap-1">
       <span>Reports</span>
       <span class="text-gray-400">›</span>
       <span class="text-cyan-600 font-bold">Alokasi Laba</span>
     </div>
 
-    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
+    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6! gap-4">
       <div class="header-left">
         <h1 class="text-3xl sm:text-4xl font-bold text-gray-800">Alokasi Laba</h1>
         <h2 class="text-3xl sm:text-4xl font-bold text-cyan-600">Tahun {{ selectedTahun }}</h2>
       </div>
       <ContentCard variant="elevated" padding="normal" hoverable>
-        <div class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">
+        <div class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1!">
           TOTAL SALDO TERSEDIA
         </div>
         <div class="text-xl sm:text-2xl font-bold text-gray-800 font-mono">
@@ -21,17 +21,17 @@
       </ContentCard>
     </div>
 
-    <div class="grid grid-cols-1 xl:grid-cols-2 gap-5 mb-5">
+    <div class="grid grid-cols-1 xl:grid-cols-2 gap-5 mb-5!">
       <ContentCard variant="default" padding="normal" hoverable>
-        <div class="flex items-center gap-2.5 mb-5 pb-4 border-b border-gray-100">
+        <div class="flex items-center gap-2.5 mb-5! pb-4 border-b border-gray-100">
           <div class="w-8 h-8 rounded-lg flex items-center justify-center text-sm bg-cyan-100">
             💸
           </div>
           <span class="text-base font-bold text-gray-800">Laba Dibagikan</span>
         </div>
 
-        <div class="mb-4">
-          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-1.5 gap-1">
+        <div class="mb-4!">
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-1.5! gap-1">
             <span class="text-sm font-semibold text-gray-600">Utang Dividen Pemdes (45%)</span>
             <span class="text-xs font-bold px-2 py-1 rounded-full bg-green-100 text-green-600"
               >Valid</span
@@ -40,8 +40,8 @@
           <MaksMoneyInput v-model="labaDibagikan.dividen" placeholder="0,00" :show-helper="false" />
         </div>
 
-        <div class="mb-4">
-          <div class="flex items-center justify-between mb-1.5">
+        <div class="mb-4!">
+          <div class="flex items-center justify-between mb-1.5!">
             <span class="text-sm font-semibold text-gray-600">Bantuan Sosial (5%)</span>
           </div>
           <MaksMoneyInput
@@ -51,8 +51,8 @@
           />
         </div>
 
-        <div class="mb-4">
-          <div class="flex items-center justify-between mb-1.5">
+        <div class="mb-4!">
+          <div class="flex items-center justify-between mb-1.5!">
             <span class="text-sm font-semibold text-gray-600">Bonus / Jasa Produksi (10%)</span>
           </div>
           <MaksMoneyInput v-model="labaDibagikan.bonus" placeholder="0,00" :show-helper="false" />
@@ -60,15 +60,15 @@
       </ContentCard>
 
       <ContentCard variant="default" padding="normal" hoverable>
-        <div class="flex items-center gap-2.5 mb-5 pb-4 border-b border-gray-100">
+        <div class="flex items-center gap-2.5 mb-5! pb-4 border-b border-gray-100">
           <div class="w-8 h-8 rounded-lg flex items-center justify-center text-sm bg-teal-50">
             🏦
           </div>
           <span class="text-base font-bold text-gray-800">Laba Ditahan</span>
         </div>
 
-        <div class="mb-4">
-          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-1.5 gap-1">
+        <div class="mb-4!">
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-1.5! gap-1">
             <span class="text-sm font-semibold text-gray-600">Pemupukan Modal (20%)</span>
             <span class="text-xs font-bold px-2 py-1 rounded-full bg-blue-100 text-blue-600"
               >Invested</span
@@ -81,8 +81,8 @@
           />
         </div>
 
-        <div class="mb-4">
-          <div class="flex items-center justify-between mb-1.5">
+        <div class="mb-4!">
+          <div class="flex items-center justify-between mb-1.5!">
             <span class="text-sm font-semibold text-gray-600">Cadangan Umum (15%)</span>
           </div>
           <MaksMoneyInput
@@ -93,9 +93,9 @@
         </div>
 
         <div
-          class="bg-gradient-to-br from-cyan-50 to-cyan-100 border-2 border-dashed border-cyan-300 rounded-xl p-3.5 mt-2 shadow-md"
+          class="bg-gradient-to-br from-cyan-50 to-cyan-100 border-2 border-dashed border-cyan-300 rounded-xl p-3.5! mt-2! shadow-md"
         >
-          <div class="text-xs font-semibold text-cyan-600 mb-1.5">Estimasi Pertumbuhan Aset</div>
+          <div class="text-xs font-semibold text-cyan-600 mb-1.5!">Estimasi Pertumbuhan Aset</div>
           <div class="flex items-center justify-between">
             <span class="font-mono text-base font-bold text-cyan-600"
               >+ Rp {{ formatNum(estimasiPertumbuhan) }}</span
@@ -174,12 +174,12 @@
         </div>
 
         <div
-          class="bg-green-50 border-2 border-green-300 rounded-xl p-4 min-w-[200px] w-full sm:w-auto"
+          class="bg-green-50 border-2 border-green-300 rounded-xl p-4! min-w-[200px] w-full sm:w-auto"
         >
-          <div class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
+          <div class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2!">
             STATUS VALIDASI
           </div>
-          <div class="flex items-center gap-2">
+          <div class="flex items-center gap-2!">
             <span class="text-base">✅</span>
             <span class="text-sm font-bold text-green-700">Siap Disinkronisasi</span>
           </div>
@@ -187,19 +187,24 @@
       </div>
     </ContentCard>
 
-    <div class="flex flex-col sm:flex-row items-center justify-center gap-3">
-      <button
-        class="w-full sm:w-auto px-7 py-3 bg-white border-2 border-gray-200 rounded-xl font-inherit text-sm font-bold text-gray-500 cursor-pointer transition-all hover:border-gray-400 hover:text-gray-700"
+    <div class="flex flex-col sm:flex-row items-center justify-center gap-4 mt-8!">
+      <BaseButton
+        variant="ghost"
+        size="lg"
         @click="handleBack"
+        class="w-full sm:w-auto px-10! rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-500 font-bold"
       >
         Kembali
-      </button>
-      <button
-        class="w-full sm:w-auto flex items-center justify-center gap-2 px-7 py-3 bg-gray-600 text-white border-none rounded-xl font-inherit text-sm font-bold cursor-pointer transition-all hover:bg-gray-700 active:scale-95"
+      </BaseButton>
+      <BaseButton
+        variant="primary-gradient"
+        size="lg"
         @click="handleSimpan"
+        class="w-full sm:w-auto px-10! rounded-xl shadow-lg shadow-blue-200/50 font-bold"
+        icon="save"
       >
-        <span>💾</span> Simpan Alokasi Laba
-      </button>
+        Simpan Alokasi Laba
+      </BaseButton>
     </div>
   </div>
 </template>
@@ -208,6 +213,7 @@
 import { ref, computed } from 'vue'
 import MaksMoneyInput from '../../../../components/MaksMoneyInput.vue'
 import ContentCard from '@/components/ui/ContentCard.vue'
+import BaseButton from '@/components/ui/BaseButton.vue'
 
 const selectedTahun = ref(2026)
 const totalSaldo = ref(128450000)

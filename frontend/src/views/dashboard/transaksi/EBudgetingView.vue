@@ -1,28 +1,42 @@
 <template>
   <div>
-    <ContentCard variant="bordered" padding="normal" hoverable>
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 items-end">
-        <div class="w-full">
-          <SelectSearch v-model="selectedTahun" :options="tahunOptions" placeholder="Pilih Tahun" />
+    <ContentCard variant="elevated" padding="small">
+      <div class="flex flex-col lg:flex-row gap-2 items-end">
+        <div class="flex-1 w-full">
+          <SelectSearch
+            v-model="selectedTahun"
+            :options="tahunOptions"
+            placeholder="Pilih Tahun Anggaran"
+            icon="calendar"
+          />
         </div>
-        <div class="w-full">
-          <SelectSearch v-model="selectedBulan" :options="bulanOptions" placeholder="Pilih Bulan" />
+        <div class="flex-1 w-full">
+          <SelectSearch
+            v-model="selectedBulan"
+            :options="bulanOptions"
+            placeholder="Pilih Bulan Anggaran"
+            icon="calendar-check"
+          />
         </div>
-        <button
-          @click="simpanRencanaAnggaran"
-          :disabled="!selectedTahun || !selectedBulan || isProcessing"
-          class="w-full sm:w-auto h-[38px] px-4 flex items-center justify-center bg-blue-600 text-white border border-blue-600 rounded-lg text-sm font-medium transition-colors hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
-        >
-          {{ isProcessing ? 'Memproses...' : 'Tentukan Rencana Anggaran' }}
-        </button>
+        <div class="w-full lg:w-auto">
+          <BaseButton
+            variant="secondary"
+            class="w-full! lg:px-10! h-[44px]! rounded-xl!"
+            icon="plus-circle"
+            :disabled="isProcessing"
+            @click="simpanRencanaAnggaran"
+          >
+            Tentukan Rencana Anggaran
+          </BaseButton>
+        </div>
       </div>
     </ContentCard>
 
     <AppNotification
       v-bind="notificationState"
-      @close="() => {}"
-      @confirm="() => {}"
-      @cancel="() => {}"
+      @close="notificationState.show = false"
+      @confirm="notificationState.show = false"
+      @cancel="notificationState.show = false"
     />
   </div>
 </template>
@@ -33,6 +47,7 @@ import { useNotification } from '@/composables/useNotification'
 import AppNotification from '@/components/ui/AppNotification.vue'
 import SelectSearch from '@/components/SelectSearch.vue'
 import ContentCard from '@/components/ui/ContentCard.vue'
+import BaseButton from '@/components/ui/BaseButton.vue'
 
 const { notificationState, success, error } = useNotification()
 
