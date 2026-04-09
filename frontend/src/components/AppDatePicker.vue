@@ -1,30 +1,50 @@
 <template>
-  <div class="app-datepicker" :class="{ 'dp-dark': dark }">
-    <DatePicker
-      v-model="internalValue"
-      :placeholder="placeholder"
-      :disabled="disabled"
-      :readonly="readonly"
-      :dateFormat="dateFormat"
-      :showIcon="showIcon"
-      :showButtonBar="showButtonBar"
-      :showWeek="showWeek"
-      :minDate="computedMinDate"
-      :maxDate="computedMaxDate"
-      :disabledDates="disabledDates"
-      :disabledDays="disabledDays"
-      :monthNavigator="monthNavigator"
-      :yearNavigator="yearNavigator"
-      :yearRange="yearRange"
-      :manualInput="manualInput"
-      :selectOtherMonths="selectOtherMonths"
-      :showOtherMonths="showOtherMonths"
-      @date-select="onDateSelect"
-      @clear-click="onClearClick"
-    />
+  <div class="base-input" :class="{ 'mb-2': !noMargin }">
+    <label v-if="label" class="base-input__label">
+      {{ label }}
+    </label>
 
-    <div v-if="showHelper && helperText" class="dp-helper">{{ helperText }}</div>
-    <div v-if="validationError" class="dp-error">{{ validationError }}</div>
+    <div class="base-input__wrapper">
+      <span v-if="prefix" class="base-input__prefix">
+        {{ prefix }}
+      </span>
+
+      <DatePicker
+        v-model="internalValue"
+        :placeholder="placeholder"
+        :disabled="disabled"
+        :readonly="readonly"
+        :dateFormat="dateFormat"
+        :showIcon="showIcon"
+        :showButtonBar="showButtonBar"
+        :showWeek="showWeek"
+        :minDate="computedMinDate"
+        :maxDate="computedMaxDate"
+        :disabledDates="disabledDates"
+        :disabledDays="disabledDays"
+        :monthNavigator="monthNavigator"
+        :yearNavigator="yearNavigator"
+        :yearRange="yearRange"
+        :manualInput="manualInput"
+        :selectOtherMonths="selectOtherMonths"
+        :showOtherMonths="showOtherMonths"
+        class="base-datepicker"
+        @date-select="onDateSelect"
+        @clear-click="onClearClick"
+      />
+
+      <span v-if="suffix" class="base-input__suffix">
+        {{ suffix }}
+      </span>
+    </div>
+
+    <div v-if="error" class="base-input__error">
+      {{ error }}
+    </div>
+
+    <div v-if="hint && !error" class="base-input__hint">
+      {{ hint }}
+    </div>
   </div>
 </template>
 
@@ -34,10 +54,15 @@ import DatePicker from 'primevue/datepicker'
 
 const props = defineProps({
   modelValue: { type: [Date, String], default: null },
-  placeholder: { type: String, default: 'Pilih tanggal' },
-  dark: { type: Boolean, default: false },
+  label: { type: String, default: '' },
+  placeholder: { type: String, default: '' },
+  prefix: { type: String, default: '' },
+  suffix: { type: String, default: '' },
   disabled: { type: Boolean, default: false },
   readonly: { type: Boolean, default: false },
+  error: { type: String, default: '' },
+  hint: { type: String, default: '' },
+
   dateFormat: { type: String, default: 'dd/mm/yy' },
   showIcon: { type: Boolean, default: false },
   showButtonBar: { type: Boolean, default: true },
@@ -50,19 +75,16 @@ const props = defineProps({
   manualInput: { type: Boolean, default: false },
   selectOtherMonths: { type: Boolean, default: false },
   showOtherMonths: { type: Boolean, default: true },
-  preventFuture: { type: Boolean, default: false },
-  preventPast: { type: Boolean, default: false },
+
   minDate: { type: Date, default: null },
   maxDate: { type: Date, default: null },
 
-  showHelper: { type: Boolean, default: false },
-  helperText: { type: String, default: '' },
+  noMargin: { type: Boolean, default: false },
 })
 
-const emit = defineEmits(['update:modelValue', 'date-select', 'clear-click', 'validation-error'])
+const emit = defineEmits(['update:modelValue', 'date-select', 'clear-click'])
 
 const internalValue = ref(null)
-const validationError = ref('')
 
 watch(
   () => props.modelValue,
@@ -72,63 +94,56 @@ watch(
   { immediate: true },
 )
 
-watch(internalValue, (val) => emit('update:modelValue', val))
+watch(internalValue, (val) => {
+  emit('update:modelValue', val)
+})
 
-/*
-  Hanya set minDate/maxDate dari prop eksplisit.
-  preventFuture & preventPast ditangani manual di onDateSelect
-  agar tidak menyebabkan PrimeVue meng-disable tanggal bulan aktif.
-*/
 const computedMinDate = computed(() => props.minDate ?? null)
 const computedMaxDate = computed(() => props.maxDate ?? null)
 
 function onDateSelect(date) {
-  validationError.value = ''
   const selected = new Date(date)
-
   internalValue.value = selected
   emit('date-select', selected)
 }
 
 function onClearClick() {
-  validationError.value = ''
+  internalValue.value = null
   emit('clear-click')
 }
-
-defineExpose({
-  validate: () => {
-    if (!internalValue.value) return true
-    return (onDateSelect(internalValue.value), validationError.value === '')
-  },
-  clear: () => {
-    internalValue.value = null
-    validationError.value = ''
-  },
-  setToday: () => {
-    internalValue.value = new Date()
-  },
-})
 </script>
 
 <style scoped>
-.app-datepicker {
-  position: relative;
-  width: 100%;
+@reference "../assets/main.css";
+
+.base-input {
+  @apply w-full transition-all duration-300;
 }
 
-/* Lebar penuh untuk wrapper PrimeVue */
+.base-input__label {
+  @apply block text-sm font-normal text-slate-500 mb-1.5 ml-1;
+}
+
+.base-datepicker {
+  @apply w-full;
+}
+
 :deep(.p-datepicker) {
-  width: 100%;
+  @apply w-full bg-transparent border-none shadow-none;
 }
 
-.dp-helper {
-  font-size: 0.7rem;
-  color: #6b7280;
-  margin-top: 0.25rem;
+:deep(.p-datepicker-input) {
+  @apply !block !w-full !h-11 !px-4 !bg-slate-50 !border !border-slate-200 !rounded-xl !text-sm !text-slate-700 !transition-all !duration-300;
+  @apply placeholder:!text-slate-400 placeholder:!font-normal;
+  @apply hover:!border-blue-400 hover:!bg-white hover:!shadow-md hover:!shadow-blue-500/5;
+  @apply focus:!outline-none focus:!bg-white focus:!border-blue-500 focus:!ring-4 focus:!ring-blue-500/10 focus:!shadow-lg focus:!shadow-blue-500/5;
 }
-.dp-error {
-  font-size: 0.7rem;
-  color: #ef4444;
-  margin-top: 0.25rem;
+
+:deep(.p-datepicker-input:disabled) {
+  @apply bg-slate-100 text-slate-400 cursor-not-allowed border-slate-200 shadow-none hover:border-slate-200 hover:shadow-none!;
+}
+
+:deep(.p-datepicker-panel) {
+  @apply rounded-xl border border-slate-200 shadow-xl;
 }
 </style>

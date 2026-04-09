@@ -1,6 +1,9 @@
 <template>
-  <button
-    :type="type"
+  <component
+    :is="componentTag"
+    :type="isButton ? type : undefined"
+    :to="to"
+    :href="href"
     :disabled="disabled || loading"
     :class="buttonClasses"
     class="base-button"
@@ -8,7 +11,7 @@
   >
     <font-awesome-icon v-if="loading" icon="spinner" class="base-button__spinner" spin />
     <font-awesome-icon
-      v-else-if="icon && iconPosition === 'left'"
+      v-else-if="icon && iconPosition === 'left' && !iconRight"
       :icon="icon"
       class="base-button__icon"
     />
@@ -16,11 +19,11 @@
       <slot />
     </span>
     <font-awesome-icon
-      v-if="!loading && icon && iconPosition === 'right'"
+      v-if="!loading && icon && (iconPosition === 'right' || iconRight)"
       :icon="icon"
       class="base-button__icon"
     />
-  </button>
+  </component>
 </template>
 
 <script setup>
@@ -31,11 +34,34 @@ const props = defineProps({
     type: String,
     default: 'button',
   },
+  to: {
+    type: [String, Object],
+    default: null,
+  },
+  href: {
+    type: String,
+    default: null,
+  },
   variant: {
     type: String,
     default: 'primary',
     validator: (value) =>
-      ['primary', 'secondary', 'success', 'warning', 'danger', 'ghost', 'link'].includes(value),
+      [
+        'primary',
+        'info',
+        'info-gradient',
+        'primary-gradient',
+        'secondary',
+        'success',
+        'success-gradient',
+        'warning',
+        'warning-gradient',
+        'danger',
+        'danger-gradient',
+        'ghost',
+        'link',
+        'glass',
+      ].includes(value),
   },
   size: {
     type: String,
@@ -50,6 +76,10 @@ const props = defineProps({
     type: String,
     default: 'left',
     validator: (value) => ['left', 'right'].includes(value),
+  },
+  iconRight: {
+    type: Boolean,
+    default: false,
   },
   disabled: {
     type: Boolean,
@@ -67,16 +97,31 @@ const props = defineProps({
 
 const emit = defineEmits(['click'])
 
+const componentTag = computed(() => {
+  if (props.to) return 'router-link'
+  if (props.href) return 'a'
+  return 'button'
+})
+
+const isButton = computed(() => componentTag.value === 'button')
+
 const buttonClasses = computed(() => {
   const base = 'base-button'
   const variants = {
     primary: 'base-button--primary',
+    'primary-gradient': 'base-button--primary-gradient',
+    info: 'base-button--info',
+    'info-gradient': 'base-button--info-gradient',
     secondary: 'base-button--secondary',
     success: 'base-button--success',
+    'success-gradient': 'base-button--success-gradient',
     warning: 'base-button--warning',
+    'warning-gradient': 'base-button--warning-gradient',
     danger: 'base-button--danger',
+    'danger-gradient': 'base-button--danger-gradient',
     ghost: 'base-button--ghost',
     link: 'base-button--link',
+    glass: 'base-button--glass',
   }
   const sizes = {
     sm: 'base-button--sm',
@@ -107,80 +152,115 @@ const handleClick = (event) => {
 @reference "../../assets/main.css";
 
 .base-button {
-  @apply inline-flex items-center justify-center font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed;
+  @apply inline-flex items-center justify-center font-medium transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed no-underline select-none;
+}
+
+.base-button:not(:disabled):not(.base-button--loading) {
+  @apply active:scale-95 hover:scale-[1.02];
 }
 
 .base-button--sm {
-  @apply px-3 py-1.5 text-xs rounded-md;
+  @apply !px-3 !py-1.5 !text-xs !rounded-md;
 }
 
 .base-button--md {
-  @apply px-4 py-2 text-sm rounded-lg;
+  @apply !px-4 !py-2 !text-sm !rounded-lg;
 }
 
 .base-button--lg {
-  @apply px-6 py-3 text-base rounded-xl;
+  @apply !px-6 !py-3 !text-base !rounded-xl;
 }
 
 .base-button--primary {
-  @apply bg-gray-600 hover:bg-gray-700 text-white focus:ring-gray-500 shadow-sm hover:shadow-md;
+  @apply bg-indigo-600 hover:bg-indigo-700 text-white focus:ring-indigo-500 shadow-sm hover:shadow-indigo-200/50;
+}
+
+.base-button--info {
+  @apply bg-blue-500 hover:bg-blue-600 text-white focus:ring-blue-500 shadow-sm hover:shadow-blue-200/50;
+}
+
+.base-button--info-gradient {
+  background: linear-gradient(135deg, #06b6d4 0%, #2563eb 100%);
+  @apply text-white border-0 shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50 focus:ring-blue-500;
+}
+
+.base-button--primary-gradient {
+  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+  @apply text-white border-0 shadow-lg shadow-indigo-500/30 hover:shadow-indigo-500/50 focus:ring-indigo-500;
 }
 
 .base-button--secondary {
-  @apply bg-slate-100 hover:bg-slate-200 text-slate-700 focus:ring-slate-500 border border-slate-300;
+  @apply bg-slate-500 hover:bg-slate-600 text-white focus:ring-slate-400 border border-slate-500;
 }
 
 .base-button--success {
-  @apply bg-emerald-500 hover:bg-emerald-600 text-white focus:ring-emerald-500 shadow-sm hover:shadow-md;
+  @apply bg-emerald-500 hover:bg-emerald-600 text-white focus:ring-emerald-500 shadow-sm hover:shadow-emerald-200/50;
+}
+
+.base-button--success-gradient {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  @apply text-white border-0 shadow-lg shadow-emerald-500/30 hover:shadow-emerald-500/50 focus:ring-emerald-500;
 }
 
 .base-button--warning {
-  @apply bg-amber-500 hover:bg-amber-600 text-white focus:ring-amber-500 shadow-sm hover:shadow-md;
+  @apply bg-amber-500 hover:bg-amber-600 text-white focus:ring-amber-500 shadow-sm;
+}
+
+.base-button--warning-gradient {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  @apply text-white border-0 shadow-lg shadow-amber-500/30 hover:shadow-amber-500/50 focus:ring-amber-500;
 }
 
 .base-button--danger {
-  @apply bg-red-500 hover:bg-red-600 text-white focus:ring-red-500 shadow-sm hover:shadow-md;
+  @apply bg-red-500 hover:bg-red-600 text-white focus:ring-red-500 shadow-sm;
+}
+
+.base-button--danger-gradient {
+  background: linear-gradient(135deg, #f43f5e 0%, #e11d48 100%);
+  @apply text-white border-0 shadow-lg shadow-red-500/30 hover:shadow-red-500/50 focus:ring-red-500;
 }
 
 .base-button--ghost {
-  @apply bg-transparent hover:bg-slate-100 text-slate-700 focus:ring-slate-500;
+  @apply bg-transparent hover:bg-slate-200 text-slate-700 focus:ring-slate-500;
 }
 
 .base-button--link {
-  @apply bg-transparent hover:bg-transparent text-[#0B7A9E] hover:text-[#094e67] focus:ring-[#0B7A9E] underline-offset-4 hover:underline p-0;
+  @apply bg-transparent hover:bg-transparent text-indigo-600 hover:text-indigo-800 focus:ring-0 underline-offset-4 hover:underline p-0 border-none shadow-none;
 }
 
-/* States */
+.base-button--glass {
+  @apply bg-white/10 backdrop-blur-md border border-white/20 text-white hover:bg-white/20 focus:ring-white/30 shadow-xl;
+}
+
 .base-button--disabled {
-  @apply opacity-50 cursor-not-allowed;
+  @apply opacity-50 cursor-not-allowed transform-none;
 }
 
 .base-button--loading {
-  @apply cursor-wait;
+  @apply cursor-wait transform-none;
 }
 
 .base-button--block {
   @apply w-full;
 }
 
-/* Elements */
 .base-button__icon {
-  @apply flex-shrink-0;
+  @apply !flex-shrink-0;
 }
 
 .base-button__icon:first-child:not(:last-child) {
-  @apply mr-2;
+  @apply !mr-2;
 }
 
 .base-button__icon:last-child:not(:first-child) {
-  @apply ml-2;
+  @apply !ml-2;
 }
 
 .base-button__text {
-  @apply truncate;
+  @apply !truncate flex-1;
 }
 
 .base-button__spinner {
-  @apply animate-spin;
+  @apply !animate-spin;
 }
 </style>

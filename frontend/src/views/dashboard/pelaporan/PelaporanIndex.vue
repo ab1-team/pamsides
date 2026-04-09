@@ -1,143 +1,176 @@
 <template>
-  <div class="space-y-6">
-    <!-- Laporan Form Card -->
+  <div class="space-y-10! pb-10!">
     <ContentCard variant="elevated" padding="large">
-      <!-- Header -->
-      <div
-        class="bg-gradient-to-r from-blue-500 via-blue-600 to-cyan-500 p-4 rounded-xl relative overflow-hidden -m-6 mt-[-1.5rem]"
-      >
+      <div class="relative!">
         <div
-          class="absolute top-0 right-0 w-32 h-32 bg-white opacity-10 rounded-full -mr-16 -mt-16"
-        ></div>
-        <div
-          class="absolute bottom-0 left-0 w-24 h-24 bg-white opacity-10 rounded-full -ml-12 -mb-12"
-        ></div>
-        <div class="relative z-10">
-          <h2 class="text-xl font-bold text-white mb-1">Laporan Pamsides</h2>
-          <p class="text-blue-100 text-sm">Pilih parameter laporan yang ingin ditampilkan</p>
+          class="relative! -m-6! mb-8! p-6! rounded-2xl! bg-linear-to-r! from-blue-500! via-blue-600! to-cyan-500! shadow-lg! shadow-blue-500/10! overflow-hidden!"
+        >
+          <div
+            class="absolute! top-0! right-0! w-44! h-44! bg-white/10! rounded-full! -mr-20! -mt-20! blur-2xl!"
+          ></div>
+          <div
+            class="absolute! bottom-0! left-0! w-32! h-32! bg-white/10! rounded-full! -ml-16! -mb-16! blur-xl!"
+          ></div>
+          <div
+            class="relative! z-10! flex! flex-col! md:flex-row! md:items-center! md:justify-between! gap-4!"
+          >
+            <div>
+              <h2 class="text-2xl! font-bold! text-white! mb-1!">Laporan Pamsides</h2>
+              <p class="text-blue-100/80! text-sm!">
+                Pilih parameter laporan yang ingin ditampilkan
+              </p>
+            </div>
+            <div
+              class="self-start! flex! items-center! px-4! py-2! rounded-xl! bg-white/10! backdrop-blur-md! border! border-white/20! text-white! text-sm! font-semibold! shadow-sm!"
+            >
+              <font-awesome-icon icon="info-circle" class="mr-2! opacity-80!" />
+              Wajib diisi semua
+            </div>
+          </div>
         </div>
-        <div
-          class="absolute top-4 right-4 bg-white bg-opacity-20 backdrop-blur-sm text-white px-2 py-1 rounded-full text-sm font-medium flex items-center border border-white border-opacity-30"
-        >
-          <font-awesome-icon icon="info-circle" class="mr-1" />
-          Wajib diisi semua
+        <div class="space-y-3!">
+          <div class="grid! grid-cols-1! md:grid-cols-2! lg:grid-cols-3! gap-6!">
+            <SelectSearch
+              v-model="selectedTahun"
+              :options="tahunOptions"
+              label="Tahun"
+              placeholder="Pilih Tahun"
+              icon="calendar"
+            />
+            <SelectSearch
+              v-model="selectedBulan"
+              :options="bulanOptions"
+              label="Bulan"
+              placeholder="Pilih Bulan"
+              icon="calendar-days"
+            />
+            <SelectSearch
+              v-model="selectedTanggal"
+              :options="tanggalOptions"
+              label="Tanggal"
+              placeholder="Pilih Tanggal"
+              icon="calendar-check"
+            />
+          </div>
+
+          <div class="grid! grid-cols-1! md:grid-cols-2! gap-6!">
+            <SelectSearch
+              v-model="selectedNamaLaporan"
+              :options="namaLaporanOptions"
+              label="Nama Laporan"
+              placeholder="Pilih Jenis Laporan"
+              icon="file-lines"
+            />
+            <SelectSearch
+              v-model="selectedNamaSubLaporan"
+              :options="namaSubLaporanOptions"
+              label="Nama Sub Laporan"
+              placeholder="Pilih Periode Laporan"
+              icon="clock-rotate-left"
+            />
+          </div>
+
+          <div class="flex! flex-col! sm:flex-row! gap-4! sm:justify-end! pt-4!">
+            <BaseButton
+              variant="secondary"
+              size="md"
+              @click="handlePreview"
+              class="px-5! rounded-xl! shadow-lg! shadow-blue-500/20! font-bold! tracking-wide!"
+              icon="eye"
+            >
+              Preview Laporan
+            </BaseButton>
+            <BaseButton
+              variant="success"
+              size="md"
+              @click="handleExcel"
+              class="px-5! rounded-xl! shadow-lg! shadow-emerald-500/20! font-bold! tracking-wide!"
+              icon="file-export"
+            >
+              Download Excel
+            </BaseButton>
+            <BaseButton
+              variant="danger"
+              size="md"
+              @click="handleSimpanSaldo"
+              class="px-5! rounded-xl! shadow-lg! shadow-amber-500/20! font-bold! tracking-wide!"
+              icon="save"
+            >
+              Simpan Saldo
+            </BaseButton>
+          </div>
         </div>
-      </div>
-
-      <!-- Form -->
-      <div class="pt-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
-        <SelectSearch
-          v-model="selectedTahun"
-          :options="tahunOptions"
-          label="Tahun"
-          placeholder="Pilih Tahun"
-        />
-        <SelectSearch
-          v-model="selectedBulan"
-          :options="bulanOptions"
-          label="Bulan"
-          placeholder="Pilih Bulan"
-        />
-        <SelectSearch
-          v-model="selectedTanggal"
-          :options="tanggalOptions"
-          label="Tanggal"
-          placeholder="Pilih Tanggal"
-        />
-      </div>
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-        <SelectSearch
-          v-model="selectedNamaLaporan"
-          :options="namaLaporanOptions"
-          label="Nama Laporan"
-          placeholder="Pilih Jenis Laporan"
-        />
-        <SelectSearch
-          v-model="selectedNamaSubLaporan"
-          :options="namaSubLaporanOptions"
-          label="Nama Sub Laporan"
-          placeholder="Pilih Periode Laporan"
-        />
-      </div>
-
-      <!-- Buttons -->
-      <div class="flex flex-col sm:flex-row gap-3 sm:justify-end">
-        <button
-          @click="handlePreview"
-          class="w-full sm:w-auto px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
-        >
-          <font-awesome-icon icon="eye" />
-          Preview
-        </button>
-        <button
-          @click="handleExcel"
-          class="w-full sm:w-auto px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center gap-2"
-        >
-          <font-awesome-icon icon="file-export" />
-          Excel
-        </button>
-        <button
-          @click="handleSimpanSaldo"
-          class="w-full sm:w-auto px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors flex items-center justify-center gap-2"
-        >
-          <font-awesome-icon icon="save" />
-          Simpan Saldo
-        </button>
       </div>
     </ContentCard>
 
-    <!-- Quick Actions Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-      <!-- Preview Card -->
-      <ContentCard variant="bordered" padding="normal" hoverable clickable @click="handlePreview">
-        <div class="flex items-center">
-          <div
-            class="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center flex-shrink-0"
-          >
-            <font-awesome-icon icon="eye" class="text-white text-sm" />
+    <div class="space-y-4!">
+      <h3 class="text-sm! font-bold! text-slate-400! uppercase! tracking-widest! ml-1!">
+        Aksi Cepat
+      </h3>
+      <div class="grid! grid-cols-1! md:grid-cols-3! gap-6!">
+        <ContentCard
+          variant="bordered"
+          padding="normal"
+          hoverable
+          clickable
+          @click="handlePreview"
+          class="group! transition-all! duration-300!"
+        >
+          <div class="flex! items-center! gap-4!">
+            <div
+              class="w-12! h-12! bg-linear-to-br! from-blue-500! to-blue-600! rounded-2xl! flex! items-center! justify-center! shrink-0! shadow-lg! shadow-blue-500/20! group-hover:scale-110! transition-transform! duration-300!"
+            >
+              <font-awesome-icon icon="eye" class="text-white! text-lg!" />
+            </div>
+            <div>
+              <h3 class="font-bold! text-slate-800!">Quick Preview</h3>
+              <p class="text-sm! text-slate-500!">Lihat ringkasan laporan</p>
+            </div>
           </div>
-          <div class="ml-3">
-            <h3 class="font-semibold text-gray-900 text-sm">Quick Preview</h3>
-            <p class="text-sm text-gray-500">Lihat ringkasan laporan</p>
-          </div>
-        </div>
-      </ContentCard>
+        </ContentCard>
 
-      <!-- Export Card -->
-      <ContentCard variant="bordered" padding="normal" hoverable clickable @click="handleExcel">
-        <div class="flex items-center">
-          <div
-            class="w-8 h-8 bg-gradient-to-br from-green-500 to-green-600 rounded-lg flex items-center justify-center flex-shrink-0"
-          >
-            <font-awesome-icon icon="file-export" class="text-white text-sm" />
+        <ContentCard
+          variant="bordered"
+          padding="normal"
+          hoverable
+          clickable
+          @click="handleExcel"
+          class="group! transition-all! duration-300!"
+        >
+          <div class="flex! items-center! gap-4!">
+            <div
+              class="w-12! h-12! bg-linear-to-br! from-emerald-500! to-emerald-600! rounded-2xl! flex! items-center! justify-center! shrink-0! shadow-lg! shadow-emerald-500/20! group-hover:scale-110! transition-transform! duration-300!"
+            >
+              <font-awesome-icon icon="file-export" class="text-white! text-lg!" />
+            </div>
+            <div>
+              <h3 class="font-bold! text-slate-800!">Export Data</h3>
+              <p class="text-sm! text-slate-500!">Download format Excel</p>
+            </div>
           </div>
-          <div class="ml-3">
-            <h3 class="font-semibold text-gray-900 text-sm">Export Data</h3>
-            <p class="text-sm text-gray-500">Download format Excel</p>
-          </div>
-        </div>
-      </ContentCard>
+        </ContentCard>
 
-      <!-- Save Balance Card -->
-      <ContentCard
-        variant="bordered"
-        padding="normal"
-        hoverable
-        clickable
-        @click="handleSimpanSaldo"
-      >
-        <div class="flex items-center">
-          <div
-            class="w-8 h-8 bg-gradient-to-br from-gray-500 to-gray-600 rounded-lg flex items-center justify-center flex-shrink-0"
-          >
-            <font-awesome-icon icon="save" class="text-white text-sm" />
+        <ContentCard
+          variant="bordered"
+          padding="normal"
+          hoverable
+          clickable
+          @click="handleSimpanSaldo"
+          class="group! transition-all! duration-300!"
+        >
+          <div class="flex! items-center! gap-4!">
+            <div
+              class="w-12! h-12! bg-linear-to-br! from-slate-600! to-slate-700! rounded-2xl! flex! items-center! justify-center! shrink-0! shadow-lg! shadow-slate-500/20! group-hover:scale-110! transition-transform! duration-300!"
+            >
+              <font-awesome-icon icon="save" class="text-white! text-lg!" />
+            </div>
+            <div>
+              <h3 class="font-bold! text-slate-800!">Save Balance</h3>
+              <p class="text-sm! text-slate-500!">Simpan saldo akhir</p>
+            </div>
           </div>
-          <div class="ml-3">
-            <h3 class="font-semibold text-gray-900 text-sm">Save Balance</h3>
-            <p class="text-sm text-gray-500">Simpan saldo akhir</p>
-          </div>
-        </div>
-      </ContentCard>
+        </ContentCard>
+      </div>
     </div>
   </div>
 </template>
@@ -146,6 +179,7 @@
 import { ref } from 'vue'
 import ContentCard from '../../../components/ui/ContentCard.vue'
 import SelectSearch from '../../../components/SelectSearch.vue'
+import BaseButton from '../../../components/ui/BaseButton.vue'
 
 const selectedTahun = ref('')
 const selectedBulan = ref('')

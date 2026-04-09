@@ -1,3 +1,4 @@
+@layer base {
 :root {
   --dp-panel-bg: #ffffff;
   --dp-panel-border: #d1d5db;
@@ -32,7 +33,9 @@
   --dp-input-focus: #3b82f6;
   --dp-input-radius: 0.375rem;
 }
+}
 
+@layer components {
 .p-datepicker-panel {
   background-color: var(--dp-panel-bg) !important;
   border: 1px solid var(--dp-panel-border) !important;
@@ -190,30 +193,30 @@ button.p-datepicker-year {
 }
 
 .p-datepicker-input {
-  width: 100% !important;
-  padding: 0.5rem 0.75rem !important;
-  border: 1px solid var(--dp-input-border) !important;
-  border-radius: var(--dp-input-radius) !important;
-  font-size: 0.875rem !important;
-  color: var(--dp-input-color) !important;
-  background-color: var(--dp-input-bg) !important;
-  font-family: inherit !important;
-  outline: none !important;
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--dp-input-border);
+  border-radius: var(--dp-input-radius);
+  font-size: 0.875rem;
+  color: var(--dp-input-color);
+  background-color: var(--dp-input-bg);
+  font-family: inherit;
+  outline: none;
   transition:
     border-color 0.15s ease,
-    box-shadow 0.15s ease !important;
+    box-shadow 0.15s ease;
 }
 .p-datepicker-input:hover:not(:focus):not(:disabled) {
-  border-color: #6b7280 !important;
+  border-color: #6b7280;
 }
 .p-datepicker-input:focus {
-  border-color: var(--dp-input-focus) !important;
-  box-shadow: 0 0 0 1px var(--dp-input-focus) !important;
+  border-color: var(--dp-input-focus);
+  box-shadow: 0 0 0 1px var(--dp-input-focus);
 }
 .p-datepicker-input:disabled {
-  background-color: #f3f4f6 !important;
-  color: #9ca3af !important;
-  cursor: not-allowed !important;
+  background-color: #f3f4f6;
+  color: #9ca3af;
+  cursor: not-allowed;
 }
 
 .p-datepicker-buttonbar {
@@ -255,4 +258,5 @@ button.p-datepicker-year {
 .p-datepicker-year-picker .p-datepicker-year.p-highlight {
   background-color: var(--dp-selected-bg) !important;
   color: var(--dp-selected-color) !important;
+}
 }

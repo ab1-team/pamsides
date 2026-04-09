@@ -19,7 +19,7 @@
     <font-awesome-icon
       v-if="showDecoration"
       icon="tint"
-      class="text-gray-400 text-sm mt-1 self-end"
+      class="text-gray-400! text-sm! mt-1! self-end!"
     />
 
     <div v-if="title === 'HARGA METER'" class="price-detail-wrapper">
@@ -73,16 +73,16 @@ const handleClick = () => {
 const meterCardClasses = computed(() => {
   const base =
     props.type === 'total' && props.title === 'HARGA METER'
-      ? 'rounded-xl p-3 border shadow-sm relative'
-      : 'rounded-xl p-3 border shadow-sm'
+      ? 'rounded-xl! p-3! shadow-md! relative!'
+      : 'rounded-xl! p-3! shadow-md!'
 
   switch (props.type) {
     case 'initial':
-      return `${base} bg-gradient-to-br from-slate-50 via-slate-100 to-slate-200 border-slate-300/30`
+      return `${base} bg-gradient-to-br! from-slate-50! via-slate-100! to-slate-200!`
     case 'final':
-      return `${base} bg-gradient-to-br from-zinc-50 via-zinc-100 to-zinc-200 border-zinc-300/30`
+      return `${base} bg-gradient-to-br! from-zinc-50! via-zinc-100! to-zinc-200!`
     case 'total':
-      return `${base} bg-gradient-to-br from-gray-700 via-gray-800 to-gray-900 border-gray-600/50 shadow-lg flex flex-col`
+      return `${base} bg-gradient-to-br! from-gray-700! via-gray-800! to-gray-900! shadow-xl! flex! flex-col!`
     default:
       return base
   }
@@ -91,18 +91,18 @@ const meterCardClasses = computed(() => {
 const titleClasses = computed(() => {
   switch (props.type) {
     case 'initial':
-      return 'text-[9px] font-bold text-slate-700 uppercase tracking-wide'
+      return 'text-[9px]! font-bold! text-slate-700! uppercase! tracking-wide!'
     case 'final':
-      return 'text-[9px] font-bold text-zinc-700 uppercase tracking-wide'
+      return 'text-[9px]! font-bold! text-zinc-700! uppercase! tracking-wide!'
     case 'total':
-      return 'text-[9px] font-bold text-gray-300 uppercase tracking-wide'
+      return 'text-[9px]! font-bold! text-gray-300! uppercase! tracking-wide!'
     default:
-      return 'text-[9px] font-bold text-slate-700 uppercase tracking-wide'
+      return 'text-[9px]! font-bold! text-slate-700! uppercase! tracking-wide!'
   }
 })
 
 const iconClasses = computed(() => {
-  const base = 'w-5 h-5 rounded-lg flex items-center justify-center'
+  const base = 'w-5! h-5! rounded-lg! flex! items-center! justify-center!'
 
   switch (props.type) {
     case 'initial':
@@ -119,26 +119,26 @@ const iconClasses = computed(() => {
 const valueClasses = computed(() => {
   switch (props.type) {
     case 'initial':
-      return 'text-lg font-bold text-slate-800 leading-none'
+      return 'text-lg! font-bold! text-slate-800! leading-none!'
     case 'final':
-      return 'text-lg font-bold text-zinc-800 leading-none'
+      return 'text-lg! font-bold! text-zinc-800! leading-none!'
     case 'total':
-      return 'text-2xl font-extrabold text-white leading-none'
+      return 'text-2xl! font-extrabold! text-white! leading-none!'
     default:
-      return 'text-lg font-bold text-slate-800 leading-none'
+      return 'text-lg! font-bold! text-slate-800! leading-none!'
   }
 })
 
 const unitClasses = computed(() => {
   switch (props.type) {
     case 'initial':
-      return 'text-xs font-medium text-slate-500'
+      return 'text-xs! font-medium! text-slate-500!'
     case 'final':
-      return 'text-xs font-medium text-zinc-500'
+      return 'text-xs! font-medium! text-zinc-500!'
     case 'total':
-      return 'text-sm font-medium text-gray-400'
+      return 'text-sm! font-medium! text-gray-400!'
     default:
-      return 'text-xs font-medium text-slate-500'
+      return 'text-xs! font-medium! text-slate-500!'
   }
 })
 
@@ -154,13 +154,13 @@ const icon = computed(() => {
 const iconColorClasses = computed(() => {
   switch (props.type) {
     case 'initial':
-      return 'text-slate-600 text-xs'
+      return 'text-slate-600! text-xs!'
     case 'final':
-      return 'text-zinc-600 text-xs'
+      return 'text-zinc-600! text-xs!'
     case 'total':
-      return 'text-gray-300 text-xs'
+      return 'text-gray-300! text-xs!'
     default:
-      return 'text-slate-600 text-xs'
+      return 'text-slate-600! text-xs!'
   }
 })
 </script>
