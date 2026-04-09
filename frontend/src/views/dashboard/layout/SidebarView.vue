@@ -2,22 +2,29 @@
   <div class="sidebar-panel" :class="{ collapsed: !sidebarOpen, 'mobile-open': mobileSidebarOpen }">
     <div class="sidebar-header">
       <div class="sidebar-header-content">
-        <div class="sidebar-header-title" v-show="sidebarOpen">Admin Portal</div>
-        <div class="sidebar-header-sub" v-show="sidebarOpen">MANAGEMENT SUITE</div>
+        <div class="sidebar-header-title" v-show="sidebarOpen || mobileSidebarOpen">
+          Admin Portal
+        </div>
+        <div class="sidebar-header-sub" v-show="sidebarOpen || mobileSidebarOpen">
+          MANAGEMENT SUITE
+        </div>
       </div>
-      <button
+      <BaseButton
+        variant="ghost"
         class="sidebar-toggle-btn-sidebar"
-        @click="$emit('toggle-sidebar')"
-        v-show="sidebarOpen"
-      >
-        <font-awesome-icon icon="bars" />
-      </button>
+        @click="mobileSidebarOpen ? $emit('close-mobile-sidebar') : $emit('toggle-sidebar')"
+        v-show="sidebarOpen || mobileSidebarOpen"
+        icon="bars"
+      />
     </div>
 
     <div class="sidebar-toggle-collapsed" v-show="!sidebarOpen">
-      <button class="sidebar-toggle-btn-collapsed" @click="$emit('toggle-sidebar')">
-        <font-awesome-icon icon="bars" />
-      </button>
+      <BaseButton
+        variant="ghost"
+        class="sidebar-toggle-btn-collapsed"
+        @click="$emit('toggle-sidebar')"
+        icon="bars"
+      />
     </div>
 
     <div class="sidebar-divider" v-show="sidebarOpen"></div>
@@ -369,16 +376,21 @@
     </nav>
 
     <div class="sidebar-new-entry-area">
-      <button class="new-entry-btn" :class="{ 'icon-only': !sidebarOpen }">
-        <font-awesome-icon icon="plus" width="14" height="14" />
+      <BaseButton
+        variant="primary-gradient"
+        class="new-entry-btn"
+        :class="{ 'icon-only': !sidebarOpen }"
+        size="md"
+      >
         <span v-if="sidebarOpen">AstaBrata Grub</span>
-      </button>
+      </BaseButton>
     </div>
   </div>
 </template>
 
 <script setup>
 import { ref, watch } from 'vue'
+import BaseButton from '@/components/ui/BaseButton.vue'
 
 const props = defineProps({
   sidebarOpen: {

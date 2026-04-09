@@ -1,15 +1,12 @@
 <template>
   <div class="billing-form" @click.stop>
-    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-      <!-- Baris 1: Tanggal Transaksi & Kode Instalasi -->
-      <div class="flex flex-col gap-0.5">
-        <label class="text-sm mb-1">TANGGAL TRANSAKSI</label>
-        <AppDatePicker
-          v-model="formData.tanggal"
-          placeholder="Pilih tanggal transaksi"
-          @date-select="(date) => (formData.tanggal = date)"
-        />
-      </div>
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+      <AppDatePicker
+        v-model="formData.tanggal"
+        placeholder="Pilih tanggal transaksi"
+        label="Tanggal Transaksi"
+        @date-select="(date) => (formData.tanggal = date)"
+      />
 
       <BaseInput
         id="kode-instalasi"
@@ -55,51 +52,46 @@
       </div>
 
       <!-- Baris 3: Tagihan & Abodemen -->
-      <div class="flex flex-col gap-0.5">
-        <label class="text-sm mb-1">Tagihan</label>
-        <MaksMoneyInput
-          v-model="formData.tagihan"
-          placeholder="0,00"
-          :show-helper="true"
-          helper-text="Masukkan jumlah tagihan"
-        />
-      </div>
+      <MaksMoneyInput
+        v-model="formData.tagihan"
+        placeholder="0,00"
+        :show-helper="true"
+        label="Tagihan"
+      />
 
-      <div class="flex flex-col gap-0.5">
-        <label class="text-sm mb-1">Abodemen</label>
-        <MaksMoneyInput
-          v-model="formData.abodemen"
-          placeholder="0,00"
-          :show-helper="true"
-          helper-text="Masukkan jumlah abodemen"
-        />
-      </div>
+      <MaksMoneyInput
+        v-model="formData.abodemen"
+        placeholder="0,00"
+        :show-helper="true"
+        label="Abodemen"
+      />
 
       <!-- Baris 4: Denda & Pembayaran -->
-      <div class="flex flex-col gap-0.5">
-        <label class="text-sm mb-1">Denda</label>
-        <MaksMoneyInput
-          v-model="formData.denda"
-          placeholder="0,00"
-          :show-helper="true"
-          helper-text="Masukkan jumlah denda"
-        />
-      </div>
+      <MaksMoneyInput
+        v-model="formData.denda"
+        placeholder="0,00"
+        :show-helper="true"
+        label="Denda"
+      />
 
-      <div class="flex flex-col gap-0.5">
-        <label class="text-sm mb-1">Pembayaran</label>
-        <MaksMoneyInput
-          v-model="formData.pembayaran"
-          placeholder="0,00"
-          :show-helper="true"
-          helper-text="Total pembayaran"
-        />
-      </div>
+      <MaksMoneyInput
+        v-model="formData.pembayaran"
+        placeholder="0,00"
+        :show-helper="true"
+        label="Pembayaran"
+      />
     </div>
 
     <!-- Tombol Simpan Pembayaran -->
-    <div class="flex justify-end mt-6">
-      <BaseButton variant="primary" icon="plus" @click="handleSave" @click.stop>
+    <div class="flex justify-end mt-6! pt-4 border-t border-slate-200/60">
+      <BaseButton
+        variant="secondary"
+        icon="save"
+        size="md"
+        class="px-8! rounded-xl shadow-lg shadow-blue-200/50"
+        @click="handleSave"
+        @click.stop
+      >
         Simpan Pembayaran
       </BaseButton>
     </div>
@@ -111,7 +103,7 @@ import { reactive, watch } from 'vue'
 import BaseInput from '../ui/BaseInput.vue'
 import BaseButton from '../ui/BaseButton.vue'
 import AppDatePicker from '../AppDatePicker.vue'
-import MaksMoneyInput from '../../MaksMoneyInput.vue'
+import MaksMoneyInput from '../MaksMoneyInput.vue'
 
 // Props untuk initial data
 const props = defineProps({

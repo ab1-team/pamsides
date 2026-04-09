@@ -76,6 +76,9 @@ import {
   faQrcode,
   faFrown,
   faCheck,
+  faEdit,
+  faTrash,
+  faPrint,
 } from '@fortawesome/free-solid-svg-icons'
 
 // Tambahkan icons ke library
@@ -135,6 +138,9 @@ library.add(
   faQrcode,
   faFrown,
   faCheck,
+  faEdit,
+  faTrash,
+  faPrint,
 )
 
 const options = {

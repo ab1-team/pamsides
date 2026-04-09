@@ -1,49 +1,83 @@
 <template>
-  <div class="w-full">
-    <ContentCard variant="default" padding="none" hoverable>
-      <div class="hidden lg:flex h-full">
+  <div class="w-full!">
+    <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4! mb-6!">
+      <div class="flex-1!">
+        <h1 class="text-2xl font-bold text-indigo-600! tracking-tight mb-1!">Status Instalasi</h1>
+        <p class="text-sm text-slate-500! leading-relaxed">
+          Manage and monitor the lifecycle of water service installations.
+        </p>
+      </div>
+
+      <div class="grid grid-cols-2 lg:flex lg:flex-wrap gap-3! w-full lg:w-auto!">
+        <BaseButton
+          variant="success-gradient"
+          size="md"
+          @click="exportData"
+          class="w-full! lg:w-auto! rounded-xl! shadow-lg! shadow-emerald-200/50!"
+          icon="file-export"
+        >
+          Export Excel
+        </BaseButton>
+
+        <BaseButton
+          variant="primary-gradient"
+          size="md"
+          @click="printData"
+          class="w-full! lg:w-auto! rounded-xl! shadow-lg! shadow-indigo-200/50!"
+          icon="print"
+        >
+          Cetak table
+        </BaseButton>
+      </div>
+    </div>
+
+    <ContentCard variant="default" padding="none" hoverable class="overflow-hidden!">
+      <!-- DESKTOP -->
+      <div class="hidden lg:flex! h-full!">
         <ContentCard
           variant="minimal"
           padding="normal"
-          class="w-56 xl:w-64 flex-shrink-0 border-r border-slate-100"
+          class="w-56! xl:w-64! flex-shrink-0! border-r! border-slate-100! !rounded-tr-none !rounded-br-none"
         >
-          <div class="flex flex-col gap-1">
-            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 px-1">
+          <div class="flex flex-col gap-2.5!">
+            <p
+              class="text-[10px]! font-bold! text-slate-400! uppercase! tracking-widest! mb-2! px-1!"
+            >
               Filter Status
             </p>
-            <button
+
+            <BaseButton
               v-for="menu in menuList"
               :key="menu.key"
               @click="activeStatus = menu.key"
-              :class="[
-                'w-full flex items-center justify-between px-3 py-2.5 rounded-full text-sm font-medium transition-all duration-200',
-                activeStatus === menu.key
-                  ? 'bg-blue-600 text-white shadow-md shadow-blue-200'
-                  : 'text-slate-600 hover:bg-white hover:shadow-sm',
-              ]"
+              :variant="activeStatus === menu.key ? menu.variant : 'ghost'"
+              class="w-full! px-4! py-3! rounded-full! transition-all! duration-300!"
             >
-              <div class="flex items-center gap-2.5">
-                <span class="text-base">{{ menu.icon }}</span>
-                <span>{{ menu.label }}</span>
-              </div>
-              <span
-                :class="[
-                  'text-xs font-bold px-2 py-0.5 rounded-full min-w-[22px] text-center',
-                  activeStatus === menu.key
-                    ? 'bg-white/25 text-white'
-                    : 'bg-slate-200 text-slate-500',
-                ]"
-                >{{ dataMap[menu.key].length }}</span
-              >
-            </button>
+              <span class="w-full! flex! items-center! justify-between! gap-3!">
+                <span class="flex items-center gap-3!">
+                  <span class="text-lg! leading-none! shrink-0!">{{ menu.icon }}</span>
+                  <span class="text-sm! font-medium! text-left! truncate!">{{ menu.label }}</span>
+                </span>
+
+                <span
+                  :class="[
+                    'text-xs! font-bold! px-2! py-0.5! rounded-full! min-w-[22px]! text-center! shrink-0! transition-colors! duration-300!',
+                    activeStatus === menu.key
+                      ? 'bg-white/25! text-white!'
+                      : 'bg-slate-200! text-slate-500!',
+                  ]"
+                >
+                  {{ dataMap[menu.key].length }}
+                </span>
+              </span>
+            </BaseButton>
           </div>
         </ContentCard>
 
-        <div class="flex-1 min-w-0">
+        <div class="flex-1! min-w-0!">
           <DataTable
             :data="paginatedData"
             :columns="tableColumns"
-            title=""
             :current-page="currentPage"
             :per-page="perPage"
             :total-pages="totalPages"
@@ -52,246 +86,180 @@
             :show-toolbar="true"
             :search-query="searchQuery"
             search-placeholder="Find customer..."
-            v-model:search-query="searchQuery"
+            v-model="searchQuery"
             @prev-page="prevPage"
             @next-page="nextPage"
             @go-to-page="goToPage"
             :no-card="true"
           >
             <template #toolbar-actions>
-              <h2 class="text-base font-bold text-slate-800">
+              <h2 class="text-base! font-bold! text-slate-800!">
                 {{ activeLabel }}
-                <span class="text-slate-400 font-normal text-sm">· Data Table</span>
+                <span class="text-slate-400! font-normal! text-sm!">· Data Table</span>
               </h2>
-              <button
-                @click="printData"
-                class="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-xs font-medium shadow-sm"
-              >
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"
-                  />
-                </svg>
-                Cetak
-              </button>
             </template>
 
+            <!-- columns -->
             <template #column-id="{ row }">
-              <span class="text-xs font-bold text-blue-600 font-mono">{{ row.id }}</span>
+              <span class="text-xs! font-bold! text-blue-600! font-mono!">{{ row.id }}</span>
             </template>
+
             <template #column-name="{ row }">
-              <div class="flex items-center gap-2.5">
+              <div class="flex items-center gap-2.5!">
                 <div
-                  class="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
+                  class="w-8! h-8! rounded-full! flex! items-center! justify-center! text-white! text-xs! font-bold! shrink-0!"
                   :style="{ backgroundColor: row.color }"
                 >
                   {{ row.initials }}
                 </div>
                 <div>
-                  <p class="text-sm font-semibold text-slate-800 leading-tight">{{ row.name }}</p>
-                  <p class="text-xs text-slate-400">{{ row.type }}</p>
+                  <p class="text-sm! font-semibold! text-slate-800! leading-tight!">
+                    {{ row.name }}
+                  </p>
+                  <p class="text-xs! text-slate-400!">{{ row.type }}</p>
                 </div>
               </div>
             </template>
+
             <template #column-address="{ row }">
-              <p class="text-sm text-slate-500 max-w-[200px] truncate">{{ row.address }}</p>
+              <p class="text-sm! text-slate-500! max-w-[200px]! truncate!">
+                {{ row.address }}
+              </p>
             </template>
+
             <template #column-status="{ row }">
               <span
-                class="text-xs font-semibold px-2.5 py-1 rounded-full border"
+                class="text-xs! font-semibold! px-2.5! py-1! rounded-full! border!"
                 :class="statusStyle[row.status]"
-                >{{ row.status }}</span
               >
+                {{ row.status }}
+              </span>
             </template>
           </DataTable>
         </div>
       </div>
 
-      <div class="lg:hidden flex flex-col">
-        <div class="px-4 pt-4 pb-3 border-b border-slate-100 bg-white">
-          <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2.5">
+      <!-- MOBILE -->
+      <div class="lg:hidden! flex! flex-col!">
+        <div class="px-4! pt-4! pb-3! border-b! border-slate-100! bg-white!">
+          <p class="text-[10px]! font-bold! text-slate-400! uppercase! tracking-widest! mb-2.5!">
             Filter Status
           </p>
-          <div class="grid grid-cols-2 gap-2">
-            <button
+
+          <div class="grid grid-cols-1 sm:grid-cols-3 md:grid-cols-5 gap-3!">
+            <BaseButton
               v-for="menu in menuList"
               :key="menu.key"
               @click="activeStatus = menu.key"
-              :class="[
-                'flex items-center justify-between px-3 py-2 rounded-full text-xs font-semibold transition-all duration-200',
-                activeStatus === menu.key
-                  ? 'bg-blue-600 text-white shadow-md shadow-blue-200'
-                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200',
-              ]"
+              :variant="activeStatus === menu.key ? menu.variant : 'ghost'"
+              class="px-3! py-2! rounded-full! transition-all! duration-300!"
             >
-              <div class="flex items-center gap-1.5">
-                <span class="text-sm leading-none">{{ menu.icon }}</span>
-                <span class="truncate">{{ menu.label }}</span>
-              </div>
-              <span
-                :class="[
-                  'text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center flex-shrink-0',
-                  activeStatus === menu.key
-                    ? 'bg-white/25 text-white'
-                    : 'bg-slate-300 text-slate-600',
-                ]"
-                >{{ dataMap[menu.key].length }}</span
-              >
-            </button>
+              <span class="w-full! flex! items-center! justify-between! gap-2!">
+                <div class="flex items-center gap-2!">
+                  <span class="text-sm! leading-none! shrink-0!">{{ menu.icon }}</span>
+                  <span class="truncate! text-[11px]! font-semibold! text-left!">
+                    {{ menu.label }}
+                  </span>
+                </div>
+
+                <span
+                  :class="[
+                    'text-[10px]! font-bold! px-1.5! py-0.5! rounded-full! min-w-[18px]! text-center! shrink-0! transition-colors! duration-300!',
+                    activeStatus === menu.key
+                      ? 'bg-white/25! text-white!'
+                      : 'bg-slate-300! text-slate-600!',
+                  ]"
+                >
+                  {{ dataMap[menu.key].length }}
+                </span>
+              </span>
+            </BaseButton>
           </div>
         </div>
 
-        <div class="px-4 py-3 border-b border-slate-100 bg-white">
-          <div class="flex items-center justify-between mb-2.5">
-            <h2 class="text-sm font-bold text-slate-800">{{ activeLabel }}</h2>
-            <button
-              @click="printData"
-              class="flex items-center gap-1.5 px-2.5 py-1.5 bg-blue-600 text-white rounded-lg text-xs font-medium"
-            >
-              <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"
-                />
-              </svg>
-              Cetak
-            </button>
+        <div class="px-4! py-3! border-b! border-slate-100! bg-white!">
+          <div class="flex! items-center! justify-between! mb-3!">
+            <h2 class="text-sm! font-bold! text-slate-800!">{{ activeLabel }}</h2>
           </div>
-          <div class="relative">
-            <svg
-              class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-              />
-            </svg>
-            <input
-              v-model="searchQuery"
-              type="text"
-              placeholder="Cari customer..."
-              class="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 transition-all"
-            />
-          </div>
+
+          <input
+            v-model="searchQuery"
+            type="text"
+            placeholder="Cari customer..."
+            class="w-full! pl-9! pr-4! py-2! bg-slate-50! border! border-slate-200! rounded-xl! text-sm! text-slate-700! focus:outline-none! focus:ring-2! focus:ring-blue-500/20! focus:border-blue-400! transition-all!"
+          />
         </div>
 
-        <div class="divide-y divide-slate-50 bg-white">
+        <div class="divide-y! divide-slate-50! bg-white!">
           <div
             v-for="row in paginatedData"
             :key="row.id"
-            class="flex items-center gap-3 px-4 py-3 hover:bg-slate-50/80 transition-colors"
+            class="flex! items-center! gap-3! px-4! py-3! hover:bg-slate-50/80! transition-colors!"
           >
             <div
-              class="w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-bold flex-shrink-0 shadow-sm"
+              class="w-10! h-10! rounded-full! flex! items-center! justify-center! text-white! text-sm! font-bold! shrink-0! shadow-sm!"
               :style="{ backgroundColor: row.color }"
             >
               {{ row.initials }}
             </div>
 
-            <div class="flex-1 min-w-0">
-              <div class="flex items-start justify-between gap-2">
-                <div class="min-w-0">
-                  <p class="text-sm font-semibold text-slate-800 truncate">{{ row.name }}</p>
-                  <p class="text-xs text-slate-400 truncate">{{ row.type }}</p>
-                </div>
-                <span
-                  class="flex-shrink-0 text-[11px] font-semibold px-2 py-0.5 rounded-full border"
-                  :class="statusStyle[row.status]"
-                  >{{ row.status }}</span
-                >
+            <div class="flex-1! min-w-0!">
+              <div class="flex! items-center! justify-between! mb-0.5!">
+                <p class="text-sm! font-semibold! text-slate-800! truncate!">{{ row.name }}</p>
+                <span class="text-[10px]! font-bold! text-blue-600! font-mono!">{{ row.id }}</span>
               </div>
-              <div class="flex items-center gap-2 mt-1">
-                <span class="text-[11px] font-mono font-bold text-blue-500">{{ row.id }}</span>
-                <span class="text-slate-300">·</span>
-                <p class="text-xs text-slate-400 truncate flex-1">{{ row.address }}</p>
+              <div class="flex! items-center! justify-between!">
+                <p class="text-xs! text-slate-400! truncate!">{{ row.type }}</p>
+                <span
+                  class="text-[9px]! font-semibold! px-1.5! py-0.5! rounded-full! border! shrink-0!"
+                  :class="statusStyle[row.status]"
+                >
+                  {{ row.status }}
+                </span>
               </div>
             </div>
           </div>
-
-          <div v-if="paginatedData.length === 0" class="py-12 text-center">
-            <p class="text-slate-400 text-sm">Tidak ada data ditemukan</p>
-          </div>
         </div>
 
-        <div class="flex items-center justify-between px-4 py-3 border-t border-slate-100 bg-white">
-          <p class="text-xs text-slate-500">
-            <span class="font-semibold text-slate-700">{{ filteredData.length }}</span> entries
-          </p>
-          <div class="flex items-center gap-1.5">
-            <button
-              @click="prevPage"
+        <!-- Mobile Pagination -->
+        <div
+          class="px-4! py-4! bg-slate-50/50! border-t! border-slate-100! flex! items-center! justify-between!"
+        >
+          <span class="text-xs! text-slate-500! font-medium!">
+            Page {{ currentPage }} of {{ totalPages }}
+          </span>
+          <div class="flex! items-center! gap-2!">
+            <BaseButton
+              variant="ghost"
+              size="sm"
               :disabled="currentPage === 1"
-              :class="[
-                'w-8 h-8 rounded-lg flex items-center justify-center text-sm transition-all',
-                currentPage === 1
-                  ? 'text-slate-300 bg-slate-50'
-                  : 'text-slate-600 bg-slate-100 hover:bg-slate-200',
-              ]"
+              @click="prevPage"
+              class="w-8! h-8! p-0! rounded-lg! border! border-slate-200! bg-white!"
             >
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M15 19l-7-7 7-7"
-                />
-              </svg>
-            </button>
-
-            <button
-              v-for="page in visiblePages"
-              :key="page"
-              @click="goToPage(page)"
-              :class="[
-                'w-8 h-8 rounded-lg flex items-center justify-center text-xs font-semibold transition-all',
-                currentPage === page
-                  ? 'bg-blue-600 text-white shadow-sm'
-                  : 'text-slate-600 bg-slate-100 hover:bg-slate-200',
-              ]"
-            >
-              {{ page }}
-            </button>
-
-            <button
-              @click="nextPage"
+              ‹
+            </BaseButton>
+            <BaseButton
+              variant="ghost"
+              size="sm"
               :disabled="currentPage === totalPages"
-              :class="[
-                'w-8 h-8 rounded-lg flex items-center justify-center text-sm transition-all',
-                currentPage === totalPages
-                  ? 'text-slate-300 bg-slate-50'
-                  : 'text-slate-600 bg-slate-100 hover:bg-slate-200',
-              ]"
+              @click="nextPage"
+              class="w-8! h-8! p-0! rounded-lg! border! border-slate-200! bg-white!"
             >
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M9 5l7 7-7 7"
-                />
-              </svg>
-            </button>
+              ›
+            </BaseButton>
           </div>
         </div>
       </div>
     </ContentCard>
   </div>
 </template>
-
 <script setup>
 import { ref, computed, watch } from 'vue'
 import DataTable from '@/components/ui/DataTable.vue'
 import ContentCard from '@/components/ui/ContentCard.vue'
+import BaseButton from '@/components/ui/BaseButton.vue'
+
+const exportData = () => console.log('Export Excel')
 
 const activeStatus = ref('permohonan')
 const currentPage = ref(1)
@@ -299,11 +267,11 @@ const perPage = 10
 const searchQuery = ref('')
 
 const menuList = [
-  { key: 'permohonan', label: 'Permohonan', icon: '📋' },
-  { key: 'pasang_baru', label: 'Pasang Baru', icon: '🔵' },
-  { key: 'aktif', label: 'Aktif', icon: '🟢' },
-  { key: 'blokir', label: 'Blokir', icon: '🟠' },
-  { key: 'cabut', label: 'Cabut', icon: '🔴' },
+  { key: 'permohonan', label: 'Permohonan', icon: '📋', variant: 'primary-gradient' },
+  { key: 'pasang_baru', label: 'Pasang Baru', icon: '🔵', variant: 'info-gradient' },
+  { key: 'aktif', label: 'Aktif', icon: '🟢', variant: 'success-gradient' },
+  { key: 'blokir', label: 'Blokir', icon: '🟠', variant: 'warning-gradient' },
+  { key: 'cabut', label: 'Cabut', icon: '🔴', variant: 'danger-gradient' },
 ]
 
 const activeLabel = computed(() => {

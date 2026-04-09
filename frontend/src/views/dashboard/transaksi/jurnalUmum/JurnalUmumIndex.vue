@@ -1,11 +1,11 @@
 <template>
-  <div class="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-4 lg:gap-5 items-start">
+  <div class="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-4 lg:gap-6 items-start pb-10">
     <ContentCard variant="elevated" padding="large" hoverable>
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-2">
         <div class="flex flex-col gap-0.5">
-          <label class="text-sm mb-1">Tanggal Transaksi</label>
           <AppDatePicker
             v-model="form.tanggal"
+            label="Tanggal Transaksi"
             placeholder="Pilih tanggal transaksi"
             @date-select="(date) => (form.tanggal = date)"
           />
@@ -57,43 +57,44 @@
         </div>
       </div>
 
-      <div class="flex flex-col gap-0.5 mb-4">
-        <label class="text-sm mb-1">Keterangan</label>
-        <textarea
-          v-model="form.keterangan"
-          class="px-3 py-2 sm:py-2.5 border border-gray-300 bg-white text-sm text-gray-900 w-full rounded-md shadow-sm resize-none focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 placeholder:text-gray-400"
-          placeholder="Tambahkan catatan detail mengenai transaksi ini..."
-          rows="3"
-        />
-      </div>
+      <BaseInput
+        v-model="form.keterangan"
+        type="textarea"
+        label="Keterangan"
+        placeholder="Tambahkan catatan detail mengenai transaksi ini..."
+        :rows="3"
+        class="mb-2"
+      />
 
-      <div class="flex flex-col gap-0.5 mb-4">
-        <label class="text-sm mb-1">Nominal</label>
+      <div class="flex flex-col gap-0.5 mb-2!">
         <MaksMoneyInput
           v-model="form.nominal"
           placeholder="0,00"
+          label="Nominal"
           :show-helper="true"
-          helper-text="Contoh: 100.000,00 untuk 100 ribu"
         />
       </div>
 
-      <div class="flex">
-        <button
-          class="ml-auto px-6 sm:px-8 py-2 bg-gradient-to-r from-gray-500 to-gray-600 text-white rounded-lg font-semibold transition-all hover:from-gray-600 hover:to-gray-700 hover:shadow-lg hover:-translate-y-0.5 text-sm sm:text-base"
+      <div class="flex mt-4 justify-end">
+        <BaseButton
+          variant="secondary"
+          size="md"
           @click="handleSubmit"
+          class="ml-auto px-5! py-2! rounded-xl shadow-lg shadow-blue-200/50"
+          icon="save"
         >
           Simpan Transaksi
-        </button>
+        </BaseButton>
       </div>
     </ContentCard>
 
-    <div class="flex flex-col gap-4 lg:sticky lg:top-8">
+    <div class="flex flex-col gap-6 lg:sticky lg:top-8">
       <ContentCard variant="elevated" padding="none" hoverable class="total-saldo-wrapper">
         <div class="total-saldo-card">
           <div class="text-xs text-white/60 font-semibold mb-1 relative z-10">
             Total Saldo Terkini
           </div>
-          <div class="relative z-10 mb-4 flex items-center gap-1">
+          <div class="relative z-10 mb-2! flex items-center gap-1">
             <span class="text-xs font-bold">Rp.</span>
             <span class="text-xl font-black tracking-tight">{{ formatSaldo(totalSaldo) }}</span>
           </div>
@@ -102,9 +103,20 @@
       </ContentCard>
 
       <ContentCard variant="bordered" padding="normal" hoverable>
-        <div class="text-sm mb-3 font-semibold">Filter Periode</div>
-
-        <div class="mb-3">
+        <div class="flex items-center gap-3 mb-2! pb-3 border-b border-slate-100/80">
+          <div
+            class="w-9 h-9 rounded-xl bg-linear-to-br from-indigo-500 to-blue-600 text-white flex items-center justify-center shadow-lg shadow-blue-200"
+          >
+            <font-awesome-icon icon="filter" />
+          </div>
+          <div>
+            <h3 class="text-sm font-bold text-slate-800">Filter Periode</h3>
+            <p class="text-[10px] text-slate-500 font-medium uppercase tracking-wider">
+              Cari & Urutkan Data
+            </p>
+          </div>
+        </div>
+        <div class="mb-2!">
           <SelectSearch
             v-model="filter.tahun"
             :options="tahunOptions.map((y) => ({ id: y, text: y }))"
@@ -114,7 +126,7 @@
           />
         </div>
 
-        <div class="mb-3">
+        <div class="mb-2!">
           <SelectSearch
             v-model="filter.bulan"
             :options="bulanOptions.map((b) => ({ id: b.value, text: b.label }))"
@@ -124,7 +136,7 @@
           />
         </div>
 
-        <div class="mb-3">
+        <div class="mb-2!">
           <SelectSearch
             v-model="filter.tanggal"
             :options="[
@@ -137,19 +149,23 @@
           />
         </div>
 
-        <div class="flex gap-2">
-          <button
-            class="flex-1 px-3 py-2 border border-blue-600 bg-white text-blue-600 rounded-md font-medium mt-1 hover:bg-blue-600 hover:text-white text-sm transition-colors"
+        <div class="flex gap-2 mt-4!">
+          <BaseButton
+            variant="primary"
+            size="md"
             @click="handleApplyFilter"
+            class="flex-1 py-2! rounded-xl shadow-md shadow-blue-100"
           >
             Terapkan Filter
-          </button>
-          <button
-            class="px-3 py-2 border border-gray-600 bg-white text-gray-600 rounded-md font-medium mt-1 hover:bg-gray-600 hover:text-white text-sm transition-colors"
+          </BaseButton>
+          <BaseButton
+            variant="ghost"
+            size="md"
             @click="handleDetail"
+            class="rounded-xl border border-slate-200 hover:bg-slate-50 py-2!"
           >
             Detail
-          </button>
+          </BaseButton>
         </div>
       </ContentCard>
 
@@ -168,11 +184,13 @@
 
 <script setup>
 import { ref, computed } from 'vue'
-import SelectSearch from '../../../../components/SelectSearch.vue'
-import MaksMoneyInput from '../../../../components/MaksMoneyInput.vue'
-import AppDatePicker from '../../../../components/AppDatePicker.vue'
-import ContentCard from '../../../../components/ui/ContentCard.vue'
-import { useCurrencyFormat } from '../../../../composables/useCurrencyFormat.js'
+import BaseInput from '@/components/ui/BaseInput.vue'
+import SelectSearch from '@/components/SelectSearch.vue'
+import MaksMoneyInput from '@/components/MaksMoneyInput.vue'
+import AppDatePicker from '@/components/AppDatePicker.vue'
+import ContentCard from '@/components/ui/ContentCard.vue'
+import BaseButton from '@/components/ui/BaseButton.vue'
+import { useCurrencyFormat } from '@/composables/useCurrencyFormat.js'
 
 const form = ref({
   tanggal: new Date(),

@@ -1,25 +1,28 @@
 <template>
-  <div>
+  <div class="space-y-6!">
     <ContentCard variant="bordered" padding="normal" hoverable>
       <!-- ... existing content card 1 ... -->
-      <div class="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4">
-        <div class="w-full lg:flex-1">
+      <div class="flex! flex-col! lg:flex-row! lg:items-end! lg:justify-between! gap-4!">
+        <div class="w-full! lg:flex-1!">
           <SelectSearch v-model="selectedTahun" :options="tahunOptions" placeholder="Pilih Tahun" />
         </div>
-        <div class="flex flex-col sm:flex-row gap-2 w-full lg:w-auto">
-          <button
-            class="w-full sm:w-auto px-4 py-2 bg-gray-600 text-white border border-gray-600 rounded-lg font-inherit text-sm font-medium cursor-pointer transition-colors disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500"
+        <div class="flex! flex-col! sm:flex-row! gap-3! w-full! lg:w-auto!">
+          <BaseButton
+            variant="info"
             @click="handleTutupBuku"
             :disabled="isProcessing"
+            :loading="isProcessing"
+            class="w-full! sm:w-auto! h-11! rounded-xl!"
           >
-            {{ isProcessing ? 'Memproses...' : '1. Tutup Buku' }}
-          </button>
-          <a
+            1. Tutup Buku
+          </BaseButton>
+          <BaseButton
             href="/transaksi/alokasi-laba"
-            class="w-full sm:w-auto inline-block px-4 py-2 bg-blue-600 text-white border border-blue-600 rounded-lg font-inherit text-sm font-medium cursor-pointer transition-colors hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-center"
+            variant="secondary"
+            class="w-full! sm:w-auto! h-11! rounded-xl!"
           >
             2. Simpan Alokasi Laba
-          </a>
+          </BaseButton>
         </div>
       </div>
     </ContentCard>
@@ -31,67 +34,74 @@
       v-if="bookStatus !== 'open' || isProcessing"
     >
       <!-- ... existing content card 2 ... -->
-      <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-4">
+      <div class="flex! flex-col! lg:flex-row! lg:items-center! lg:justify-between! gap-4! mb-4!">
         <div
-          class="flex items-center gap-3 text-base font-semibold text-gray-900"
+          class="flex! items-center! gap-3! text-base! font-semibold! text-gray-900!"
           v-if="bookStatus !== 'open' || isProcessing"
         >
-          <span class="text-lg">📊</span>
-          <div class="flex flex-col gap-1">
-            <span class="text-base font-semibold text-gray-900"
+          <span class="text-lg!">📊</span>
+          <div class="flex! flex-col! gap-1!">
+            <span class="text-base! font-semibold! text-gray-900!"
               >Daftar Akun — Tahun {{ selectedTahun }}</span
             >
             <span
               v-if="isProcessing || bookStatus === 'closed'"
-              class="text-sm font-medium px-3 py-1 rounded-lg inline-block"
+              class="text-xs! font-semibold! px-2.5! py-1! rounded-full! inline-flex! items-center! gap-1.5! transition-all! duration-300!"
               :class="
                 isProcessing
-                  ? 'bg-yellow-100 text-yellow-800 border border-yellow-300'
+                  ? 'bg-amber-100! text-amber-700! border! border-amber-200! animate-pulse!'
                   : bookStatus === 'closed'
-                    ? 'bg-green-100 text-green-800 border border-green-300'
+                    ? 'bg-emerald-100! text-emerald-700! border! border-emerald-200!'
                     : ''
               "
             >
+              <span
+                v-if="isProcessing"
+                class="w-1.5! h-1.5! rounded-full! bg-amber-500! animate-ping!"
+              ></span>
+              <span v-else>✅</span>
               {{
                 isProcessing
-                  ? '🔄 Sedang Memproses Tutup Buku...'
+                  ? 'Sedang Memproses...'
                   : bookStatus === 'closed'
-                    ? '✅ Buku Sudah Ditutup'
+                    ? 'Buku Sudah Ditutup'
                     : ''
               }}
             </span>
           </div>
         </div>
-        <div class="w-full lg:w-auto">
-          <div class="relative">
-            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-sm">🔍</span>
+        <div class="w-full! lg:w-auto!">
+          <div class="relative!">
+            <span class="absolute! left-3! top-1/2! -translate-y-1/2! text-sm!">🔍</span>
             <input
               v-model="searchQuery"
               type="text"
-              class="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 bg-white font-inherit text-base text-gray-900 outline-none shadow-sm transition-colors focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+              class="w-full! h-11! pl-10! pr-4! rounded-xl! border! border-slate-200! bg-slate-50! font-inherit! text-sm! text-slate-700! outline-none! transition-all! duration-300! focus:bg-white! focus:border-blue-500! focus:ring-4! focus:ring-blue-500/10! focus:shadow-lg! focus:shadow-blue-500/5!"
               placeholder="Cari kode atau nama akun..."
             />
           </div>
         </div>
       </div>
 
-      <div class="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
-        <div class="min-w-[600px]">
-          <table class="w-full border-collapse">
+      <div
+        class="overflow-x-auto! -mx-4! px-4! sm:mx-0! sm:px-0! rounded-2xl! overflow-hidden! border! border-slate-200!"
+      >
+        <div class="min-w-[600px]!">
+          <table class="w-full! border-collapse!">
             <thead>
-              <tr class="bg-gray-800">
+              <tr class="bg-slate-800!">
                 <th
-                  class="px-4 py-3 text-xs sm:px-6 sm:py-4 sm:text-sm font-semibold text-white uppercase tracking-wider text-left font-sans"
+                  class="px-4! py-3! text-xs! sm:px-6! sm:py-4! sm:text-sm! font-semibold! text-white! uppercase! tracking-wider! text-left! font-sans!"
                 >
                   Kode Akun
                 </th>
                 <th
-                  class="px-4 py-3 text-xs sm:px-6 sm:py-4 sm:text-sm font-semibold text-white uppercase tracking-wider text-left font-sans"
+                  class="px-4! py-3! text-xs! sm:px-6! sm:py-4! sm:text-sm! font-semibold! text-white! uppercase! tracking-wider! text-left! font-sans!"
                 >
                   Nama Akun
                 </th>
                 <th
-                  class="px-4 py-3 text-xs sm:px-6 sm:py-4 sm:text-sm font-semibold text-white uppercase tracking-wider text-right font-sans w-32 sm:w-48"
+                  class="px-4! py-3! text-xs! sm:px-6! sm:py-4! sm:text-sm! font-semibold! text-white! uppercase! tracking-wider! text-right! font-sans! w-48! sm:w-72!"
                 >
                   Saldo
                 </th>
@@ -102,49 +112,55 @@
                 v-for="(akun, idx) in filteredAkun"
                 :key="akun.kode"
                 :class="{
-                  'bg-gray-50': idx % 2 === 0,
-                  'hover:bg-gray-100': true,
-                  'transition-colors': true,
+                  'bg-slate-50!': idx % 2 === 0,
+                  'hover:bg-gray-100!': true,
+                  'transition-colors!': true,
                 }"
               >
                 <td
-                  class="px-4 py-3 text-xs sm:px-6 sm:py-4 sm:text-sm text-gray-600 border-b border-gray-200 font-sans"
+                  class="px-4! py-1! text-xs! sm:px-6! sm:py-1.5! sm:text-sm! text-gray-600! border-b! border-gray-200! font-sans!"
                 >
                   <span
-                    class="font-mono text-xs sm:text-sm bg-gray-100 text-gray-700 px-2 py-1 sm:px-3 rounded-md border border-gray-300 font-medium"
+                    class="font-mono! text-[11px]! sm:text-xs! bg-blue-50! text-blue-700! px-3! py-1! rounded-full! border! border-blue-100! font-bold! tracking-tight!"
                     >{{ akun.kode }}</span
                   >
                 </td>
                 <td
-                  class="px-4 py-3 text-xs sm:px-6 sm:py-4 sm:text-sm font-semibold text-gray-900 border-b border-gray-200 font-sans"
+                  class="px-4! py-1! text-xs! sm:px-6! sm:py-1.5! sm:text-sm! font-semibold! text-gray-900! border-b! border-gray-200! font-sans!"
                 >
                   {{ akun.nama }}
                 </td>
                 <td
-                  class="px-4 py-3 text-xs sm:px-6 sm:py-4 sm:text-sm border-b border-gray-200 font-sans text-right"
+                  class="px-4! py-1! text-xs! sm:px-6! sm:py-1.5! sm:text-sm! border-b! border-gray-200! font-sans! text-right!"
                 >
-                  <MaksMoneyInput v-model="akun.saldo" placeholder="0,00" :show-helper="false" />
+                  <MaksMoneyInput
+                    v-model="akun.saldo"
+                    placeholder="0,00"
+                    :show-helper="false"
+                    size="sm"
+                    no-margin
+                  />
                 </td>
               </tr>
               <tr v-if="filteredAkun.length === 0">
                 <td
                   colspan="3"
-                  class="text-center py-6 sm:py-8 text-gray-500 text-xs sm:text-sm font-sans"
+                  class="text-center! py-6! sm:py-8! text-gray-500! text-xs! sm:text-sm! font-sans!"
                 >
                   Tidak ada data ditemukan.
                 </td>
               </tr>
             </tbody>
             <tfoot>
-              <tr class="bg-gray-50">
+              <tr class="bg-gray-50!">
                 <td
                   colspan="2"
-                  class="px-4 py-3 text-xs sm:px-6 sm:py-4 sm:text-sm font-semibold text-gray-700 uppercase tracking-wider border-t-2 border-gray-300 font-sans"
+                  class="px-4! py-3! text-xs! sm:px-6! sm:py-4! sm:text-sm! font-semibold! text-gray-700! uppercase! tracking-wider! border-t-2! border-gray-300! font-sans!"
                 >
                   TOTAL SALDO KESELURUHAN
                 </td>
                 <td
-                  class="px-4 py-3 text-xs sm:px-6 sm:py-4 sm:text-sm text-right font-mono font-bold text-blue-600 border-t-2 border-gray-300"
+                  class="px-4! py-3! text-xs! sm:px-6! sm:py-4! sm:text-sm! text-right! font-mono! font-bold! text-blue-600! border-t-2! border-gray-300!"
                 >
                   {{ formatRp(grandTotal) }}
                 </td>
@@ -155,16 +171,17 @@
       </div>
     </ContentCard>
 
-    <button
-      class="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 flex items-center gap-2 px-4 py-2 sm:px-5 sm:py-2.5 bg-gray-600 text-white border border-gray-600 rounded-full font-inherit text-xs sm:text-sm font-medium cursor-pointer shadow-lg transition-all z-50 hover:bg-gray-700 hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
+    <BaseButton
+      variant="success-gradient"
+      size="lg"
+      class="fixed! bottom-6! right-6! z-50! rounded-full! shadow-2xl! scale-110! sm:scale-100!"
       @click="simpanPerubahanSaldo"
-      title="Simpan Perubahan Saldo"
       v-if="bookStatus !== 'open' || isProcessing"
     >
-      <span class="text-sm sm:text-base">💾</span>
-      <span class="hidden sm:inline">Simpan Tutup Buku</span>
-      <span class="sm:hidden">Simpan</span>
-    </button>
+      <span class="mr-2!">💾</span>
+      <span class="hidden! sm:inline!">Simpan Tutup Buku</span>
+      <span class="sm:hidden!">Simpan</span>
+    </BaseButton>
 
     <AppNotification
       v-bind="notificationState"
@@ -180,8 +197,9 @@ import { ref, computed } from 'vue'
 import { useNotification } from '@/composables/useNotification'
 import AppNotification from '@/components/ui/AppNotification.vue'
 import SelectSearch from '@/components/SelectSearch.vue'
-import MaksMoneyInput from '../../../../components/MaksMoneyInput.vue'
+import MaksMoneyInput from '@/components/MaksMoneyInput.vue'
 import ContentCard from '@/components/ui/ContentCard.vue'
+import BaseButton from '@/components/ui/BaseButton.vue'
 
 const { notificationState, success, error } = useNotification()
 const selectedTahun = ref('')
