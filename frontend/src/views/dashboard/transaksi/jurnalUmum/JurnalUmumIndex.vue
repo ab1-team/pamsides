@@ -149,22 +149,14 @@
           />
         </div>
 
-        <div class="flex gap-2 mt-4!">
+        <div class="flex gap-2 mt-4! justify-end">
           <BaseButton
-            variant="primary"
-            size="md"
-            @click="handleApplyFilter"
-            class="flex-1 py-2! rounded-xl shadow-md shadow-blue-100"
-          >
-            Terapkan Filter
-          </BaseButton>
-          <BaseButton
-            variant="ghost"
+            variant="danger"
             size="md"
             @click="handleDetail"
             class="rounded-xl border border-slate-200 hover:bg-slate-50 py-2!"
           >
-            Detail
+            Detail Transaksi
           </BaseButton>
         </div>
       </ContentCard>
@@ -179,11 +171,15 @@
         </div>
       </ContentCard>
     </div>
+    <DetailModal :show="showDetail" @close="showDetail = false" @openCetak="handleOpenCetak" />
+    <CetakTrxModal :show="showCetak" @close="showCetak = false" />
   </div>
 </template>
 
 <script setup>
 import { ref, computed } from 'vue'
+import DetailModal from './partials/DetailModal.vue'
+import CetakTrxModal from './partials/CetakTrxModal.vue'
 import BaseInput from '@/components/ui/BaseInput.vue'
 import SelectSearch from '@/components/SelectSearch.vue'
 import MaksMoneyInput from '@/components/MaksMoneyInput.vue'
@@ -200,6 +196,9 @@ const form = ref({
   keterangan: '',
   nominal: null,
 })
+
+const showDetail = ref(false)
+const showCetak = ref(false)
 
 const totalSaldo = ref(24580000)
 
@@ -250,12 +249,13 @@ function handleSubmit() {
   console.log('Simpan transaksi:', payload)
 }
 
-function handleApplyFilter() {
-  console.log('Filter applied:', filter.value)
+function handleDetail() {
+  showDetail.value = true
 }
 
-function handleDetail() {
-  console.log('Show detail')
+function handleOpenCetak() {
+  showDetail.value = false
+  showCetak.value = true
 }
 </script>
 
