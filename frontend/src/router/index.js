@@ -176,6 +176,11 @@ const router = createRouter({
         },
       ],
     },
+    {
+      path: '/usages/cetak_input',
+      name: 'Cetak Input',
+      component: () => import('@/views/dashboard/instalasi/partials/view/cetakInput.vue'),
+    },
   ],
 })
 
