@@ -9,6 +9,9 @@
         @search="handleSearch"
       />
 
+      <!-- Detail Modal -->
+      <DetailModal :show="showDetailModal" @close="showDetailModal = false" />
+
       <div
         v-if="billingStore.searchResults.length > 0"
         class="absolute! top-full! left-0! right-0! bg-white! border! border-gray-200! rounded-lg! shadow-lg! z-50! max-h-60! overflow-y-auto! mx-2! sm:mx-4!"
@@ -353,13 +356,17 @@ import CustomSearch from '../../../../components/ui/CustomSearch.vue'
 import ContentCard from '../../../../components/ui/ContentCard.vue'
 import MeterDisplay from '../../../../components/ui/MeterDisplay.vue'
 import BillingForm from '../../../../components/billing/BillingForm.vue'
+import DetailModal from './partials/BillingDetail.vue'
+import { ref } from 'vue'
 
 const billingStore = useBillingStore()
 
 const currentPeriod = computed(() => billingStore.currentPeriod)
 
+const showDetailModal = ref(false)
+
 const handleSearch = () => {
-  console.log('Searching for:', billingStore.searchQuery)
+  showDetailModal.value = true
 }
 
 const selectCustomer = async (customer) => {
