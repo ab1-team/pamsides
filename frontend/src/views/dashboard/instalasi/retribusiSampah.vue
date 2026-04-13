@@ -1,12 +1,12 @@
 <template>
-  <div class="pemakaian-air-root">
+  <div class="retribusi-sampah-root">
     <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4!">
       <div class="flex-1!">
         <h1 class="text-2xl font-bold text-cyan-600! tracking-tight mb-1!">
           Retribusi Pemakaian Sampah
         </h1>
         <p class="text-sm text-slate-500! leading-relaxed">
-          Manage and monitor regional water consumption cycles.
+          Manage and monitor regional waste collection services and fees.
         </p>
       </div>
 
@@ -49,10 +49,10 @@
           <SelectSearch
             v-model="filter.tahun"
             :options="[
-              { id: '', text: 'Pilih Tahun Pemakaian' },
+              { id: '', text: 'Pilih Tahun' },
               ...tahunOptions.map((y) => ({ id: y, text: y })),
             ]"
-            placeholder="Pilih Tahun Pemakaian"
+            placeholder="Pilih Tahun"
             no-margin
           />
         </div>
@@ -61,10 +61,10 @@
           <SelectSearch
             v-model="filter.bulan"
             :options="[
-              { id: '', text: 'Pilih Bulan Pemakaian' },
+              { id: '', text: 'Pilih Bulan' },
               ...bulanOptions.map((b) => ({ id: b, text: b })),
             ]"
-            placeholder="Pilih Bulan Pemakaian"
+            placeholder="Pilih Bulan"
             no-margin
           />
         </div>
@@ -102,11 +102,13 @@
       :current-page="currentPage"
       :total-pages="totalPages"
       :visible-pages="visiblePages"
+      :total-entries="tableData.length"
       v-model="searchQuery"
       @prev-page="currentPage--"
       @next-page="currentPage++"
       @go-to-page="currentPage = $event"
       class="mt-6!"
+      search-placeholder="Cari pelanggan (Nama, ID)..."
     >
       <template #column-nama="{ row }">
         <div class="flex items-center gap-3!">
@@ -139,7 +141,7 @@
       </template>
 
       <template #column-pemakaian="{ row }">
-        <span class="text-sm! font-semibold! text-slate-900!"> {{ row.pemakaian }} m³ </span>
+        <span class="text-sm! font-semibold! text-slate-900!"> {{ row.pemakaian }} unit </span>
       </template>
 
       <template #column-tagihan="{ row }">
@@ -188,8 +190,9 @@
     </DataTable>
   </div>
 </template>
+
 <script setup>
-import { usePemakaianAir } from '@/composables/usePemakaianAir'
+import { useRetribusiSampah } from '@/composables/useRetribusiSampah'
 import SelectSearch from '@/components/SelectSearch.vue'
 import DataTable from '@/components/ui/DataTable.vue'
 import ContentCard from '@/components/ui/ContentCard.vue'
@@ -201,6 +204,7 @@ const {
   currentPage,
   tahunOptions,
   bulanOptions,
+  tableData,
   filteredData,
   totalPages,
   visiblePages,
@@ -211,7 +215,7 @@ const {
   handleInputPemakaian,
   handleEdit,
   handleDelete,
-} = usePemakaianAir()
+} = useRetribusiSampah()
 
 const tableColumns = [
   {
