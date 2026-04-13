@@ -79,6 +79,9 @@ import {
   faEdit,
   faTrash,
   faPrint,
+  faCamera,
+  faUserEdit,
+  faKey,
 } from '@fortawesome/free-solid-svg-icons'
 
 // Tambahkan icons ke library
@@ -141,6 +144,9 @@ library.add(
   faEdit,
   faTrash,
   faPrint,
+  faCamera,
+  faUserEdit,
+  faKey,
 )
 
 const options = {
