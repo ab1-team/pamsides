@@ -192,6 +192,7 @@ import SelectSearch from '@/components/SelectSearch.vue'
 import DataTable from '@/components/ui/DataTable.vue'
 import ContentCard from '@/components/ui/ContentCard.vue'
 import BaseButton from '@/components/ui/BaseButton.vue'
+import { useRouter } from 'vue-router'
 
 const {
   filter,
@@ -204,12 +205,18 @@ const {
   visiblePages,
   STATUS_COLORS,
   handleApplyFilter,
-  handleCetakFormInput,
   handleHasilInput,
   handleInputPemakaian,
   handleEdit,
   handleDelete,
 } = usePemakaianAir()
+
+const router = useRouter()
+
+const handleCetakFormInput = () => {
+  const url = router.resolve({ name: 'Cetak Input' }).href
+  window.open(url, '_blank')
+}
 
 const tableColumns = [
   {
@@ -249,3 +256,9 @@ const tableColumns = [
   },
 ]
 </script>
+
+<style scoped>
+.pemakaian-air-root {
+  /* Page specific styles */
+}
+</style>
