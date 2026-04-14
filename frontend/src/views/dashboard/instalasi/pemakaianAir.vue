@@ -2,9 +2,9 @@
   <div class="pemakaian-air-root">
     <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4!">
       <div class="flex-1!">
-        <h1 class="text-2xl font-bold text-cyan-600! tracking-tight mb-1!">Usage Data Pemakaian</h1>
+        <h1 class="text-2xl font-bold text-cyan-600! tracking-tight mb-1!">Data Pemakaian Air</h1>
         <p class="text-sm text-slate-500! leading-relaxed">
-          Manage and monitor regional water consumption cycles.
+          Manage and monitor regional water consumption cycles and billing.
         </p>
       </div>
 
@@ -47,10 +47,10 @@
           <SelectSearch
             v-model="filter.tahun"
             :options="[
-              { id: '', text: 'Pilih Tahun Pemakaian' },
+              { id: '', text: 'Pilih Tahun' },
               ...tahunOptions.map((y) => ({ id: y, text: y })),
             ]"
-            placeholder="Pilih Tahun Pemakaian"
+            placeholder="Pilih Tahun"
             no-margin
           />
         </div>
@@ -59,10 +59,10 @@
           <SelectSearch
             v-model="filter.bulan"
             :options="[
-              { id: '', text: 'Pilih Bulan Pemakaian' },
+              { id: '', text: 'Pilih Bulan' },
               ...bulanOptions.map((b) => ({ id: b, text: b })),
             ]"
-            placeholder="Pilih Bulan Pemakaian"
+            placeholder="Pilih Bulan"
             no-margin
           />
         </div>
@@ -100,11 +100,13 @@
       :current-page="currentPage"
       :total-pages="totalPages"
       :visible-pages="visiblePages"
+      :total-entries="tableData.length"
       v-model="searchQuery"
       @prev-page="currentPage--"
       @next-page="currentPage++"
       @go-to-page="currentPage = $event"
       class="mt-6!"
+      search-placeholder="Cari pelanggan (Nama, ID)..."
     >
       <template #column-nama="{ row }">
         <div class="flex items-center gap-3!">
@@ -186,6 +188,7 @@
     </DataTable>
   </div>
 </template>
+
 <script setup>
 import { usePemakaianAir } from '@/composables/usePemakaianAir'
 import SelectSearch from '@/components/SelectSearch.vue'
@@ -200,6 +203,7 @@ const {
   currentPage,
   tahunOptions,
   bulanOptions,
+  tableData,
   filteredData,
   totalPages,
   visiblePages,
