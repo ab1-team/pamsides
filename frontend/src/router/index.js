@@ -27,6 +27,7 @@ import ebudgeting from '@/views/dashboard/transaksi/EBudgetingView.vue'
 import tutupBuku from '@/views/dashboard/transaksi/tutupBuku.vue'
 import komisiSPS from '@/views/dashboard/transaksi/komisiSPS.vue'
 import laporan from '@/views/dashboard/pelaporan/PelaporanIndex.vue'
+import profil from '@/views/dashboard/profil/ProfilIndex.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -49,6 +50,11 @@ const router = createRouter({
           path: '',
           name: 'dashboard',
           component: Dashbord,
+        },
+        {
+          path: '/profil',
+          name: 'profil',
+          component: profil,
         },
         // {
         //   path: '/settings',

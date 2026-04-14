@@ -1,14 +1,14 @@
 <template>
   <div :class="cardClasses" @click="handleClick">
-    <div v-if="$slots.header" class="content-card__header">
+    <div v-if="$slots.header" class="content-card__header!">
       <slot name="header" />
     </div>
 
-    <div class="content-card__body">
+    <div class="content-card__body!">
       <slot />
     </div>
 
-    <div v-if="$slots.footer" class="content-card__footer">
+    <div v-if="$slots.footer" class="content-card__footer!">
       <slot name="footer" />
     </div>
   </div>
@@ -95,33 +95,30 @@ const handleClick = (event) => {
 </script>
 
 <style scoped>
+@reference "../../assets/main.css";
+
 .content-card {
   background-color: white;
   transition: all 0.2s ease;
 }
 
 .content-card--default {
-  box-shadow:
-    0 4px 6px -1px rgba(0, 0, 0, 0.1),
-    0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  box-shadow: var(--card-shadow-base);
 }
 
 .content-card--bordered {
-  box-shadow:
-    0 4px 6px -1px rgba(0, 0, 0, 0.1),
-    0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  @apply border border-slate-200;
+  box-shadow: var(--card-shadow-base);
 }
 
 .content-card--elevated {
-  box-shadow:
-    0 10px 15px -3px rgba(0, 0, 0, 0.1),
-    0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  box-shadow: var(--card-shadow-hover);
 }
 
 .content-card--minimal {
   box-shadow:
-    0 4px 6px -1px rgba(0, 0, 0, 0.1),
-    0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    0 1px 3px 0 rgba(0, 0, 0, 0.1),
+    0 1px 2px 0 rgba(0, 0, 0, 0.06);
 }
 
 .content-card--padding-none {
@@ -146,16 +143,12 @@ const handleClick = (event) => {
 
 .content-card--interactive:hover {
   transform: translateY(-2px);
-  box-shadow:
-    0 20px 25px -5px rgba(0, 0, 0, 0.1),
-    0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  box-shadow: var(--card-shadow-hover);
 }
 
 .content-card--interactive:active {
   transform: translateY(0);
-  box-shadow:
-    0 4px 6px -1px rgba(0, 0, 0, 0.1),
-    0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  box-shadow: var(--card-shadow-base);
 }
 
 .content-card__header {

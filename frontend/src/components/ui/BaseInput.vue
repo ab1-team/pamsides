@@ -1,26 +1,17 @@
 <template>
-  <div class="base-input" :class="{ 'mb-2': !noMargin }">
+  <div class="base-input" :class="{ 'mb-2!': !noMargin }">
     <label v-if="label" :for="inputId" class="base-input__label">
       {{ label }}
     </label>
+
     <div class="base-input__wrapper">
-      <span v-if="prefix" class="base-input__prefix">
-        {{ prefix }}
-      </span>
-      <textarea
-        v-if="type === 'textarea'"
-        :id="inputId"
-        :value="modelValue"
-        :placeholder="placeholder"
-        :disabled="disabled"
-        :readonly="readonly"
-        :rows="rows"
-        :class="inputClasses"
-        class="base-input__field base-input__field--textarea"
-        @input="handleInput"
-      ></textarea>
+      <!-- Prefix Icon -->
+      <div v-if="prefixIcon" class="base-input__prefix">
+        <font-awesome-icon :icon="prefixIcon" />
+      </div>
+
       <input
-        v-else
+        v-if="type !== 'textarea'"
         :id="inputId"
         :type="type"
         :value="modelValue"
@@ -28,21 +19,41 @@
         :disabled="disabled"
         :readonly="readonly"
         :class="inputClasses"
-        :style="style"
-        class="base-input__field"
         @input="handleInput"
-        @click="$emit('click', $event)"
+        @change="$emit('change', $event.target.value)"
         @focus="$emit('focus', $event)"
         @blur="$emit('blur', $event)"
         @keydown="$emit('keydown', $event)"
       />
-      <span v-if="suffix" class="base-input__suffix">
-        {{ suffix }}
-      </span>
+
+      <textarea
+        v-else
+        :id="inputId"
+        :value="modelValue"
+        :placeholder="placeholder"
+        :disabled="disabled"
+        :readonly="readonly"
+        :rows="rows"
+        :class="[inputClasses, 'base-input__field--textarea']"
+        @input="handleInput"
+        @change="$emit('change', $event.target.value)"
+        @focus="$emit('focus', $event)"
+        @blur="$emit('blur', $event)"
+        @keydown="$emit('keydown', $event)"
+      ></textarea>
+
+      <!-- Suffix Icon or Action -->
+      <div v-if="$slots.suffix" class="base-input__suffix">
+        <slot name="suffix" />
+      </div>
     </div>
+
+    <!-- Error Message -->
     <div v-if="error" class="base-input__error">
       {{ error }}
     </div>
+
+    <!-- Hint Text -->
     <div v-if="hint && !error" class="base-input__hint">
       {{ hint }}
     </div>
@@ -61,19 +72,23 @@ const props = defineProps({
     type: String,
     default: '',
   },
-  type: {
-    type: String,
-    default: 'text',
-  },
   placeholder: {
     type: String,
     default: '',
   },
-  prefix: {
+  type: {
+    type: String,
+    default: 'text',
+  },
+  prefixIcon: {
+    type: String,
+    default: null,
+  },
+  error: {
     type: String,
     default: '',
   },
-  suffix: {
+  hint: {
     type: String,
     default: '',
   },
@@ -85,14 +100,6 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
-  error: {
-    type: String,
-    default: '',
-  },
-  hint: {
-    type: String,
-    default: '',
-  },
   size: {
     type: String,
     default: 'md',
@@ -102,12 +109,8 @@ const props = defineProps({
     type: String,
     default: '',
   },
-  style: {
-    type: [String, Object],
-    default: '',
-  },
   rows: {
-    type: [String, Number],
+    type: Number,
     default: 3,
   },
   noMargin: {
@@ -116,7 +119,7 @@ const props = defineProps({
   },
 })
 
-const emit = defineEmits(['update:modelValue', 'click', 'focus', 'blur', 'keydown'])
+const emit = defineEmits(['update:modelValue', 'change', 'focus', 'blur', 'keydown'])
 
 const inputId = useId()
 
@@ -136,7 +139,7 @@ const inputClasses = computed(() => {
       'base-input__field--error': props.error,
       'base-input__field--disabled': props.disabled,
       'base-input__field--readonly': props.readonly,
-      'base-input__field--has-prefix': props.prefix,
+      'base-input__field--has-prefix': props.prefixIcon,
     },
   ]
 })
