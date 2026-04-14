@@ -4,7 +4,9 @@ import MainView from '@/views/dashboard/layout/MainView.vue'
 import Dashbord from '@/views/dashboard/DashboardMain.vue'
 // import SopView from '@/views/dashboard/settings/SopView.vue'
 // import COAView from '@/views/dashboard/settings/COAView.vue'
-// import KelasBiayaView from '@/views/dashboard/settings/KelasBiayaView.vue'
+import KelasBiayaView from '@/views/dashboard/kelas/KelasIndex.vue'
+import CreateKelasView from '@/views/dashboard/kelas/KelasCreate.vue'
+import EditKelasView from '@/views/dashboard/kelas/KelasEdit.vue'
 // import cretaepelangganView from '@/views/dashboard/basis-data/pelanggan/CreateView.vue'
 // import editpelangganView from '@/views/dashboard/basis-data/pelanggan/EditView.vue'
 // import pelangganView from '@/views/dashboard/basis-data/pelanggan/IndexView.vue'
@@ -59,11 +61,21 @@ const router = createRouter({
         //   name: 'settings',
         //   component: COAView,
         // },
-        // {
-        //   path: '/settings',
-        //   name: 'settings',
-        //   component: KelasBiayaView,
-        // },
+        {
+          path: '/kelas-biaya',
+          name: 'kelas biaya',
+          component: KelasBiayaView,
+        },
+        {
+          path: '/kelas-biaya/config',
+          name: 'Tambah Kelas',
+          component: CreateKelasView,
+        },
+        {
+          path: '/kelas-biaya/config/:id',
+          name: 'Edit Kelas',
+          component: EditKelasView,
+        },
         // {
         //   path: '/BasisData',
         //   name: 'BasisData',

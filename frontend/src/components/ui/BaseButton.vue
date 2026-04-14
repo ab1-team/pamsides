@@ -52,6 +52,8 @@ const props = defineProps({
         'info-gradient',
         'primary-gradient',
         'secondary',
+        'secondary-gradient',
+        'dark-gradient',
         'success',
         'success-gradient',
         'warning',
@@ -113,6 +115,8 @@ const buttonClasses = computed(() => {
     info: 'base-button--info',
     'info-gradient': 'base-button--info-gradient',
     secondary: 'base-button--secondary',
+    'secondary-gradient': 'base-button--secondary-gradient',
+    'dark-gradient': 'base-button--dark-gradient',
     success: 'base-button--success',
     'success-gradient': 'base-button--success-gradient',
     warning: 'base-button--warning',
@@ -191,6 +195,16 @@ const handleClick = (event) => {
 
 .base-button--secondary {
   @apply bg-slate-500 hover:bg-slate-600 text-white focus:ring-slate-400 border border-slate-500;
+}
+
+.base-button--secondary-gradient {
+  background: linear-gradient(135deg, #cbd5e1 0%, #94a3b8 100%);
+  @apply text-slate-800 border-0 shadow-lg shadow-slate-200/50 hover:shadow-slate-300/80 focus:ring-slate-300;
+}
+
+.base-button--dark-gradient {
+  background: linear-gradient(135deg, #1e293b 0%, #020617 100%);
+  @apply text-white border-0 shadow-lg shadow-slate-900/30 hover:shadow-slate-900/50 focus:ring-slate-900;
 }
 
 .base-button--success {
