@@ -72,11 +72,7 @@
             <span class="sidebar-submenu-bullet"></span>
             <span>Cart of Account COA</span>
           </router-link>
-          <router-link
-            to="/settings/kelas-biaya"
-            class="sidebar-submenu-item"
-            @click="handleMenuClick"
-          >
+          <router-link to="/kelas-biaya" class="sidebar-submenu-item" @click="handleMenuClick">
             <span class="sidebar-submenu-bullet"></span>
             <span>Kelas Dan Biaya</span>
           </router-link>
@@ -382,7 +378,7 @@
         :class="{ 'icon-only': !sidebarOpen }"
         size="md"
       >
-        <span v-if="sidebarOpen">AstaBrata Grub</span>
+        <span v-if="sidebarOpen">AstaBrata Teknologi</span>
       </BaseButton>
     </div>
   </div>
