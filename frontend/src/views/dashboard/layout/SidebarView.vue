@@ -230,7 +230,7 @@
               </router-link>
             </div>
           </div>
-          <router-link to="/data/instalasi" class="sidebar-submenu-item" @click="handleMenuClick">
+          <router-link to="/dataInstalasi" class="sidebar-submenu-item" @click="handleMenuClick">
             <font-awesome-icon
               icon="building"
               class="sidebar-submenu-icon"

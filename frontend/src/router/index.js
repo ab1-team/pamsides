@@ -13,7 +13,7 @@ import Dashbord from '@/views/dashboard/DashboardMain.vue'
 // import desaView from '@/views/dashboard/basis-data/desa/IndexView.vue'
 // import createcaterView from '@/views/dashboard/basis-data/cater/CreateView.vue'
 // import caterView from '@/views/dashboard/basis-data/cater/IndexView.vue'
-// import datainstalasiView from '@/views/dashboard/basis-data/data-instalasi/IndexView.vue'
+import datainstalasiView from '@/views/dashboard/instalasi/dataInstalasi.vue'
 import registerInstalasi from '@/views/dashboard/instalasi/registrasi.vue'
 import statusInstalasi from '@/views/dashboard/instalasi/InstalasiStatus.vue'
 import pemakaianair from '@/views/dashboard/instalasi/pemakaianAir.vue'
@@ -109,11 +109,11 @@ const router = createRouter({
         //   name: 'BasisData',
         //   component: caterView,
         // },
-        // {
-        //   path: '/BasisData',
-        //   name: 'BasisData',
-        //   component: datainstalasiView,
-        // },
+        {
+          path: '/dataInstalasi',
+          name: 'Data Instalasi',
+          component: datainstalasiView,
+        },
         {
           path: '/instalasi/register',
           name: 'Register Instalasi',
