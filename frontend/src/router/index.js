@@ -16,6 +16,7 @@ import Dashbord from '@/views/dashboard/DashboardMain.vue'
 import datainstalasiView from '@/views/dashboard/instalasi/dataInstalasi.vue'
 import registerInstalasi from '@/views/dashboard/instalasi/registrasi.vue'
 import statusInstalasi from '@/views/dashboard/instalasi/InstalasiStatus.vue'
+import Caterpemakaianair from '@/views/dashboard/instalasi/caterPemakaianAir.vue'
 import pemakaianair from '@/views/dashboard/instalasi/pemakaianAir.vue'
 import retribusisampah from '@/views/dashboard/instalasi/retribusiSampah.vue'
 import jurnalUmum from '@/views/dashboard/transaksi/jurnalUmum/JurnalUmumIndex.vue'
@@ -128,6 +129,11 @@ const router = createRouter({
           path: '/instalasi/pemakaian-air',
           name: 'Pemakaian Air',
           component: pemakaianair,
+        },
+        {
+          path: '/instalasi/caterPemakaianAir',
+          name: 'Cater Input Pemakaian Air',
+          component: Caterpemakaianair,
         },
         {
           path: '/instalasi/retribusi-sampah',
