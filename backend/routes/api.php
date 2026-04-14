@@ -10,6 +10,7 @@ use App\Http\Controllers\InstallationPackageController;
 use App\Http\Controllers\InstallationResultController;
 use App\Http\Controllers\InstallationTicketController;
 use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SurveyResultController;
 use App\Http\Controllers\WaterTariffBlockController;
@@ -27,7 +28,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
 Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
     Route::get('/test-admin', fn() => response()->json(['message' => 'Kamu admin!']));
-
+    Route::get('/customers', [CustomerController::class, 'index']);
     Route::apiResource('installation-packages', InstallationPackageController::class);
     Route::apiResource('installation-packages.water-tariff-blocks', WaterTariffBlockController::class);
 
