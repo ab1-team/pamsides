@@ -3,7 +3,6 @@
     <Transition name="modal-fade">
       <div v-if="show" class="fixed inset-0 z-50 flex items-center justify-center p-4! md:p-8!">
         <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" @click="close"></div>
-
         <div
           class="relative w-full! h-full! max-w-7xl! bg-white rounded-2xl! shadow-xl! border border-slate-200 flex flex-col overflow-hidden animate-slide-up"
         >
@@ -18,7 +17,7 @@
               </div>
               <div>
                 <h2 class="text-lg! font-semibold! text-slate-800 leading-tight">
-                  2.1.01.01 - Utang Dividen Pemdes Bulan April 2026
+                  Detail Transaksi Pemakaian
                 </h2>
               </div>
             </div>
@@ -135,48 +134,12 @@
                     </div>
                   </td>
                 </tr>
-
-                <tr class="bg-slate-100">
-                  <td colspan="5" class="py-4! px-6! font-semibold text-slate-800">
-                    Total Transaksi Bulan April 2026
-                  </td>
-                  <td class="py-4! px-4! text-right font-mono text-slate-800">0.00</td>
-                  <td class="py-4! px-4! text-right font-mono text-slate-800">0.00</td>
-                  <td colspan="2"></td>
-                </tr>
-
-                <tr class="bg-white">
-                  <td colspan="5" class="py-4! px-6! font-semibold text-slate-800">
-                    Total Transaksi sampai dengan Bulan April 2026
-                  </td>
-                  <td class="py-4! px-4! text-right font-mono text-slate-800">0.00</td>
-                  <td class="py-4! px-4! text-right font-mono text-slate-800">0.00</td>
-                  <td class="py-4! px-4! text-center font-mono text-slate-800">0.00</td>
-                  <td></td>
-                </tr>
-
-                <tr class="bg-slate-100 border-b border-slate-200">
-                  <td colspan="5" class="py-4! px-6! font-semibold text-slate-800">
-                    Total Transaksi Komulatif sampai dengan Tahun 2026
-                  </td>
-                  <td class="py-4! px-4! text-right font-mono text-slate-800">0.00</td>
-                  <td class="py-4! px-4! text-right font-mono text-slate-800">0.00</td>
-                  <td colspan="2"></td>
-                </tr>
               </tbody>
             </table>
           </div>
-
           <div
             class="px-6! py-6! bg-white border-t border-slate-200 flex justify-end items-center gap-3! min-h-[80px]!"
           >
-            <button
-              @click="openCetak"
-              class="flex items-center gap-2! bg-slate-700 hover:bg-slate-800 text-white px-6! py-3! font-semibold transition-all active:scale-95 rounded-lg!"
-            >
-              <font-awesome-icon icon="print" />
-              Cetak Bukti Transaksi
-            </button>
             <button
               @click="close"
               class="bg-white border border-slate-300 hover:bg-slate-100 text-slate-700 px-6! py-3! font-semibold transition-all active:scale-95 rounded-lg!"
@@ -200,14 +163,10 @@ const props = defineProps({
   },
 })
 
-const emit = defineEmits(['close', 'openCetak'])
+const emit = defineEmits(['close'])
 
 const close = () => {
   emit('close')
-}
-
-const openCetak = () => {
-  emit('openCetak')
 }
 
 const handleKeydown = (e) => {
@@ -253,6 +212,7 @@ onUnmounted(() => {
     transform: translateY(30px) scale(0.98);
     opacity: 0;
   }
+
   to {
     transform: translateY(0) scale(1);
     opacity: 1;
