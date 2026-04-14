@@ -4,18 +4,21 @@ import MainView from '@/views/dashboard/layout/MainView.vue'
 import Dashbord from '@/views/dashboard/DashboardMain.vue'
 // import SopView from '@/views/dashboard/settings/SopView.vue'
 // import COAView from '@/views/dashboard/settings/COAView.vue'
-// import KelasBiayaView from '@/views/dashboard/settings/KelasBiayaView.vue'
+import KelasBiayaView from '@/views/dashboard/kelas/KelasIndex.vue'
+import CreateKelasView from '@/views/dashboard/kelas/KelasCreate.vue'
+import EditKelasView from '@/views/dashboard/kelas/KelasEdit.vue'
 // import cretaepelangganView from '@/views/dashboard/basis-data/pelanggan/CreateView.vue'
 // import editpelangganView from '@/views/dashboard/basis-data/pelanggan/EditView.vue'
-// import pelangganView from '@/views/dashboard/basis-data/pelanggan/IndexView.vue'
+import pelangganView from '@/views/dashboard/pelanggan/PelangganIndex.vue'
 // import createdesaView from '@/views/dashboard/basis-data/desa/CreateView.vue'
 // import editdesaView from '@/views/dashboard/basis-data/desa/EditView.vue'
 // import desaView from '@/views/dashboard/basis-data/desa/IndexView.vue'
 // import createcaterView from '@/views/dashboard/basis-data/cater/CreateView.vue'
 // import caterView from '@/views/dashboard/basis-data/cater/IndexView.vue'
-// import datainstalasiView from '@/views/dashboard/basis-data/data-instalasi/IndexView.vue'
+import datainstalasiView from '@/views/dashboard/instalasi/dataInstalasi.vue'
 import registerInstalasi from '@/views/dashboard/instalasi/registrasi.vue'
 import statusInstalasi from '@/views/dashboard/instalasi/InstalasiStatus.vue'
+import Caterpemakaianair from '@/views/dashboard/instalasi/caterPemakaianAir.vue'
 import pemakaianair from '@/views/dashboard/instalasi/pemakaianAir.vue'
 import retribusisampah from '@/views/dashboard/instalasi/retribusiSampah.vue'
 import jurnalUmum from '@/views/dashboard/transaksi/jurnalUmum/JurnalUmumIndex.vue'
@@ -26,6 +29,7 @@ import ebudgeting from '@/views/dashboard/transaksi/EBudgetingView.vue'
 import tutupBuku from '@/views/dashboard/transaksi/tutupBuku.vue'
 import komisiSPS from '@/views/dashboard/transaksi/komisiSPS.vue'
 import laporan from '@/views/dashboard/pelaporan/PelaporanIndex.vue'
+import profil from '@/views/dashboard/profil/ProfilIndex.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -49,6 +53,11 @@ const router = createRouter({
           name: 'dashboard',
           component: Dashbord,
         },
+        {
+          path: '/profil',
+          name: 'profil',
+          component: profil,
+        },
         // {
         //   path: '/settings',
         //   name: 'settings',
@@ -59,11 +68,21 @@ const router = createRouter({
         //   name: 'settings',
         //   component: COAView,
         // },
-        // {
-        //   path: '/settings',
-        //   name: 'settings',
-        //   component: KelasBiayaView,
-        // },
+        {
+          path: '/kelas-biaya',
+          name: 'kelas biaya',
+          component: KelasBiayaView,
+        },
+        {
+          path: '/kelas-biaya/config',
+          name: 'Tambah Kelas',
+          component: CreateKelasView,
+        },
+        {
+          path: '/kelas-biaya/config/:id',
+          name: 'Edit Kelas',
+          component: EditKelasView,
+        },
         // {
         //   path: '/BasisData',
         //   name: 'BasisData',
@@ -74,11 +93,11 @@ const router = createRouter({
         //   name: 'BasisData',
         //   component: editpelangganView,
         // },
-        // {
-        //   path: '/BasisData',
-        //   name: 'BasisData',
-        //   component: pelangganView,
-        // },
+        {
+          path: '/data-pelanggan',
+          name: 'Data Pelanggan',
+          component: pelangganView,
+        },
         // {
         //   path: '/BasisData',
         //   name: 'BasisData',
@@ -109,11 +128,11 @@ const router = createRouter({
         //   name: 'BasisData',
         //   component: caterView,
         // },
-        // {
-        //   path: '/BasisData',
-        //   name: 'BasisData',
-        //   component: datainstalasiView,
-        // },
+        {
+          path: '/dataInstalasi',
+          name: 'Data Instalasi',
+          component: datainstalasiView,
+        },
         {
           path: '/instalasi/register',
           name: 'Register Instalasi',
@@ -128,6 +147,11 @@ const router = createRouter({
           path: '/instalasi/pemakaian-air',
           name: 'Pemakaian Air',
           component: pemakaianair,
+        },
+        {
+          path: '/instalasi/caterPemakaianAir',
+          name: 'Cater Input Pemakaian Air',
+          component: Caterpemakaianair,
         },
         {
           path: '/instalasi/retribusi-sampah',
@@ -175,6 +199,11 @@ const router = createRouter({
           component: laporan,
         },
       ],
+    },
+    {
+      path: '/usages/cetak_input',
+      name: 'Cetak Input',
+      component: () => import('@/views/dashboard/instalasi/partials/view/cetakInput.vue'),
     },
   ],
 })

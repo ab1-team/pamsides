@@ -71,7 +71,7 @@ class BillingService
             $blockMin = (float) $block->usage_min_m3;
             $blockMax = $block->usage_max_m3 !== null ? (float) $block->usage_max_m3 : PHP_FLOAT_MAX;
 
-            if ($usageM3 >= $blockMin && $usageM3 < $blockMax) {
+            if ($usageM3 >= $blockMin && $usageM3 <= $blockMax) {
                 return $usageM3 * (float) $block->price_per_m3;
             }
         }
@@ -95,5 +95,10 @@ class BillingService
         if (! $oldBill) return 0;
 
         return $customer->ticket->package->late_penalty;
+    }
+
+    public function calculateChargeForTesting($package, float $usageM3): float
+    {
+        return $this->calculateProgressiveCharge($package, $usageM3);
     }
 }

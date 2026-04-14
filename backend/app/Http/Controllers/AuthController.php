@@ -63,7 +63,7 @@ class AuthController extends Controller
     {
         return response()->json([
             'success' => true,
-            'data'    => $user,
+            'data'    => $request->user(),
         ]);
     }
 }

@@ -2,9 +2,9 @@
   <div class="pemakaian-air-root">
     <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4!">
       <div class="flex-1!">
-        <h1 class="text-2xl font-bold text-cyan-600! tracking-tight mb-1!">Data Pemakaian Air</h1>
+        <h1 class="text-2xl font-bold text-cyan-600! tracking-tight mb-1!">Data Instalasi</h1>
         <p class="text-sm text-slate-500! leading-relaxed">
-          Manage and monitor regional water consumption cycles and billing.
+          Manage and monitor regional water consumption cycles.
         </p>
       </div>
 
@@ -16,83 +16,10 @@
           class="w-full! lg:w-auto! rounded-xl! shadow-lg! shadow-amber-200/50!"
           icon="print"
         >
-          Cetak Form Input
-        </BaseButton>
-
-        <BaseButton
-          variant="success-gradient"
-          size="md"
-          @click="handleHasilInput"
-          class="w-full! lg:w-auto! rounded-xl! shadow-lg! shadow-emerald-200/50!"
-          icon="file-alt"
-        >
-          Hasil Input
-        </BaseButton>
-
-        <BaseButton
-          variant="primary-gradient"
-          size="md"
-          @click="handleInputPemakaian"
-          class="w-full! lg:w-auto! rounded-xl! shadow-lg! shadow-indigo-200/50!"
-          icon="plus"
-        >
-          Input Pemakaian
+          Cetak Data Instalasi
         </BaseButton>
       </div>
     </div>
-
-    <ContentCard variant="elevated" padding="normal" hoverable class="mt-4!">
-      <div class="flex flex-col lg:flex-row lg:items-end gap-4!">
-        <div class="flex-1! min-w-[150px]!">
-          <SelectSearch
-            v-model="filter.tahun"
-            :options="[
-              { id: '', text: 'Pilih Tahun' },
-              ...tahunOptions.map((y) => ({ id: y, text: y })),
-            ]"
-            placeholder="Pilih Tahun"
-            no-margin
-          />
-        </div>
-
-        <div class="flex-1! min-w-[150px]!">
-          <SelectSearch
-            v-model="filter.bulan"
-            :options="[
-              { id: '', text: 'Pilih Bulan' },
-              ...bulanOptions.map((b) => ({ id: b, text: b })),
-            ]"
-            placeholder="Pilih Bulan"
-            no-margin
-          />
-        </div>
-
-        <div class="flex-1! min-w-[150px]!">
-          <SelectSearch
-            v-model="filter.cater"
-            :options="[
-              { id: '', text: 'Pilih Cater' },
-              { id: 'cater-001', text: 'Cater-001' },
-              { id: 'cater-002', text: 'Cater-002' },
-              { id: 'cater-003', text: 'Cater-003' },
-            ]"
-            placeholder="Pilih Cater"
-            no-margin
-          />
-        </div>
-
-        <BaseButton
-          variant="info-gradient"
-          @click="handleApplyFilter"
-          class="w-full! lg:w-auto! lg:min-w-[140px]! rounded-xl! shadow-md! lg:self-end! h-11!"
-          icon="filter"
-          icon-right
-        >
-          Apply Filter
-        </BaseButton>
-      </div>
-    </ContentCard>
-
     <DataTable
       :data="filteredData"
       :columns="tableColumns"
@@ -100,13 +27,11 @@
       :current-page="currentPage"
       :total-pages="totalPages"
       :visible-pages="visiblePages"
-      :total-entries="tableData.length"
       v-model="searchQuery"
       @prev-page="currentPage--"
       @next-page="currentPage++"
       @go-to-page="currentPage = $event"
       class="mt-6!"
-      search-placeholder="Cari pelanggan (Nama, ID)..."
     >
       <template #column-nama="{ row }">
         <div class="flex items-center gap-3!">
@@ -157,7 +82,7 @@
       <template #column-status="{ row }">
         <span
           :class="[
-            'inline-flex! items-center! gap-1.5! px-3! py-1.5! rounded-md! text-sm! font-semibold! tracking-wide!',
+            'inline-flex! items-center! gap-1! px-2! py-0.5! rounded-md! text-sm! font-semibold! tracking-wide!',
             STATUS_COLORS[row.status] || '',
           ]"
         >
@@ -188,39 +113,22 @@
     </DataTable>
   </div>
 </template>
-
 <script setup>
 import { usePemakaianAir } from '@/composables/usePemakaianAir'
-import SelectSearch from '@/components/SelectSearch.vue'
 import DataTable from '@/components/ui/DataTable.vue'
-import ContentCard from '@/components/ui/ContentCard.vue'
 import BaseButton from '@/components/ui/BaseButton.vue'
-import { useRouter } from 'vue-router'
 
 const {
-  filter,
   searchQuery,
   currentPage,
-  tahunOptions,
-  bulanOptions,
-  tableData,
   filteredData,
   totalPages,
   visiblePages,
   STATUS_COLORS,
-  handleApplyFilter,
-  handleHasilInput,
-  handleInputPemakaian,
+  handleCetakFormInput,
   handleEdit,
   handleDelete,
 } = usePemakaianAir()
-
-const router = useRouter()
-
-const handleCetakFormInput = () => {
-  const url = router.resolve({ name: 'Cetak Input' }).href
-  window.open(url, '_blank')
-}
 
 const tableColumns = [
   {
@@ -253,16 +161,5 @@ const tableColumns = [
     title: 'STATUS',
     tdClass: '',
   },
-  {
-    key: 'aksi',
-    title: 'AKSI',
-    tdClass: '',
-  },
 ]
 </script>
-
-<style scoped>
-.pemakaian-air-root {
-  /* Page specific styles */
-}
-</style>

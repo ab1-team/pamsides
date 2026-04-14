@@ -10,7 +10,9 @@ class CheckRole
 {
     public function handle(Request $request, Closure $next, string ...$roles): mixed
     {
-        if (! in_array($request->user()?->role, $roles)) {
+        $user = $request->user('sanctum') ?? $request->user();
+
+        if (! $user || ! in_array($user->role, $roles)) {
             return response()->json(['message' => 'Akses ditolak.'], 403);
         }
 

@@ -1,7 +1,7 @@
 import { ref, computed } from 'vue'
-import { STATUS_TYPES, STATUS_COLORS } from '@/types/pemakaianAir'
+import { STATUS_TYPES, STATUS_COLORS } from '@/types/retribusiSampah'
 
-export function usePemakaianAir() {
+export function useRetribusiSampah() {
   // Filter state
   const filter = ref({ tahun: '', bulan: '', cater: '' })
   const searchQuery = ref('')
@@ -29,41 +29,41 @@ export function usePemakaianAir() {
     'Desember',
   ]
 
-  // Sample data
+  // Sample data for Retribusi Sampah
   const tableData = ref([
     {
-      id: '102808473',
+      id: 'RS-2024-0001',
       nama: 'Hadi Supriyanto',
       initials: 'HS',
       avatarColor: '#0ea5e9',
-      meterAwal: 1140,
-      meterAkhir: 3265,
-      pemakaian: 25,
-      tagihan: 125000,
+      meterAwal: 0,
+      meterAkhir: 0,
+      pemakaian: 1, // Flat unit
+      tagihan: 25000,
       jatuhTempo: '20 Mei 2024',
       status: STATUS_TYPES.PAID,
     },
     {
-      id: '102808890',
+      id: 'RS-2024-0002',
       nama: 'Siti Nurhaliza',
       initials: 'SN',
       avatarColor: '#06b6d4',
-      meterAwal: 2105,
-      meterAkhir: 2138,
-      pemakaian: 13,
-      tagihan: 65000,
+      meterAwal: 0,
+      meterAkhir: 0,
+      pemakaian: 1,
+      tagihan: 25000,
       jatuhTempo: '20 Mei 2024',
       status: STATUS_TYPES.PENDING,
     },
     {
-      id: '102808553',
+      id: 'RS-2024-0003',
       nama: 'Rudy Wijaya',
       initials: 'RW',
       avatarColor: '#14b8a6',
-      meterAwal: 6098,
-      meterAkhir: 6942,
-      pemakaian: 52,
-      tagihan: 260000,
+      meterAwal: 0,
+      meterAkhir: 0,
+      pemakaian: 1,
+      tagihan: 25000,
       jatuhTempo: '20 Mei 2024',
       status: STATUS_TYPES.PAID,
     },
@@ -73,25 +73,27 @@ export function usePemakaianAir() {
   const filteredData = computed(() => {
     if (!searchQuery.value) return tableData.value
     const q = searchQuery.value.toLowerCase()
-    return tableData.value.filter((r) => r.nama.toLowerCase().includes(q) || r.id.includes(q))
+    return tableData.value.filter(
+      (r) => r.nama.toLowerCase().includes(q) || r.id.toLowerCase().includes(q),
+    )
   })
 
-  const totalPages = computed(() => Math.max(1, Math.ceil(1248 / perPage)))
+  const totalPages = computed(() => Math.max(1, Math.ceil(tableData.value.length / perPage)))
   const visiblePages = computed(() => {
     const pages = []
-    for (let i = 1; i <= Math.min(3, totalPages.value); i++) {
+    for (let i = 1; i <= totalPages.value; i++) {
       pages.push(i)
     }
     return pages
   })
 
   // Handlers
-  const handleApplyFilter = () => console.log('Apply filter:', filter.value)
-  const handleCetakFormInput = () => console.log('Cetak Form Input')
-  const handleHasilInput = () => console.log('Hasil Input')
-  const handleInputPemakaian = () => console.log('Input Pemakaian')
-  const handleEdit = (row) => console.log('Edit:', row)
-  const handleDelete = (row) => console.log('Delete:', row)
+  const handleApplyFilter = () => console.log('Apply filter Retribusi Sampah:', filter.value)
+  const handleCetakFormInput = () => console.log('Cetak Form Input Retribusi Sampah')
+  const handleHasilInput = () => console.log('Hasil Input Retribusi Sampah')
+  const handleInputPemakaian = () => console.log('Input Pemakaian Retribusi Sampah')
+  const handleEdit = (row) => console.log('Edit Retribusi Sampah:', row)
+  const handleDelete = (row) => console.log('Delete Retribusi Sampah:', row)
 
   return {
     // State

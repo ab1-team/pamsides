@@ -1,115 +1,97 @@
 <template>
-  <div class="base-input" :class="{ 'mb-2': !noMargin }">
-    <label v-if="label" class="base-input__label">
-      {{ label }}
-    </label>
-
-    <div class="base-input__wrapper">
-      <span v-if="prefix" class="base-input__prefix">
-        {{ prefix }}
-      </span>
-
+  <div class="app-date-picker" :class="{ 'mb-2!': !noMargin }">
+    <label v-if="label" class="label!">{{ label }}</label>
+    <div class="picker-wrapper!">
+      <font-awesome-icon v-if="icon" :icon="icon" class="prefix-icon!" />
       <DatePicker
-        v-model="internalValue"
+        v-model="dateValue"
         :placeholder="placeholder"
-        :disabled="disabled"
-        :readonly="readonly"
         :dateFormat="dateFormat"
-        :showIcon="showIcon"
-        :showButtonBar="showButtonBar"
-        :showWeek="showWeek"
-        :minDate="computedMinDate"
-        :maxDate="computedMaxDate"
-        :disabledDates="disabledDates"
-        :disabledDays="disabledDays"
-        :monthNavigator="monthNavigator"
-        :yearNavigator="yearNavigator"
+        :showIcon="false"
+        :disabled="disabled"
         :yearRange="yearRange"
-        :manualInput="manualInput"
-        :selectOtherMonths="selectOtherMonths"
-        :showOtherMonths="showOtherMonths"
-        class="base-datepicker"
-        @date-select="onDateSelect"
-        @clear-click="onClearClick"
+        showYear
+        class="base-input!"
+        :class="{ 'has-icon!': icon, 'p-invalid!': error }"
+        @change="handleChange"
       />
-
-      <span v-if="suffix" class="base-input__suffix">
-        {{ suffix }}
-      </span>
+      <font-awesome-icon icon="calendar-alt" class="suffix-icon!" />
     </div>
-
-    <div v-if="error" class="base-input__error">
-      {{ error }}
-    </div>
-
-    <div v-if="hint && !error" class="base-input__hint">
-      {{ hint }}
-    </div>
+    <small v-if="error" class="error-text!">{{ error }}</small>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, watch } from 'vue'
 import DatePicker from 'primevue/datepicker'
 
 const props = defineProps({
-  modelValue: { type: [Date, String], default: null },
-  label: { type: String, default: '' },
-  placeholder: { type: String, default: '' },
-  prefix: { type: String, default: '' },
-  suffix: { type: String, default: '' },
-  disabled: { type: Boolean, default: false },
-  readonly: { type: Boolean, default: false },
-  error: { type: String, default: '' },
-  hint: { type: String, default: '' },
-
-  dateFormat: { type: String, default: 'dd/mm/yy' },
-  showIcon: { type: Boolean, default: false },
-  showButtonBar: { type: Boolean, default: true },
-  showWeek: { type: Boolean, default: false },
-  disabledDates: { type: Array, default: () => [] },
-  disabledDays: { type: Array, default: () => [] },
-  monthNavigator: { type: Boolean, default: true },
-  yearNavigator: { type: Boolean, default: true },
-  yearRange: { type: String, default: '2020:2030' },
-  manualInput: { type: Boolean, default: false },
-  selectOtherMonths: { type: Boolean, default: false },
-  showOtherMonths: { type: Boolean, default: true },
-
-  minDate: { type: Date, default: null },
-  maxDate: { type: Date, default: null },
-
-  noMargin: { type: Boolean, default: false },
+  modelValue: {
+    type: [String, Date],
+    default: null,
+  },
+  label: {
+    type: String,
+    default: '',
+  },
+  placeholder: {
+    type: String,
+    default: 'Pilih Tanggal',
+  },
+  dateFormat: {
+    type: String,
+    default: 'yy-mm-dd',
+  },
+  icon: {
+    type: String,
+    default: null,
+  },
+  disabled: {
+    type: Boolean,
+    default: false,
+  },
+  error: {
+    type: String,
+    default: null,
+  },
+  yearRange: {
+    type: String,
+    default: '1900:2100',
+  },
+  noMargin: {
+    type: Boolean,
+    default: false,
+  },
 })
 
-const emit = defineEmits(['update:modelValue', 'date-select', 'clear-click'])
+const emit = defineEmits(['update:modelValue', 'change'])
 
-const internalValue = ref(null)
+const dateValue = ref(props.modelValue ? new Date(props.modelValue) : null)
 
 watch(
   () => props.modelValue,
-  (val) => {
-    internalValue.value = val ? new Date(val) : null
+  (newVal) => {
+    dateValue.value = newVal ? new Date(newVal) : null
   },
-  { immediate: true },
 )
 
-watch(internalValue, (val) => {
-  emit('update:modelValue', val)
-})
-
-const computedMinDate = computed(() => props.minDate ?? null)
-const computedMaxDate = computed(() => props.maxDate ?? null)
-
-function onDateSelect(date) {
-  const selected = new Date(date)
-  internalValue.value = selected
-  emit('date-select', selected)
+const handleChange = (newDate) => {
+  const formattedDate = newDate ? formatDate(newDate) : null
+  emit('update:modelValue', formattedDate)
+  emit('change', formattedDate)
 }
 
-function onClearClick() {
-  internalValue.value = null
-  emit('clear-click')
+const formatDate = (date) => {
+  if (!date) return null
+  const d = new Date(date)
+  let month = '' + (d.getMonth() + 1)
+  let day = '' + d.getDate()
+  const year = d.getFullYear()
+
+  if (month.length < 2) month = '0' + month
+  if (day.length < 2) day = '0' + day
+
+  return [year, month, day].join('-')
 }
 </script>
 
@@ -120,30 +102,42 @@ function onClearClick() {
   @apply w-full transition-all duration-300;
 }
 
-.base-input__label {
+.label {
   @apply block text-sm font-normal text-slate-500 mb-1.5 ml-1;
 }
 
-.base-datepicker {
-  @apply w-full;
+.picker-wrapper {
+  @apply relative flex items-center;
+}
+
+.prefix-icon {
+  @apply absolute left-4 text-slate-400 text-sm z-10;
+}
+
+.suffix-icon {
+  @apply absolute right-4 text-slate-400 text-sm pointer-events-none;
 }
 
 :deep(.p-datepicker) {
-  @apply w-full bg-transparent border-none shadow-none;
+  @apply w-full;
 }
 
-:deep(.p-datepicker-input) {
-  @apply !block !w-full !h-11 !px-4 !bg-slate-50 !border !border-slate-200 !rounded-xl !text-sm !text-slate-700 !transition-all !duration-300;
-  @apply placeholder:!text-slate-400 placeholder:!font-normal;
-  @apply hover:!border-blue-400 hover:!bg-white hover:!shadow-md hover:!shadow-blue-500/5;
-  @apply focus:!outline-none focus:!bg-white focus:!border-blue-500 focus:!ring-4 focus:!ring-blue-500/10 focus:!shadow-lg focus:!shadow-blue-500/5;
+:deep(.p-inputtext) {
+  @apply w-full h-11 px-4 pr-10 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-700 transition-all duration-300;
+  @apply placeholder:text-slate-400 placeholder:font-normal;
+  @apply hover:border-blue-400 hover:bg-white hover:shadow-md hover:shadow-blue-500/5;
+  @apply focus:outline-none focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 focus:shadow-lg focus:shadow-blue-500/5;
 }
 
-:deep(.p-datepicker-input:disabled) {
-  @apply bg-slate-100 text-slate-400 cursor-not-allowed border-slate-200 shadow-none hover:border-slate-200 hover:shadow-none!;
+.has-icon :deep(.p-inputtext) {
+  @apply pl-10;
 }
 
-:deep(.p-datepicker-panel) {
-  @apply rounded-xl border border-slate-200 shadow-xl;
+.p-invalid :deep(.p-inputtext) {
+  @apply border-red-300 bg-red-50/30;
+}
+
+.error-text {
+  @apply mt-1.5 ml-1 text-xs text-red-600 font-medium;
 }
 </style>

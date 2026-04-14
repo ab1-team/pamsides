@@ -1,5 +1,5 @@
 <template>
-  <div class="custom-select-search" :class="{ 'mb-2': !noMargin }">
+  <div class="custom-select-search" :class="{ 'mb-2!': !noMargin }">
     <!-- Label -->
     <label v-if="label" class="select-label">{{ label }}</label>
 
@@ -68,7 +68,7 @@
 
             <!-- Empty State -->
             <div v-if="filteredOptions.length === 0" class="empty-state">
-              <font-awesome-icon icon="search" class="text-slate-200 text-3xl mb-2" />
+              <font-awesome-icon icon="search" class="text-slate-200! text-3xl! mb-2!" />
               <p>Tidak ada data ditemukan</p>
             </div>
           </div>
@@ -326,13 +326,14 @@ onUnmounted(() => {
 }
 
 .option-item--selected {
-  @apply bg-blue-600 text-white hover:bg-blue-600 hover:text-white! shadow-md shadow-blue-200;
+  @apply bg-blue-600 text-white hover:bg-blue-600 !hover:text-white shadow-md shadow-blue-200;
 }
 
 .option-label {
   @apply text-sm truncate font-medium;
 }
 
+/* Selected Indicator */
 .selected-indicator {
   @apply text-xs ml-2;
 }
