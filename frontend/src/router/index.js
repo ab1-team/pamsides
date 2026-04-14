@@ -7,7 +7,7 @@ import Dashbord from '@/views/dashboard/DashboardMain.vue'
 // import KelasBiayaView from '@/views/dashboard/settings/KelasBiayaView.vue'
 // import cretaepelangganView from '@/views/dashboard/basis-data/pelanggan/CreateView.vue'
 // import editpelangganView from '@/views/dashboard/basis-data/pelanggan/EditView.vue'
-// import pelangganView from '@/views/dashboard/basis-data/pelanggan/IndexView.vue'
+import pelangganView from '@/views/dashboard/pelanggan/PelangganIndex.vue'
 // import createdesaView from '@/views/dashboard/basis-data/desa/CreateView.vue'
 // import editdesaView from '@/views/dashboard/basis-data/desa/EditView.vue'
 // import desaView from '@/views/dashboard/basis-data/desa/IndexView.vue'
@@ -75,11 +75,11 @@ const router = createRouter({
         //   name: 'BasisData',
         //   component: editpelangganView,
         // },
-        // {
-        //   path: '/BasisData',
-        //   name: 'BasisData',
-        //   component: pelangganView,
-        // },
+        {
+          path: '/data-pelanggan',
+          name: 'Data Pelanggan',
+          component: pelangganView,
+        },
         // {
         //   path: '/BasisData',
         //   name: 'BasisData',

@@ -133,7 +133,7 @@
                 <span>Create Pelanggan</span>
               </router-link>
               <router-link
-                to="/data/pelanggan"
+                to="/data-pelanggan"
                 class="sidebar-submenu-item nested-item"
                 @click="handleMenuClick"
               >
