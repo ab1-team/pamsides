@@ -326,7 +326,7 @@ onUnmounted(() => {
 }
 
 .option-item--selected {
-  @apply bg-blue-600 text-white hover:bg-blue-600 !hover:text-white shadow-md shadow-blue-200;
+  @apply bg-blue-600 text-white hover:bg-blue-600 hover:text-white! shadow-md shadow-blue-200;
 }
 
 .option-label {
