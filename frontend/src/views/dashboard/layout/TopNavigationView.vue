@@ -65,10 +65,10 @@
               </div>
             </div>
             <div class="avatar-dropdown-divider"></div>
-            <BaseButton variant="ghost" class="avatar-dropdown-item" block>
+            <a href="/profil" class="avatar-dropdown-item" block>
               <font-awesome-icon icon="user" class="mr-3" />
               Profil
-            </BaseButton>
+            </a>
             <BaseButton
               variant="ghost"
               class="avatar-dropdown-item logout"
