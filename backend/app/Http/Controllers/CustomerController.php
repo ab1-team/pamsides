@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Http\Controllers;
+use App\Models\Customer;
 
 use Illuminate\Http\Request;
 
@@ -9,9 +10,29 @@ class CustomerController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        //
+        $query = Customer::with('user');
+
+        if ($request->search) {
+            $query->whereHas('user', function ($q) use ($request) {
+                $q->where('name', 'like', '%' . $request->search . '%');
+            })
+            ->orWhere('customer_code', 'like', '%' . $request->search . '%');
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => $query->get()->map(function ($c) {
+                return [
+                    'id' => $c->id,
+                    'customer_code' => $c->customer_code,
+                    'name' => $c->user->name,
+                    'address' => optional($c->ticket)->address ?? '-',
+                    'status' => $c->activated_at ? 'Aktif' : 'Belum Terdaftar'
+                ];
+            })
+        ]);
     }
 
     /**
