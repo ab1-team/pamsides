@@ -12,6 +12,7 @@ import EditKelasView from '@/views/dashboard/kelas/KelasEdit.vue'
 import pelangganView from '@/views/dashboard/pelanggan/PelangganIndex.vue'
 // import createdesaView from '@/views/dashboard/basis-data/desa/CreateView.vue'
 // import editdesaView from '@/views/dashboard/basis-data/desa/EditView.vue'
+import caterView from '@/views/dashboard/cater/CaterIndex.vue'
 // import desaView from '@/views/dashboard/basis-data/desa/IndexView.vue'
 // import createcaterView from '@/views/dashboard/basis-data/cater/CreateView.vue'
 // import caterView from '@/views/dashboard/basis-data/cater/IndexView.vue'
@@ -113,6 +114,11 @@ const router = createRouter({
         //   name: 'BasisData',
         //   component: desaView,
         // },
+        {
+          path: '/data-cater',
+          name: 'Data Cater',
+          component: caterView,
+        },
         // {
         //   path: '/BasisData',
         //   name: 'BasisData',
