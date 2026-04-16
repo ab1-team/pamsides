@@ -2,12 +2,8 @@ import './assets/main.css'
 import './assets/datepicker.css'
 import './assets/stat-card.css'
 
-import {
-  createApp
-} from 'vue'
-import {
-  createPinia
-} from 'pinia'
+import { createApp } from 'vue'
+import { createPinia } from 'pinia'
 import App from './App.vue'
 import router from './router'
 
@@ -22,12 +18,8 @@ import DatePicker from 'primevue/datepicker'
 import InputNumber from 'primevue/inputnumber'
 
 // Font Awesome
-import {
-  library
-} from '@fortawesome/fontawesome-svg-core'
-import {
-  FontAwesomeIcon
-} from '@fortawesome/vue-fontawesome'
+import { library } from '@fortawesome/fontawesome-svg-core'
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import {
   faFilter,
   faCalendar,
@@ -58,6 +50,7 @@ import {
   faSignOutAlt,
   faTimes,
   faLock,
+  faUnlock,
   faEyeSlash,
   faSpinner,
   faArrowRight,
@@ -90,7 +83,29 @@ import {
   faCamera,
   faUserEdit,
   faKey,
+  faImage,
+  faFileInvoiceDollar,
+  faFaucet,
+  faWrench,
+  faHandHoldingWater,
+  faCalendarDay,
+  faRedoAlt,
+  faRobot,
+  faHistory,
+  faFileImage,
+  faWeightHanging,
+  faDroplet,
+  faShieldAlt,
+  faCloud,
+  faServer,
+  faChevronRight,
+  faChevronLeft,
+  faGlobe,
+  faEnvelope,
+  faPhone,
 } from '@fortawesome/free-solid-svg-icons'
+
+import { faWhatsapp } from '@fortawesome/free-brands-svg-icons'
 
 // Tambahkan icons ke library
 library.add(
@@ -123,6 +138,7 @@ library.add(
   faSignOutAlt,
   faTimes,
   faLock,
+  faUnlock,
   faEyeSlash,
   faSpinner,
   faArrowRight,
@@ -155,6 +171,29 @@ library.add(
   faCamera,
   faUserEdit,
   faKey,
+  faImage,
+  faWhatsapp,
+  faFileInvoiceDollar,
+  faFaucet,
+  faWrench,
+  faHandHoldingWater,
+  faCalendarDay,
+  faRedoAlt,
+  faRobot,
+  faHistory,
+  faFileImage,
+  faWeightHanging,
+  faDroplet,
+  faTint,
+  faShieldHalved,
+  faShieldAlt,
+  faCloud,
+  faServer,
+  faChevronRight,
+  faChevronLeft,
+  faGlobe,
+  faEnvelope,
+  faPhone,
 )
 
 const options = {

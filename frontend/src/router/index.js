@@ -2,7 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import LoginView from '@/views/auth/LoginView.vue'
 import MainView from '@/views/dashboard/layout/MainView.vue'
 import Dashbord from '@/views/dashboard/DashboardMain.vue'
-// import SopView from '@/views/dashboard/settings/SopView.vue'
+import SopIndex from '@/views/dashboard/sop/SopIndex.vue'
 // import COAView from '@/views/dashboard/settings/COAView.vue'
 import KelasBiayaView from '@/views/dashboard/kelas/KelasIndex.vue'
 import CreateKelasView from '@/views/dashboard/kelas/KelasCreate.vue'
@@ -58,11 +58,11 @@ const router = createRouter({
           name: 'profil',
           component: profil,
         },
-        // {
-        //   path: '/settings',
-        //   name: 'settings',
-        //   component: SopView,
-        // },
+        {
+          path: '/settings/personalisasi-sop',
+          name: 'personalisasi-sop',
+          component: SopIndex,
+        },
         // {
         //   path: '/settings',
         //   name: 'settings',

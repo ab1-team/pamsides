@@ -1,0 +1,84 @@
+/* =============================================
+   SOP MODULE STYLES
+   ============================================= */
+
+/* ── Tab Curve Indicator (Desktop) ── */
+.active-tab-curve::before,
+.active-tab-curve::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  width: 25px;
+  height: 25px;
+  background: transparent;
+  pointer-events: none;
+  z-index: 50 !important;
+}
+
+.active-tab-curve::before {
+  top: -25px;
+  border-bottom-right-radius: 25px;
+  box-shadow: 15px 15px 0 15px #f8fafc !important;
+}
+
+.active-tab-curve::after {
+  bottom: -25px;
+  border-top-right-radius: 25px;
+  box-shadow: 15px -15px 0 15px #f8fafc !important;
+}
+
+/* ── Transitions ── */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease, transform 0.3s ease !important;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0 !important;
+  transform: translateY(10px) !important;
+}
+
+/* ── Animations ── */
+
+/* Item Reveal (Mobile Menu) */
+@keyframes item-reveal {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.animate-item-reveal {
+  animation: item-reveal 0.4s cubic-bezier(0.23, 1, 0.32, 1) forwards !important;
+}
+
+/* Reveal Up (Welcome Screen) */
+@keyframes reveal-up {
+  from { 
+    opacity: 0; 
+    transform: translateY(20px); 
+  }
+  to { 
+    opacity: 1; 
+    transform: translateY(0); 
+  }
+}
+
+.animate-reveal-up { 
+  animation: reveal-up 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards !important; 
+}
+
+/* Bounce Subtle (Welcome Screen) */
+@keyframes bounce-subtle {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+
+.animate-bounce-subtle {
+  animation: bounce-subtle 2s infinite ease-in-out !important;
+}
