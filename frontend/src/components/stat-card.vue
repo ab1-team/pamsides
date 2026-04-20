@@ -7,7 +7,15 @@
     <div class="stat-card-content">
       <div class="stat-card-value-container">
         <div class="stat-card-value">{{ value }}</div>
-        <router-link :to="link || '#'" class="stat-card-link">
+        <button
+          v-if="!link"
+          class="stat-card-link bg-transparent border-none p-0 cursor-pointer text-inherit"
+          @click.prevent="$emit('detail-click')"
+        >
+          <span>Lihat Detail</span>
+          <font-awesome-icon icon="arrow-right" class="link-icon" />
+        </button>
+        <router-link v-else :to="link" class="stat-card-link">
           <span>Lihat Detail</span>
           <font-awesome-icon icon="arrow-right" class="link-icon" />
         </router-link>
@@ -30,6 +38,8 @@
 
 <script setup>
 import { computed } from 'vue'
+
+defineEmits(['detail-click'])
 
 const props = defineProps({
   label: String,
