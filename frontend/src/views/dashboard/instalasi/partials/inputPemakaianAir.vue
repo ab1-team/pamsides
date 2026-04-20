@@ -29,7 +29,6 @@
       :visible-pages="visiblePages"
       :total-entries="filteredData.length"
       v-model="searchQuery"
-      :row-clickable="true"
       @prev-page="currentPage--"
       @next-page="currentPage++"
       @go-to-page="currentPage = $event"
