@@ -3,19 +3,19 @@
     :class="
       props.noCard
         ? 'h-full! flex! flex-col!'
-        : 'bg-white! rounded-xl! shadow-[0_10px_15px_-3px_rgba(0,0,0,0.1),0_4px_6px_-2px_rgba(0,0,0,0.05)]! overflow-hidden! transition-all! hover:translate-y-[-2px]! hover:shadow-[0_20px_25px_-5px_rgba(0,0,0,0.1),0_10px_10px_-5px_rgba(0,0,0,0.04)]!'
+        : 'bg-white! rounded-xl! shadow-sm! overflow-hidden! transition-all!'
     "
   >
     <div
       v-if="showToolbar"
-      class="flex! items-center! justify-between! p-4! border-b! border-slate-100!"
+      class="flex! flex-col! sm:flex-row! sm:items-center! justify-between! p-4! border-b! border-slate-100! gap-4!"
     >
       <div class="flex! items-center! gap-3!">
         <span class="text-sm! font-semibold! text-slate-900!">{{ title }}</span>
         <slot name="toolbar-actions"></slot>
       </div>
 
-      <div class="relative!">
+      <div class="relative! w-full! sm:w-auto!">
         <span class="absolute! left-3.5! top-1/2! -translate-y-1/2! text-sm! text-slate-400!">
           🔍
         </span>
@@ -23,7 +23,7 @@
           v-model="searchQuery"
           type="text"
           :placeholder="searchPlaceholder"
-          class="pl-9! pr-4! py-2! bg-slate-50! border! border-slate-200! rounded-lg! text-sm! text-slate-900! w-56! hover:bg-white! hover:border-slate-300! focus:border-cyan-600! focus:bg-white! focus:outline-none! transition-all!"
+          class="pl-9! pr-4! py-2! bg-slate-50! border! border-slate-200! rounded-lg! text-sm! text-slate-900! w-full! sm:w-56! hover:bg-white! hover:border-slate-300! focus:border-cyan-600! focus:bg-white! focus:outline-none! transition-all!"
         />
       </div>
     </div>
@@ -77,16 +77,16 @@
       v-if="showPagination"
       :class="
         props.noCard
-          ? 'flex! items-center! justify-between! p-4! border-t! border-slate-100!'
-          : 'flex! items-center! justify-between! p-4! border-t! border-slate-100! bg-slate-50!'
+          ? 'flex! flex-col! sm:flex-row! sm:items-center! justify-between! p-4! border-t! border-slate-100! gap-4!'
+          : 'flex! flex-col! sm:flex-row! sm:items-center! justify-between! p-4! border-t! border-slate-100! bg-slate-50! gap-4!'
       "
     >
-      <div class="text-sm! text-slate-500! font-medium!">
+      <div class="text-xs md:text-sm! text-slate-500! font-medium! text-center! sm:text-left!">
         Showing {{ showingInfo.start }} to {{ showingInfo.end }} of
         <strong class="font-bold! text-slate-900!">{{ showingInfo.total }}</strong> entries
       </div>
 
-      <div class="flex! items-center! gap-1.5!">
+      <div class="flex! items-center! justify-center! sm:justify-end! gap-1!">
         <BaseButton
           variant="ghost"
           size="sm"
@@ -103,7 +103,7 @@
           variant="ghost"
           size="sm"
           @click="$emit('go-to-page', page)"
-          class="min-w-[32px]! h-8! rounded-lg! border! px-2! shadow-sm!"
+          class="min-w-[32px]! h-8! rounded-lg! border! px-1 md:px-2! shadow-sm!"
           :class="
             page === currentPage
               ? 'bg-blue-50! border-blue-200! text-blue-600! font-bold!'
@@ -126,6 +126,7 @@
     </div>
   </div>
 </template>
+
 <script setup>
 import { computed } from 'vue'
 import BaseButton from './BaseButton.vue'
