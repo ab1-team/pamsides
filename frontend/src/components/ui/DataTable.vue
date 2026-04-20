@@ -53,8 +53,9 @@
             v-else
             v-for="(row, index) in paginatedData"
             :key="row.id || index"
-            class="hover:bg-slate-50! transition-colors! cursor-pointer!"
-            @click="$emit('row-click', row)"
+            class="hover:bg-slate-50! transition-colors!"
+            :class="{ 'cursor-pointer!': props.rowClickable }"
+            @click="props.rowClickable ? emit('row-click', row) : null"
           >
             <td
               v-for="column in columns"
@@ -180,6 +181,10 @@ const props = defineProps({
     default: 0,
   },
   noCard: {
+    type: Boolean,
+    default: false,
+  },
+  rowClickable: {
     type: Boolean,
     default: false,
   },

@@ -8,6 +8,7 @@
             :options="tahunOptions"
             placeholder="Pilih Tahun Anggaran"
             icon="calendar"
+            no-margin
           />
         </div>
         <div class="flex-1 w-full">
@@ -16,6 +17,7 @@
             :options="bulanOptions"
             placeholder="Pilih Bulan Anggaran"
             icon="calendar-check"
+            no-margin
           />
         </div>
         <div class="w-full lg:w-auto">
