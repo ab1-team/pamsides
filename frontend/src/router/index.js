@@ -37,6 +37,7 @@ import tutupBuku from '@/views/dashboard/transaksi/tutupBuku.vue'
 import komisiSPS from '@/views/dashboard/transaksi/komisiSPS.vue'
 import laporan from '@/views/dashboard/pelaporan/PelaporanIndex.vue'
 import profil from '@/views/dashboard/profil/ProfilIndex.vue'
+import inputPemakaianAir from '@/views/dashboard/instalasi/partials/inputPemakaianAir.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -189,6 +190,11 @@ const router = createRouter({
           path: '/instalasi/pemakaian-air',
           name: 'Pemakaian Air',
           component: pemakaianair,
+        },
+        {
+          path: '/instalasi/pemakaian-air/input',
+          name: 'Input Pemakaian Air',
+          component: inputPemakaianAir,
         },
         {
           path: '/instalasi/caterPemakaianAir',
