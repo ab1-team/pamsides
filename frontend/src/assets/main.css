@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import './base.css';
+@import './sop.css';
 
 @layer base, components, utilities;
 
@@ -232,6 +233,17 @@ body {
   font-family: 'DM Sans', 'Segoe UI', sans-serif;
   color: var(--color-text-main);
   -webkit-font-smoothing: antialiased;
+}
+
+/* Hide number input spin buttons */
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type=number] {
+  -moz-appearance: textfield;
 }
 
 #app {
