@@ -4,7 +4,7 @@ import { INSTALASI_STATUS_COLORS, INSTALASI_MENU_LIST } from '@/types/instalasiS
 export function useInstalasiStatus() {
   const activeStatus = ref('permohonan')
   const currentPage = ref(1)
-  const perPage = 10
+  const perPage = ref(10)
   const searchQuery = ref('')
 
   const menuList = INSTALASI_MENU_LIST
@@ -193,7 +193,9 @@ export function useInstalasiStatus() {
     )
   })
 
-  const totalPages = computed(() => Math.max(1, Math.ceil(filteredData.value.length / perPage)))
+  const totalPages = computed(() =>
+    Math.max(1, Math.ceil(filteredData.value.length / perPage.value)),
+  )
 
   const visiblePages = computed(() => {
     const pages = []
@@ -204,8 +206,8 @@ export function useInstalasiStatus() {
   })
 
   const paginatedData = computed(() => {
-    const start = (currentPage.value - 1) * perPage
-    return filteredData.value.slice(start, start + perPage)
+    const start = (currentPage.value - 1) * perPage.value
+    return filteredData.value.slice(start, start + perPage.value)
   })
 
   const prevPage = () => {

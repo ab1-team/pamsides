@@ -76,10 +76,10 @@
 
         <div class="flex-1! min-w-0!">
           <DataTable
-            :data="paginatedData"
+            :data="filteredData"
             :columns="tableColumns"
-            :current-page="currentPage"
-            :per-page="perPage"
+            v-model:current-page="currentPage"
+            v-model:per-page="perPage"
             :total-pages="totalPages"
             :visible-pages="visiblePages"
             :total-entries="filteredData.length"
@@ -87,9 +87,6 @@
             :search-query="searchQuery"
             search-placeholder="Cari customer..."
             v-model="searchQuery"
-            @prev-page="prevPage"
-            @next-page="nextPage"
-            @go-to-page="goToPage"
             :no-card="true"
             :row-clickable="true"
             @row-click="handleRowClick"
@@ -292,7 +289,6 @@ const {
   statusStyle,
   prevPage,
   nextPage,
-  goToPage,
   exportData,
 } = useInstalasiStatus()
 

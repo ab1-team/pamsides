@@ -24,13 +24,11 @@
       :data="filteredData"
       :columns="tableColumns"
       title=""
-      :current-page="currentPage"
+      v-model:current-page="currentPage"
+      v-model:per-page="perPage"
       :total-pages="totalPages"
       :visible-pages="visiblePages"
       v-model="searchQuery"
-      @prev-page="currentPage--"
-      @next-page="currentPage++"
-      @go-to-page="currentPage = $event"
       class="mt-6!"
     >
       <template #column-nama="{ row }">
@@ -121,6 +119,7 @@ import BaseButton from '@/components/ui/BaseButton.vue'
 const {
   searchQuery,
   currentPage,
+  perPage,
   filteredData,
   totalPages,
   visiblePages,

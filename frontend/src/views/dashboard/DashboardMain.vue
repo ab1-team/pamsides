@@ -273,10 +273,10 @@ import statCard from '../../components/stat-card.vue'
 import ContentCard from '../../components/ui/ContentCard.vue'
 
 // Import Detail Components
-import InstalasiDetail from './arsipDashbord/instalasi.vue'
-import PemakaianDetail from './arsipDashbord/pemakaian.vue'
-import TunggakanDetail from './arsipDashbord/tunggakan.vue'
-import TagihanDetail from './arsipDashbord/tagihan.vue'
+import InstalasiDetail from './arsipDashbord/ArsipInstalasi.vue'
+import PemakaianDetail from './arsipDashbord/ArsipPemakaian.vue'
+import TunggakanDetail from './arsipDashbord/ArsipTunggakan.vue'
+import TagihanDetail from './arsipDashbord/ArsipTagihan.vue'
 
 // Modular Modal State
 const activeModal = ref(false)

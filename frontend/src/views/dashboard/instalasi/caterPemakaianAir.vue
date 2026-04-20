@@ -69,6 +69,7 @@
             </div>
 
             <BaseButton
+              to="/instalasi/pemakaian-air/input"
               variant="info-gradient"
               size="lg"
               block
@@ -228,6 +229,7 @@
         <!-- Mobile Buttons -->
         <div class="flex! flex-col! gap-3! mt-4!">
           <BaseButton
+            to="/instalasi/pemakaian-air/input"
             variant="info-gradient"
             size="lg"
             block

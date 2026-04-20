@@ -3,27 +3,27 @@
   <div class="h-full bg-white flex flex-col pt-2 pb-4">
     <DataTable
       v-model="searchQuery"
-      :data="paginatedData"
+      :data="filteredData"
       :columns="columns"
-      title="Detail Arsip Instalasi"
+      title="Detail Arsip Tunggakan"
       searchPlaceholder="Cari nama atau nomor induk..."
-      :current-page="currentPage"
-      :per-page="perPage"
-      :total-pages="totalPages"
-      :visible-pages="visiblePages"
+      v-model:current-page="currentPage"
+      v-model:per-page="perPage"
       :total-entries="filteredData.length"
       :no-card="true"
-      @prev-page="currentPage--"
-      @next-page="currentPage++"
-      @go-to-page="currentPage = $event"
     >
+      <template #column-jumlahTunggakan="{ row }">
+        <span class="font-semibold text-slate-700">
+          {{ formatCurrency(row.jumlahTunggakan) }}
+        </span>
+      </template>
+
       <template #column-status="{ row }">
         <span
           class="px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider rounded-md"
           :class="{
-            'bg-emerald-50 text-emerald-600': row.status === 'Aktif',
-            'bg-amber-50 text-amber-600': row.status === 'Proses',
-            'bg-rose-50 text-rose-600': row.status === 'Batal',
+            'bg-rose-50 text-rose-600 border border-rose-200': row.status === 'Belum Bayar',
+            'bg-amber-50 text-amber-600 border border-amber-200': row.status === 'Sebagian',
           }"
         >
           {{ row.status }}
@@ -37,6 +37,15 @@
 import { ref, computed } from 'vue'
 import DataTable from '../../../components/ui/DataTable.vue'
 
+// Currency formatter
+const formatCurrency = (amount) => {
+  return new Intl.NumberFormat('id-ID', {
+    style: 'currency',
+    currency: 'IDR',
+    minimumFractionDigits: 0,
+  }).format(amount)
+}
+
 // Search and Pagination states
 const searchQuery = ref('')
 const currentPage = ref(1)
@@ -47,7 +56,7 @@ const columns = [
   { key: 'customer', title: 'Customer' },
   { key: 'alamat', title: 'Alamat' },
   { key: 'paket', title: 'Paket' },
-  { key: 'tanggalOrder', title: 'Tanggal Order' },
+  { key: 'jumlahTunggakan', title: 'Jumlah Tunggakan' },
   { key: 'status', title: 'Status' },
 ]
 
@@ -59,8 +68,8 @@ const mockData = ref([
     customer: 'Budi Santoso',
     alamat: 'Jl. Merpati No. 10',
     paket: 'Rumah Tangga A',
-    tanggalOrder: '2024-03-01',
-    status: 'Aktif',
+    jumlahTunggakan: 150000,
+    status: 'Belum Bayar',
   },
   {
     id: 2,
@@ -68,17 +77,8 @@ const mockData = ref([
     customer: 'Siti Aminah',
     alamat: 'Jl. Kenari No. 5',
     paket: 'Rumah Tangga B',
-    tanggalOrder: '2024-03-05',
-    status: 'Proses',
-  },
-  {
-    id: 3,
-    nomorInduk: 'INS-24003',
-    customer: 'Ahmad Dahlan',
-    alamat: 'Jl. Mawar No. 12',
-    paket: 'Niaga',
-    tanggalOrder: '2024-03-10',
-    status: 'Aktif',
+    jumlahTunggakan: 75000,
+    status: 'Sebagian',
   },
   {
     id: 4,
@@ -86,17 +86,8 @@ const mockData = ref([
     customer: 'Dewi Lestari',
     alamat: 'Jl. Melati No. 8',
     paket: 'Rumah Tangga A',
-    tanggalOrder: '2024-03-12',
-    status: 'Batal',
-  },
-  {
-    id: 5,
-    nomorInduk: 'INS-24005',
-    customer: 'Joko Widodo',
-    alamat: 'Jl. Anggrek No. 15',
-    paket: 'Rumah Tangga C',
-    tanggalOrder: '2024-03-15',
-    status: 'Aktif',
+    jumlahTunggakan: 300000,
+    status: 'Belum Bayar',
   },
   {
     id: 6,
@@ -104,21 +95,21 @@ const mockData = ref([
     customer: 'Indah Pertiwi',
     alamat: 'Jl. Tulip No. 20',
     paket: 'Rumah Tangga A',
-    tanggalOrder: '2024-03-18',
-    status: 'Proses',
+    jumlahTunggakan: 150000,
+    status: 'Belum Bayar',
   },
   {
-    id: 7,
-    nomorInduk: 'INS-24007',
-    customer: 'Hendra Gunawan',
-    alamat: 'Jl. Flamboyan No. 3',
-    paket: 'Sosial',
-    tanggalOrder: '2024-03-20',
-    status: 'Aktif',
+    id: 8,
+    nomorInduk: 'INS-24008',
+    customer: 'Rudi Hermawan',
+    alamat: 'Jl. Kamboja No. 9',
+    paket: 'Niaga',
+    jumlahTunggakan: 500000,
+    status: 'Belum Bayar',
   },
 ])
 
-// Computed Properties for filtering and pagination
+// Computed Properties for filtering
 const filteredData = computed(() => {
   const query = searchQuery.value.toLowerCase()
   if (!query) return mockData.value
@@ -127,21 +118,5 @@ const filteredData = computed(() => {
     (item) =>
       item.customer.toLowerCase().includes(query) || item.nomorInduk.toLowerCase().includes(query),
   )
-})
-
-const totalPages = computed(() => Math.ceil(filteredData.value.length / perPage.value))
-
-const paginatedData = computed(() => {
-  const start = (currentPage.value - 1) * perPage.value
-  const end = start + perPage.value
-  return filteredData.value.slice(start, end)
-})
-
-const visiblePages = computed(() => {
-  const pages = []
-  for (let i = 1; i <= totalPages.value; i++) {
-    pages.push(i)
-  }
-  return pages
 })
 </script>

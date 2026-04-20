@@ -96,14 +96,12 @@
     <DataTable
       :data="filteredData"
       :columns="tableColumns"
-      :current-page="currentPage"
+      v-model:current-page="currentPage"
+      v-model:per-page="perPage"
       :total-pages="totalPages"
       :visible-pages="visiblePages"
       :total-entries="tableData.length"
       v-model="searchQuery"
-      @prev-page="currentPage--"
-      @next-page="currentPage++"
-      @go-to-page="currentPage = $event"
       class="mt-6!"
       search-placeholder="Cari..."
     >

@@ -10,8 +10,25 @@
       v-if="showToolbar"
       class="flex! flex-col! sm:flex-row! sm:items-center! justify-between! p-4! border-b! border-slate-100! gap-4!"
     >
-      <div class="flex! items-center! gap-3!">
-        <span class="text-sm! font-semibold! text-slate-900!">{{ title }}</span>
+      <div class="flex! items-center! gap-4!">
+        <span v-if="title" class="text-sm! font-semibold! text-slate-900!">{{ title }}</span>
+
+        <!-- Built-in Show Entries -->
+        <div v-if="showEntries" class="flex! items-center! gap-2! text-xs! text-slate-500!">
+          <span class="whitespace-nowrap!">Show</span>
+          <select
+            :value="effectivePerPage"
+            @change="effectivePerPage = parseInt($event.target.value)"
+            class="bg-white! border! border-slate-200! rounded-md! px-2! py-1! outline-none! focus:border-cyan-600! transition-all! cursor-pointer! text-slate-700!"
+          >
+            <option :value="10">10</option>
+            <option :value="25">25</option>
+            <option :value="50">50</option>
+            <option :value="100">100</option>
+          </select>
+          <span class="whitespace-nowrap!">entries</span>
+        </div>
+
         <slot name="toolbar-actions"></slot>
       </div>
 
@@ -35,7 +52,8 @@
             <th
               v-for="column in columns"
               :key="column.key"
-              class="px-4! py-2.5! text-xs! font-bold! text-slate-300! uppercase! tracking-wider! text-left! whitespace-nowrap!"
+              class="px-4! py-2! text-xs! font-bold! text-slate-300! uppercase! tracking-wider! text-left! whitespace-nowrap!"
+              :class="column.thClass"
             >
               {{ column.title }}
             </th>
@@ -60,7 +78,7 @@
             <td
               v-for="column in columns"
               :key="column.key"
-              class="px-4! py-2! border-b! border-slate-100! align-middle!"
+              class="px-4! py-1.5! border-b! border-slate-100! align-middle!"
               :class="column.tdClass"
             >
               <slot :name="`column-${column.key}`" :row="row" :column="column" :index="index">
@@ -90,22 +108,28 @@
         <BaseButton
           variant="ghost"
           size="sm"
-          :disabled="currentPage === 1"
-          @click="$emit('prev-page')"
+          :disabled="effectiveCurrentPage === 1"
+          @click="
+            effectiveCurrentPage--
+            $emit('prev-page')
+          "
           class="w-8! h-8! p-0! rounded-lg! border! border-slate-200! bg-white!"
         >
           ‹
         </BaseButton>
 
         <BaseButton
-          v-for="page in visiblePages"
+          v-for="page in effectiveVisiblePages"
           :key="page"
           variant="ghost"
           size="sm"
-          @click="$emit('go-to-page', page)"
+          @click="
+            effectiveCurrentPage = page
+            $emit('go-to-page', page)
+          "
           class="min-w-[32px]! h-8! rounded-lg! border! px-1 md:px-2! shadow-sm!"
           :class="
-            page === currentPage
+            page === effectiveCurrentPage
               ? 'bg-blue-50! border-blue-200! text-blue-600! font-bold!'
               : 'border-slate-200! bg-white! text-slate-600!'
           "
@@ -116,8 +140,11 @@
         <BaseButton
           variant="ghost"
           size="sm"
-          :disabled="currentPage === totalPages"
-          @click="$emit('next-page')"
+          :disabled="effectiveCurrentPage === effectiveTotalPages"
+          @click="
+            effectiveCurrentPage++
+            $emit('next-page')
+          "
           class="w-8! h-8! p-0! rounded-lg! border! border-slate-200! bg-white!"
         >
           ›
@@ -128,7 +155,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { ref, computed } from 'vue'
 import BaseButton from './BaseButton.vue'
 
 const props = defineProps({
@@ -162,19 +189,19 @@ const props = defineProps({
   },
   currentPage: {
     type: Number,
-    default: 1,
+    default: undefined,
   },
   perPage: {
     type: Number,
-    default: 10,
+    default: undefined,
   },
   totalPages: {
     type: Number,
-    default: 1,
+    default: undefined,
   },
   visiblePages: {
     type: Array,
-    default: () => [],
+    default: undefined,
   },
   totalEntries: {
     type: Number,
@@ -188,9 +215,72 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  showEntries: {
+    type: Boolean,
+    default: true,
+  },
 })
 
-const emit = defineEmits(['update:modelValue', 'prev-page', 'next-page', 'go-to-page', 'row-click'])
+const emit = defineEmits([
+  'update:modelValue',
+  'prev-page',
+  'next-page',
+  'go-to-page',
+  'row-click',
+  'update:currentPage',
+  'update:perPage',
+  'update:per-page',
+])
+
+// Internal state for when parent doesn't provide v-model
+const internalCurrentPage = ref(1)
+const internalPerPage = ref(10)
+
+const effectiveCurrentPage = computed({
+  get: () => (props.currentPage !== undefined ? props.currentPage : internalCurrentPage.value),
+  set: (val) => {
+    if (props.currentPage !== undefined) {
+      emit('update:currentPage', val)
+    } else {
+      internalCurrentPage.value = val
+    }
+  },
+})
+
+const effectivePerPage = computed({
+  get: () => (props.perPage !== undefined ? props.perPage : internalPerPage.value),
+  set: (val) => {
+    if (props.perPage !== undefined) {
+      emit('update:perPage', val)
+      emit('update:per-page', val)
+    } else {
+      internalPerPage.value = val
+      internalCurrentPage.value = 1 // Reset to page 1 when perPage changes
+    }
+  },
+})
+
+const effectiveTotalPages = computed(() => {
+  if (props.totalPages !== undefined) return props.totalPages
+  return Math.max(1, Math.ceil(props.totalEntries / effectivePerPage.value))
+})
+
+const effectiveVisiblePages = computed(() => {
+  if (props.visiblePages !== undefined) return props.visiblePages
+  const pages = []
+  const maxPages = 5
+  let start = Math.max(1, effectiveCurrentPage.value - 2)
+  let end = Math.min(effectiveTotalPages.value, start + maxPages - 1)
+
+  if (end - start < maxPages - 1) {
+    start = Math.max(1, end - maxPages + 1)
+  }
+
+  for (let i = start; i <= end; i++) {
+    pages.push(i)
+  }
+  return pages
+})
 
 const searchQuery = computed({
   get: () => props.modelValue,
@@ -198,14 +288,15 @@ const searchQuery = computed({
 })
 
 const paginatedData = computed(() => {
-  const start = (props.currentPage - 1) * props.perPage
-  const end = start + props.perPage
+  const start = (effectiveCurrentPage.value - 1) * effectivePerPage.value
+  const end = start + effectivePerPage.value
   return props.data.slice(start, end)
 })
 
 const showingInfo = computed(() => {
-  const start = props.totalEntries === 0 ? 0 : (props.currentPage - 1) * props.perPage + 1
-  const end = Math.min(props.currentPage * props.perPage, props.totalEntries)
+  const start =
+    props.totalEntries === 0 ? 0 : (effectiveCurrentPage.value - 1) * effectivePerPage.value + 1
+  const end = Math.min(effectiveCurrentPage.value * effectivePerPage.value, props.totalEntries)
   return {
     start,
     end,

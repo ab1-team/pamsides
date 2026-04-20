@@ -25,17 +25,14 @@
       <DataTable
         :data="filteredData"
         :columns="tableColumns"
-        :current-page="currentPage"
-        :per-page="perPage"
+        v-model:current-page="currentPage"
+        v-model:per-page="perPage"
         :total-pages="totalPages"
         :visible-pages="visiblePages"
         :total-entries="filteredData.length"
         :show-toolbar="true"
         v-model="searchQuery"
         search-placeholder="Cari nama kelas..."
-        @prev-page="prevPage"
-        @next-page="nextPage"
-        @go-to-page="goToPage"
         :no-card="true"
       >
         <template #toolbar-actions>
@@ -127,7 +124,7 @@ const tableColumns = [
 // Search and Pagination State
 const searchQuery = ref('')
 const currentPage = ref(1)
-const perPage = 10
+const perPage = ref(10)
 
 // Mock Data
 const kelasList = ref([
@@ -148,7 +145,7 @@ const filteredData = computed(() => {
 })
 
 // Pagination Calculations
-const totalPages = computed(() => Math.ceil(filteredData.value.length / perPage))
+const totalPages = computed(() => Math.ceil(filteredData.value.length / perPage.value))
 
 const visiblePages = computed(() => {
   const pages = []
@@ -157,19 +154,6 @@ const visiblePages = computed(() => {
   }
   return pages
 })
-
-// Handlers
-const prevPage = () => {
-  if (currentPage.value > 1) currentPage.value--
-}
-
-const nextPage = () => {
-  if (currentPage.value < totalPages.value) currentPage.value++
-}
-
-const goToPage = (page) => {
-  currentPage.value = page
-}
 
 const formatCurrency = (val) => {
   return useCurrencyFormat(val)
