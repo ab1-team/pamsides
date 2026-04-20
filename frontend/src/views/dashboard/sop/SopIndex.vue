@@ -9,16 +9,16 @@
         <ContentCard
           variant="minimal"
           padding="none"
-          class="w-54! xl:w-62! flex-shrink-0! bg-slate-900! border-r! border-slate-800! !rounded-tr-none !rounded-br-none !overflow-visible relative! z-20!"
+          class="w-54! xl:w-62! flex-shrink-0! bg-slate-900! border-r! border-slate-800! rounded-tr-none! rounded-br-none! overflow-visible! relative! z-20!"
         >
           <div class="flex flex-col gap-1! py-6!">
             <p
-              class="text-[10px]! font-bold! text-slate-500! uppercase! tracking-widest! mb-3! px-6!"
+              class="text-[10px]! font-bold! text-slate-500! uppercase! tracking-widest! mb-3! pl-5! pr-4!"
             >
               Menu Pengaturan
             </p>
 
-            <div class="flex flex-col gap-1! pl-4! !overflow-visible">
+            <div class="flex flex-col gap-1! pl-0! overflow-visible!">
               <div
                 v-for="menu in menuList"
                 :key="menu.key"
@@ -28,18 +28,16 @@
                 <BaseButton
                   @click="activeSection = menu.key"
                   variant="ghost"
-                  class="w-full! px-5! py-3.5! rounded-l-full! rounded-r-none! transition-all! duration-300! relative!"
+                  class="w-full! justify-start! pl-5! pr-4! py-3.5! rounded-l-full! rounded-r-none! transition-all! duration-300! relative!"
                   :class="[
                     activeSection === menu.key
-                      ? 'bg-[#f8fafc]! text-slate-900! font-bold! z-10! translate-x-[1px]! !ring-0! !ring-offset-0! focus:!ring-0! focus:!ring-offset-0! !outline-none! !border-r-0! !shadow-none!'
+                      ? 'bg-[#f8fafc]! text-slate-900! font-bold! z-10! translate-x-[1px]! ring-0! ring-offset-0! focus:ring-0! focus:ring-offset-0! outline-none! border-r-0! shadow-none!'
                       : 'text-slate-400! hover:text-white! hover:bg-white/10!',
                   ]"
                 >
                   <span class="w-full! flex! items-center! justify-between! gap-3!">
                     <span class="flex items-center gap-3!">
-                      <span
-                        class="text-lg! leading-none! shrink-0! min-w-[20px]! flex! justify-center!"
-                      >
+                      <span class="text-lg! leading-none! shrink-0! w-6! flex! justify-start!">
                         <font-awesome-icon :icon="menu.icon" />
                       </span>
                       <span class="text-sm! font-bold! text-left! truncate!">{{ menu.label }}</span>

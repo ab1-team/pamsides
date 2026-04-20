@@ -16,9 +16,9 @@
               </div>
               <div class="flex-1!">
                 <h4 class="text-xs! font-black! text-slate-800! leading-tight!">
-                  Toleransi Menunggak
+                  Batas Tagihan Bulanan
                 </h4>
-                <p class="text-[10px]! text-slate-400!">Batas bayar bulanan.</p>
+                <p class="text-[10px]! text-slate-400!">Tanggal jatuh tempo.</p>
               </div>
             </div>
             <BaseInput
@@ -39,16 +39,16 @@
               <div
                 class="w-8! h-8! rounded-lg! bg-indigo-500! text-white! flex! items-center! justify-center! text-xs! shadow-lg! shadow-indigo-100!"
               >
-                <font-awesome-icon icon="redo-alt" />
+                <font-awesome-icon icon="file-invoice-dollar" />
               </div>
               <div class="flex-1!">
                 <h4 class="text-xs! font-black! text-slate-800! leading-tight!">Biaya Aktivasi</h4>
-                <p class="text-[10px]! text-slate-400!">Biaya aktivasi.</p>
+                <p class="text-[10px]! text-slate-400!">Biaya per aktif kembali.</p>
               </div>
             </div>
             <MaksMoneyInput
               v-model="form.biayaAktivasi"
-              placeholder="Rp 0"
+              placeholder="0"
               :no-margin="true"
               class="w-full!"
             />
@@ -63,13 +63,13 @@
               <div
                 class="w-8! h-8! rounded-lg! bg-rose-500! text-white! flex! items-center! justify-center! text-xs! shadow-lg! shadow-rose-100!"
               >
-                <font-awesome-icon icon="hourglass-half" />
+                <font-awesome-icon icon="history" />
               </div>
               <div class="flex-1!">
                 <h4 class="text-xs! font-black! text-slate-800! leading-tight!">
-                  Batas Tagihan Bulanan
+                  Toleransi Menunggak
                 </h4>
-                <p class="text-[10px]! text-slate-400!">Setiap tanggal.</p>
+                <p class="text-[10px]! text-slate-400!">Batas bulan tunggakan.</p>
               </div>
             </div>
             <BaseInput

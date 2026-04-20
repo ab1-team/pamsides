@@ -1,8 +1,8 @@
 <template>
   <div class="currency-input" :class="{ 'mb-2': !noMargin }">
     <label v-if="label" class="currency-label">{{ label }}</label>
-    <div class="input-wrapper">
-      <span class="currency-prefix">Rp</span>
+    <div class="currency-input-wrapper">
+      <span class="currency-prefix">Rp.</span>
       <InputNumber
         v-model="internalValue"
         :placeholder="placeholder"
@@ -77,7 +77,7 @@ function handleFocus() {}
   @apply block text-sm font-normal text-slate-500 mb-1.5 ml-1;
 }
 
-.input-wrapper {
+.currency-input-wrapper {
   @apply relative flex items-center;
 }
 
@@ -90,7 +90,7 @@ function handleFocus() {}
 }
 
 :deep(.p-inputnumber-input) {
-  @apply block w-full pl-10 pr-4 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-700 transition-all duration-300!;
+  @apply block w-full pl-10 pr-4 bg-slate-50 border border-slate-200 rounded-xl text-sm font-normal! text-slate-700 transition-all duration-300!;
   height: v-bind('size === "sm" ? "2.25rem" : "2.75rem"');
   @apply placeholder:text-slate-400 placeholder:font-normal!;
   @apply hover:border-blue-400 hover:bg-white hover:shadow-md hover:shadow-blue-500/5!;

@@ -41,7 +41,7 @@
         >
           <div class="flex flex-col gap-2.5!">
             <p
-              class="text-[10px]! font-bold! text-slate-400! uppercase! tracking-widest! mb-2! px-1!"
+              class="text-[10px]! font-bold! text-slate-400! uppercase! tracking-widest! mb-2! pl-5! pr-4!"
             >
               Filter Status
             </p>
@@ -51,24 +51,28 @@
               :key="menu.key"
               @click="activeStatus = menu.key"
               :variant="activeStatus === menu.key ? menu.variant : 'ghost'"
-              class="w-full! px-4! py-3! rounded-full! transition-all! duration-300!"
+              class="w-full! justify-start! pl-5! pr-5! py-3! rounded-full! transition-all! duration-300!"
             >
               <span class="w-full! flex! items-center! justify-between! gap-3!">
                 <span class="flex items-center gap-3!">
-                  <span class="text-lg! leading-none! shrink-0!">{{ menu.icon }}</span>
+                  <span class="text-lg! leading-none! shrink-0! w-6! flex! justify-start!">
+                    {{ menu.icon }}
+                  </span>
                   <span class="text-sm! font-medium! text-left! truncate!">{{ menu.label }}</span>
                 </span>
 
-                <span
-                  :class="[
-                    'text-xs! font-bold! px-2! py-0.5! rounded-full! min-w-[22px]! text-center! shrink-0! transition-colors! duration-300!',
-                    activeStatus === menu.key
-                      ? 'bg-white/25! text-white!'
-                      : 'bg-slate-200! text-slate-500!',
-                  ]"
-                >
-                  {{ dataMap[menu.key]?.length || 0 }}
-                </span>
+                <div class="ml-auto! flex! justify-end! items-center!">
+                  <span
+                    :class="[
+                      'text-xs! font-bold! px-2! py-0.5! rounded-full! min-w-[22px]! text-center! shrink-0! transition-colors! duration-300!',
+                      activeStatus === menu.key
+                        ? 'bg-white/25! text-white!'
+                        : 'bg-slate-200! text-slate-500!',
+                    ]"
+                  >
+                    {{ dataMap[menu.key]?.length || 0 }}
+                  </span>
+                </div>
               </span>
             </BaseButton>
           </div>
@@ -91,6 +95,7 @@
             @next-page="nextPage"
             @go-to-page="goToPage"
             :no-card="true"
+            :show-entries="false"
             :row-clickable="true"
             @row-click="handleRowClick"
           >

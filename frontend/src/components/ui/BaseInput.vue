@@ -5,9 +5,10 @@
     </label>
 
     <div class="base-input__wrapper">
-      <!-- Prefix Icon -->
-      <div v-if="prefixIcon" class="base-input__prefix">
-        <font-awesome-icon :icon="prefixIcon" />
+      <!-- Prefix Icon/Text -->
+      <div v-if="prefixIcon || prefixText" class="base-input__prefix">
+        <span v-if="prefixText">{{ prefixText }}</span>
+        <font-awesome-icon v-else :icon="prefixIcon" />
       </div>
 
       <input
@@ -84,6 +85,10 @@ const props = defineProps({
     type: String,
     default: null,
   },
+  prefixText: {
+    type: String,
+    default: null,
+  },
   error: {
     type: String,
     default: '',
@@ -139,7 +144,7 @@ const inputClasses = computed(() => {
       'base-input__field--error': props.error,
       'base-input__field--disabled': props.disabled,
       'base-input__field--readonly': props.readonly,
-      'base-input__field--has-prefix': props.prefixIcon,
+      'base-input__field--has-prefix': props.prefixIcon || props.prefixText,
     },
   ]
 })
