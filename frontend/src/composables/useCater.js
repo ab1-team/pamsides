@@ -4,7 +4,7 @@ export function useCater() {
   // Filter state
   const searchQuery = ref('')
   const currentPage = ref(1)
-  const perPage = 10
+  const perPage = ref(10)
 
   // Sample data for Cater
   const tableData = ref([
@@ -58,7 +58,9 @@ export function useCater() {
     )
   })
 
-  const totalPages = computed(() => Math.max(1, Math.ceil(filteredData.value.length / perPage)))
+  const totalPages = computed(() =>
+    Math.max(1, Math.ceil(filteredData.value.length / perPage.value)),
+  )
   const visiblePages = computed(() => {
     const pages = []
     for (let i = 1; i <= totalPages.value; i++) {

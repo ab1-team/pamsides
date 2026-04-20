@@ -1,6 +1,8 @@
 import './assets/main.css'
 import './assets/datepicker.css'
 import './assets/stat-card.css'
+import './assets/ui-base.css'
+import './assets/ui-modals.css'
 
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
@@ -8,7 +10,6 @@ import App from './App.vue'
 import router from './router'
 
 import VueSweetalert2 from 'vue-sweetalert2'
-import Swal from 'sweetalert2'
 import 'sweetalert2/dist/sweetalert2.min.css'
 
 import PrimeVue from 'primevue/config'
@@ -100,7 +101,6 @@ import {
   faShieldAlt,
   faCloud,
   faServer,
-  faChevronLeft,
   faGlobe,
   faEnvelope,
   faPhone,
@@ -193,7 +193,6 @@ library.add(
   faShieldAlt,
   faCloud,
   faServer,
-  faChevronLeft,
   faGlobe,
   faEnvelope,
   faPhone,
@@ -202,12 +201,7 @@ library.add(
   faSyncAlt,
 )
 
-const options = {
-  confirmButtonColor: '#ff0000',
-  cancelButtonColor: '#ff7674',
-}
-
-export const MySwal = Swal.mixin(options)
+export { MySwal } from './utils/swal'
 
 const app = createApp(App)
 const pinia = createPinia()

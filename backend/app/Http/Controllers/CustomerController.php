@@ -15,10 +15,12 @@ class CustomerController extends Controller
         $query = Customer::with('user');
 
         if ($request->search) {
-            $query->whereHas('user', function ($q) use ($request) {
-                $q->where('name', 'like', '%' . $request->search . '%');
-            })
-            ->orWhere('customer_code', 'like', '%' . $request->search . '%');
+            $query->where(function ($q) use ($request) {
+                $q->whereHas('user', function ($q2) use ($request) {
+                    $q2->where('name', 'like', '%' . $request->search . '%');
+                })
+                ->orWhere('customer_code', 'like', '%' . $request->search . '%');
+            });
         }
 
         return response()->json([

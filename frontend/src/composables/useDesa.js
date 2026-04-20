@@ -4,7 +4,7 @@ export function useDesa() {
   // Filter state
   const searchQuery = ref('')
   const currentPage = ref(1)
-  const perPage = 10
+  const perPage = ref(10)
 
   // Sample data for Desa
   const tableData = ref([
@@ -63,7 +63,9 @@ export function useDesa() {
     )
   })
 
-  const totalPages = computed(() => Math.max(1, Math.ceil(filteredData.value.length / perPage)))
+  const totalPages = computed(() =>
+    Math.max(1, Math.ceil(filteredData.value.length / perPage.value)),
+  )
   const visiblePages = computed(() => {
     const pages = []
     for (let i = 1; i <= totalPages.value; i++) {
