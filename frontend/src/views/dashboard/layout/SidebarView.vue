@@ -217,7 +217,7 @@
                 <span>Create Caters</span>
               </router-link>
               <router-link
-                to="/data/caters"
+                to="/data-cater"
                 class="sidebar-submenu-item nested-item"
                 @click="handleMenuClick"
               >
@@ -405,6 +405,7 @@ const settingsOpen = ref(false)
 const BasisDataOpen = ref(false)
 const pelangganOpen = ref(false)
 const desaOpen = ref(false)
+const masterDataOpen = ref(false)
 const instalasiOpen = ref(false)
 const transaksiOpen = ref(false)
 
@@ -429,6 +430,12 @@ function togglePelanggan() {
 function toggleDesa() {
   if (props.sidebarOpen) {
     desaOpen.value = !desaOpen.value
+  }
+}
+
+function toggleMasterData() {
+  if (props.sidebarOpen) {
+    masterDataOpen.value = !masterDataOpen.value
   }
 }
 
@@ -458,6 +465,7 @@ watch(
       BasisDataOpen.value = false
       pelangganOpen.value = false
       desaOpen.value = false
+      masterDataOpen.value = false
       instalasiOpen.value = false
       transaksiOpen.value = false
     }

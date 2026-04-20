@@ -10,6 +10,9 @@ import EditKelasView from '@/views/dashboard/kelas/KelasEdit.vue'
 // import cretaepelangganView from '@/views/dashboard/basis-data/pelanggan/CreateView.vue'
 // import editpelangganView from '@/views/dashboard/basis-data/pelanggan/EditView.vue'
 import pelangganView from '@/views/dashboard/pelanggan/PelangganIndex.vue'
+// import createdesaView from '@/views/dashboard/basis-data/desa/CreateView.vue'
+// import editdesaView from '@/views/dashboard/basis-data/desa/EditView.vue'
+import caterView from '@/views/dashboard/cater/CaterIndex.vue'
 import desaView from '@/views/dashboard/desa/DesaIndex.vue'
 // import desaView from '@/views/dashboard/basis-data/desa/IndexView.vue'
 // import createcaterView from '@/views/dashboard/basis-data/cater/CreateView.vue'
@@ -96,6 +99,26 @@ const router = createRouter({
           path: '/data-pelanggan',
           name: 'Data Pelanggan',
           component: pelangganView,
+        },
+        // {
+        //   path: '/BasisData',
+        //   name: 'BasisData',
+        //   component: createdesaView,
+        // },
+        // {
+        //   path: '/BasisData',
+        //   name: 'BasisData',
+        //   component: editdesaView,
+        // },
+        // {
+        //   path: '/BasisData',
+        //   name: 'BasisData',
+        //   component: desaView,
+        // },
+        {
+          path: '/data-cater',
+          name: 'Data Cater',
+          component: caterView,
         },
         {
           path: '/data-desa',
