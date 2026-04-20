@@ -6,7 +6,7 @@ export function useRetribusiSampah() {
   const filter = ref({ tahun: '', bulan: '', cater: '' })
   const searchQuery = ref('')
   const currentPage = ref(1)
-  const perPage = 10
+  const perPage = ref(10)
 
   // Options
   const tahunOptions = computed(() => {
@@ -78,7 +78,7 @@ export function useRetribusiSampah() {
     )
   })
 
-  const totalPages = computed(() => Math.max(1, Math.ceil(tableData.value.length / perPage)))
+  const totalPages = computed(() => Math.max(1, Math.ceil(tableData.value.length / perPage.value)))
   const visiblePages = computed(() => {
     const pages = []
     for (let i = 1; i <= totalPages.value; i++) {

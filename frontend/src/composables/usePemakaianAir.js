@@ -6,7 +6,7 @@ export function usePemakaianAir() {
   const filter = ref({ tahun: '', bulan: '', cater: '' })
   const searchQuery = ref('')
   const currentPage = ref(1)
-  const perPage = 10
+  const perPage = ref(10)
 
   // Options
   const tahunOptions = computed(() => {
@@ -76,7 +76,9 @@ export function usePemakaianAir() {
     return tableData.value.filter((r) => r.nama.toLowerCase().includes(q) || r.id.includes(q))
   })
 
-  const totalPages = computed(() => Math.max(1, Math.ceil(1248 / perPage)))
+  const totalPages = computed(() =>
+    Math.max(1, Math.ceil(filteredData.value.length / perPage.value)),
+  )
   const visiblePages = computed(() => {
     const pages = []
     for (let i = 1; i <= Math.min(3, totalPages.value); i++) {
