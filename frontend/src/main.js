@@ -17,7 +17,6 @@ import Button from 'primevue/button'
 import DatePicker from 'primevue/datepicker'
 import InputNumber from 'primevue/inputnumber'
 
-// Font Awesome
 import { library } from '@fortawesome/fontawesome-svg-core'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import {
@@ -101,7 +100,6 @@ import {
   faShieldAlt,
   faCloud,
   faServer,
-  faChevronRight,
   faChevronLeft,
   faGlobe,
   faEnvelope,
@@ -113,7 +111,6 @@ import {
 
 import { faWhatsapp } from '@fortawesome/free-brands-svg-icons'
 
-// Tambahkan icons ke library
 library.add(
   faFilter,
   faCalendar,
@@ -193,12 +190,9 @@ library.add(
   faFileImage,
   faWeightHanging,
   faDroplet,
-  faTint,
-  faShieldHalved,
   faShieldAlt,
   faCloud,
   faServer,
-  faChevronRight,
   faChevronLeft,
   faGlobe,
   faEnvelope,
@@ -215,10 +209,7 @@ const options = {
 
 export const MySwal = Swal.mixin(options)
 
-// Create app instance
 const app = createApp(App)
-
-// Create Pinia instance
 const pinia = createPinia()
 
 app.use(pinia)
@@ -230,12 +221,9 @@ app.use(PrimeVue, {
   },
 })
 
-// Register PrimeVue components
 app.component('PrimeButton', Button)
 app.component('DatePicker', DatePicker)
 app.component('InputNumber', InputNumber)
-
-// Register Font Awesome component
 app.component('font-awesome-icon', FontAwesomeIcon)
 
 app.mount('#app')
