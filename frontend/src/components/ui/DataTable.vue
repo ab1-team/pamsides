@@ -111,7 +111,7 @@
           :disabled="effectiveCurrentPage === 1"
           @click="
             effectiveCurrentPage--
-            $emit('prev-page')
+            emit('prev-page')
           "
           class="w-8! h-8! p-0! rounded-lg! border! border-slate-200! bg-white!"
         >
@@ -125,7 +125,7 @@
           size="sm"
           @click="
             effectiveCurrentPage = page
-            $emit('go-to-page', page)
+            emit('go-to-page', page)
           "
           class="min-w-[32px]! h-8! rounded-lg! border! px-1 md:px-2! shadow-sm!"
           :class="
@@ -143,7 +143,7 @@
           :disabled="effectiveCurrentPage === effectiveTotalPages"
           @click="
             effectiveCurrentPage++
-            $emit('next-page')
+            emit('next-page')
           "
           class="w-8! h-8! p-0! rounded-lg! border! border-slate-200! bg-white!"
         >
