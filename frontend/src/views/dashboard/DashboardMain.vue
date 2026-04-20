@@ -1,19 +1,34 @@
 <template>
   <div class="dashboard-container">
     <div class="grid! items-start! grid-cols-1! sm:grid-cols-2! lg:grid-cols-4! gap-4! mb-8!">
-      <statCard label="INSTALASI" value="100">
+      <statCard
+        label="INSTALASI"
+        value="100"
+        :link="null"
+        @detail-click="openDetailModal('instalasi')"
+      >
         <font-awesome-icon icon="home" />
       </statCard>
 
-      <statCard label="PEMAKAIAN" value="100">
+      <statCard
+        label="PEMAKAIAN"
+        value="100"
+        :link="null"
+        @detail-click="openDetailModal('pemakaian')"
+      >
         <font-awesome-icon icon="tint" />
       </statCard>
 
-      <statCard label="TUNGGAKAN" value="100">
+      <statCard
+        label="TUNGGAKAN"
+        value="100"
+        :link="null"
+        @detail-click="openDetailModal('tunggakan')"
+      >
         <font-awesome-icon icon="balance-scale" />
       </statCard>
 
-      <statCard label="TAGIHAN" value="100">
+      <statCard label="TAGIHAN" value="100" :link="null" @detail-click="openDetailModal('tagihan')">
         <font-awesome-icon icon="file-invoice" />
       </statCard>
     </div>
@@ -203,13 +218,126 @@
         </ContentCard>
       </div>
     </div>
+
+    <!-- Modal Dialog for Details (Teleported to body so it covers sidebar/topnav) -->
+    <Teleport to="body">
+      <div
+        v-if="activeModal"
+        class="fixed! inset-0! z-[9999]! flex! items-center! justify-center! bg-slate-900/50! backdrop-blur-md! p-4! sm:p-6! md:p-8!"
+        @click.self="closeDetailModal"
+      >
+        <div
+          class="bg-white! w-full! h-full! max-w-7xl! rounded-2xl! shadow-2xl! flex! flex-col! overflow-hidden! animate-[fade-in-up_0.3s_ease-out_forwards]!"
+        >
+          <!-- Modal Header -->
+          <div class="flex! items-center! justify-between! px-6! py-4! border-b! border-slate-100!">
+            <div class="flex! items-center! gap-3!">
+              <div
+                class="w-8! h-8! rounded-full! bg-slate-700! flex! items-center! justify-center! text-white!"
+              >
+                <font-awesome-icon :icon="modalIcon" class="text-sm!" />
+              </div>
+              <h3 class="text-base! font-semibold! text-slate-800!">Detail {{ modalTitle }}</h3>
+            </div>
+            <button
+              @click="closeDetailModal"
+              class="text-slate-400! hover:text-slate-600! transition-colors!"
+            >
+              <font-awesome-icon icon="times" class="text-lg!" />
+            </button>
+          </div>
+
+          <!-- Modal Body -->
+          <div class="flex-1! overflow-y-auto! relative! bg-white!">
+            <component :is="activeComponent" />
+          </div>
+
+          <!-- Modal Footer -->
+          <div class="px-6! py-4! border-t! border-slate-100! flex! justify-end! bg-white!">
+            <button
+              @click="closeDetailModal"
+              class="px-6! py-2! text-sm! font-medium! text-slate-700! bg-white! border! border-slate-300! rounded-lg! hover:bg-slate-50! transition-colors!"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      </div>
+    </Teleport>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import statCard from '../../components/stat-card.vue'
 import ContentCard from '../../components/ui/ContentCard.vue'
+
+// Import Detail Components
+import InstalasiDetail from './arsipDashbord/instalasi.vue'
+import PemakaianDetail from './arsipDashbord/pemakaian.vue'
+import TunggakanDetail from './arsipDashbord/tunggakan.vue'
+import TagihanDetail from './arsipDashbord/tagihan.vue'
+
+// Modular Modal State
+const activeModal = ref(false)
+const currentDetailType = ref('')
+
+const openDetailModal = (type) => {
+  currentDetailType.value = type
+  activeModal.value = true
+}
+
+const closeDetailModal = () => {
+  activeModal.value = false
+  setTimeout(() => {
+    currentDetailType.value = ''
+  }, 300) // Allow exit animation to complete before unmounting Component
+}
+
+const activeComponent = computed(() => {
+  switch (currentDetailType.value) {
+    case 'instalasi':
+      return InstalasiDetail
+    case 'pemakaian':
+      return PemakaianDetail
+    case 'tunggakan':
+      return TunggakanDetail
+    case 'tagihan':
+      return TagihanDetail
+    default:
+      return null
+  }
+})
+
+const modalTitle = computed(() => {
+  switch (currentDetailType.value) {
+    case 'instalasi':
+      return 'Instalasi'
+    case 'pemakaian':
+      return 'Pemakaian'
+    case 'tunggakan':
+      return 'Tunggakan'
+    case 'tagihan':
+      return 'Tagihan Khusus'
+    default:
+      return 'Detail'
+  }
+})
+
+const modalIcon = computed(() => {
+  switch (currentDetailType.value) {
+    case 'instalasi':
+      return 'home'
+    case 'pemakaian':
+      return 'tint'
+    case 'tunggakan':
+      return 'balance-scale'
+    case 'tagihan':
+      return 'file-invoice'
+    default:
+      return 'info-circle'
+  }
+})
 
 const financialData = ref({
   pendapatan: 2300000,
@@ -241,4 +369,15 @@ onMounted(() => {
 })
 </script>
 
-<style scoped></style>
+<style scoped>
+@keyframes fade-in-up {
+  0% {
+    opacity: 0;
+    transform: translateY(10px) scale(0.98);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+</style>
