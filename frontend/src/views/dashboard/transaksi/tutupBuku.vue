@@ -4,7 +4,12 @@
       <!-- ... existing content card 1 ... -->
       <div class="flex! flex-col! lg:flex-row! lg:items-end! lg:justify-between! gap-4!">
         <div class="w-full! lg:flex-1!">
-          <SelectSearch v-model="selectedTahun" :options="tahunOptions" placeholder="Pilih Tahun" />
+          <SelectSearch
+            v-model="selectedTahun"
+            :options="tahunOptions"
+            placeholder="Pilih Tahun"
+            no-margin
+          />
         </div>
         <div class="flex! flex-col! sm:flex-row! gap-3! w-full! lg:w-auto!">
           <BaseButton
