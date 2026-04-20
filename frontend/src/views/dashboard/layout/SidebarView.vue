@@ -173,7 +173,7 @@
                 <span>Create Desa</span>
               </router-link>
               <router-link
-                to="/data/desa"
+                to="/data-desa"
                 class="sidebar-submenu-item nested-item"
                 @click="handleMenuClick"
               >
