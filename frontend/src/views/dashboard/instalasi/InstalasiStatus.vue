@@ -91,6 +91,8 @@
             @next-page="nextPage"
             @go-to-page="goToPage"
             :no-card="true"
+            :row-clickable="true"
+            @row-click="handleRowClick"
           >
             <template #toolbar-actions>
               <h2 class="text-base! font-bold! text-slate-800!">
@@ -134,6 +136,19 @@
               >
                 {{ row.status }}
               </span>
+            </template>
+
+            <template #column-action="{}">
+              <div class="flex! items-center! justify-center!">
+                <span
+                  class="w-7! h-7! rounded-full! bg-slate-100! hover:bg-indigo-100! flex! items-center! justify-center! transition-colors!"
+                >
+                  <font-awesome-icon
+                    icon="chevron-right"
+                    class="text-xs! text-slate-400! group-hover:text-indigo-500!"
+                  />
+                </span>
+              </div>
             </template>
           </DataTable>
         </div>
@@ -194,7 +209,8 @@
           <div
             v-for="row in paginatedData"
             :key="row.id"
-            class="flex! items-center! gap-3! px-4! py-3! hover:bg-slate-50/80! transition-colors!"
+            @click="handleRowClick(row)"
+            class="flex! items-center! gap-3! px-4! py-3! hover:bg-slate-50/80! transition-colors! cursor-pointer!"
           >
             <div
               class="w-10! h-10! rounded-full! flex! items-center! justify-center! text-white! text-sm! font-bold! shrink-0! shadow-sm!"
@@ -256,6 +272,7 @@
 
 <script setup>
 import { useInstalasiStatus } from '@/composables/useInstalasiStatus'
+import { useRouter } from 'vue-router'
 import DataTable from '@/components/ui/DataTable.vue'
 import ContentCard from '@/components/ui/ContentCard.vue'
 import BaseButton from '@/components/ui/BaseButton.vue'
@@ -279,11 +296,30 @@ const {
   exportData,
 } = useInstalasiStatus()
 
+const router = useRouter()
+
+const routeMap = {
+  permohonan: 'Detail Permohonan',
+  pasang_baru: 'Detail Pasang Baru',
+  aktif: 'Detail Aktif',
+  blokir: 'Detail Blokir',
+  cabut: 'Detail Cabut',
+}
+
+const handleRowClick = (row) => {
+  const routeName = routeMap[activeStatus.value]
+  if (routeName) {
+    // encodeURIComponent handles special chars like # in IDs
+    router.push({ name: routeName, params: { id: encodeURIComponent(row.id) } })
+  }
+}
+
 const tableColumns = [
   { key: 'id', title: 'Customer ID', tdClass: '' },
   { key: 'name', title: 'Full Name', tdClass: '' },
   { key: 'address', title: 'Address', tdClass: '' },
   { key: 'status', title: 'Status', tdClass: '' },
+  { key: 'action', title: '', tdClass: 'w-12 text-center' },
 ]
 
 const handlePrintData = () => {

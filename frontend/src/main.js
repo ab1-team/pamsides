@@ -2,12 +2,8 @@ import './assets/main.css'
 import './assets/datepicker.css'
 import './assets/stat-card.css'
 
-import {
-  createApp
-} from 'vue'
-import {
-  createPinia
-} from 'pinia'
+import { createApp } from 'vue'
+import { createPinia } from 'pinia'
 import App from './App.vue'
 import router from './router'
 
@@ -22,12 +18,8 @@ import DatePicker from 'primevue/datepicker'
 import InputNumber from 'primevue/inputnumber'
 
 // Font Awesome
-import {
-  library
-} from '@fortawesome/fontawesome-svg-core'
-import {
-  FontAwesomeIcon
-} from '@fortawesome/vue-fontawesome'
+import { library } from '@fortawesome/fontawesome-svg-core'
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import {
   faFilter,
   faCalendar,
@@ -44,6 +36,7 @@ import {
   faChartBar,
   faCog,
   faChevronDown,
+  faChevronRight,
   faUsers,
   faHome,
   faBuilding,
@@ -60,6 +53,7 @@ import {
   faLock,
   faEyeSlash,
   faSpinner,
+  faArrowLeft,
   faArrowRight,
   faArrowDown,
   faArrowUp,
@@ -90,6 +84,9 @@ import {
   faCamera,
   faUserEdit,
   faKey,
+  faBan,
+  faTimesCircle,
+  faSyncAlt,
 } from '@fortawesome/free-solid-svg-icons'
 
 // Tambahkan icons ke library
@@ -109,6 +106,7 @@ library.add(
   faChartBar,
   faCog,
   faChevronDown,
+  faChevronRight,
   faUsers,
   faHome,
   faBuilding,
@@ -125,6 +123,7 @@ library.add(
   faLock,
   faEyeSlash,
   faSpinner,
+  faArrowLeft,
   faArrowRight,
   faArrowDown,
   faArrowUp,
@@ -155,6 +154,9 @@ library.add(
   faCamera,
   faUserEdit,
   faKey,
+  faBan,
+  faTimesCircle,
+  faSyncAlt,
 )
 
 const options = {
