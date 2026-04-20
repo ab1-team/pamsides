@@ -36,6 +36,7 @@ import {
   faChartBar,
   faCog,
   faChevronDown,
+  faChevronRight,
   faUsers,
   faHome,
   faBuilding,
@@ -53,6 +54,7 @@ import {
   faUnlock,
   faEyeSlash,
   faSpinner,
+  faArrowLeft,
   faArrowRight,
   faArrowDown,
   faArrowUp,
@@ -103,6 +105,9 @@ import {
   faGlobe,
   faEnvelope,
   faPhone,
+  faBan,
+  faTimesCircle,
+  faSyncAlt,
 } from '@fortawesome/free-solid-svg-icons'
 
 import { faWhatsapp } from '@fortawesome/free-brands-svg-icons'
@@ -124,6 +129,7 @@ library.add(
   faChartBar,
   faCog,
   faChevronDown,
+  faChevronRight,
   faUsers,
   faHome,
   faBuilding,
@@ -141,6 +147,7 @@ library.add(
   faUnlock,
   faEyeSlash,
   faSpinner,
+  faArrowLeft,
   faArrowRight,
   faArrowDown,
   faArrowUp,
@@ -194,6 +201,9 @@ library.add(
   faGlobe,
   faEnvelope,
   faPhone,
+  faBan,
+  faTimesCircle,
+  faSyncAlt,
 )
 
 const options = {

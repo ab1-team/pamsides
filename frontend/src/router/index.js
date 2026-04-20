@@ -12,6 +12,8 @@ import EditKelasView from '@/views/dashboard/kelas/KelasEdit.vue'
 import pelangganView from '@/views/dashboard/pelanggan/PelangganIndex.vue'
 // import createdesaView from '@/views/dashboard/basis-data/desa/CreateView.vue'
 // import editdesaView from '@/views/dashboard/basis-data/desa/EditView.vue'
+import caterView from '@/views/dashboard/cater/CaterIndex.vue'
+import desaView from '@/views/dashboard/desa/DesaIndex.vue'
 // import desaView from '@/views/dashboard/basis-data/desa/IndexView.vue'
 // import createcaterView from '@/views/dashboard/basis-data/cater/CreateView.vue'
 // import caterView from '@/views/dashboard/basis-data/cater/IndexView.vue'
@@ -21,6 +23,11 @@ import statusInstalasi from '@/views/dashboard/instalasi/InstalasiStatus.vue'
 import Caterpemakaianair from '@/views/dashboard/instalasi/caterPemakaianAir.vue'
 import pemakaianair from '@/views/dashboard/instalasi/pemakaianAir.vue'
 import retribusisampah from '@/views/dashboard/instalasi/retribusiSampah.vue'
+import DetailPermohonan from '@/views/dashboard/instalasi/partials/permohonan.vue'
+import DetailPasangBaru from '@/views/dashboard/instalasi/partials/pasangBaru.vue'
+import DetailAktif from '@/views/dashboard/instalasi/partials/aktif.vue'
+import DetailBlokir from '@/views/dashboard/instalasi/partials/blokir.vue'
+import DetailCabut from '@/views/dashboard/instalasi/partials/cabut.vue'
 import jurnalUmum from '@/views/dashboard/transaksi/jurnalUmum/JurnalUmumIndex.vue'
 import tagihanInstalasi from '@/views/dashboard/transaksi/Tagihan/tagihanInstalasi.vue'
 import tagihanBulanan from '@/views/dashboard/transaksi/Tagihan/tagihanBulanan.vue'
@@ -113,6 +120,16 @@ const router = createRouter({
         //   name: 'BasisData',
         //   component: desaView,
         // },
+        {
+          path: '/data-cater',
+          name: 'Data Cater',
+          component: caterView,
+        },
+        {
+          path: '/data-desa',
+          name: 'Data Desa',
+          component: desaView,
+        },
         // {
         //   path: '/BasisData',
         //   name: 'BasisData',
@@ -142,6 +159,31 @@ const router = createRouter({
           path: '/instalasi/status',
           name: 'Status Instalasi',
           component: statusInstalasi,
+        },
+        {
+          path: '/instalasi/status/permohonan/:id',
+          name: 'Detail Permohonan',
+          component: DetailPermohonan,
+        },
+        {
+          path: '/instalasi/status/pasang-baru/:id',
+          name: 'Detail Pasang Baru',
+          component: DetailPasangBaru,
+        },
+        {
+          path: '/instalasi/status/aktif/:id',
+          name: 'Detail Aktif',
+          component: DetailAktif,
+        },
+        {
+          path: '/instalasi/status/blokir/:id',
+          name: 'Detail Blokir',
+          component: DetailBlokir,
+        },
+        {
+          path: '/instalasi/status/cabut/:id',
+          name: 'Detail Cabut',
+          component: DetailCabut,
         },
         {
           path: '/instalasi/pemakaian-air',
