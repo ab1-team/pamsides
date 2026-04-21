@@ -8,7 +8,7 @@
           <div
             class="w-8! h-8! rounded-lg! bg-indigo-50! text-indigo-600! flex! items-center! justify-center! text-xs! shrink-0!"
           >
-            <font-awesome-icon icon="dollar-sign" />
+            <font-awesome-icon icon="file-invoice-dollar" />
           </div>
           <div class="flex! flex-col!">
             <h4 class="text-slate-800! font-bold! text-sm! leading-tight!">Biaya Pasang Baru</h4>
@@ -19,7 +19,7 @@
         </div>
 
         <div class="w-full sm:w-56!">
-          <MaksMoneyInput v-model="form.biayaPasang" placeholder="Rp 0" :no-margin="true" />
+          <MaksMoneyInput v-model="form.biayaPasang" placeholder="0" :no-margin="true" />
         </div>
       </div>
     </div>

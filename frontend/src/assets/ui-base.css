@@ -120,6 +120,7 @@
 
 .base-button__text {
   @apply !truncate;
+  display: contents !important;
 }
 
 .base-button__spinner {
