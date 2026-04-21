@@ -210,7 +210,7 @@ import { ref, computed, watch } from 'vue'
 import BaseButton from '@/components/ui/BaseButton.vue'
 import DataTable from '@/components/ui/DataTable.vue'
 import ContentCard from '@/components/ui/ContentCard.vue'
-import InputMeterModal from './InputMeterModal.vue'
+import InputMeterModal from './inputMeterModal.vue'
 
 const isModalOpen = ref(false)
 const selectedCustomer = ref({})

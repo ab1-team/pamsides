@@ -32,38 +32,47 @@ export function usePemakaianAir() {
   // Sample data
   const tableData = ref([
     {
-      id: '102808473',
-      nama: 'Hadi Supriyanto',
-      initials: 'HS',
+      id: '1..08.561 P',
+      nama: 'Tarsim',
+      initials: 'T',
       avatarColor: '#0ea5e9',
-      meterAwal: 1140,
-      meterAkhir: 3265,
-      pemakaian: 25,
-      tagihan: 125000,
-      jatuhTempo: '20 Mei 2024',
-      status: STATUS_TYPES.PAID,
-    },
-    {
-      id: '102808890',
-      nama: 'Siti Nurhaliza',
-      initials: 'SN',
-      avatarColor: '#06b6d4',
-      meterAwal: 2105,
-      meterAkhir: 2138,
-      pemakaian: 13,
-      tagihan: 65000,
+      desa: 'Karangasem',
+      dusun: 'Karangasem',
+      rt: '',
+      meterAwal: 0,
+      meterAkhir: 10,
+      pemakaian: 10,
+      tagihan: 45000,
       jatuhTempo: '20 Mei 2024',
       status: STATUS_TYPES.PENDING,
     },
     {
-      id: '102808553',
-      nama: 'Rudy Wijaya',
-      initials: 'RW',
+      id: '1.0002.02.568 P',
+      nama: 'Fuji Riyanta',
+      initials: 'FR',
+      avatarColor: '#06b6d4',
+      desa: 'Mulo',
+      dusun: 'Mulo',
+      rt: '02',
+      meterAwal: 0,
+      meterAkhir: 0,
+      pemakaian: 0,
+      tagihan: 10000,
+      jatuhTempo: '20 Mei 2024',
+      status: STATUS_TYPES.PENDING,
+    },
+    {
+      id: '102808473',
+      nama: 'Hadi Supriyanto',
+      initials: 'HS',
       avatarColor: '#14b8a6',
-      meterAwal: 6098,
-      meterAkhir: 6942,
-      pemakaian: 52,
-      tagihan: 260000,
+      desa: 'Mulo',
+      dusun: 'Mulo',
+      rt: '01',
+      meterAwal: 1140,
+      meterAkhir: 1165,
+      pemakaian: 25,
+      tagihan: 125000,
       jatuhTempo: '20 Mei 2024',
       status: STATUS_TYPES.PAID,
     },
@@ -79,6 +88,19 @@ export function usePemakaianAir() {
   const totalPages = computed(() =>
     Math.max(1, Math.ceil(filteredData.value.length / perPage.value)),
   )
+
+  const groupedData = computed(() => {
+    const groups = {}
+    filteredData.value.forEach((item) => {
+      const dusun = item.dusun || 'Lainnya'
+      if (!groups[dusun]) {
+        groups[dusun] = []
+      }
+      groups[dusun].push(item)
+    })
+    return groups
+  })
+
   const visiblePages = computed(() => {
     const pages = []
     for (let i = 1; i <= Math.min(3, totalPages.value); i++) {
@@ -109,6 +131,7 @@ export function usePemakaianAir() {
     // Data
     tableData,
     filteredData,
+    groupedData,
 
     // Computed
     totalPages,

@@ -176,6 +176,13 @@
         </div>
       </template>
     </DataTable>
+
+    <HasilInputModal
+      :show="showHasilModal"
+      :grouped-data="groupedData"
+      :filter="filter"
+      @close="showHasilModal = false"
+    />
   </div>
 </template>
 
@@ -185,7 +192,9 @@ import SelectSearch from '@/components/SelectSearch.vue'
 import DataTable from '@/components/ui/DataTable.vue'
 import ContentCard from '@/components/ui/ContentCard.vue'
 import BaseButton from '@/components/ui/BaseButton.vue'
+import HasilInputModal from './partials/hasilInputModal.vue'
 import { useRouter } from 'vue-router'
+import { ref } from 'vue'
 
 const {
   filter,
@@ -195,14 +204,20 @@ const {
   bulanOptions,
   tableData,
   filteredData,
+  groupedData,
   totalPages,
   visiblePages,
   STATUS_COLORS,
   handleApplyFilter,
-  handleHasilInput,
   handleEdit,
   handleDelete,
 } = usePemakaianAir()
+
+const showHasilModal = ref(false)
+
+const handleHasilInput = () => {
+  showHasilModal.value = true
+}
 
 const router = useRouter()
 
