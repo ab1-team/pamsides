@@ -2,13 +2,13 @@ import { ref, computed } from 'vue'
 import { STATUS_TYPES, STATUS_COLORS } from '@/types/retribusiSampah'
 
 export function useRetribusiSampah() {
-  // Filter state
+  // State untuk filter pencarian
   const filter = ref({ tahun: '', bulan: '', cater: '' })
   const searchQuery = ref('')
   const currentPage = ref(1)
   const perPage = ref(10)
 
-  // Options
+  // Pilihan opsi
   const tahunOptions = computed(() => {
     const y = new Date().getFullYear()
     return Array.from({ length: 5 }, (_, i) => y - i)
@@ -29,7 +29,7 @@ export function useRetribusiSampah() {
     'Desember',
   ]
 
-  // Sample data for Retribusi Sampah
+  // Data dummy untuk Retribusi Sampah
   const tableData = ref([
     {
       id: 'RS-2024-0001',
@@ -38,7 +38,7 @@ export function useRetribusiSampah() {
       avatarColor: '#0ea5e9',
       meterAwal: 0,
       meterAkhir: 0,
-      pemakaian: 1, // Flat unit
+      pemakaian: 1, // Unit flat
       tagihan: 25000,
       jatuhTempo: '20 Mei 2024',
       status: STATUS_TYPES.PAID,
@@ -69,7 +69,7 @@ export function useRetribusiSampah() {
     },
   ])
 
-  // Computed properties
+  // Properti komputasi
   const filteredData = computed(() => {
     if (!searchQuery.value) return tableData.value
     const q = searchQuery.value.toLowerCase()
@@ -87,7 +87,7 @@ export function useRetribusiSampah() {
     return pages
   })
 
-  // Handlers
+  // Fungsi-fungsi penanganan aksi
   const handleApplyFilter = () => console.log('Apply filter Retribusi Sampah:', filter.value)
   const handleCetakFormInput = () => console.log('Cetak Form Input Retribusi Sampah')
   const handleHasilInput = () => console.log('Hasil Input Retribusi Sampah')
@@ -102,7 +102,7 @@ export function useRetribusiSampah() {
     currentPage,
     perPage,
 
-    // Options
+    // Pilihan opsi
     tahunOptions,
     bulanOptions,
 
@@ -110,15 +110,15 @@ export function useRetribusiSampah() {
     tableData,
     filteredData,
 
-    // Computed
+    // Komputasi
     totalPages,
     visiblePages,
 
-    // Constants
+    // Konstanta
     STATUS_TYPES,
     STATUS_COLORS,
 
-    // Handlers
+    // Penanganan Aksi
     handleApplyFilter,
     handleCetakFormInput,
     handleHasilInput,

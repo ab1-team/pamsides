@@ -5,7 +5,7 @@
     </label>
 
     <div class="base-input__wrapper">
-      <!-- Prefix Icon/Text -->
+      <!-- Prefix Icon atau Teks -->
       <div v-if="prefixIcon || prefixText" class="base-input__prefix">
         <span v-if="prefixText">{{ prefixText }}</span>
         <font-awesome-icon v-else :icon="prefixIcon" />
@@ -45,18 +45,18 @@
         @keydown="$emit('keydown', $event)"
       ></textarea>
 
-      <!-- Suffix Icon or Action -->
+      <!-- Suffix Icon atau Aksi -->
       <div v-if="$slots.suffix" class="base-input__suffix">
         <slot name="suffix" />
       </div>
     </div>
 
-    <!-- Error Message -->
+    <!-- Pesan Error -->
     <div v-if="error" class="base-input__error">
       {{ error }}
     </div>
 
-    <!-- Hint Text -->
+    <!-- Teks Petunjuk -->
     <div v-if="hint && !error" class="base-input__hint">
       {{ hint }}
     </div>

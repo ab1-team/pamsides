@@ -1,7 +1,6 @@
 <template>
   <div class="max-w-5xl! mx-auto grid! grid-cols-1! lg:grid-cols-3! gap-6!">
     <div class="lg:col-span-2! flex! flex-col! gap-6!">
-      <!-- Customer Profile Card -->
       <ContentCard variant="bordered" padding="large" rounded="2xl">
         <div class="flex! items-start! justify-between! gap-4!">
           <div class="flex-1!">
@@ -39,7 +38,6 @@
         </div>
       </ContentCard>
 
-      <!-- Info Grid -->
       <div class="grid! grid-cols-1! sm:grid-cols-2! gap-3!">
         <ContentCard variant="bordered" padding="none" rounded="xl" :hoverable="true">
           <div
@@ -75,7 +73,6 @@
         </ContentCard>
       </div>
 
-      <!-- Meter Info -->
       <ContentCard variant="bordered" padding="normal" rounded="2xl">
         <h3 class="text-sm! font-bold! text-slate-700! mb-4!">Informasi Meter</h3>
         <div class="grid! grid-cols-1! sm:grid-cols-3! gap-4!">
@@ -98,7 +95,6 @@
       </ContentCard>
     </div>
 
-    <!-- RIGHT COLUMN -->
     <div class="flex! flex-col! gap-6!">
       <ContentCard variant="bordered" padding="normal" rounded="2xl">
         <div class="flex! items-center! gap-2! mb-4!">

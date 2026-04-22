@@ -1,6 +1,5 @@
 <template>
   <div class="profil-page space-y-6!">
-    <!-- Header Section -->
     <ContentCard variant="bordered" padding="normal" rounded="xl" hoverable>
       <div class="flex! flex-row! items-center! gap-6!">
         <div class="relative! group!">
@@ -44,7 +43,6 @@
       </div>
     </ContentCard>
 
-    <!-- Data Diri Section -->
     <ContentCard variant="bordered" padding="large" rounded="xl" hoverable>
       <template #header>
         <div class="flex! items-center! justify-between! mb-4!">
@@ -53,25 +51,21 @@
       </template>
 
       <div class="space-y-6!">
-        <!-- Row 1: NIK & Nama Depan -->
         <div class="grid! grid-cols-2! gap-6!">
           <BaseInput label="NIK" v-model="form.nik" placeholder="3308128492740001" />
           <BaseInput label="Nama Depan" v-model="form.nama_depan" placeholder="Santoso" />
         </div>
 
-        <!-- Row 2: Nama Belakang & Inisial -->
         <div class="grid! grid-cols-2! gap-6!">
           <BaseInput label="Nama Belakang" v-model="form.nama_belakang" placeholder="SIDBM" />
           <BaseInput label="Inisial" v-model="form.inisial" placeholder="SS" />
         </div>
 
-        <!-- Row 3: Tempat Lahir & Tanggal Lahir -->
         <div class="grid! grid-cols-2! gap-6!">
           <BaseInput label="Tempat Lahir" v-model="form.tempat_lahir" placeholder="Magelang" />
           <AppDatePicker label="Tanggal Lahir" v-model="form.tanggal_lahir" yearRange="1950:2026" />
         </div>
 
-        <!-- Row 4: Alamat (Full Width) -->
         <div class="grid! grid-cols-1! gap-6!">
           <BaseInput
             type="textarea"
@@ -82,7 +76,6 @@
           />
         </div>
 
-        <!-- Row 5: Telpon & Pendidikan -->
         <div class="grid! grid-cols-2! gap-6!">
           <BaseInput label="Telpon" v-model="form.telpon" placeholder="6281234567890" />
           <SelectSearch
@@ -93,7 +86,6 @@
           />
         </div>
 
-        <!-- Row 6: Menjabat Sejak -->
         <div class="grid! grid-cols-2! gap-6!">
           <AppDatePicker
             label="Menjabat Sejak"
@@ -102,7 +94,6 @@
           />
         </div>
 
-        <!-- Buttons -->
         <div
           class="flex! justify-end! items-center! gap-4! mt-8! pt-6! border-t! border-slate-100!"
         >
@@ -121,7 +112,6 @@
       </div>
     </ContentCard>
 
-    <!-- Edit User Modal -->
     <Teleport to="body">
       <div v-if="showModal" class="modal-overlay" @click="showModal = false">
         <div class="modal-content" @click.stop>
@@ -183,14 +173,12 @@ import SelectSearch from '@/components/SelectSearch.vue'
 import BaseButton from '@/components/ui/BaseButton.vue'
 import Swal from 'sweetalert2'
 
-// State
 const showModal = ref(false)
 const isSaving = ref(false)
 const isUpdatingUser = ref(false)
 const photoInput = ref(null)
 const profilePhoto = ref(null)
 
-// Watchers
 watch(showModal, (val) => {
   if (val) {
     document.body.style.overflow = 'hidden'
@@ -228,7 +216,6 @@ const pendidikanOptions = [
   { label: 'Doktor (S3)', value: 'Doktor (S3)' },
 ]
 
-// Methods
 const triggerPhotoUpload = () => {
   photoInput.value.click()
 }
@@ -254,7 +241,6 @@ const handlePhotoUpload = (event) => {
 const saveChanges = async () => {
   isSaving.value = true
 
-  // Simulate API call
   await new Promise((resolve) => setTimeout(resolve, 1500))
 
   isSaving.value = false
@@ -269,7 +255,6 @@ const saveChanges = async () => {
 const updateUser = async () => {
   isUpdatingUser.value = true
 
-  // Simulate API call
   await new Promise((resolve) => setTimeout(resolve, 1500))
 
   isUpdatingUser.value = false
@@ -299,7 +284,6 @@ const updateUser = async () => {
   }
 }
 
-/* Modal Styling */
 .modal-overlay {
   position: fixed;
   top: 0;

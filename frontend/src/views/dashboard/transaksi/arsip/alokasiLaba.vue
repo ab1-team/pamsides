@@ -218,7 +218,6 @@ import BaseButton from '@/components/ui/BaseButton.vue'
 const selectedTahun = ref(2026)
 const totalSaldo = ref(128450000)
 
-// Persentase alokasi
 const persen = {
   dividen: 0.45,
   bantuanSosial: 0.05,

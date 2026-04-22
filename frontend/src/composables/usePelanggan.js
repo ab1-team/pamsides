@@ -3,12 +3,12 @@ import { STATUS_TYPES, STATUS_COLORS } from '@/types/pelanggan'
 import Swal from 'sweetalert2'
 
 export function usePelanggan(router = null) {
-  // Filter state
+  // State untuk filter pencarian
   const searchQuery = ref('')
   const currentPage = ref(1)
   const perPage = ref(10)
 
-  // Sample data for Customers
+  // Data dummy untuk Pelanggan
   const tableData = ref([
     {
       id: 'P-2024-0001',
@@ -62,7 +62,7 @@ export function usePelanggan(router = null) {
     },
   ])
 
-  // Computed properties
+  // Properti komputasi
   const filteredData = computed(() => {
     if (!searchQuery.value) return tableData.value
     const q = searchQuery.value.toLowerCase()
@@ -86,7 +86,7 @@ export function usePelanggan(router = null) {
     return pages
   })
 
-  // Handlers
+  // Fungsi-fungsi penanganan aksi
   const handleEdit = (row) => {
     console.log('Edit Pelanggan:', row)
     if (router) {
@@ -130,15 +130,15 @@ export function usePelanggan(router = null) {
     tableData,
     filteredData,
 
-    // Computed
+    // Komputasi
     totalPages,
     visiblePages,
 
-    // Constants
+    // Konstanta
     STATUS_TYPES,
     STATUS_COLORS,
 
-    // Handlers
+    // Penanganan Aksi
     handleEdit,
     handleDelete,
   }

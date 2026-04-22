@@ -1,6 +1,5 @@
 <template>
   <div class="input-pemakaian-air-root p-4 lg:p-6 min-h-screen">
-    <!-- View Desktop Header -->
     <div
       class="hidden! md:flex! flex-col! md:flex-row! md:items-center! justify-between! gap-4! mb-6!"
     >
@@ -22,7 +21,6 @@
       </div>
     </div>
 
-    <!-- View Desktop Table -->
     <div class="hidden! md:block!">
       <ContentCard variant="default" padding="none" hoverable class="overflow-hidden!">
         <DataTable
@@ -61,11 +59,9 @@
       </ContentCard>
     </div>
 
-    <!-- View Mobile Unified Card -->
     <div
       class="md:hidden! bg-white! rounded-[2.25rem]! border! border-slate-100! shadow-[0_20px_50px_rgba(0,0,0,0.04)]! overflow-hidden!"
     >
-      <!-- Card Header Section -->
       <div class="p-6! border-b! border-slate-50!">
         <div class="flex! items-center! gap-3! mb-5!">
           <BaseButton
@@ -101,7 +97,6 @@
         </div>
       </div>
 
-      <!-- Card List Section -->
       <div v-if="paginatedData.length === 0" class="p-12! text-center!">
         <font-awesome-icon icon="search" class="text-slate-200! text-4xl! mb-3!" />
         <p class="text-slate-400! text-sm!">Data tidak ditemukan</p>
@@ -166,7 +161,6 @@
         </div>
       </div>
 
-      <!-- Card Footer Section -->
       <div
         class="px-5! py-5! bg-slate-50/50! border-t! border-slate-100! flex! items-center! justify-between!"
       >

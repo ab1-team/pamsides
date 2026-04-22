@@ -7,7 +7,6 @@
         <div
           class="relative w-full! h-full! max-w-7xl! bg-white rounded-2xl! shadow-xl! border border-slate-200 flex flex-col overflow-hidden animate-slide-up"
         >
-          <!-- Modal Header -->
           <div
             class="flex items-center! justify-between! px-6! py-4! border-b! border-slate-200! bg-white!"
           >
@@ -34,7 +33,6 @@
             </button>
           </div>
 
-          <!-- Filter & Search Bar -->
           <div
             class="px-6! py-4! bg-slate-50/50! border-b! border-slate-100! flex flex-col! md:flex-row! md:items-center! justify-between! gap-4!"
           >
@@ -64,7 +62,6 @@
             </div>
           </div>
 
-          <!-- Table Content -->
           <div class="flex-1 overflow-auto px-0! py-0! scrollbar-custom">
             <table class="w-full border-collapse text-xs md:text-sm!">
               <thead>
@@ -115,13 +112,12 @@
               </thead>
               <tbody>
                 <template v-for="(members, dusun) in filteredGroups" :key="dusun">
-                  <!-- Dusun Group Header -->
                   <tr class="bg-slate-100/80! border-y! border-slate-200!">
                     <td colspan="10" class="py-2.5! px-4! font-bold text-slate-700!">
                       Dusun : {{ dusun }}
                     </td>
                   </tr>
-                  <!-- Rows for this Dusun -->
+
                   <tr
                     v-for="item in members"
                     :key="item.id"
@@ -165,7 +161,6 @@
             </table>
           </div>
 
-          <!-- Modal Footer -->
           <div
             class="px-6! py-4! bg-slate-50! border-t! border-slate-200! flex justify-end items-center gap-3! min-h-[80px]!"
           >
@@ -234,11 +229,9 @@ const isAllSelected = computed({
     allVisibleIds.value.every((id) => selectedIds.value.includes(id)),
   set: (val) => {
     if (val) {
-      // Add only currently visible IDs that aren't already selected
       const newSelections = new Set([...selectedIds.value, ...allVisibleIds.value])
       selectedIds.value = Array.from(newSelections)
     } else {
-      // Remove only currently visible IDs from selection
       selectedIds.value = selectedIds.value.filter((id) => !allVisibleIds.value.includes(id))
     }
   },

@@ -1,12 +1,12 @@
 import { ref, computed } from 'vue'
 
 export function useDesa() {
-  // Filter state
+  // State untuk filter pencarian
   const searchQuery = ref('')
   const currentPage = ref(1)
   const perPage = ref(10)
 
-  // Sample data for Desa
+  // Data dummy untuk Desa
   const tableData = ref([
     {
       id: 'D-001',
@@ -50,7 +50,7 @@ export function useDesa() {
     },
   ])
 
-  // Computed properties
+  // Properti komputasi
   const filteredData = computed(() => {
     if (!searchQuery.value) return tableData.value
     const q = searchQuery.value.toLowerCase()
@@ -74,7 +74,7 @@ export function useDesa() {
     return pages
   })
 
-  // Handlers
+  // Fungsi-fungsi penanganan aksi
   const handleEdit = (row) => {
     console.log('Edit Desa:', row)
   }
@@ -96,11 +96,11 @@ export function useDesa() {
     tableData,
     filteredData,
 
-    // Computed
+    // Komputasi
     totalPages,
     visiblePages,
 
-    // Handlers
+    // Penanganan Aksi
     handleEdit,
     handleDelete,
   }

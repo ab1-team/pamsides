@@ -1,14 +1,8 @@
 /**
- * =============================================
-   DATE FORMATTING UTILITY - STATIC
-   =============================================
- */
-
-/**
- * Format date to Indonesian format
- * @param {Date|string|number} date - Date to format
- * @param {Object} options - Formatting options
- * @returns {string} Formatted date string
+ * Format tanggal ke format Indonesia
+ * @param {Date|string|number} date - Tanggal yang akan diformat
+ * @param {Object} options - Opsi format
+ * @returns {string} String tanggal yang diformat
  */
 export function useDateFormat(date, options = {}) {
   const { format = 'DD/MM/YYYY', locale = 'id-ID' } = options
@@ -48,9 +42,9 @@ export function useDateFormat(date, options = {}) {
 }
 
 /**
- * Get month name in Indonesian
- * @param {number} monthIndex - Month index (0-11)
- * @returns {string} Month name
+ * Dapatkan nama bulan dalam bahasa Indonesia
+ * @param {number} monthIndex - Indeks bulan (0-11)
+ * @returns {string} Nama bulan
  */
 export function getMonthName(monthIndex) {
   const months = [
@@ -71,9 +65,9 @@ export function getMonthName(monthIndex) {
 }
 
 /**
- * Format month period (e.g., "April 2025")
- * @param {Date|string|number} date - Date
- * @returns {string} Formatted month period
+ * Format periode bulan (contoh: "April 2025")
+ * @param {Date|string|number} date - Tanggal
+ * @returns {string} Periode bulan yang diformat
  */
 export function formatMonthPeriod(date) {
   const dateObj = new Date(date)
@@ -88,9 +82,9 @@ export function formatMonthPeriod(date) {
 }
 
 /**
- * Check if date is valid
- * @param {Date|string|number} date - Date to check
- * @returns {boolean} Is valid date
+ * Periksa apakah tanggal valid
+ * @param {Date|string|number} date - Tanggal yang diperiksa
+ * @returns {boolean} Valid atau tidak
  */
 export function isValidDate(date) {
   const dateObj = new Date(date)
@@ -98,8 +92,8 @@ export function isValidDate(date) {
 }
 
 /**
- * Get current date in DD/MM/YYYY format
- * @returns {string} Current date
+ * Dapatkan tanggal hari ini dalam format DD/MM/YYYY
+ * @returns {string} Tanggal hari ini
  */
 export function getCurrentDate() {
   return useDateFormat(new Date(), { format: 'DD/MM/YYYY' })

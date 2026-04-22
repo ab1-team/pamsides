@@ -1,7 +1,6 @@
 <template>
   <div>
     <div class="grid! grid-cols-1! lg:grid-cols-[1fr_320px]! gap-4! lg:gap-5! items-start!">
-      <!-- ... existing grid ... -->
       <ContentCard variant="elevated" padding="large" hoverable>
         <div class="flex! items-center! gap-3! mb-2!">
           <div

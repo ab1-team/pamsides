@@ -117,14 +117,14 @@ const closeModal = () => {
   emit('close')
 }
 
-// Close modal on ESC key
+// Tutup modal dengan tombol ESC
 const handleEscKey = (event) => {
   if (event.key === 'Escape') {
     closeModal()
   }
 }
 
-// Add/remove event listener
+// Tambah/hapus event listener
 watch(
   () => props.show,
   (newValue) => {

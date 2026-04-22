@@ -1,6 +1,5 @@
 <template>
   <div class="pricing-config-view w-full! max-w-5xl! mx-auto! pb-20!">
-    <!-- Header Section -->
     <div class="mb-8!">
       <div>
         <h1 class="text-3xl font-extrabold text-slate-900! tracking-tight mb-2!">
@@ -13,14 +12,12 @@
       </div>
     </div>
 
-    <!-- Main Configuration Card -->
     <ContentCard
       variant="elevated"
       padding="none"
       class="mb-6! border-0! shadow-xl! shadow-slate-200/40! overflow-visible!"
     >
       <div class="p-6! sm:p-8!">
-        <!-- Card Header Info -->
         <div class="flex items-center justify-between mb-8!">
           <div class="flex items-center gap-3!">
             <div class="w-1.5! h-6! bg-sky-600! rounded-full!"></div>
@@ -66,7 +63,6 @@
           />
         </div>
 
-        <!-- Block Rows Table-like Header -->
         <div
           class="grid grid-cols-[1fr_2fr_2fr_auto] gap-4! px-4! mb-4! text-[10px]! font-black! text-slate-300! uppercase! tracking-widest!"
         >
@@ -76,14 +72,12 @@
           <div class="w-10!">AKSI</div>
         </div>
 
-        <!-- Dynamic Block Rows -->
         <div class="space-y-4!">
           <div
             v-for="(block, index) in blocks"
             :key="index"
             class="group grid grid-cols-[1fr_2fr_2fr_auto] gap-4! items-center! py-3! px-4! rounded-2xl! transition-all! duration-300 hover:bg-slate-50/80!"
           >
-            <!-- Order & Label -->
             <div class="flex items-center gap-3!">
               <div
                 class="w-8! h-8! rounded-xl! bg-blue-50! text-blue-600! flex! items-center! justify-center! text-[11px]! font-black! shrink-0!"
@@ -95,7 +89,6 @@
               >
             </div>
 
-            <!-- Volume Range -->
             <div class="flex items-center gap-3! justify-center!">
               <div class="w-16!">
                 <input
@@ -115,12 +108,10 @@
               </div>
             </div>
 
-            <!-- Price Input -->
             <div class="px-2!">
               <MaksMoneyInput v-model="block.price" placeholder="0" no-margin size="sm" />
             </div>
 
-            <!-- Delete Action -->
             <div class="flex justify-center!">
               <button
                 @click="removeBlock(index)"
@@ -134,7 +125,6 @@
           </div>
         </div>
 
-        <!-- Add Block Button -->
         <div class="mt-8! px-4!">
           <button
             @click="addBlock"
@@ -155,7 +145,6 @@
       </div>
     </ContentCard>
 
-    <!-- Action Buttons -->
     <div class="mt-10! flex items-center justify-end gap-4!">
       <BaseButton
         variant="secondary-gradient"
@@ -189,10 +178,8 @@ import MaksMoneyInput from '@/components/MaksMoneyInput.vue'
 
 const router = useRouter()
 
-// Selection State
 const namaKelas = ref('')
 
-// Block Config State
 const blockNames = ['Pertama', 'Kedua', 'Ketiga', 'Keempat', 'Kelima']
 const abodemen = ref(0)
 const denda = ref(0)
@@ -202,7 +189,6 @@ const blocks = ref([
   { from: 20, to: 100, price: 5000 },
 ])
 
-// Methods
 const addBlock = () => {
   const lastBlock = blocks.value[blocks.value.length - 1]
   blocks.value.push({
@@ -267,7 +253,6 @@ onUnmounted(() => {
   animation: fadeIn 0.5s ease-out;
 }
 
-/* Hide default numeric spin buttons */
 input::-webkit-outer-spin-button,
 input::-webkit-inner-spin-button {
   -webkit-appearance: none;
@@ -289,7 +274,6 @@ input[type='number'] {
   }
 }
 
-/* Custom scrollbar for better appearance */
 ::-webkit-scrollbar {
   width: 6px;
 }

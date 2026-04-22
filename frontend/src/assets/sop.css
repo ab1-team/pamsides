@@ -1,8 +1,6 @@
-/* =============================================
-   SOP MODULE STYLES
-   ============================================= */
 
-/* ── Tab Curve Indicator (Desktop) ── */
+
+
 .active-tab-curve::before,
 .active-tab-curve::after {
   content: "";
@@ -27,7 +25,7 @@
   box-shadow: 15px -15px 0 15px #f8fafc !important;
 }
 
-/* ── Transitions ── */
+
 .fade-enter-active,
 .fade-leave-active {
   transition: opacity 0.3s ease, transform 0.3s ease !important;
@@ -39,9 +37,9 @@
   transform: translateY(10px) !important;
 }
 
-/* ── Animations ── */
 
-/* Item Reveal (Mobile Menu) */
+
+
 @keyframes item-reveal {
   from {
     opacity: 0;
@@ -57,7 +55,7 @@
   animation: item-reveal 0.4s cubic-bezier(0.23, 1, 0.32, 1) forwards !important;
 }
 
-/* Reveal Up (Welcome Screen) */
+
 @keyframes reveal-up {
   from { 
     opacity: 0; 
@@ -73,7 +71,7 @@
   animation: reveal-up 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards !important; 
 }
 
-/* Bounce Subtle (Welcome Screen) */
+
 @keyframes bounce-subtle {
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-3px); }

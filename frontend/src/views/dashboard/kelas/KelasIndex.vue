@@ -44,7 +44,6 @@
           </h2>
         </template>
 
-        <!-- Column Slots -->
         <template #column-nama="{ row }">
           <div class="flex items-center gap-3!">
             <div
@@ -112,7 +111,6 @@ import { useCurrencyFormat } from '@/composables/useCurrencyFormat.js'
 
 const router = useRouter()
 
-// Table columns configuration
 const tableColumns = [
   { key: 'nama', title: 'Nama Kelas', tdClass: '' },
   { key: 'block1', title: 'Block 1 (10 M³)', tdClass: '' },
@@ -121,12 +119,10 @@ const tableColumns = [
   { key: 'aksi', title: 'Aksi', tdClass: 'w-20!' },
 ]
 
-// Search and Pagination State
 const searchQuery = ref('')
 const currentPage = ref(1)
 const perPage = ref(10)
 
-// Mock Data
 const kelasList = ref([
   { id: 1, nama: 'Rumah Tangga A', block1: 2500, block2: 3500, block3: 4500 },
   { id: 2, nama: 'Rumah Tangga B', block1: 3000, block2: 4000, block3: 5000 },
@@ -136,7 +132,6 @@ const kelasList = ref([
   { id: 6, nama: 'Instansi Pemerintah', block1: 4000, block2: 5000, block3: 6000 },
 ])
 
-// Filtered data based on search
 const filteredData = computed(() => {
   if (!searchQuery.value) return kelasList.value
 
@@ -144,7 +139,6 @@ const filteredData = computed(() => {
   return kelasList.value.filter((item) => item.nama.toLowerCase().includes(query))
 })
 
-// Pagination Calculations
 const totalPages = computed(() => Math.ceil(filteredData.value.length / perPage.value))
 
 const visiblePages = computed(() => {
@@ -169,10 +163,7 @@ const editKelas = (row) => {
 
 const deleteKelas = (row) => {
   console.log('Delete Kelas:', row)
-  // Implement logic for deleting class
 }
 </script>
 
-<style scoped>
-/* Optional: Add custom styles here if needed */
-</style>
+<style scoped></style>

@@ -1,6 +1,5 @@
 <template>
   <div class="pricing-config-view w-full! max-w-5xl! mx-auto! pb-20!">
-    <!-- Header Section -->
     <div class="mb-8!">
       <div>
         <h1 class="text-3xl font-extrabold text-slate-900! tracking-tight mb-2!">
@@ -12,14 +11,12 @@
       </div>
     </div>
 
-    <!-- Main Configuration Card -->
     <ContentCard
       variant="elevated"
       padding="none"
       class="mb-6! border-0! shadow-xl! shadow-slate-200/40! overflow-visible!"
     >
       <div class="p-6! sm:p-8!">
-        <!-- Card Header Info -->
         <div class="flex items-center justify-between mb-8!">
           <div class="flex items-center gap-3!">
             <div class="w-1.5! h-6! bg-indigo-600! rounded-full!"></div>
@@ -65,7 +62,6 @@
           />
         </div>
 
-        <!-- Block Rows Table-like Header -->
         <div
           class="grid grid-cols-[1.2fr_2fr_2fr] gap-6! px-4! mb-6! text-[10px]! font-black! text-slate-300! uppercase! tracking-widest!"
         >
@@ -74,14 +70,12 @@
           <div class="text-center!">HARGA PER M3</div>
         </div>
 
-        <!-- Fixed Block Rows -->
         <div class="space-y-3!">
           <div
             v-for="(block, index) in blocks"
             :key="index"
             class="group grid grid-cols-[1.2fr_2fr_2fr] gap-6! items-center! py-4! px-5! rounded-2xl! border! border-transparent! hover:border-slate-100! hover:bg-slate-50/50! transition-all! duration-300"
           >
-            <!-- Order & Label -->
             <div class="flex items-center gap-4!">
               <div
                 class="w-10! h-10! rounded-2xl! bg-white! border! border-slate-100! shadow-sm! text-indigo-600! flex! items-center! justify-center! text-xs! font-black! shrink-0!"
@@ -98,7 +92,6 @@
               </div>
             </div>
 
-            <!-- Volume Range (Locked) -->
             <div class="flex items-center gap-4! justify-center!">
               <div class="w-20!">
                 <input
@@ -119,14 +112,12 @@
               </div>
             </div>
 
-            <!-- Price Input -->
             <div class="px-2!">
               <MaksMoneyInput v-model="block.price" placeholder="0" no-margin size="md" />
             </div>
           </div>
         </div>
 
-        <!-- Info Box instead of Add button -->
         <div
           class="mt-10! p-4! bg-amber-50/50! border! border-amber-100/50! rounded-2xl! flex! items-start! gap-4!"
         >
@@ -147,7 +138,6 @@
       </div>
     </ContentCard>
 
-    <!-- Action Buttons -->
     <div class="mt-10! flex items-center justify-end gap-4!">
       <BaseButton
         variant="secondary-gradient"
@@ -182,16 +172,13 @@ import MaksMoneyInput from '@/components/MaksMoneyInput.vue'
 const router = useRouter()
 const route = useRoute()
 
-// Selection State
 const namaKelas = ref('')
 
-// Block Config State
 const blockNames = ['Pertama', 'Kedua', 'Ketiga', 'Keempat', 'Kelima']
 const abodemen = ref(0)
 const denda = ref(0)
 const blocks = ref([])
 
-// Mock data fetch simulation
 const fetchKelasData = (id) => {
   console.log(`Fetching data for ID: ${id}`)
   const mockData = {
@@ -224,7 +211,6 @@ const fetchKelasData = (id) => {
   blocks.value = data.blocks
 }
 
-// Methods (Removed add/remove block logic)
 const handleBack = () => {
   router.back()
 }
@@ -250,7 +236,6 @@ onMounted(() => {
   animation: fadeIn 0.5s ease-out;
 }
 
-/* Hide default numeric spin buttons */
 input::-webkit-outer-spin-button,
 input::-webkit-inner-spin-button {
   -webkit-appearance: none;
@@ -272,7 +257,6 @@ input[type='number'] {
   }
 }
 
-/* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
 }

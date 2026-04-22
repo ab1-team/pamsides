@@ -293,7 +293,6 @@ const billingItems = computed(() => {
 
 const grandTotal = computed(() => billingItems.value.reduce((sum, item) => sum + item.subtotal, 0))
 
-// Removed unused selectedPaket, paketSearchQuery, detailInstalasi
 const pelangganSearchQuery = ref('')
 const filteredPelangganList = ref([])
 
@@ -324,19 +323,9 @@ const selectPelanggan = (pelanggan) => {
   console.log('Pelanggan selected:', pelanggan)
 }
 
-// Remove unused resetDetailInstalasi
-
-// Remove unused saveDetailInstalasi
-
-// Remove unused formatRupiah
-
 const formatBillAmount = (val) => {
   return Number(val).toLocaleString('id-ID')
 }
-
-// Remove unused handlePaketChange
-
-// Remove unused filterPaketList
 
 const handlePayNow = () => {
   console.log('Pay now clicked')

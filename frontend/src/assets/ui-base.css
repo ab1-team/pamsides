@@ -1,8 +1,6 @@
 @reference "./main.css";
 
-/* =============================================
-   BASE BUTTON
-   ============================================= */
+
 .base-button {
   @apply inline-flex items-center justify-center font-medium transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed no-underline select-none;
 }
@@ -127,9 +125,7 @@
   @apply !animate-spin;
 }
 
-/* =============================================
-   BASE INPUT
-   ============================================= */
+
 .base-input {
   @apply w-full transition-all duration-300;
 }
@@ -193,9 +189,7 @@
   @apply mt-1.5 ml-1 text-xs text-slate-400;
 }
 
-/* =============================================
-   BASE SELECT
-   ============================================= */
+
 .base-select {
   @apply w-full transition-all duration-300;
 }
@@ -230,9 +224,7 @@
   @apply mt-1.5 ml-1 text-xs text-red-600 font-medium;
 }
 
-/* =============================================
-   CONTENT CARD
-   ============================================= */
+
 .content-card {
   background-color: white;
   transition: all 0.2s ease;

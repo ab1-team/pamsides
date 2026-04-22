@@ -1,6 +1,5 @@
 <template>
   <div class="cater-pemakaian-root p-4! lg:p-6!">
-    <!-- DESKTOP LAYOUT (lg and up) -->
     <div class="hidden! lg:block! max-w-7xl mx-auto">
       <div class="flex! justify-between! items-start! mb-8!">
         <div>
@@ -23,7 +22,6 @@
       </div>
 
       <div class="grid! grid-cols-12! gap-6!">
-        <!-- Main Form Column -->
         <div class="col-span-8!">
           <ContentCard variant="elevated" padding="large" rounded="2xl" class="h-full! shadow-xl!">
             <div class="grid! grid-cols-2! gap-6! mb-6!">
@@ -81,9 +79,7 @@
           </ContentCard>
         </div>
 
-        <!-- Info Column -->
         <div class="col-span-4! flex! flex-col! gap-6!">
-          <!-- Session Info Card -->
           <ContentCard variant="elevated" padding="large" rounded="2xl" class="shadow-xl!">
             <template #header>
               <div
@@ -108,7 +104,6 @@
             </div>
           </ContentCard>
 
-          <!-- Decorative Card -->
           <div
             class="relative! overflow-hidden! rounded-3xl! h-full! min-h-[220px]! shadow-xl! group!"
           >
@@ -129,7 +124,6 @@
         </div>
       </div>
 
-      <!-- Desktop Warning -->
       <ContentCard
         variant="elevated"
         padding="large"
@@ -165,7 +159,6 @@
       </ContentCard>
     </div>
 
-    <!-- MOBILE LAYOUT (Default, hidden on lg) -->
     <div class="lg:hidden! flex! flex-col! gap-6! pb-20!">
       <div class="header!">
         <h1 class="text-2xl! font-extrabold! text-blue-800! tracking-tight! leading-none! mb-1!">
@@ -175,7 +168,6 @@
       </div>
 
       <div class="mobile-form! flex! flex-col! gap-6!">
-        <!-- Staff Input -->
         <div class="form-group!">
           <label class="block! text-sm! font-bold! text-slate-600! mb-2!"
             >Petugas Pencatat (Staff)</label
@@ -193,7 +185,6 @@
           </div>
         </div>
 
-        <!-- Tahun Dropdown -->
         <div class="form-group!">
           <label class="block! text-sm! font-bold! text-slate-600! mb-2!">Tahun Anggaran</label>
           <SelectSearch
@@ -206,7 +197,6 @@
           />
         </div>
 
-        <!-- Bulan Grid -->
         <div class="form-group!">
           <label class="block! text-sm! font-bold! text-slate-600! mb-2!">Bulan Periode</label>
           <div class="grid! grid-cols-3! gap-2!">
@@ -226,7 +216,6 @@
           </div>
         </div>
 
-        <!-- Mobile Buttons -->
         <div class="flex! flex-col! gap-3! mt-4!">
           <BaseButton
             to="/instalasi/pemakaian-air/input"
@@ -302,7 +291,6 @@ const form = reactive({
   staff: 'ADMINISTRATOR PRINCIPAL',
 })
 
-// Options for selection fields
 const tahunOptions = [
   { id: '2023', text: '2023' },
   { id: '2024', text: '2024' },
@@ -340,31 +328,25 @@ const bulanGrid = [
   { label: 'Des', value: 'Des' },
 ]
 
-const handleHistory = () => {
-  // Navigation or logic here
-}
+const handleHistory = () => {}
 </script>
 
 <style scoped>
 @reference "@/assets/main.css";
 
-/* Any additional custom styles to fine-tune the layouts */
 .cater-pemakaian-root {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Custom shadow for mobile buttons if needed */
 .shadow-blue-200 {
   --tw-shadow-color: rgba(191, 219, 254, 0.4);
 }
 
-/* Specific styling for the staff input in mobile */
 input:read-only {
   @apply cursor-default;
 }
 
-/* Matching SelectSearch height to input fields in mobile */
 @media (max-width: 1024px) {
   :deep(.custom-select-search .select-display) {
     @apply !h-auto !py-4 !rounded-2xl;

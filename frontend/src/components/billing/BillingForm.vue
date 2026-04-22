@@ -105,7 +105,7 @@ import BaseButton from '../ui/BaseButton.vue'
 import AppDatePicker from '../AppDatePicker.vue'
 import MaksMoneyInput from '../MaksMoneyInput.vue'
 
-// Props untuk initial data
+// Properti untuk data awal
 const props = defineProps({
   initialData: {
     type: Object,
@@ -117,10 +117,10 @@ const props = defineProps({
   },
 })
 
-// Emit events
+// Daftar event emit
 const emit = defineEmits(['save', 'change'])
 
-// Form data reaktif
+// Data formulir reaktif
 const formData = reactive({
   tanggal: props.initialData.tanggal ? new Date(props.initialData.tanggal) : new Date(),
   kode: props.initialData.kode || props.customerInfo.installationCode || '',
@@ -133,14 +133,14 @@ const formData = reactive({
   pembayaran: props.initialData.pembayaran || 0,
 })
 
-// Auto calculate pemakaian
+// Hitung otomatis pemakaian
 watch([() => formData.meterAwal, () => formData.meterAkhir], ([awal, akhir]) => {
   if (awal && akhir && akhir >= awal) {
     formData.pemakaian = akhir - awal
   }
 })
 
-// Auto calculate pembayaran
+// Hitung otomatis pembayaran
 watch(
   [() => formData.tagihan, () => formData.abodemen, () => formData.denda],
   ([tagihan, abodemen, denda]) => {
@@ -148,7 +148,7 @@ watch(
   },
 )
 
-// Emit change event
+// Emit event perubahan
 watch(
   formData,
   (newData) => {
@@ -157,9 +157,9 @@ watch(
   { deep: true },
 )
 
-// Handle save
+// Fungsi penanganan simpan
 const handleSave = () => {
-  // Validation
+  // Validasi
   if (!formData.tanggal || !formData.kode) {
     alert('Mohon lengkapi data tanggal dan kode instalasi')
     return
@@ -170,11 +170,11 @@ const handleSave = () => {
     return
   }
 
-  // Emit save event
+  // Emit event simpan
   emit('save', { ...formData })
 }
 
-// Expose form data for parent access
+// Mengekspos data form untuk diakses komponen induk
 defineExpose({
   formData,
   resetForm: () => {
@@ -194,10 +194,6 @@ defineExpose({
 </script>
 
 <style scoped>
-/* =============================================
-   BILLING FORM - DYNAMIC COMPONENT
-   ============================================= */
-
 .billing-form {
   padding: 1rem 1.25rem 1rem 1.25rem;
   border-top: 1px solid #e2e8f0;

@@ -162,7 +162,7 @@ background: linear-gradient(135deg, #ffffff 0%, #a0c9ff 50%, #006df6 100%);}
   transform: translateX(4px);
 }
 
-/* Link Colors based on card theme */
+
 .stat-card--instalasi .stat-card-link {
   color: #1a56db;
 }
@@ -222,7 +222,7 @@ background: linear-gradient(135deg, #ffffff 0%, #a0c9ff 50%, #006df6 100%);}
   box-shadow: 0 4px 12px rgba(255, 255, 255, 0.3);
 }
 
-/* Info card — dipakai di detail pages (reuse shadow dari stat-card) */
+
 .info-card {
   box-shadow: 0 4px 6px -1px rgb(166 161 161 / 19%), 0 2px 4px -1px rgb(97 91 91 / 32%);
   transition: box-shadow 0.2s ease, transform 0.2s ease;

@@ -3,22 +3,14 @@ import LoginView from '@/views/auth/LoginView.vue'
 import MainView from '@/views/dashboard/layout/MainView.vue'
 import Dashbord from '@/views/dashboard/DashboardMain.vue'
 import SopIndex from '@/views/dashboard/sop/SopIndex.vue'
-// import COAView from '@/views/dashboard/settings/COAView.vue'
 import KelasBiayaView from '@/views/dashboard/kelas/KelasIndex.vue'
 import CreateKelasView from '@/views/dashboard/kelas/KelasCreate.vue'
 import EditKelasView from '@/views/dashboard/kelas/KelasEdit.vue'
-// import cretaepelangganView from '@/views/dashboard/basis-data/pelanggan/CreateView.vue'
-// import editpelangganView from '@/views/dashboard/basis-data/pelanggan/EditView.vue'
 import pelangganView from '@/views/dashboard/pelanggan/PelangganIndex.vue'
 import PelangganCreate from '@/views/dashboard/pelanggan/PelangganCreate.vue'
 import PelangganEdit from '@/views/dashboard/pelanggan/PelangganEdit.vue'
-// import createdesaView from '@/views/dashboard/basis-data/desa/CreateView.vue'
-// import editdesaView from '@/views/dashboard/basis-data/desa/EditView.vue'
 import caterView from '@/views/dashboard/cater/CaterIndex.vue'
 import desaView from '@/views/dashboard/desa/DesaIndex.vue'
-// import desaView from '@/views/dashboard/basis-data/desa/IndexView.vue'
-// import createcaterView from '@/views/dashboard/basis-data/cater/CreateView.vue'
-// import caterView from '@/views/dashboard/basis-data/cater/IndexView.vue'
 import datainstalasiView from '@/views/dashboard/instalasi/dataInstalasi.vue'
 import registerInstalasi from '@/views/dashboard/instalasi/registrasi.vue'
 import statusInstalasi from '@/views/dashboard/instalasi/InstalasiStatus.vue'
@@ -73,11 +65,6 @@ const router = createRouter({
           name: 'personalisasi-sop',
           component: SopIndex,
         },
-        // {
-        //   path: '/settings',
-        //   name: 'settings',
-        //   component: COAView,
-        // },
         {
           path: '/kelas-biaya',
           name: 'kelas biaya',
@@ -93,16 +80,6 @@ const router = createRouter({
           name: 'Edit Kelas',
           component: EditKelasView,
         },
-        // {
-        //   path: '/BasisData',
-        //   name: 'BasisData',
-        //   component: cretaepelangganView,
-        // },
-        // {
-        //   path: '/BasisData',
-        //   name: 'BasisData',
-        //   component: editpelangganView,
-        // },
         {
           path: '/data-pelanggan',
           name: 'Data Pelanggan',
@@ -118,21 +95,6 @@ const router = createRouter({
           name: 'Edit Pelanggan',
           component: PelangganEdit,
         },
-        // {
-        //   path: '/BasisData',
-        //   name: 'BasisData',
-        //   component: createdesaView,
-        // },
-        // {
-        //   path: '/BasisData',
-        //   name: 'BasisData',
-        //   component: editdesaView,
-        // },
-        // {
-        //   path: '/BasisData',
-        //   name: 'BasisData',
-        //   component: desaView,
-        // },
         {
           path: '/data-cater',
           name: 'Data Cater',
@@ -143,21 +105,6 @@ const router = createRouter({
           name: 'Data Desa',
           component: desaView,
         },
-        // {
-        //   path: '/BasisData',
-        //   name: 'BasisData',
-        //   component: createcaterView,
-        // },
-        // {
-        //   path: '/BasisData',
-        //   name: 'BasisData',
-        //   component: createcaterView,
-        // },
-        // {
-        //   path: '/BasisData',
-        //   name: 'BasisData',
-        //   component: caterView,
-        // },
         {
           path: '/dataInstalasi',
           name: 'Data Instalasi',

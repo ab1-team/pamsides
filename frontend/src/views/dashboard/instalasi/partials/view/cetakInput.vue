@@ -2,7 +2,6 @@
   <div class="min-h-screen bg-slate-100 p-0 md:p-8 flex justify-center no-print-bg">
     <div class="print-paper bg-white shadow-2xl relative">
       <div class="print-container bg-white p-4 font-sans text-slate-900 overflow-hidden">
-        <!-- Header Section -->
         <div class="header text-center mb-6">
           <h3 class="text-xs font-bold tracking-[2px] mb-1">FORM INPUT CATER</h3>
           <h1 class="text-lg font-extrabold mb-1 uppercase tracking-tight">
@@ -14,7 +13,6 @@
           <div class="w-full h-[2px] bg-slate-800 mt-2 mb-4"></div>
         </div>
 
-        <!-- Metadata Section -->
         <div class="metadata flex justify-between items-start text-xs font-medium mb-4 px-2">
           <div class="left-info space-y-1">
             <div class="flex gap-2">
@@ -34,7 +32,6 @@
           </div>
         </div>
 
-        <!-- Table Section -->
         <table class="w-full border-collapse border border-slate-800 text-[11px]">
           <thead>
             <tr class="bg-slate-50">
@@ -81,7 +78,7 @@
               <td class="border border-slate-800 px-3 text-center"></td>
               <td class="border border-slate-800 px-3 text-center"></td>
             </tr>
-            <!-- Filling remaining space if small data -->
+
             <tr v-for="n in Math.max(0, 15 - filteredData.length)" :key="'empty-' + n" class="h-9">
               <td class="border border-slate-800 px-2 text-center">
                 {{ filteredData.length + n }}
@@ -97,7 +94,6 @@
         </table>
       </div>
 
-      <!-- Floating Print Button (Hidden during print) -->
       <div class="fixed bottom-8 right-8 no-print">
         <button
           @click="triggerPrint"
@@ -122,7 +118,6 @@ const triggerPrint = () => {
 }
 
 onMounted(() => {
-  // Auto-trigger print when the new tab opens
   setTimeout(() => {
     window.print()
   }, 500)

@@ -1,12 +1,12 @@
 import { ref, computed } from 'vue'
 
 export function useCater() {
-  // Filter state
+  // State untuk filter pencarian
   const searchQuery = ref('')
   const currentPage = ref(1)
   const perPage = ref(10)
 
-  // Sample data for Cater
+  // Data tiruan untuk Cater
   const tableData = ref([
     {
       id: 'C-001',
@@ -45,7 +45,7 @@ export function useCater() {
     },
   ])
 
-  // Computed properties
+  // Properti komputasi data (filter dan paginasi)
   const filteredData = computed(() => {
     if (!searchQuery.value) return tableData.value
     const q = searchQuery.value.toLowerCase()
@@ -69,7 +69,7 @@ export function useCater() {
     return pages
   })
 
-  // Handlers
+  // Fungsi-fungsi penanganan aksi
   const handleEdit = (row) => {
     console.log('Edit Cater:', row)
   }

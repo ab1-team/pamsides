@@ -1,7 +1,5 @@
 /**
- * =============================================
-   BILLING STORE - DYNAMIC STATE MANAGEMENT
-   =============================================
+ * Store Pinia untuk manajemen state tagihan
  */
 
 import { defineStore } from 'pinia'
@@ -10,7 +8,7 @@ import { getCurrentDate } from '../composables/useDateFormat.js'
 import { formatRupiah } from '../composables/useFormatCurrency.js'
 
 export const useBillingStore = defineStore('billing', () => {
-  // State
+  // State utama tagihan
   const billingPeriods = ref([])
   const searchQuery = ref('')
   const selectedCustomer = ref(null)
@@ -18,7 +16,7 @@ export const useBillingStore = defineStore('billing', () => {
   const error = ref(null)
   const searchResults = ref([])
 
-  // Mock data pelanggan
+  // Data tiruan pelanggan (sebagai contoh sebelum integrasi API)
   const mockCustomers = [
     {
       name: 'Bambang Susanto',
@@ -55,7 +53,7 @@ export const useBillingStore = defineStore('billing', () => {
     },
   ]
 
-  // Mock data - ini bisa diganti dengan API call
+  // Data tiruan riwayat tagihan (sebagai contoh sebelum integrasi API)
   const mockBillingPeriods = [
     {
       id: 1,
@@ -104,7 +102,7 @@ export const useBillingStore = defineStore('billing', () => {
     },
   ]
 
-  // Computed properties
+  // Data komputasi tagihan yang difilter dan dikelompokkan
   const filteredBillingPeriods = computed(() => {
     if (!searchQuery.value) {
       return billingPeriods.value
@@ -132,16 +130,16 @@ export const useBillingStore = defineStore('billing', () => {
     return overduePeriods.value.reduce((total, period) => total + period.amount, 0)
   })
 
-  // Actions
+  // Fungsi-fungsi aksi (Actions)
   const fetchBillingPeriods = async (customerId) => {
     loading.value = true
     error.value = null
 
     try {
-      // Simulate API call
+      // Simulasi jeda pemanggilan API
       await new Promise((resolve) => setTimeout(resolve, 500))
 
-      // Filter by customer if customerId provided
+      // Filter berdasarkan pelanggan jika ID diberikan
       if (customerId) {
         billingPeriods.value = mockBillingPeriods.filter(
           (period) => period.customerId === customerId,
@@ -150,7 +148,7 @@ export const useBillingStore = defineStore('billing', () => {
         billingPeriods.value = [...mockBillingPeriods]
       }
 
-      // Set selected customer
+      // Set pelanggan yang dipilih secara default
       if (billingPeriods.value.length > 0) {
         selectedCustomer.value = {
           name: billingPeriods.value[0].customerName,
@@ -179,7 +177,7 @@ export const useBillingStore = defineStore('billing', () => {
     error.value = null
 
     try {
-      // Simulate API call
+      // Simulasi jeda pemanggilan API
       await new Promise((resolve) => setTimeout(resolve, 300))
 
       const periodIndex = billingPeriods.value.findIndex((p) => p.id === periodId)
@@ -205,7 +203,7 @@ export const useBillingStore = defineStore('billing', () => {
     error.value = null
 
     try {
-      // Simulate API call
+      // Simulasi jeda pemanggilan API
       await new Promise((resolve) => setTimeout(resolve, 500))
 
       // Update billing period dengan data pembayaran
@@ -259,7 +257,7 @@ export const useBillingStore = defineStore('billing', () => {
     searchResults.value = []
     searchQuery.value = customer.name
 
-    // Fetch billing periods untuk customer yang dipilih
+    // Ambil periode tagihan untuk pelanggan yang dipilih
     await fetchBillingPeriods(customer.id)
   }
 
@@ -276,7 +274,7 @@ export const useBillingStore = defineStore('billing', () => {
     error.value = null
   }
 
-  // Utility functions
+  // Fungsi utilitas bantuan
   const formatAmount = (amount) => {
     return formatRupiah(amount)
   }
@@ -301,9 +299,9 @@ export const useBillingStore = defineStore('billing', () => {
     return backgrounds[type] || 'bg-slate-100'
   }
 
-  // Initialize store
+  // Inisialisasi store saat pertama dimuat
   const initializeStore = async () => {
-    // Jangan otomatis fetch data, tunggu user search
+    // Data belum di-fetch secara otomatis, menunggu pencarian pengguna
     // await fetchBillingPeriods()
   }
 
@@ -316,13 +314,13 @@ export const useBillingStore = defineStore('billing', () => {
     error,
     searchResults,
 
-    // Computed
+    // Komputasi
     filteredBillingPeriods,
     currentPeriod,
     overduePeriods,
     totalOverdueAmount,
 
-    // Actions
+    // Aksi
     fetchBillingPeriods,
     togglePeriod,
     updateBillingPeriod,
@@ -333,7 +331,7 @@ export const useBillingStore = defineStore('billing', () => {
     resetStore,
     initializeStore,
 
-    // Utilities
+    // Utilitas
     formatAmount,
     getPeriodStatusColor,
     getPeriodStatusBg,

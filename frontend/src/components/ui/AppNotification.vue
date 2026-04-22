@@ -150,7 +150,7 @@ onUnmounted(() => {
   clearAutoClose()
 })
 
-// Watch for show prop changes
+// Pantau perubahan properti show
 const { show } = toRefs(props)
 watch(show, (newShow) => {
   if (newShow) {
