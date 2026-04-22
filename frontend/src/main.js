@@ -4,8 +4,12 @@ import './assets/stat-card.css'
 import './assets/ui-base.css'
 import './assets/ui-modals.css'
 
-import { createApp } from 'vue'
-import { createPinia } from 'pinia'
+import {
+  createApp
+} from 'vue'
+import {
+  createPinia
+} from 'pinia'
 import App from './App.vue'
 import router from './router'
 
@@ -18,8 +22,12 @@ import Button from 'primevue/button'
 import DatePicker from 'primevue/datepicker'
 import InputNumber from 'primevue/inputnumber'
 
-import { library } from '@fortawesome/fontawesome-svg-core'
-import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
+import {
+  library
+} from '@fortawesome/fontawesome-svg-core'
+import {
+  FontAwesomeIcon
+} from '@fortawesome/vue-fontawesome'
 import {
   faFilter,
   faCalendar,
@@ -107,12 +115,16 @@ import {
   faBan,
   faTimesCircle,
   faSyncAlt,
+  faCalendarAlt,
 } from '@fortawesome/free-solid-svg-icons'
 
-import { faWhatsapp } from '@fortawesome/free-brands-svg-icons'
+import {
+  faWhatsapp
+} from '@fortawesome/free-brands-svg-icons'
 
 library.add(
   faFilter,
+  faCalendarAlt,
   faCalendar,
   faFileAlt,
   faFileExport,
@@ -201,7 +213,10 @@ library.add(
   faSyncAlt,
 )
 
-export { MySwal } from './utils/swal'
+export {
+  MySwal
+}
+from './utils/swal'
 
 const app = createApp(App)
 const pinia = createPinia()
