@@ -4,12 +4,8 @@ import './assets/stat-card.css'
 import './assets/ui-base.css'
 import './assets/ui-modals.css'
 
-import {
-  createApp
-} from 'vue'
-import {
-  createPinia
-} from 'pinia'
+import { createApp } from 'vue'
+import { createPinia } from 'pinia'
 import App from './App.vue'
 import router from './router'
 
@@ -23,12 +19,8 @@ import DatePicker from 'primevue/datepicker'
 import InputNumber from 'primevue/inputnumber'
 import Select from 'primevue/select'
 
-import {
-  library
-} from '@fortawesome/fontawesome-svg-core'
-import {
-  FontAwesomeIcon
-} from '@fortawesome/vue-fontawesome'
+import { library } from '@fortawesome/fontawesome-svg-core'
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import {
   faFilter,
   faCalendar,
@@ -117,11 +109,10 @@ import {
   faTimesCircle,
   faSyncAlt,
   faCalendarAlt,
+  faHashtag,
 } from '@fortawesome/free-solid-svg-icons'
 
-import {
-  faWhatsapp
-} from '@fortawesome/free-brands-svg-icons'
+import { faWhatsapp } from '@fortawesome/free-brands-svg-icons'
 
 library.add(
   faFilter,
@@ -212,12 +203,10 @@ library.add(
   faBan,
   faTimesCircle,
   faSyncAlt,
+  faHashtag,
 )
 
-export {
-  MySwal
-}
-from './utils/swal'
+export { MySwal } from './utils/swal'
 
 const app = createApp(App)
 const pinia = createPinia()
@@ -228,6 +217,12 @@ app.use(VueSweetalert2)
 app.use(PrimeVue, {
   theme: {
     preset: Aura,
+  },
+  zIndex: {
+    modal: 1100,
+    overlay: 10000,
+    menu: 1000,
+    tooltip: 1100,
   },
 })
 

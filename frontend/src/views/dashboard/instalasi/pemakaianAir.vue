@@ -106,42 +106,40 @@
       search-placeholder="Cari..."
     >
       <template #column-nama="{ row }">
-        <div class="flex items-center gap-2 md:gap-3!">
+        <div class="flex items-center gap-3!">
           <div
-            class="w-8 md:w-9! h-8 md:h-9! rounded-full! flex items-center justify-center text-white! text-[10px] md:text-xs! font-bold! shrink-0!"
+            class="w-9! h-9! rounded-full! flex items-center justify-center text-white! text-xs! font-bold! shrink-0!"
             :style="{ background: row.avatarColor }"
           >
             {{ row.initials }}
           </div>
           <div>
-            <div class="font-semibold! text-xs md:text-sm! text-slate-900! mb-0.5!">
+            <div class="font-semibold! text-sm! text-slate-900! mb-0.5!">
               {{ row.nama }}
             </div>
-            <div class="text-[10px] md:text-xs! text-slate-400! font-normal!">ID: {{ row.id }}</div>
+            <div class="text-xs! text-slate-400! font-normal!">ID: {{ row.id }}</div>
           </div>
         </div>
       </template>
 
       <template #column-meterRange="{ row }">
-        <div class="flex items-center gap-1 md:gap-2!">
-          <span class="text-xs md:text-sm! font-medium! text-slate-500!">
+        <div class="flex items-center gap-2!">
+          <span class="text-sm! font-medium! text-slate-500!">
             {{ row.meterAwal.toLocaleString('id-ID') }}
           </span>
-          <span class="text-xs md:text-sm! text-slate-300!">→</span>
-          <span class="text-xs md:text-sm! font-semibold! text-cyan-600!">
+          <span class="text-sm! text-slate-300!">→</span>
+          <span class="text-sm! font-semibold! text-cyan-600!">
             {{ row.meterAkhir.toLocaleString('id-ID') }}
           </span>
         </div>
       </template>
 
       <template #column-pemakaian="{ row }">
-        <span class="text-xs md:text-sm! font-semibold! text-slate-900!">
-          {{ row.pemakaian }} m³
-        </span>
+        <span class="text-sm! font-semibold! text-slate-900!"> {{ row.pemakaian }} m³ </span>
       </template>
 
       <template #column-tagihan="{ row }">
-        <div class="font-bold! text-xs md:text-sm! text-slate-900!">
+        <div class="font-bold! text-sm! text-slate-900!">
           {{ row.tagihan.toLocaleString('id-ID') }}
         </div>
       </template>
@@ -149,28 +147,30 @@
       <template #column-status="{ row }">
         <span
           :class="[
-            'inline-flex! items-center! gap-1.5! px-2 md:px-3! py-1 md:py-1.5! rounded-md! text-[10px] md:text-sm! font-semibold! tracking-wide!',
+            'inline-flex! items-center! gap-1! px-2! py-0.5! rounded-md! text-[10px]! font-bold! tracking-wider! uppercase! whitespace-nowrap!',
             STATUS_COLORS[row.status] || '',
           ]"
         >
-          {{ row.status }}
+          • {{ row.status }}
         </span>
       </template>
 
       <template #column-aksi="{ row }">
-        <div class="flex items-center gap-1 md:gap-2!">
+        <div class="flex items-center gap-2!">
           <BaseButton
             variant="ghost"
             size="sm"
             @click="handleEdit(row)"
-            class="w-7 md:w-8! h-7 md:h-8! p-0! rounded-lg! border! border-slate-100! text-slate-600!"
+            class="w-8! h-8! p-0! rounded-lg! border! border-slate-100! hover:border-blue-200! hover:bg-blue-50! text-slate-600! hover:text-blue-600! shadow-sm!"
+            title="Edit"
             icon="edit"
           />
           <BaseButton
             variant="ghost"
             size="sm"
             @click="handleDelete(row)"
-            class="w-7 md:w-8! h-7 md:h-8! p-0! rounded-lg! border! border-slate-100! text-slate-600!"
+            class="w-8! h-8! p-0! rounded-lg! border! border-slate-100! hover:border-red-200! hover:bg-red-50! text-slate-600! hover:text-red-600! shadow-sm!"
+            title="Delete"
             icon="trash"
           />
         </div>
@@ -183,6 +183,13 @@
       :filter="filter"
       @close="showHasilModal = false"
     />
+
+    <EditPemakaianModal
+      :show="showEditModal"
+      :data="selectedRow"
+      @close="showEditModal = false"
+      @save="handleSaveEdit"
+    />
   </div>
 </template>
 
@@ -193,6 +200,7 @@ import DataTable from '@/components/ui/DataTable.vue'
 import ContentCard from '@/components/ui/ContentCard.vue'
 import BaseButton from '@/components/ui/BaseButton.vue'
 import HasilInputModal from './partials/hasilInputModal.vue'
+import EditPemakaianModal from './editPemakaianAir.vue'
 import { useRouter } from 'vue-router'
 import { ref } from 'vue'
 
@@ -208,8 +216,11 @@ const {
   totalPages,
   visiblePages,
   STATUS_COLORS,
+  showEditModal,
+  selectedRow,
   handleApplyFilter,
   handleEdit,
+  handleSaveEdit,
   handleDelete,
 } = usePemakaianAir()
 
