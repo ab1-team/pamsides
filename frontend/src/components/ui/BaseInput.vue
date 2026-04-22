@@ -14,7 +14,7 @@
       <input
         v-if="type !== 'textarea'"
         :id="inputId"
-        :type="type"
+        :type="inputType"
         :value="modelValue"
         :placeholder="placeholder"
         :disabled="disabled"
@@ -45,6 +45,13 @@
         @keydown="$emit('keydown', $event)"
       ></textarea>
 
+      <!-- Password Visibility Toggle -->
+      <div v-if="type === 'password'" class="base-input__password-toggle">
+        <button type="button" @click="togglePassword" class="focus:outline-none!">
+          <font-awesome-icon :icon="showPassword ? 'eye-slash' : 'eye'" />
+        </button>
+      </div>
+
       <!-- Suffix Icon or Action -->
       <div v-if="$slots.suffix" class="base-input__suffix">
         <slot name="suffix" />
@@ -64,7 +71,19 @@
 </template>
 
 <script setup>
-import { computed, useId } from 'vue'
+import { computed, useId, ref } from 'vue'
+
+const showPassword = ref(false)
+const togglePassword = () => {
+  showPassword.value = !showPassword.value
+}
+
+const inputType = computed(() => {
+  if (props.type === 'password') {
+    return showPassword.value ? 'text' : 'password'
+  }
+  return props.type
+})
 
 const props = defineProps({
   modelValue: {
@@ -161,3 +180,83 @@ const handleInput = (event) => {
   emit('update:modelValue', value)
 }
 </script>
+
+<style scoped>
+.base-input {
+  display: flex;
+  flex-direction: column;
+}
+
+.base-input__label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #334155;
+  margin-bottom: 0.25rem;
+}
+
+.base-input__wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.base-input__prefix {
+  position: absolute;
+  left: 1rem;
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+  pointer-events: none;
+}
+
+.base-input__field {
+  width: 100%;
+  border-radius: 0.75rem;
+  border: 1px solid #e2e8f0;
+  background-color: #ffffff;
+  padding: 0.625rem 1rem;
+  font-size: 0.875rem;
+  color: #1e293b;
+  transition: all 0.2s ease;
+}
+
+.base-input__field:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.base-input__field--has-prefix {
+  padding-left: 2.75rem;
+}
+
+.base-input__password-toggle {
+  position: absolute;
+  right: 1rem;
+  color: #94a3b8;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  transition: color 0.2s;
+}
+
+.base-input__password-toggle:hover {
+  color: #64748b;
+}
+
+.base-input__error {
+  color: #ef4444;
+  font-size: 0.75rem;
+  margin-top: 0.25rem;
+}
+
+.base-input__hint {
+  color: #64748b;
+  font-size: 0.75rem;
+  margin-top: 0.25rem;
+}
+
+.base-input__field--textarea {
+  resize: vertical;
+}
+</style>

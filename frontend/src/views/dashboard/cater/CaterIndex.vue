@@ -1,5 +1,5 @@
 <template>
-  <div class="cater-root">
+  <div class="cater-root pb-20!">
     <DataTable
       :data="filteredData"
       :columns="tableColumns"
@@ -11,7 +11,7 @@
       :total-entries="tableData.length"
       v-model="searchQuery"
       class="mt-6!"
-      search-placeholder="Cari cater (Nama, Alamat, Username)..."
+      search-placeholder="Cari petugas..."
     >
       <template #column-aksi="{ row }">
         <div class="flex items-center gap-2!">
@@ -38,9 +38,12 @@
 </template>
 
 <script setup>
+import { useRouter } from 'vue-router'
 import { useCater } from '@/composables/useCater'
 import DataTable from '@/components/ui/DataTable.vue'
 import BaseButton from '@/components/ui/BaseButton.vue'
+
+const router = useRouter()
 
 const {
   searchQuery,
@@ -51,7 +54,7 @@ const {
   visiblePages,
   handleEdit,
   handleDelete,
-} = useCater()
+} = useCater(router)
 
 const tableColumns = [
   {
