@@ -1,7 +1,14 @@
 <template>
   <div class="pricing-config-view w-full! max-w-5xl! mx-auto! pb-20!">
     <!-- Header Section -->
-    <div class="mb-8!">
+    <div class="mb-8! flex! items-start! gap-4!">
+      <BaseButton
+        variant="ghost"
+        size="md"
+        @click="handleBack"
+        class="w-12! h-12! p-0! rounded-full! border! border-slate-200! hover:bg-slate-50! text-slate-600! flex! items-center! justify-center! shadow-sm! shrink-0!"
+        icon="chevron-left"
+      />
       <div>
         <h1 class="text-3xl font-extrabold text-slate-900! tracking-tight mb-2!">
           Tentukan Harga Paket
@@ -158,15 +165,6 @@
     <!-- Action Buttons -->
     <div class="mt-10! flex items-center justify-end gap-4!">
       <BaseButton
-        variant="secondary-gradient"
-        size="md"
-        @click="handleBack"
-        class="px-10! py-3! font-bold! rounded-2xl! shadow-lg! shadow-slate-200/60! transform! transition-all! hover:translate-y-[-2px]! active:scale-95!"
-        icon="arrow-left"
-      >
-        Kembali
-      </BaseButton>
-      <BaseButton
         variant="secondary"
         size="md"
         @click="handleSave"
@@ -186,6 +184,8 @@ import ContentCard from '@/components/ui/ContentCard.vue'
 import BaseInput from '@/components/ui/BaseInput.vue'
 import BaseButton from '@/components/ui/BaseButton.vue'
 import MaksMoneyInput from '@/components/MaksMoneyInput.vue'
+
+import Swal from 'sweetalert2'
 
 const router = useRouter()
 
@@ -236,11 +236,20 @@ const handleBack = () => {
   router.back()
 }
 
-const handleSave = () => {
+const handleSave = async () => {
   console.log('Saving New Kelas:', {
     nama: namaKelas.value,
     blocks: blocks.value,
   })
+
+  await Swal.fire({
+    title: 'Berhasil Disimpan!',
+    text: 'Kelas biaya baru telah berhasil ditambahkan.',
+    icon: 'success',
+    timer: 1500,
+    showConfirmButton: false,
+  })
+
   router.push('/kelas-biaya')
 }
 
