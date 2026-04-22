@@ -38,9 +38,12 @@
 </template>
 
 <script setup>
+import { useRouter } from 'vue-router'
 import { useDesa } from '@/composables/useDesa'
 import DataTable from '@/components/ui/DataTable.vue'
 import BaseButton from '@/components/ui/BaseButton.vue'
+
+const router = useRouter()
 
 const {
   searchQuery,
@@ -51,7 +54,7 @@ const {
   visiblePages,
   handleEdit,
   handleDelete,
-} = useDesa()
+} = useDesa(router)
 
 const tableColumns = [
   {

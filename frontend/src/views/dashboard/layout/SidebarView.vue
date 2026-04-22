@@ -165,7 +165,7 @@
             <!-- Nested Submenu -->
             <div class="sidebar-submenu nested" :class="{ open: desaOpen && sidebarOpen }">
               <router-link
-                to="/data/desa/create"
+                to="/data-desa/tambah"
                 class="sidebar-submenu-item nested-item"
                 @click="handleMenuClick"
               >
