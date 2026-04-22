@@ -34,12 +34,18 @@
       <template #column-status="{ row }">
         <span
           :class="[
-            'inline-flex! items-center! gap-0! px-2! py-0! rounded-md! text-sm! font-semibold! tracking-wide!',
+            'inline-flex! items-center! gap-1! px-2! py-0.5! rounded-md! text-[10px]! font-bold! tracking-wider! uppercase! whitespace-nowrap!',
             STATUS_COLORS[row.status] || '',
           ]"
         >
           • {{ row.status }}
         </span>
+      </template>
+
+      <template #column-no_hp="{ row }">
+        <div class="text-xs! font-medium! text-slate-600! whitespace-nowrap!">
+          {{ row.no_hp }}
+        </div>
       </template>
 
       <template #column-aksi="{ row }">
@@ -67,9 +73,12 @@
 </template>
 
 <script setup>
+import { useRouter } from 'vue-router'
 import { usePelanggan } from '@/composables/usePelanggan'
 import DataTable from '@/components/ui/DataTable.vue'
 import BaseButton from '@/components/ui/BaseButton.vue'
+
+const router = useRouter()
 
 const {
   searchQuery,
@@ -81,7 +90,7 @@ const {
   STATUS_COLORS,
   handleEdit,
   handleDelete,
-} = usePelanggan()
+} = usePelanggan(router)
 
 const tableColumns = [
   {

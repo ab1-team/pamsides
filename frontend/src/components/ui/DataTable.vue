@@ -78,7 +78,7 @@
             <td
               v-for="column in columns"
               :key="column.key"
-              class="px-4! py-1.5! border-b! border-slate-100! align-middle!"
+              class="px-4! py-2! border-b! border-slate-100! align-middle! text-[13px]! text-slate-600!"
               :class="column.tdClass"
             >
               <slot :name="`column-${column.key}`" :row="row" :column="column" :index="index">
@@ -109,10 +109,7 @@
           variant="ghost"
           size="sm"
           :disabled="effectiveCurrentPage === 1"
-          @click="
-            effectiveCurrentPage--
-            emit('prev-page')
-          "
+          @click="handlePrevPage"
           class="w-8! h-8! p-0! rounded-lg! border! border-slate-200! bg-white!"
         >
           ‹
@@ -123,10 +120,7 @@
           :key="page"
           variant="ghost"
           size="sm"
-          @click="
-            effectiveCurrentPage = page
-            emit('go-to-page', page)
-          "
+          @click="handleGoToPage(page)"
           class="min-w-[32px]! h-8! rounded-lg! border! px-1 md:px-2! shadow-sm!"
           :class="
             page === effectiveCurrentPage
@@ -141,10 +135,7 @@
           variant="ghost"
           size="sm"
           :disabled="effectiveCurrentPage === effectiveTotalPages"
-          @click="
-            effectiveCurrentPage++
-            emit('next-page')
-          "
+          @click="handleNextPage"
           class="w-8! h-8! p-0! rounded-lg! border! border-slate-200! bg-white!"
         >
           ›
@@ -303,6 +294,25 @@ const showingInfo = computed(() => {
     total: props.totalEntries,
   }
 })
+
+const handlePrevPage = () => {
+  if (effectiveCurrentPage.value > 1) {
+    effectiveCurrentPage.value--
+    emit('prev-page')
+  }
+}
+
+const handleNextPage = () => {
+  if (effectiveCurrentPage.value < effectiveTotalPages.value) {
+    effectiveCurrentPage.value++
+    emit('next-page')
+  }
+}
+
+const handleGoToPage = (page) => {
+  effectiveCurrentPage.value = page
+  emit('go-to-page', page)
+}
 
 const getNestedValue = (obj, path) => {
   return path.split('.').reduce((current, key) => {
