@@ -20,6 +20,7 @@
         :disabled="disabled"
         :readonly="readonly"
         :class="inputClasses"
+        :maxlength="maxlength"
         @input="handleInput"
         @change="$emit('change', $event.target.value)"
         @focus="$emit('focus', $event)"
@@ -36,6 +37,7 @@
         :readonly="readonly"
         :rows="rows"
         :class="[inputClasses, 'base-input__field--textarea']"
+        :maxlength="maxlength"
         @input="handleInput"
         @change="$emit('change', $event.target.value)"
         @focus="$emit('focus', $event)"
@@ -121,6 +123,10 @@ const props = defineProps({
   noMargin: {
     type: Boolean,
     default: false,
+  },
+  maxlength: {
+    type: [String, Number],
+    default: null,
   },
 })
 

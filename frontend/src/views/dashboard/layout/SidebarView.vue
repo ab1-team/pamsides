@@ -121,7 +121,7 @@
             <!-- Nested Submenu -->
             <div class="sidebar-submenu nested" :class="{ open: pelangganOpen && sidebarOpen }">
               <router-link
-                to="/data/pelanggan/create"
+                to="/data-pelanggan/tambah"
                 class="sidebar-submenu-item nested-item"
                 @click="handleMenuClick"
               >

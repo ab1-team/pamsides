@@ -1,7 +1,8 @@
 import { ref, computed } from 'vue'
 import { STATUS_TYPES, STATUS_COLORS } from '@/types/pelanggan'
+import Swal from 'sweetalert2'
 
-export function usePelanggan() {
+export function usePelanggan(router = null) {
   // Filter state
   const searchQuery = ref('')
   const currentPage = ref(1)
@@ -88,13 +89,34 @@ export function usePelanggan() {
   // Handlers
   const handleEdit = (row) => {
     console.log('Edit Pelanggan:', row)
-    // Future: router.push(`/data/pelanggan/edit/${row.id}`)
+    if (router) {
+      router.push(`/data-pelanggan/edit/${row.id}`)
+    }
   }
 
-  const handleDelete = (row) => {
-    console.log('Delete Pelanggan:', row)
-    if (confirm(`Apakah Anda yakin ingin menghapus pelanggan ${row.nama}?`)) {
+  const handleDelete = async (row) => {
+    const result = await Swal.fire({
+      title: 'Hapus Pelanggan?',
+      text: `Pelanggan an. "${row.nama}" akan dihapus secara permanent dari aplikasi`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Ya, Hapus!',
+      cancelButtonText: 'Batal',
+      confirmButtonColor: '#ef4444',
+      cancelButtonColor: '#64748b',
+      reverseButtons: true,
+    })
+
+    if (result.isConfirmed) {
       tableData.value = tableData.value.filter((item) => item.id !== row.id)
+
+      Swal.fire({
+        title: 'Terhapus!',
+        text: 'Data pelanggan telah berhasil dihapus.',
+        icon: 'success',
+        timer: 1500,
+        showConfirmButton: false,
+      })
     }
   }
 

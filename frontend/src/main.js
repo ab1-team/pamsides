@@ -17,6 +17,7 @@ import Aura from '@primeuix/themes/aura'
 import Button from 'primevue/button'
 import DatePicker from 'primevue/datepicker'
 import InputNumber from 'primevue/inputnumber'
+import Select from 'primevue/select'
 
 import { library } from '@fortawesome/fontawesome-svg-core'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
@@ -218,6 +219,7 @@ app.use(PrimeVue, {
 app.component('PrimeButton', Button)
 app.component('DatePicker', DatePicker)
 app.component('InputNumber', InputNumber)
+app.component('PrimeSelect', Select)
 app.component('font-awesome-icon', FontAwesomeIcon)
 
 app.mount('#app')
