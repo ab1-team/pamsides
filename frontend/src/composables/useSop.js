@@ -1,4 +1,5 @@
 import { ref, computed } from 'vue'
+import { MySwal } from '@/utils/swal'
 
 export function useSop() {
   const activeSection = ref('wellcome')
@@ -101,6 +102,8 @@ Pembayaran telah kami terima pada`,
   const pasangBaruForm = ref({
     biayaPasang: 750000,
     statusPembayaran: 'wajib',
+    enableAir: true,
+    enableSampah: false,
   })
 
   const sistemTagihanForm = ref({
@@ -112,8 +115,36 @@ Pembayaran telah kami terima pada`,
   const wellcomeForm = ref({})
 
   const saveSettings = () => {
-    console.log('Saving settings for:', activeSection.value)
-    alert(`Settings for ${activeLabel.value} saved successfully!`)
+    if (activeSection.value === 'pasangBaru' && pasangBaruForm.value.enableSampah) {
+      MySwal.fire({
+        title: 'Konfirmasi Aktivasi Fitur',
+        text: 'Aktivasi fitur Retribusi Sampah memerlukan login ulang untuk sinkronisasi data sistem. Apakah Anda ingin melanjutkan?',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#0ea5e9',
+        cancelButtonColor: '#64748b',
+        confirmButtonText: 'Ya, Login Ulang',
+        cancelButtonText: 'Batal',
+      }).then((result) => {
+        if (result.isConfirmed) {
+          window.location.href = '/login?logout=success'
+        }
+      })
+    } else {
+      MySwal.fire({
+        toast: true,
+        position: 'top-end',
+        icon: 'success',
+        title: 'Pengaturan Berhasil Disimpan',
+        showConfirmButton: false,
+        timer: 3000,
+        timerProgressBar: true,
+        customClass: {
+          popup: 'swal-toast-custom',
+          title: 'swal-toast-title',
+        },
+      })
+    }
   }
 
   return {
