@@ -9,9 +9,9 @@
               <p class="text-xs! font-bold! text-red-500! uppercase! tracking-widest!">
                 Customer Profile
               </p>
-              <span class="px-3! py-1! rounded-full! text-xs! font-bold! bg-red-100! text-red-700!"
-                >CABUT</span
-              >
+              <span class="px-3! py-1! rounded-full! text-xs! font-bold! bg-red-100! text-red-700!">
+                CABUT
+              </span>
             </div>
             <h1 class="text-3xl! font-extrabold! text-slate-800! mb-3!">{{ customer.name }}</h1>
             <div class="flex! items-start! gap-2! text-slate-500!">
@@ -28,9 +28,9 @@
             >
               <font-awesome-icon icon="qrcode" class="text-slate-600! text-5xl!" />
             </div>
-            <span class="text-[10px]! text-slate-400! font-medium! tracking-wide! italic!"
-              >QR tidak aktif</span
-            >
+            <span class="text-[10px]! text-slate-400! font-medium! tracking-wide! italic!">
+              QR tidak aktif
+            </span>
           </div>
         </div>
       </ContentCard>
@@ -39,8 +39,8 @@
       <div class="bg-red-50! border! border-red-200! rounded-2xl! p-4! flex! items-start! gap-3!">
         <font-awesome-icon icon="times-circle" class="text-red-500! mt-0.5! shrink-0!" />
         <div>
-          <p class="text-sm! font-bold! text-red-700!">Instalasi Dicabut</p>
-          <p class="text-xs! text-red-600! mt-0.5!">
+          <p class="text-xs! text-red-600!">
+            <span class="font-bold! text-red-700! mr-1!">Instalasi Dicabut:</span>
             Sambungan air pelanggan ini telah dicabut. Layanan tidak aktif dan tidak dapat
             digunakan. Hubungi admin untuk pengajuan ulang.
           </p>
@@ -83,23 +83,50 @@
         </ContentCard>
       </div>
 
-      <!-- History Timeline -->
-      <ContentCard variant="bordered" padding="normal" rounded="2xl">
-        <h3 class="text-sm! font-bold! text-slate-700! mb-4!">Riwayat Status</h3>
-        <div class="space-y-3!">
-          <div v-for="event in timeline" :key="event.date" class="flex! items-start! gap-3!">
-            <div class="w-2! h-2! rounded-full! mt-1.5! shrink-0!" :class="event.color"></div>
-            <div>
-              <p class="text-sm! font-semibold! text-slate-700!">{{ event.label }}</p>
-              <p class="text-xs! text-slate-400!">{{ event.date }}</p>
-            </div>
-          </div>
-        </div>
-      </ContentCard>
+      <div class="grid! grid-cols-1! sm:grid-cols-3! gap-3! mt-3!">
+        <button
+          @click="handleDelete"
+          class="flex! items-center! justify-center! gap-2! bg-red-500! hover:bg-red-600! text-white! font-bold! py-3! rounded-xl! text-sm! transition-all! shadow-lg! shadow-red-200/50! border-red-500!"
+        >
+          <font-awesome-icon icon="trash-alt" />
+          Hapus Pelanggan
+        </button>
+        <button
+          class="flex! items-center! justify-center! gap-2! border! border-slate-200! hover:bg-slate-50! text-slate-600! font-semibold! py-3! rounded-xl! text-sm! transition-all! bg-white!"
+        >
+          <font-awesome-icon icon="print" />
+          Cetak
+        </button>
+        <button
+          @click="$router.back()"
+          class="flex! items-center! justify-center! gap-2! border! border-slate-200! hover:bg-slate-50! text-slate-600! font-semibold! py-3! rounded-xl! text-sm! transition-all! bg-white!"
+        >
+          <font-awesome-icon icon="arrow-left" />
+          Kembali
+        </button>
+      </div>
     </div>
 
     <!-- RIGHT COLUMN -->
     <div class="flex! flex-col! gap-6!">
+      <!-- History Timeline -->
+      <ContentCard variant="bordered" padding="normal" rounded="2xl">
+        <h3 class="text-sm! font-bold! text-slate-700! mb-4!">Riwayat Status</h3>
+        <div class="space-y-3!">
+          <div
+            v-for="event in timeline"
+            :key="event.date"
+            class="flex! items-center! justify-between! gap-4!"
+          >
+            <div class="flex! items-center! gap-3!">
+              <div class="w-2! h-2! rounded-full! shrink-0!" :class="event.color"></div>
+              <p class="text-sm! font-semibold! text-slate-700!">{{ event.label }}</p>
+            </div>
+            <p class="text-xs! text-slate-400! font-medium! font-mono!">{{ event.date }}</p>
+          </div>
+        </div>
+      </ContentCard>
+
       <ContentCard variant="bordered" padding="normal" rounded="2xl">
         <div class="flex! items-center! gap-2! mb-4!">
           <div class="w-7! h-7! bg-red-100! rounded-lg! flex! items-center! justify-center!">
@@ -111,8 +138,9 @@
           <div>
             <label
               class="text-xs! font-semibold! text-slate-500! uppercase! tracking-wide! block! mb-1!"
-              >Kode Instalasi</label
             >
+              Kode Instalasi
+            </label>
             <input
               type="text"
               :value="customer.kodeInstalasi"
@@ -123,8 +151,9 @@
           <div>
             <label
               class="text-xs! font-semibold! text-slate-500! uppercase! tracking-wide! block! mb-1!"
-              >Alasan Pencabutan</label
             >
+              Alasan Pencabutan
+            </label>
             <input
               type="text"
               :value="customer.alasanCabut"
@@ -132,21 +161,6 @@
               class="w-full! border! border-slate-200! rounded-xl! px-3! py-2.5! text-sm! text-slate-700! bg-slate-50! focus:outline-none!"
             />
           </div>
-        </div>
-        <div class="grid! grid-cols-2! gap-2!">
-          <button
-            class="flex! items-center! justify-center! gap-2! border! border-slate-200! hover:bg-slate-50! text-slate-600! font-semibold! py-2.5! rounded-xl! text-sm! transition-all!"
-          >
-            <font-awesome-icon icon="print" />
-            Cetak
-          </button>
-          <button
-            @click="$router.back()"
-            class="flex! items-center! justify-center! gap-2! border! border-slate-200! hover:bg-slate-50! text-slate-600! font-semibold! py-2.5! rounded-xl! text-sm! transition-all!"
-          >
-            <font-awesome-icon icon="arrow-left" />
-            Kembali
-          </button>
         </div>
       </ContentCard>
     </div>
@@ -156,13 +170,41 @@
 <script setup>
 defineOptions({ name: 'CabutDetail' })
 import { computed } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useInstalasiStatus } from '@/composables/useInstalasiStatus'
 import ContentCard from '@/components/ui/ContentCard.vue'
+import Swal from 'sweetalert2'
 
 const route = useRoute()
+const router = useRouter()
 const { dataMap } = useInstalasiStatus()
 const id = decodeURIComponent(route.params.id)
+
+const handleDelete = async () => {
+  const result = await Swal.fire({
+    title: 'Hapus Pelanggan?',
+    text: 'Data pelanggan ini akan dihapus secara permanen dari aplikasi!',
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#ef4444',
+    cancelButtonColor: '#64748b',
+    confirmButtonText: 'Ya, Hapus Permanen',
+    cancelButtonText: 'Batal',
+    reverseButtons: true,
+  })
+
+  if (result.isConfirmed) {
+    // Logic delete here
+    await Swal.fire({
+      title: 'Terhapus!',
+      text: 'Data pelanggan telah dihapus secara permanen.',
+      icon: 'success',
+      timer: 1500,
+      showConfirmButton: false,
+    })
+    router.push({ name: 'Status Instalasi' })
+  }
+}
 
 const timeline = [
   { label: 'Permohonan Diterima', date: '2020-01-10', color: 'bg-blue-500!' },
