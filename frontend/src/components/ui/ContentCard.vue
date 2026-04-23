@@ -48,7 +48,7 @@ const emit = defineEmits(['click'])
 const cardClasses = computed(() => {
   const base = 'content-card'
 
-  // Variant styles
+  // Gaya varian
   const variants = {
     default: 'content-card--default',
     bordered: 'content-card--bordered',
@@ -56,7 +56,7 @@ const cardClasses = computed(() => {
     minimal: 'content-card--minimal',
   }
 
-  // Padding styles
+  // Gaya padding
   const paddings = {
     none: 'content-card--padding-none',
     small: 'content-card--padding-small',
@@ -64,7 +64,7 @@ const cardClasses = computed(() => {
     large: 'content-card--padding-large',
   }
 
-  // Rounded styles
+  // Gaya sudut membulat
   const roundedStyles = {
     none: 'rounded-none',
     sm: 'rounded-sm',
@@ -75,7 +75,7 @@ const cardClasses = computed(() => {
     full: 'rounded-full',
   }
 
-  // Interactive styles
+  // Gaya interaktif
   const interactive = props.hoverable || props.clickable ? 'content-card--interactive' : ''
 
   return [

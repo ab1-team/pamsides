@@ -18,10 +18,9 @@
 import { ref, computed } from 'vue'
 import DataTable from '../../../components/ui/DataTable.vue'
 
-// Search and Pagination states
 const searchQuery = ref('')
 const currentPage = ref(1)
-const perPage = ref(5) // Setting to 5 since it's likely going to be in a popup
+const perPage = ref(5)
 
 const columns = [
   { key: 'nomorInduk', title: 'Nomor Induk' },
@@ -30,7 +29,6 @@ const columns = [
   { key: 'paket', title: 'Paket' },
 ]
 
-// Mock Data
 const mockData = ref([
   {
     id: 1,
@@ -83,7 +81,6 @@ const mockData = ref([
   },
 ])
 
-// Computed Properties for filtering
 const filteredData = computed(() => {
   const query = searchQuery.value.toLowerCase()
   if (!query) return mockData.value

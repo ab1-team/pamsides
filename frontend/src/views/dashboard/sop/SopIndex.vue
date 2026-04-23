@@ -136,7 +136,6 @@
                   </span>
                 </div>
 
-                <!-- Active Indicator Dot (Optional for non-active) -->
                 <div
                   v-if="activeSection !== menu.key"
                   class="absolute! -bottom-1! left-1/2! -translate-x-1/2! w-1! h-1! bg-slate-700! rounded-full! opacity-0!"

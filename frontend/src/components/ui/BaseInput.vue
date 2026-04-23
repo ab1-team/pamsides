@@ -5,7 +5,7 @@
     </label>
 
     <div class="base-input__wrapper">
-      <!-- Prefix Icon/Text -->
+      <!-- Prefix Icon atau Teks -->
       <div v-if="prefixIcon || prefixText" class="base-input__prefix">
         <span v-if="prefixText">{{ prefixText }}</span>
         <font-awesome-icon v-else :icon="prefixIcon" />
@@ -45,6 +45,7 @@
         @keydown="$emit('keydown', $event)"
       ></textarea>
 
+      <!-- Suffix Icon atau Aksi -->
       <!-- Password Visibility Toggle -->
       <div v-if="type === 'password'" class="base-input__password-toggle">
         <button type="button" @click="togglePassword" class="focus:outline-none!">
@@ -58,12 +59,12 @@
       </div>
     </div>
 
-    <!-- Error Message -->
+    <!-- Pesan Error -->
     <div v-if="error" class="base-input__error">
       {{ error }}
     </div>
 
-    <!-- Hint Text -->
+    <!-- Teks Petunjuk -->
     <div v-if="hint && !error" class="base-input__hint">
       {{ hint }}
     </div>

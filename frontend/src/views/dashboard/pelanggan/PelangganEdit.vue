@@ -154,11 +154,9 @@ const form = ref({
 })
 
 onMounted(() => {
-  // Simulasi fetch data berdasarkan ID dari route params
   const id = route.params.id
   console.log('Fetching data for ID:', id)
 
-  // Data dummy untuk contoh
   form.value = {
     nik: '3201234567890001',
     nama_lengkap: 'Budi Santoso',
@@ -190,7 +188,7 @@ const handleSave = () => {
     text: 'Data pelanggan telah diperbarui.',
     icon: 'success',
     confirmButtonText: 'OK',
-    confirmButtonColor: '#64748b', // Secondary color
+    confirmButtonColor: '#64748b',
   }).then(() => {
     router.push('/data-pelanggan')
   })

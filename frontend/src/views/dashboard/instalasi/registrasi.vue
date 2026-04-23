@@ -125,7 +125,6 @@
     </div>
 
     <ContentCard variant="bordered" padding="none" hoverable class="overflow-hidden!">
-      <!-- Unified Header: Selected Customer -->
       <Transition
         enter-active-class="transition! duration-300! ease-out!"
         enter-from-class="opacity-0! -translate-y-4!"
@@ -170,7 +169,6 @@
       <div
         class="grid! grid-cols-1! lg:grid-cols-2! gap-2! divide-y! lg:divide-y-0! lg:divide-x! divide-slate-100!"
       >
-        <!-- Service Details Section -->
         <div class="p-5! lg:p-6!">
           <div class="flex! items-center! gap-2.5! mb-5!">
             <div class="w-8! h-8! bg-blue-100! rounded-lg! flex! items-center! justify-center!">
@@ -228,7 +226,6 @@
           />
         </div>
 
-        <!-- Deployment Site Section -->
         <div class="p-5! lg:p-6!">
           <div class="flex! items-center! gap-2.5! mb-5!">
             <div class="w-8! h-8! bg-cyan-100! rounded-lg! flex! items-center! justify-center!">
@@ -600,7 +597,7 @@ const openMapPreview = () => {
 
 const handleNewCustomerRegistration = () => {
   console.log('Redirecting to new customer registration...')
-  // Typically window.location.href = '/customer/register' or similar
+
   alert('Fitur Registrasi Pelanggan Baru akan segera hadir!')
 }
 

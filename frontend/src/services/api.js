@@ -1,8 +1,8 @@
-// Base API configuration and services for PAMSIMAS application
+// Konfigurasi dasar API dan layanan untuk aplikasi PAMSIMAS
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'
 
-// Generic API request function
+// Fungsi umum untuk permintaan API
 const apiRequest = async (endpoint, options = {}) => {
   const url = `${API_BASE_URL}${endpoint}`
 
@@ -30,14 +30,14 @@ const apiRequest = async (endpoint, options = {}) => {
   }
 }
 
-// Tutup Buku API Service
+// Layanan API untuk Tutup Buku
 export const tutupBukuService = {
-  // Check if book is already closed for a specific year
+  // Cek apakah buku sudah ditutup untuk tahun tertentu
   async checkBookClosed(year) {
     return apiRequest(`/tutup-buku/check/${year}`)
   },
 
-  // Perform book closing process
+  // Eksekusi proses tutup buku
   async closeBook(year, data = {}) {
     return apiRequest('/tutup-buku/close', {
       method: 'POST',
@@ -48,25 +48,25 @@ export const tutupBukuService = {
     })
   },
 
-  // Get book closing history
+  // Ambil riwayat tutup buku
   async getClosingHistory() {
     return apiRequest('/tutup-buku/history')
   },
 
-  // Get closing status for specific year
+  // Ambil status penutupan untuk tahun tertentu
   async getClosingStatus(year) {
     return apiRequest(`/tutup-buku/status/${year}`)
   },
 }
 
-// Neraca Saldo API Service
+// Layanan API untuk Neraca Saldo
 export const neracaSaldoService = {
-  // Get balance sheet for specific year
+  // Ambil neraca saldo untuk tahun tertentu
   async getNeracaSaldo(year) {
     return apiRequest(`/neraca-saldo/${year}`)
   },
 
-  // Update account balances after closing
+  // Perbarui saldo akun setelah penutupan
   async updateBalances(year, balances) {
     return apiRequest('/neraca-saldo/update', {
       method: 'POST',
@@ -78,9 +78,9 @@ export const neracaSaldoService = {
   },
 }
 
-// Alokasi Laba API Service
+// Layanan API untuk Alokasi Laba
 export const alokasiLabaService = {
-  // Calculate profit allocation
+  // Hitung alokasi laba
   async calculateAllocation(year, totalSaldo) {
     return apiRequest('/alokasi-laba/calculate', {
       method: 'POST',
@@ -91,7 +91,7 @@ export const alokasiLabaService = {
     })
   },
 
-  // Save profit allocation
+  // Simpan data alokasi laba
   async saveAllocation(year, allocationData) {
     return apiRequest('/alokasi-laba/save', {
       method: 'POST',
@@ -103,7 +103,7 @@ export const alokasiLabaService = {
   },
 }
 
-// Export default API configuration
+// Ekspor konfigurasi API utama
 export default {
   API_BASE_URL,
   apiRequest,

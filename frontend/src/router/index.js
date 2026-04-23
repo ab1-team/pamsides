@@ -3,17 +3,12 @@ import LoginView from '@/views/auth/LoginView.vue'
 import MainView from '@/views/dashboard/layout/MainView.vue'
 import Dashbord from '@/views/dashboard/DashboardMain.vue'
 import SopIndex from '@/views/dashboard/sop/SopIndex.vue'
-// import COAView from '@/views/dashboard/settings/COAView.vue'
 import KelasBiayaView from '@/views/dashboard/kelas/KelasIndex.vue'
 import CreateKelasView from '@/views/dashboard/kelas/KelasCreate.vue'
 import EditKelasView from '@/views/dashboard/kelas/KelasEdit.vue'
-// import cretaepelangganView from '@/views/dashboard/basis-data/pelanggan/CreateView.vue'
-// import editpelangganView from '@/views/dashboard/basis-data/pelanggan/EditView.vue'
 import pelangganView from '@/views/dashboard/pelanggan/PelangganIndex.vue'
 import PelangganCreate from '@/views/dashboard/pelanggan/PelangganCreate.vue'
 import PelangganEdit from '@/views/dashboard/pelanggan/PelangganEdit.vue'
-// import createdesaView from '@/views/dashboard/basis-data/desa/CreateView.vue'
-// import editdesaView from '@/views/dashboard/basis-data/desa/EditView.vue'
 import caterView from '@/views/dashboard/cater/CaterIndex.vue'
 import CaterCreate from '@/views/dashboard/cater/CaterCreate.vue'
 import CaterEdit from '@/views/dashboard/cater/CaterEdit.vue'
@@ -102,16 +97,6 @@ const router = createRouter({
           name: 'Edit Kelas',
           component: EditKelasView,
         },
-        // {
-        //   path: '/BasisData',
-        //   name: 'BasisData',
-        //   component: cretaepelangganView,
-        // },
-        // {
-        //   path: '/BasisData',
-        //   name: 'BasisData',
-        //   component: editpelangganView,
-        // },
         {
           path: '/data-pelanggan',
           name: 'Data Pelanggan',
@@ -127,21 +112,6 @@ const router = createRouter({
           name: 'Edit Pelanggan',
           component: PelangganEdit,
         },
-        // {
-        //   path: '/BasisData',
-        //   name: 'BasisData',
-        //   component: createdesaView,
-        // },
-        // {
-        //   path: '/BasisData',
-        //   name: 'BasisData',
-        //   component: editdesaView,
-        // },
-        // {
-        //   path: '/BasisData',
-        //   name: 'BasisData',
-        //   component: desaView,
-        // },
         {
           path: '/data-cater',
           name: 'Data Cater',

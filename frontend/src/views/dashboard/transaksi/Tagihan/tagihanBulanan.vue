@@ -9,7 +9,6 @@
         @search="handleSearch"
       />
 
-      <!-- Detail Modal -->
       <DetailModal :show="showDetailModal" @close="showDetailModal = false" />
 
       <div

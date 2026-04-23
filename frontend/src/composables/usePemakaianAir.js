@@ -3,12 +3,13 @@ import { STATUS_TYPES, STATUS_COLORS } from '@/types/pemakaianAir'
 import Swal from 'sweetalert2'
 
 export function usePemakaianAir() {
-  // Filter state
+  // State untuk filter pencarian
   const filter = ref({ tahun: '', bulan: '', cater: '' })
   const searchQuery = ref('')
   const currentPage = ref(1)
   const perPage = ref(10)
 
+  // Pilihan opsi
   // Edit Modal state
   const showEditModal = ref(false)
   const selectedRow = ref(null)
@@ -34,7 +35,7 @@ export function usePemakaianAir() {
     'Desember',
   ]
 
-  // Sample data
+  // Data dummy
   const tableData = ref([
     {
       id: '1..08.561 P',
@@ -86,7 +87,7 @@ export function usePemakaianAir() {
     },
   ])
 
-  // Computed properties
+  // Properti komputasi
   const filteredData = computed(() => {
     if (!searchQuery.value) return tableData.value
     const q = searchQuery.value.toLowerCase()
@@ -117,7 +118,7 @@ export function usePemakaianAir() {
     return pages
   })
 
-  // Handlers
+  // Fungsi-fungsi penanganan aksi
   const handleApplyFilter = () => console.log('Apply filter:', filter.value)
   const handleCetakFormInput = () => console.log('Cetak Form Input')
   const handleHasilInput = () => console.log('Hasil Input')
@@ -170,7 +171,7 @@ export function usePemakaianAir() {
     showEditModal,
     selectedRow,
 
-    // Options
+    // Pilihan opsi
     tahunOptions,
     bulanOptions,
 
@@ -179,15 +180,15 @@ export function usePemakaianAir() {
     filteredData,
     groupedData,
 
-    // Computed
+    // Komputasi
     totalPages,
     visiblePages,
 
-    // Constants
+    // Konstanta
     STATUS_TYPES,
     STATUS_COLORS,
 
-    // Handlers
+    // Penanganan Aksi
     handleApplyFilter,
     handleCetakFormInput,
     handleHasilInput,

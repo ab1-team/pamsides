@@ -1,13 +1,13 @@
 import { ref, computed } from 'vue'
 import Swal from 'sweetalert2'
 
-export function useCater(router = null) {
-  // Filter state
+export function useCater() {
+  // State untuk filter pencarian
   const searchQuery = ref('')
   const currentPage = ref(1)
   const perPage = ref(10)
 
-  // Sample data for Cater
+  // Data tiruan untuk Cater
   const tableData = ref([
     {
       id: 'C-001',
@@ -46,7 +46,7 @@ export function useCater(router = null) {
     },
   ])
 
-  // Computed properties
+  // Properti komputasi data (filter dan paginasi)
   const filteredData = computed(() => {
     if (!searchQuery.value) return tableData.value
     const q = searchQuery.value.toLowerCase()
@@ -70,7 +70,7 @@ export function useCater(router = null) {
     return pages
   })
 
-  // Handlers
+  // Fungsi-fungsi penanganan aksi
   const handleEdit = (row) => {
     console.log('Edit Cater:', row)
     if (router) {

@@ -13,7 +13,7 @@
       <div class="flex! items-center! gap-4!">
         <span v-if="title" class="text-sm! font-semibold! text-slate-900!">{{ title }}</span>
 
-        <!-- Built-in Show Entries -->
+        <!-- Tampilkan Entri -->
         <div v-if="showEntries" class="flex! items-center! gap-2! text-xs! text-slate-500!">
           <span class="whitespace-nowrap!">Show</span>
           <select
@@ -223,7 +223,7 @@ const emit = defineEmits([
   'update:per-page',
 ])
 
-// Internal state for when parent doesn't provide v-model
+// State internal jika komponen induk tidak menyediakan v-model
 const internalCurrentPage = ref(1)
 const internalPerPage = ref(10)
 

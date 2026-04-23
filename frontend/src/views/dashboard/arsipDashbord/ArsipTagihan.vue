@@ -15,6 +15,4 @@
   </div>
 </template>
 
-<script setup>
-// Placeholder for Tagihan specifics
-</script>
+<script setup></script>

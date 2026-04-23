@@ -32,7 +32,6 @@
     </div>
 
     <ContentCard variant="default" padding="none" hoverable class="overflow-hidden!">
-      <!-- DESKTOP -->
       <div class="hidden lg:flex! h-full!">
         <ContentCard
           variant="minimal"
@@ -103,7 +102,10 @@
               </h2>
             </template>
 
-            <!-- columns -->
+            <template #column-id="{ row }">
+              <span class="text-xs! font-bold! text-blue-600! font-mono!">{{ row.id }}</span>
+            </template>
+
             <template #column-name="{ row }">
               <div class="flex items-center gap-2.5!">
                 <div
@@ -152,7 +154,6 @@
         </div>
       </div>
 
-      <!-- MOBILE -->
       <div class="lg:hidden! flex! flex-col!">
         <div class="px-3! pt-3! pb-2! border-b! border-slate-100! bg-white!">
           <p class="text-[10px]! font-bold! text-slate-400! uppercase! tracking-widest! mb-2!">
@@ -240,7 +241,6 @@
           </div>
         </div>
 
-        <!-- Mobile Pagination -->
         <div
           class="px-3! py-3! bg-slate-50/50! border-t! border-slate-100! flex! items-center! justify-between!"
         >
@@ -311,7 +311,6 @@ const routeMap = {
 const handleRowClick = (row) => {
   const routeName = routeMap[activeStatus.value]
   if (routeName) {
-    // encodeURIComponent handles special chars like # in IDs
     router.push({ name: routeName, params: { id: encodeURIComponent(row.id) } })
   }
 }

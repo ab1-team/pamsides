@@ -1,6 +1,5 @@
 <template>
   <div class="login-container">
-    <!-- Background is handled via CSS pseudo-elements for performance -->
     <div class="wrapper">
       <div class="left">
         <div class="badge">

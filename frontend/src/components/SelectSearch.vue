@@ -148,7 +148,7 @@ const searchQuery = ref('')
 const dropdownRef = ref(null)
 const searchInput = ref(null)
 
-// Computed
+// Komputasi
 const selectedOption = computed(() => {
   if (props.modelValue === null || props.modelValue === undefined) return null
   return (
@@ -162,11 +162,11 @@ const filteredOptions = computed(() => {
   return props.options.filter((opt) => getLabel(opt).toLowerCase().includes(query))
 })
 
-// Methods
+// Fungsi-fungsi penanganan
 const getLabel = (opt) => {
   if (opt === null || opt === undefined) return ''
   if (typeof opt === 'object') {
-    // If specific labelKey doesn't exist, try common fallbacks
+    // Jika labelKey tidak ada, coba atribut umum
     return opt[props.labelKey] ?? opt.text ?? opt.name ?? opt.label ?? ''
   }
   return opt
@@ -175,7 +175,7 @@ const getLabel = (opt) => {
 const getValue = (opt) => {
   if (opt === null || opt === undefined) return null
   if (typeof opt === 'object') {
-    // If specific valueKey doesn't exist, try common fallbacks
+    // Jika valueKey tidak ada, coba atribut umum
     return opt[props.valueKey] ?? opt.id ?? opt.value ?? null
   }
   return opt
@@ -201,14 +201,14 @@ const selectOption = (opt) => {
   closeDropdown()
 }
 
-// Click Outside handling
+// Penanganan klik di luar elemen
 const handleClickOutside = (event) => {
   if (dropdownRef.value && !dropdownRef.value.contains(event.target)) {
     closeDropdown()
   }
 }
 
-// Watch for focus
+// Pantau fokus elemen
 watch(isOpen, (newVal) => {
   if (newVal && props.searchable) {
     setTimeout(() => {
@@ -229,22 +229,18 @@ onUnmounted(() => {
 <style scoped>
 @reference "../assets/main.css";
 
-/* Root Container */
 .custom-select-search {
   @apply w-full transition-all duration-300;
 }
 
-/* Label Styling */
 .select-label {
   @apply block text-sm font-normal text-slate-500 mb-1.5 ml-1;
 }
 
-/* Wrapper */
 .select-wrapper {
   @apply relative w-full;
 }
 
-/* Input Area */
 .select-display {
   @apply flex items-center justify-between w-full h-11 px-4 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-700 transition-all duration-300 cursor-pointer;
   @apply hover:border-blue-400 hover:bg-white hover:shadow-md hover:shadow-blue-500/5;
@@ -262,7 +258,6 @@ onUnmounted(() => {
   @apply bg-slate-100 text-slate-400 cursor-not-allowed border-slate-200 shadow-none hover:shadow-none;
 }
 
-/* Content Inside Input */
 .select-content {
   @apply flex items-center gap-3 overflow-hidden;
 }
@@ -279,7 +274,6 @@ onUnmounted(() => {
   @apply text-slate-700 text-sm font-medium truncate;
 }
 
-/* Chevron Icon */
 .chevron-icon {
   @apply text-slate-400 text-xs transition-transform duration-300 shrink-0 ml-2;
 }
@@ -288,12 +282,10 @@ onUnmounted(() => {
   @apply rotate-180 text-blue-500;
 }
 
-/* Dropdown Menu */
 .select-dropdown {
   @apply absolute top-full left-0 right-0 mt-2 bg-white border border-slate-200 rounded-2xl shadow-xl shadow-slate-200/50 z-[9999] overflow-hidden;
 }
 
-/* Search Header */
 .search-container {
   @apply p-2.5 border-b border-slate-100 bg-slate-50/50;
 }
@@ -312,7 +304,6 @@ onUnmounted(() => {
   @apply focus:outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-500/5;
 }
 
-/* Options List */
 .options-list {
   @apply max-h-60 overflow-y-auto p-1;
 }
@@ -333,17 +324,14 @@ onUnmounted(() => {
   @apply text-sm truncate font-medium;
 }
 
-/* Selected Indicator */
 .selected-indicator {
   @apply text-xs ml-2;
 }
 
-/* Empty State */
 .empty-state {
   @apply py-8 px-4 text-center text-sm text-slate-400 font-medium;
 }
 
-/* Error/Hint Styling */
 .error-text {
   @apply mt-1.5 ml-1 text-xs text-red-600 font-medium;
 }
@@ -352,7 +340,6 @@ onUnmounted(() => {
   @apply mt-1.5 ml-1 text-xs text-slate-400;
 }
 
-/* Transitions */
 .fade-slide-enter-active,
 .fade-slide-leave-active {
   transition: all 0.2s ease-out;
@@ -364,7 +351,6 @@ onUnmounted(() => {
   transform: translateY(-8px);
 }
 
-/* Custom Scrollbar */
 .custom-scrollbar::-webkit-scrollbar {
   width: 5px;
 }

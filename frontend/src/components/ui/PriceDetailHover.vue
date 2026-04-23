@@ -32,14 +32,10 @@
 </template>
 
 <script setup>
-// No script needed - direct display
+// Tidak diperlukan script - komponen tampilan langsung
 </script>
 
 <style scoped>
-/* =============================================
-   PRICE DETAIL HOVER - AUTO SHOW ON HOVER
-   ============================================= */
-
 .price-detail-hover {
   position: relative;
   display: inline-block;

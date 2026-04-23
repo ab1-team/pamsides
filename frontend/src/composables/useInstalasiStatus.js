@@ -13,7 +13,7 @@ export function useInstalasiStatus() {
     return menuList.find((m) => m.key === activeStatus.value)?.label || ''
   })
 
-  // Mock data map
+  // Peta data dummy
   const dataMap = ref({
     permohonan: [
       {
@@ -220,7 +220,7 @@ export function useInstalasiStatus() {
     currentPage.value = page
   }
 
-  // Reset page on status change or search
+  // Reset halaman saat status atau pencarian berubah
   watch([activeStatus, searchQuery], () => {
     currentPage.value = 1
   })

@@ -47,7 +47,7 @@ const emit = defineEmits(['update:modelValue', 'search', 'input'])
 
 const searchQuery = ref(props.modelValue)
 
-// Watch for external changes
+// Pantau perubahan dari luar
 watch(
   () => props.modelValue,
   (newValue) => {
@@ -55,7 +55,7 @@ watch(
   },
 )
 
-// Emit changes
+// Emit perubahan
 watch(searchQuery, (newValue) => {
   emit('update:modelValue', newValue)
 })
@@ -72,7 +72,6 @@ const handleSearch = () => {
 <style scoped>
 @reference "../../assets/main.css";
 
-/* Scoped styles kept minimal as we use utility classes */
 input::placeholder {
   @apply text-slate-400 font-normal italic opacity-70;
 }

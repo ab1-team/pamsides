@@ -58,7 +58,6 @@
           />
         </router-link>
 
-        <!-- Submenu -->
         <div class="sidebar-submenu" :class="{ open: settingsOpen && sidebarOpen }">
           <router-link
             to="/settings/personalisasi-sop"
@@ -97,7 +96,6 @@
           />
         </router-link>
 
-        <!-- Submenu -->
         <div class="sidebar-submenu" :class="{ open: BasisDataOpen && sidebarOpen }">
           <div class="sidebar-nav-group">
             <router-link
@@ -118,7 +116,6 @@
               />
             </router-link>
 
-            <!-- Nested Submenu -->
             <div class="sidebar-submenu nested" :class="{ open: pelangganOpen && sidebarOpen }">
               <router-link
                 to="/data-pelanggan/tambah"
@@ -162,7 +159,6 @@
               />
             </router-link>
 
-            <!-- Nested Submenu -->
             <div class="sidebar-submenu nested" :class="{ open: desaOpen && sidebarOpen }">
               <router-link
                 to="/data-desa/tambah"
@@ -206,7 +202,6 @@
               />
             </router-link>
 
-            <!-- Nested Submenu -->
             <div class="sidebar-submenu nested" :class="{ open: masterDataOpen && sidebarOpen }">
               <router-link
                 to="/data-cater/tambah"
@@ -256,7 +251,6 @@
           />
         </router-link>
 
-        <!-- Submenu -->
         <div class="sidebar-submenu" :class="{ open: instalasiOpen && sidebarOpen }">
           <router-link
             to="/instalasi/register"
@@ -307,7 +301,6 @@
           />
         </router-link>
 
-        <!-- Submenu -->
         <div class="sidebar-submenu" :class="{ open: transaksiOpen && sidebarOpen }">
           <router-link
             to="/transaksi/jurnal-umum"

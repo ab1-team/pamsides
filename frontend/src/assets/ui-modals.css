@@ -1,8 +1,6 @@
 @reference "./main.css";
 
-/* =============================================
-   NOTIFICATIONS / COMPACT DIALOGS
-   ============================================= */
+
 .notification-overlay {
   position: fixed;
   top: 0;
@@ -165,9 +163,7 @@
   }
 }
 
-/* =============================================
-   PRICE DETAIL MODAL
-   ============================================= */
+
 .price-detail-modal-overlay {
   position: fixed;
   inset: 0;
@@ -306,9 +302,7 @@
   }
 }
 
-/* =============================================
-   INPUT METER MODAL (ADANCED SCANNER)
-   ============================================= */
+
 .modal-overlay {
   @apply fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-[3000] p-2 md:p-6 transition-all;
 }
@@ -457,9 +451,7 @@
   }
 }
 
-/* =============================================
-   SHARED ANIMATIONS
-   ============================================= */
+
 @keyframes modal-pop {
   from { opacity: 0; transform: scale(0.95) translateY(30px); }
   to { opacity: 1; transform: scale(1) translateY(0); }
@@ -470,7 +462,7 @@
   to { transform: translateY(0); }
 }
 
-/* Universal Input Overrides */
+
 input[type='text']::-webkit-inner-spin-button,
 input[type='text']::-webkit-outer-spin-button {
   -webkit-appearance: none !important;

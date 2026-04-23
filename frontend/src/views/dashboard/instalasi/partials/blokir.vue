@@ -1,7 +1,6 @@
 <template>
   <div class="max-w-5xl! mx-auto grid! grid-cols-1! lg:grid-cols-3! gap-6!">
     <div class="lg:col-span-2! flex! flex-col! gap-6!">
-      <!-- Customer Profile Card -->
       <ContentCard variant="bordered" padding="large" rounded="2xl">
         <div class="flex! items-start! justify-between! gap-4!">
           <div class="flex-1!">
@@ -36,7 +35,6 @@
         </div>
       </ContentCard>
 
-      <!-- Alert Banner -->
       <div
         class="bg-orange-50! border! border-orange-200! rounded-2xl! p-4! flex! items-start! gap-3!"
       >
@@ -50,7 +48,6 @@
         </div>
       </div>
 
-      <!-- Info Grid -->
       <div class="grid! grid-cols-1! sm:grid-cols-2! gap-3!">
         <ContentCard variant="bordered" padding="none" rounded="xl" :hoverable="true">
           <div
@@ -86,7 +83,6 @@
         </ContentCard>
       </div>
 
-      <!-- Tunggakan -->
       <ContentCard variant="bordered" padding="normal" rounded="2xl">
         <h3 class="text-sm! font-bold! text-slate-700! mb-4!">Total Tunggakan</h3>
         <div class="grid! grid-cols-1! sm:grid-cols-2! gap-4!">
@@ -102,7 +98,6 @@
       </ContentCard>
     </div>
 
-    <!-- RIGHT COLUMN -->
     <div class="flex! flex-col! gap-6!">
       <ContentCard variant="bordered" padding="normal" rounded="2xl">
         <div class="flex! items-center! gap-2! mb-4!">

@@ -166,10 +166,6 @@ const iconColorClasses = computed(() => {
 </script>
 
 <style scoped>
-/* =============================================
-   METER DISPLAY - REUSABLE COMPONENT
-   ============================================= */
-
 .price-detail-wrapper {
   position: absolute;
   top: 100%;

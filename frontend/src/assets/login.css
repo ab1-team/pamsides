@@ -1,7 +1,4 @@
-/* 
-  Modern Premium Design System 
-  Focus: Glassmorphism, Dynamic Backgrounds, and Elevated Shadows
-*/
+
 
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Outfit:wght@300;400;500;600;700;800;900&display=swap');
 
@@ -16,14 +13,14 @@
   --text-main: #0f172a;
   --text-muted: #64748b;
   
-  /* Advanced Shadows */
+  
   --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.05);
   --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
   --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
   --shadow-premium: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
   --shadow-glow: 0 0 20px rgba(37, 99, 235, 0.15);
   
-  /* User Requested Shadows */
+  
   --shadow-chip: 0 2px 8px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.04);
   --shadow-input: 0 2px 6px rgba(0, 0, 0, 0.02), inset 0 1px 1px rgba(255, 255, 255, 1);
   --shadow-button: 0 10px 20px -5px rgba(37, 99, 235, 0.4), 0 4px 6px -2px rgba(37, 99, 235, 0.1);
@@ -47,7 +44,7 @@
   overflow: hidden;
   position: relative;
   
-  /* Original Background Image Restored with subtle vignette */
+  
   background: 
     radial-gradient(circle, transparent 20%, rgba(0, 0, 0, 0.05) 100%),
     url('@/assets/login-bg.jpg');
@@ -73,7 +70,7 @@
   width: 100%;
 }
 
-/* LEFT CONTENT */
+
 .left {
   flex: 1;
   display: flex;
@@ -156,7 +153,7 @@
   font-size: 0.85rem;
   font-weight: 600;
   color: #1e293b;
-  /* User Requested Shadow */
+  
   box-shadow: var(--shadow-chip);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -173,7 +170,7 @@
   height: 16px;
 }
 
-/* RIGHT CONTENT (CARD) */
+
 .right {
   flex: 0 0 420px;
   animation: slideInRight 0.8s cubic-bezier(0.16, 1, 0.3, 1);
@@ -229,7 +226,7 @@
   margin-bottom: 1.2rem;
 }
 
-/* FORM STYLES */
+
 .form {
   display: flex;
   flex-direction: column;
@@ -292,7 +289,7 @@ label {
   font-size: 0.95rem;
   font-family: inherit;
   color: #1e293b;
-  /* User Requested Shadow */
+  
   box-shadow: var(--shadow-input);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -336,7 +333,7 @@ label {
   font-size: 1rem;
   font-weight: 700;
   cursor: pointer;
-  /* User Requested Shadow */
+  
   box-shadow: var(--shadow-button);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -356,7 +353,7 @@ label {
   cursor: not-allowed;
 }
 
-/* QUICK ACCESS Section */
+
 .quick {
   margin-top: 1rem;
   padding-top: 1rem;
@@ -394,7 +391,7 @@ label {
   font-weight: 700;
   color: #475569;
   cursor: pointer;
-  /* User Requested Shadow */
+  
   box-shadow: var(--shadow-sm);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -429,7 +426,7 @@ label {
   height: 14px;
 }
 
-/* RESPONSIVE */
+
 @media (max-width: 1024px) {
   .wrapper {
     padding: 0 2rem;

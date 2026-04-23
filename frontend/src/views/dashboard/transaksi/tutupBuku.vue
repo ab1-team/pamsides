@@ -1,7 +1,6 @@
 <template>
   <div class="space-y-6!">
     <ContentCard variant="bordered" padding="normal" hoverable>
-      <!-- ... existing content card 1 ... -->
       <div class="flex! flex-col! lg:flex-row! lg:items-end! lg:justify-between! gap-4!">
         <div class="w-full! lg:flex-1!">
           <SelectSearch
@@ -38,7 +37,6 @@
       hoverable
       v-if="bookStatus !== 'open' || isProcessing"
     >
-      <!-- ... existing content card 2 ... -->
       <div class="flex! flex-col! lg:flex-row! lg:items-center! lg:justify-between! gap-4! mb-4!">
         <div
           class="flex! items-center! gap-3! text-base! font-semibold! text-gray-900!"

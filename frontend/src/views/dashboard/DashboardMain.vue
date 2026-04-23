@@ -166,22 +166,18 @@
                 </linearGradient>
               </defs>
 
-              <!-- Axis -->
               <line x1="40" y1="20" x2="40" y2="250" stroke="#e2e8f0" stroke-width="1" />
               <line x1="40" y1="250" x2="680" y2="250" stroke="#e2e8f0" stroke-width="1" />
 
-              <!-- Grid -->
               <line x1="40" y1="200" x2="680" y2="200" stroke="#e2e8f0" stroke-dasharray="4 4" />
               <line x1="40" y1="150" x2="680" y2="150" stroke="#e2e8f0" stroke-dasharray="4 4" />
               <line x1="40" y1="100" x2="680" y2="100" stroke="#e2e8f0" stroke-dasharray="4 4" />
 
-              <!-- Labels -->
               <text x="50" y="270" fill="#94a3b8" font-size="10">Awal Tahun</text>
               <text x="230" y="270" fill="#94a3b8" font-size="10">Januari</text>
               <text x="410" y="270" fill="#94a3b8" font-size="10">Februari</text>
               <text x="630" y="270" fill="#94a3b8" font-size="10">Maret</text>
 
-              <!-- Area -->
               <path
                 d="M50,240 C100,230 150,210 230,180 C310,140 390,110 470,90 C540,76 610,70 680,66 L680,250 L50,250 Z"
                 fill="url(#gradP)"
@@ -191,7 +187,6 @@
                 fill="url(#gradB)"
               />
 
-              <!-- Lines -->
               <path
                 d="M50,240 C100,230 150,210 230,180 C310,140 390,110 470,90 C540,76 610,70 680,66"
                 fill="none"
@@ -208,7 +203,6 @@
                 stroke-linecap="round"
               />
 
-              <!-- Points -->
               <circle cx="230" cy="180" r="4" fill="white" stroke="#3b82f6" stroke-width="2" />
               <circle cx="470" cy="90" r="4" fill="white" stroke="#3b82f6" stroke-width="2" />
               <circle cx="230" cy="210" r="4" fill="white" stroke="#334155" stroke-width="2" />
@@ -219,7 +213,6 @@
       </div>
     </div>
 
-    <!-- Modal Dialog for Details (Teleported to body so it covers sidebar/topnav) -->
     <Teleport to="body">
       <div
         v-if="activeModal"
@@ -229,7 +222,6 @@
         <div
           class="bg-white! w-full! h-full! max-w-7xl! rounded-2xl! shadow-2xl! flex! flex-col! overflow-hidden! animate-[fade-in-up_0.3s_ease-out_forwards]!"
         >
-          <!-- Modal Header -->
           <div class="flex! items-center! justify-between! px-6! py-4! border-b! border-slate-100!">
             <div class="flex! items-center! gap-3!">
               <div
@@ -247,12 +239,10 @@
             </button>
           </div>
 
-          <!-- Modal Body -->
           <div class="flex-1! overflow-y-auto! relative! bg-white!">
             <component :is="activeComponent" />
           </div>
 
-          <!-- Modal Footer -->
           <div class="px-6! py-4! border-t! border-slate-100! flex! justify-end! bg-white!">
             <button
               @click="closeDetailModal"
@@ -272,13 +262,11 @@ import { ref, computed, onMounted } from 'vue'
 import statCard from '../../components/stat-card.vue'
 import ContentCard from '../../components/ui/ContentCard.vue'
 
-// Import Detail Components
 import InstalasiDetail from './arsipDashbord/ArsipInstalasi.vue'
 import PemakaianDetail from './arsipDashbord/ArsipPemakaian.vue'
 import TunggakanDetail from './arsipDashbord/ArsipTunggakan.vue'
 import TagihanDetail from './arsipDashbord/ArsipTagihan.vue'
 
-// Modular Modal State
 const activeModal = ref(false)
 const currentDetailType = ref('')
 
@@ -291,7 +279,7 @@ const closeDetailModal = () => {
   activeModal.value = false
   setTimeout(() => {
     currentDetailType.value = ''
-  }, 300) // Allow exit animation to complete before unmounting Component
+  }, 300)
 }
 
 const activeComponent = computed(() => {
