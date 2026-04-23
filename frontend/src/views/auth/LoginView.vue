@@ -32,11 +32,11 @@
       <div class="right">
         <div class="card">
           <h2 class="card-title">Selamat Datang</h2>
-          <p class="card-sub">Silakan masuk untuk mengakses dashboard</p>
+          <p class="card-sub">Silahkan login untuk mengakses dashboard</p>
 
           <form @submit.prevent="handleLogin" class="form">
             <div class="form-group">
-              <label for="username">ID Pelanggan / Username</label>
+              <label for="username">Username Email</label>
               <div class="input-wrap">
                 <span class="icon-left">
                   <font-awesome-icon icon="user" />
@@ -45,7 +45,7 @@
                   id="username"
                   v-model="form.username"
                   type="text"
-                  placeholder="Masukkan ID anda"
+                  placeholder="Masukkan Username Email"
                   required
                   autocomplete="username"
                 />
@@ -112,6 +112,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import axios from 'axios'
 import { useRouter, useRoute } from 'vue-router'
 import { MySwal } from '@/main.js'
 import '@/assets/login.css'
@@ -139,7 +140,7 @@ onMounted(() => {
       icon: 'success',
       title: 'Logout Berhasil',
       text: 'Anda telah keluar dari sistem',
-      timer: 2000,
+      timer: 4000,
       timerProgressBar: true,
       showConfirmButton: false,
       customClass: {
@@ -154,18 +155,28 @@ onMounted(() => {
 const handleLogin = async () => {
   loading.value = true
   try {
-    await new Promise((resolve) => setTimeout(resolve, 1500))
 
-    if (form.value.username && form.value.password) {
-      router.push('/dashboard?login=success')
-    } else {
-      throw new Error('username atau kata sandi tidak boleh kosong')
+    // validasi sederhana
+    if (!form.value.username || !form.value.password) {
+      throw new Error('Email dan password tidak boleh kosong')
     }
+
+    const res = await axios.post('http://127.0.0.1:8000/api/login', {
+      email: form.value.username,
+      password: form.value.password,
+    })
+
+    const token = res.data.data.token
+
+    localStorage.setItem('token', token)
+
+    router.push('/dashboard?login=success')
+
   } catch (error) {
     MySwal.fire({
       icon: 'error',
       title: 'Login Gagal!',
-      text: error.message || 'Terjadi kesalahan saat login',
+      text: error.response?.data?.message || error.message,
       confirmButtonColor: '#ef4444',
     })
   } finally {
