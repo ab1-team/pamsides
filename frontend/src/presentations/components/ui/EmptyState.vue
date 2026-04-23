@@ -1,13 +1,13 @@
 <template>
-  <div class="empty-state flex! flex-col! items-center! justify-center! p-12! text-center!">
-    <div class="w-48! h-48! mb-6! relative!">
+  <div class="empty-state flex! flex-col! items-center! justify-center! p-4! md:p-8! text-center!">
+    <div class="w-24! h-24! md:w-32! md:h-32! mb-4! relative!">
       <!-- Background Circles -->
-      <div class="absolute! inset-0! bg-slate-50! rounded-full! scale-100! animate-pulse!"></div>
-      <div class="absolute! inset-0! bg-slate-100! rounded-full! scale-75! opacity-50!"></div>
+      <div class="absolute! inset-0! bg-slate-100! rounded-full! scale-100! opacity-60!"></div>
+      <div class="absolute! inset-0! bg-slate-200! rounded-full! scale-75! opacity-40!"></div>
 
       <!-- Icon/Illustration Placeholder -->
-      <div class="absolute! inset-0! flex! items-center! justify-center! text-slate-300!">
-        <font-awesome-icon :icon="icon" size="4x" class="drop-shadow-sm!" />
+      <div class="absolute! inset-0! flex! items-center! justify-center! text-slate-500!">
+        <font-awesome-icon :icon="icon" size="2x" class="md:size-3x! drop-shadow-sm!" />
       </div>
     </div>
 

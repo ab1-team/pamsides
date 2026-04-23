@@ -171,7 +171,7 @@ defineOptions({ name: 'CabutDetail' })
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useInstalasiStatus } from '@/composables/useInstalasiStatus'
-import ContentCard from '@/components/ui/ContentCard.vue'
+import ContentCard from '@/presentations/components/ui/ContentCard.vue'
 import Swal from 'sweetalert2'
 
 const route = useRoute()

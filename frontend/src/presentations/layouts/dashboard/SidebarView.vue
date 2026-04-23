@@ -224,7 +224,7 @@ const menuItems = [
         label: 'Desa',
         icon: 'building',
         children: [
-          { label: 'Create Desa', to: '/data/desa/create' },
+          { label: 'Create Desa', to: '/data-desa/tambah' },
           { label: 'Data Desa', to: '/data-desa' },
         ],
       },
@@ -232,7 +232,7 @@ const menuItems = [
         label: 'Caters',
         icon: 'archive',
         children: [
-          { label: 'Create Caters', to: '/data/caters/create' },
+          { label: 'Create Caters', to: '/data-cater/tambah' },
           { label: 'Data Caters', to: '/data-cater' },
         ],
       },
@@ -248,8 +248,13 @@ const menuItems = [
       { label: 'Status Instalasi', to: '/instalasi/status', roles: ['admin', 'surveyor'] },
       {
         label: 'Pemakaian Air Bersih',
+        to: '/instalasi/pemakaian-air',
+        roles: ['admin'],
+      },
+      {
+        label: 'Pemakaian Air Bersih',
         to: '/instalasi/teknisiPemakaianAir',
-        roles: ['admin', 'teknisi'],
+        roles: ['teknisi'],
       },
       { label: 'Retribusi Sampah', to: '/instalasi/retribusi-sampah', roles: ['admin', 'teknisi'] },
     ],

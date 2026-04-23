@@ -7,12 +7,9 @@ import TeknisiDashboard from '@/presentations/views/dashboard/teknisi/DashboardM
 import PelangganDashboard from '@/presentations/views/dashboard/pelanggan/DashboardMain.vue'
 import { useUiStore } from '@/stores/uiStore'
 import SopIndex from '@/presentations/views/dashboard/admin/sop/SopIndex.vue'
-// import COAView from '@/presentations/views/dashboard/admin/settings/COAView.vue'
 import KelasBiayaView from '@/presentations/views/dashboard/admin/kelas/KelasIndex.vue'
 import CreateKelasView from '@/presentations/views/dashboard/admin/kelas/KelasCreate.vue'
 import EditKelasView from '@/presentations/views/dashboard/admin/kelas/KelasEdit.vue'
-// import cretaepelangganView from '@/presentations/views/dashboard/admin/basis-data/pelanggan/CreateView.vue'
-// import editpelangganView from '@/presentations/views/dashboard/admin/basis-data/pelanggan/EditView.vue'
 import pelangganView from '@/presentations/views/dashboard/admin/pelanggan/PelangganIndex.vue'
 import PelangganCreate from '@/presentations/views/dashboard/admin/pelanggan/PelangganCreate.vue'
 import PelangganEdit from '@/presentations/views/dashboard/admin/pelanggan/PelangganEdit.vue'
@@ -93,11 +90,6 @@ const router = createRouter({
           name: 'coa',
           component: () => import('@/presentations/views/dashboard/admin/sop/CoaIndex.vue'),
         },
-        // {
-        //   path: '/settings',
-        //   name: 'settings',
-        //   component: COAView,
-        // },
         {
           path: '/kelas-biaya',
           name: 'kelas biaya',
@@ -158,21 +150,6 @@ const router = createRouter({
           name: 'Edit Desa',
           component: DesaEdit,
         },
-        // {
-        //   path: '/BasisData',
-        //   name: 'BasisData',
-        //   component: createcaterView,
-        // },
-        // {
-        //   path: '/BasisData',
-        //   name: 'BasisData',
-        //   component: createcaterView,
-        // },
-        // {
-        //   path: '/BasisData',
-        //   name: 'BasisData',
-        //   component: caterView,
-        // },
         {
           path: '/dataInstalasi',
           name: 'Data Instalasi',

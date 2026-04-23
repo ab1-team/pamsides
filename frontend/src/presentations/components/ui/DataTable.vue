@@ -71,7 +71,7 @@
 
         <tbody class="divide-y! divide-slate-100!">
           <tr v-if="data.length === 0">
-            <td :colspan="selectable ? columns.length + 1 : columns.length" class="px-4! py-8!">
+            <td :colspan="selectable ? columns.length + 1 : columns.length" class="px-4! py-4!">
               <EmptyState :title="emptyTitle" :message="emptyMessage" :icon="emptyIcon" />
             </td>
           </tr>

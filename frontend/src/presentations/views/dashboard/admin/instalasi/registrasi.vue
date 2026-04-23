@@ -393,6 +393,7 @@ export default {
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { useRouter } from 'vue-router'
 import ContentCard from '@/presentations/components/ui/ContentCard.vue'
 import BaseButton from '@/presentations/components/ui/BaseButton.vue'
 import BaseInput from '@/presentations/components/ui/BaseInput.vue'
@@ -405,6 +406,7 @@ const customerSearch = ref('')
 const activeFilterTab = ref('Semua')
 const selectedCustomer = ref(null)
 const customerSelectRef = ref(null)
+const router = useRouter()
 
 const form = ref({
   tanggalOrder: new Date(),
@@ -596,9 +598,7 @@ const openMapPreview = () => {
 }
 
 const handleNewCustomerRegistration = () => {
-  console.log('Redirecting to new customer registration...')
-
-  alert('Fitur Registrasi Pelanggan Baru akan segera hadir!')
+  router.push('/data-pelanggan/tambah')
 }
 
 const handleSubmit = () => {

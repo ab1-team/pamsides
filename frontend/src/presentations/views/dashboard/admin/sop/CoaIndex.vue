@@ -21,7 +21,7 @@
 
 <script setup>
 import { onMounted } from 'vue'
-import ContentCard from '@/components/ui/ContentCard.vue'
+import ContentCard from '@/presentations/components/ui/ContentCard.vue'
 import 'jstree/dist/themes/default/style.min.css'
 
 onMounted(() => {
@@ -158,7 +158,7 @@ onMounted(() => {
 </script>
 
 <style scoped>
-@reference "../../../assets/main.css";
+@reference "@/assets/css/main.css";
 
 .coa-tree-wrapper {
   @apply font-sans text-[13px]!;
