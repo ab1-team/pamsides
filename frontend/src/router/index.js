@@ -15,6 +15,8 @@ import PelangganEdit from '@/views/dashboard/pelanggan/PelangganEdit.vue'
 // import createdesaView from '@/views/dashboard/basis-data/desa/CreateView.vue'
 // import editdesaView from '@/views/dashboard/basis-data/desa/EditView.vue'
 import caterView from '@/views/dashboard/cater/CaterIndex.vue'
+import CaterCreate from '@/views/dashboard/cater/CaterCreate.vue'
+import CaterEdit from '@/views/dashboard/cater/CaterEdit.vue'
 import desaView from '@/views/dashboard/desa/DesaIndex.vue'
 import DesaCreate from '@/views/dashboard/desa/DesaCreate.vue'
 import DesaEdit from '@/views/dashboard/desa/DesaEdit.vue'
@@ -139,6 +141,16 @@ const router = createRouter({
           path: '/data-cater',
           name: 'Data Cater',
           component: caterView,
+        },
+        {
+          path: '/data-cater/tambah',
+          name: 'Tambah Cater',
+          component: CaterCreate,
+        },
+        {
+          path: '/data-cater/edit/:id',
+          name: 'Edit Cater',
+          component: CaterEdit,
         },
         {
           path: '/data-desa',

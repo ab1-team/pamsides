@@ -209,7 +209,7 @@
             <!-- Nested Submenu -->
             <div class="sidebar-submenu nested" :class="{ open: masterDataOpen && sidebarOpen }">
               <router-link
-                to="/data/caters/create"
+                to="/data-cater/tambah"
                 class="sidebar-submenu-item nested-item"
                 @click="handleMenuClick"
               >

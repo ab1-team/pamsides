@@ -11,7 +11,7 @@
       :total-entries="tableData.length"
       v-model="searchQuery"
       class="mt-6!"
-      search-placeholder="Cari pelanggan (Nama, NIK, ID)..."
+      search-placeholder="Cari pelanggan..."
     >
       <template #column-nama="{ row }">
         <div class="flex items-center gap-3!">
