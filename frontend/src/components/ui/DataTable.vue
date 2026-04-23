@@ -8,7 +8,7 @@
   >
     <div
       v-if="showToolbar"
-      class="flex! flex-col! sm:flex-row! sm:items-center! justify-between! p-4! border-b! border-slate-100! gap-4!"
+      class="flex! flex-col! sm:flex-row! sm:items-center! justify-between! p-3! border-b! border-slate-100! gap-4!"
     >
       <div class="flex! items-center! gap-4!">
         <span v-if="title" class="text-sm! font-semibold! text-slate-900!">{{ title }}</span>
@@ -52,7 +52,7 @@
             <th
               v-for="column in columns"
               :key="column.key"
-              class="px-4! py-2! text-xs! font-bold! text-slate-300! uppercase! tracking-wider! text-left! whitespace-nowrap!"
+              class="px-4! py-1.5! text-xs! font-bold! text-slate-300! uppercase! tracking-wider! text-left! whitespace-nowrap!"
               :class="column.thClass"
             >
               {{ column.title }}
@@ -78,7 +78,7 @@
             <td
               v-for="column in columns"
               :key="column.key"
-              class="px-4! py-2! border-b! border-slate-100! align-middle! text-[13px]! text-slate-600!"
+              class="px-4! py-1.5! border-b! border-slate-100! align-middle! text-[13px]! text-slate-600!"
               :class="column.tdClass"
             >
               <slot :name="`column-${column.key}`" :row="row" :column="column" :index="index">
@@ -95,8 +95,8 @@
       v-if="showPagination"
       :class="
         props.noCard
-          ? 'flex! flex-col! sm:flex-row! sm:items-center! justify-between! p-4! border-t! border-slate-100! gap-4!'
-          : 'flex! flex-col! sm:flex-row! sm:items-center! justify-between! p-4! border-t! border-slate-100! bg-slate-50! gap-4!'
+          ? 'flex! flex-col! sm:flex-row! sm:items-center! justify-between! p-3! border-t! border-slate-100! gap-4!'
+          : 'flex! flex-col! sm:flex-row! sm:items-center! justify-between! p-3! border-t! border-slate-100! bg-slate-50! gap-4!'
       "
     >
       <div class="text-xs md:text-sm! text-slate-500! font-medium! text-center! sm:text-left!">

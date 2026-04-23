@@ -11,11 +11,11 @@
         :disabled="disabled"
         :yearRange="yearRange"
         showYear
+        appendTo="body"
         class="base-input!"
         :class="{ 'has-icon!': icon, 'p-invalid!': error }"
         @change="handleChange"
       />
-      <font-awesome-icon icon="calendar-alt" class="suffix-icon!" />
     </div>
     <small v-if="error" class="error-text!">{{ error }}</small>
   </div>
@@ -107,15 +107,11 @@ const formatDate = (date) => {
 }
 
 .picker-wrapper {
-  @apply relative flex items-center;
+  @apply relative;
 }
 
 .prefix-icon {
-  @apply absolute left-4 text-slate-400 text-sm z-10;
-}
-
-.suffix-icon {
-  @apply absolute right-4 text-slate-400 text-sm pointer-events-none;
+  @apply absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-sm z-10;
 }
 
 :deep(.p-datepicker) {

@@ -11,7 +11,7 @@
       :total-entries="tableData.length"
       v-model="searchQuery"
       class="mt-6!"
-      search-placeholder="Cari desa (Kode, Desa, Dusun)..."
+      search-placeholder="Cari desa..."
     >
       <template #column-aksi="{ row }">
         <div class="flex items-center gap-2!">
@@ -38,9 +38,12 @@
 </template>
 
 <script setup>
+import { useRouter } from 'vue-router'
 import { useDesa } from '@/composables/useDesa'
 import DataTable from '@/components/ui/DataTable.vue'
 import BaseButton from '@/components/ui/BaseButton.vue'
+
+const router = useRouter()
 
 const {
   searchQuery,
@@ -51,7 +54,7 @@ const {
   visiblePages,
   handleEdit,
   handleDelete,
-} = useDesa()
+} = useDesa(router)
 
 const tableColumns = [
   {

@@ -2,7 +2,7 @@
   <div class="w-full!">
     <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4! mb-6!">
       <div class="flex-1!">
-        <h1 class="text-2xl font-bold text-indigo-600! tracking-tight mb-1!">Kelas Biaya</h1>
+        <h1 class="text-2xl font-bold text-slate-900! tracking-tight mb-1!">Kelas Biaya</h1>
         <p class="text-sm text-slate-500! leading-relaxed">
           Kelola kategori kelas biaya dan tarif pemakaian air berdasarkan blok.
         </p>
@@ -14,7 +14,7 @@
           size="md"
           @click="addKelas"
           class="w-full! lg:w-auto! rounded-xl! shadow-lg! shadow-blue-200/50!"
-          icon="plus-circle"
+          icon="plus"
         >
           Tambah Kelas & Biaya
         </BaseButton>
@@ -35,15 +35,6 @@
         search-placeholder="Cari nama kelas..."
         :no-card="true"
       >
-        <template #toolbar-actions>
-          <h2 class="text-base! font-bold! text-slate-800!">
-            Daftar Kelas
-            <span class="text-slate-400! font-normal! text-sm!"
-              >· Total {{ filteredData.length }} Data</span
-            >
-          </h2>
-        </template>
-
         <!-- Column Slots -->
         <template #column-nama="{ row }">
           <div class="flex items-center gap-3!">
@@ -83,18 +74,18 @@
               variant="ghost"
               size="sm"
               @click="editKelas(row)"
-              class="w-8! h-8! p-0! rounded-lg! text-slate-400! hover:text-indigo-600! hover:bg-indigo-50!"
-            >
-              <font-awesome-icon icon="edit" />
-            </BaseButton>
+              class="w-8! h-8! p-0! rounded-lg! border! border-slate-100! hover:border-blue-200! hover:bg-blue-50! text-slate-600! hover:text-blue-600! shadow-sm!"
+              title="Edit"
+              icon="edit"
+            />
             <BaseButton
               variant="ghost"
               size="sm"
               @click="deleteKelas(row)"
-              class="w-8! h-8! p-0! rounded-lg! text-slate-400! hover:text-red-600! hover:bg-red-50!"
-            >
-              <font-awesome-icon icon="trash" />
-            </BaseButton>
+              class="w-8! h-8! p-0! rounded-lg! border! border-slate-100! hover:border-red-200! hover:bg-red-50! text-slate-600! hover:text-red-600! shadow-sm!"
+              title="Delete"
+              icon="trash"
+            />
           </div>
         </template>
       </DataTable>
@@ -110,6 +101,8 @@ import ContentCard from '@/components/ui/ContentCard.vue'
 import BaseButton from '@/components/ui/BaseButton.vue'
 import { useCurrencyFormat } from '@/composables/useCurrencyFormat.js'
 
+import Swal from 'sweetalert2'
+
 const router = useRouter()
 
 // Table columns configuration
@@ -118,7 +111,7 @@ const tableColumns = [
   { key: 'block1', title: 'Block 1 (10 M³)', tdClass: '' },
   { key: 'block2', title: 'Block 2 (20 M³)', tdClass: '' },
   { key: 'block3', title: 'Block 3 (> 20 M³)', tdClass: '' },
-  { key: 'aksi', title: 'Aksi', tdClass: 'w-20!' },
+  { key: 'aksi', title: 'AKSI', tdClass: 'w-20!' },
 ]
 
 // Search and Pagination State
@@ -167,9 +160,30 @@ const editKelas = (row) => {
   router.push(`/kelas-biaya/config/${row.id}`)
 }
 
-const deleteKelas = (row) => {
-  console.log('Delete Kelas:', row)
-  // Implement logic for deleting class
+const deleteKelas = async (row) => {
+  const result = await Swal.fire({
+    title: 'Hapus Kelas?',
+    text: `Kelas "${row.nama}" akan dihapus secara permanent dari aplikasi`,
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonText: 'Ya, Hapus!',
+    cancelButtonText: 'Batal',
+    confirmButtonColor: '#ef4444',
+    cancelButtonColor: '#64748b',
+    reverseButtons: true,
+  })
+
+  if (result.isConfirmed) {
+    kelasList.value = kelasList.value.filter((item) => item.id !== row.id)
+
+    Swal.fire({
+      title: 'Terhapus!',
+      text: 'Data kelas telah berhasil dihapus.',
+      icon: 'success',
+      timer: 1500,
+      showConfirmButton: false,
+    })
+  }
 }
 </script>
 

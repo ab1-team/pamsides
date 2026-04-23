@@ -220,6 +220,12 @@ app.use(PrimeVue, {
   theme: {
     preset: Aura,
   },
+  zIndex: {
+    modal: 1100,
+    overlay: 10000,
+    menu: 1000,
+    tooltip: 1100,
+  },
 })
 
 app.component('PrimeButton', Button)
