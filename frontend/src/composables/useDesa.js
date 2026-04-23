@@ -1,7 +1,7 @@
 import { ref, computed } from 'vue'
 import Swal from 'sweetalert2'
 
-export function useDesa() {
+export function useDesa(router) {
   // State untuk filter pencarian
   const searchQuery = ref('')
   const currentPage = ref(1)

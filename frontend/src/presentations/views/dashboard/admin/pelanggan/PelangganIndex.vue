@@ -3,33 +3,19 @@
     <DataTable
       :data="filteredData"
       :columns="tableColumns"
-      title="Daftar Pelanggan Aktif"
+      title=""
       v-model:current-page="currentPage"
       v-model:per-page="perPage"
       :total-pages="totalPages"
       :visible-pages="visiblePages"
       :total-entries="tableData.length"
       v-model="searchQuery"
-      v-model:selection="selectedRows"
-      selectable
       class="mt-6!"
-      search-placeholder="Cari pelanggan (Nama, NIK, ID)..."
+      search-placeholder="Cari pelanggan..."
       empty-title="Pelanggan Tidak Ditemukan"
       empty-message="Mohon cek kembali kata kunci pencarian Anda atau tambahkan pelanggan baru."
       empty-icon="users-slash"
     >
-      <template #bulk-actions="{ selection }">
-        <BaseButton
-          variant="primary"
-          size="sm"
-          icon="file-invoice"
-          @click="handleBulkInvoice(selection)"
-        >
-          Generate Tagihan ({{ selection.length }})
-        </BaseButton>
-        <BaseButton variant="secondary" size="sm" icon="print"> Cetak Label </BaseButton>
-      </template>
-
       <template #column-nama="{ row }">
         <div class="flex items-center gap-3!">
           <div
@@ -90,16 +76,12 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { usePelanggan } from '@/composables/usePelanggan'
-import { useUiStore } from '@/stores/uiStore'
 import DataTable from '@/presentations/components/ui/DataTable.vue'
 import BaseButton from '@/presentations/components/ui/BaseButton.vue'
 
 const router = useRouter()
-const uiStore = useUiStore()
-const selectedRows = ref([])
 
 const {
   searchQuery,
@@ -112,11 +94,6 @@ const {
   handleEdit,
   handleDelete,
 } = usePelanggan(router)
-
-const handleBulkInvoice = (selection) => {
-  uiStore.success(`Berhasil generate tagihan untuk ${selection.length} pelanggan.`)
-  selectedRows.value = [] // Clear selection
-}
 
 const tableColumns = [
   {

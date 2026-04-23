@@ -1,168 +1,147 @@
 <template>
   <div class="pricing-config-view w-full! max-w-5xl! mx-auto! pb-20!">
-    <div class="mb-8! flex items-center justify-between">
+    <div class="mb-8! flex! items-center! gap-4!">
+      <BaseButton
+        variant="ghost"
+        icon="arrow-left"
+        @click="handleBack"
+        class="w-12! h-12! p-0! rounded-full! border! border-slate-200! bg-white! hover:bg-slate-50! hover:border-slate-300! text-slate-600! shadow-sm! shrink-0!"
+      />
       <div>
-        <h1 class="text-3xl font-extrabold text-slate-900! tracking-tight mb-2!">
+        <h1 class="text-3xl font-extrabold text-slate-900! tracking-tight mb-0.5!">
           Tentukan Harga Paket
         </h1>
         <p class="text-sm font-medium text-slate-500! leading-relaxed">
-          Konfigurasikan tarif bertingkat berdasarkan blok volume penggunaan air untuk setiap
-          kategori kelas.
+          Konfigurasikan tarif bertingkat berdasarkan blok volume penggunaan air.
         </p>
       </div>
-      <BaseButton
-        variant="ghost"
-        size="sm"
-        @click="handleBack"
-        icon="arrow-left"
-        class="font-bold!"
-      >
-        Kembali
-      </BaseButton>
     </div>
 
     <ContentCard
       variant="elevated"
       padding="none"
-      class="mb-6! border-0! shadow-xl! shadow-slate-200/40! overflow-visible!"
+      class="mb-6! border-0! shadow-xl! shadow-slate-200/40! overflow-visible! bg-white! rounded-3xl!"
     >
-      <div class="p-6! sm:p-8!">
+      <div class="p-6! sm:p-10!">
         <div class="flex items-center justify-between mb-8!">
           <div class="flex items-center gap-3!">
-            <div class="w-1.5! h-6! bg-sky-600! rounded-full!"></div>
-            <h2 class="text-lg! font-bold! text-slate-800!">Konfigurasi Blok Tarif</h2>
+            <div class="w-1.5! h-6! bg-blue-600! rounded-full!"></div>
+            <h2 class="text-xl! font-bold! text-slate-800!">Konfigurasi Blok Tarif</h2>
           </div>
           <div class="flex items-center gap-2!">
             <span
-              class="px-2! py-1! bg-sky-50! text-sky-700! text-[9px]! font-black! rounded-md! uppercase! tracking-widest!"
+              class="px-3! py-1! bg-blue-50! text-blue-700! text-[10px]! font-black! rounded-lg! uppercase! tracking-widest!"
               >UNIT: M3</span
             >
             <span
-              class="px-2! py-1! bg-orange-50! text-orange-700! text-[9px]! font-black! rounded-md! uppercase! tracking-widest!"
-              >CURRENCY: IDR</span
+              class="px-3! py-1! bg-amber-50! text-amber-700! text-[10px]! font-black! rounded-lg! uppercase! tracking-widest!"
+              >IDR</span
             >
           </div>
         </div>
 
+        <!-- Reduced margin here -->
         <div class="mb-6!">
           <BaseInput
             v-model="namaKelas"
             label="Nama Kelas / Kategori"
             placeholder="Contoh: Rumah Tangga A1"
-            icon="tag"
           />
         </div>
 
-        <div
-          class="grid grid-cols-1 md:grid-cols-2 gap-6! mb-2! pb-8! border-b! border-slate-100/50!"
-        >
-          <MaksMoneyInput
-            v-model="abodemen"
-            label="Biaya Abodemen / Beban"
-            placeholder="0"
-            helper-text="Biaya tetap bulanan yang dikenakan pada kelas ini."
-            show-helper
-          />
-          <MaksMoneyInput
-            v-model="denda"
-            label="Biaya Denda Keterlambatan"
-            placeholder="0"
-            helper-text="Denda yang dikenakan jika pembayaran melewati jatuh tempo."
-            show-helper
-          />
+        <!-- Reduced gap and margin here -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6! mb-8! pb-8! border-b! border-slate-100!">
+          <MaksMoneyInput v-model="abodemen" label="Biaya Abodemen" placeholder="0" />
+          <MaksMoneyInput v-model="denda" label="Biaya Denda" placeholder="0" />
         </div>
 
+        <!-- Table Header -->
         <div
-          class="grid grid-cols-[1fr_2fr_2fr_auto] gap-4! px-4! mb-4! text-[10px]! font-black! text-slate-300! uppercase! tracking-widest!"
+          class="grid grid-cols-[1.5fr_2fr_2fr_80px] gap-4! px-6! mb-4! text-[11px]! font-bold! text-slate-400! uppercase! tracking-widest!"
         >
           <div>URUTAN BLOK</div>
           <div class="text-center!">RENTANG VOLUME (M3)</div>
           <div class="text-center!">HARGA PER M3</div>
-          <div class="w-10!">AKSI</div>
+          <div class="text-center!">AKSI</div>
         </div>
 
-        <div class="space-y-4!">
+        <!-- Table Rows -->
+        <div class="space-y-3!">
           <div
             v-for="(block, index) in blocks"
             :key="index"
-            class="group grid grid-cols-[1fr_2fr_2fr_auto] gap-4! items-center! py-3! px-4! rounded-2xl! transition-all! duration-300 hover:bg-slate-50/80!"
+            class="group grid grid-cols-[1.5fr_2fr_2fr_80px] gap-4! items-center! py-4! px-6! rounded-2xl! bg-slate-50/50! border! border-transparent! hover:border-blue-100! hover:bg-white! hover:shadow-lg! hover:shadow-blue-500/5! transition-all! duration-300!"
           >
-            <div class="flex items-center gap-3!">
+            <div class="flex items-center gap-4!">
               <div
-                class="w-8! h-8! rounded-xl! bg-blue-50! text-blue-600! flex! items-center! justify-center! text-[11px]! font-black! shrink-0!"
+                class="w-10! h-10! rounded-xl! bg-blue-600! text-white! flex! items-center! justify-center! text-xs! font-black! shrink-0! shadow-lg! shadow-blue-200!"
               >
                 {{ (index + 1).toString().padStart(2, '0') }}
               </div>
               <span class="text-sm! font-bold! text-slate-700!"
-                >Blok {{ blockNames[index] || 'Tambahan' }}</span
+                >Blok {{ blockNames[index] || 'Lanjutan' }}</span
               >
             </div>
 
             <div class="flex items-center gap-3! justify-center!">
-              <div class="w-16!">
-                <input
-                  type="number"
-                  v-model="block.from"
-                  class="w-full! text-center! py-2! bg-slate-50! border! border-slate-200! rounded-xl! text-sm! font-bold! text-slate-700! focus:outline-none! focus:bg-white! focus:border-blue-500! focus:ring-4! focus:ring-blue-500/5! transition-all!"
-                  :disabled="index === 0"
-                />
-              </div>
-              <span class="text-slate-300! font-bold!">——</span>
-              <div class="w-16!">
-                <input
-                  type="number"
-                  v-model="block.to"
-                  class="w-full! text-center! py-2! bg-slate-50! border! border-slate-200! rounded-xl! text-sm! font-bold! text-slate-700! focus:outline-none! focus:bg-white! focus:border-blue-500! focus:ring-4! focus:ring-blue-500/5! transition-all!"
-                />
-              </div>
+              <input
+                type="number"
+                v-model="block.from"
+                class="w-20! text-center! py-2.5! bg-white! border! border-slate-200! rounded-xl! text-sm! font-bold! text-slate-700! focus:outline-none! focus:border-blue-500! focus:ring-4! focus:ring-blue-500/5! transition-all!"
+                :disabled="index === 0"
+              />
+              <span class="text-slate-300! font-bold!">to</span>
+              <input
+                type="number"
+                v-model="block.to"
+                class="w-20! text-center! py-2.5! bg-white! border! border-slate-200! rounded-xl! text-sm! font-bold! text-slate-700! focus:outline-none! focus:border-blue-500! focus:ring-4! focus:ring-blue-500/5! transition-all!"
+              />
             </div>
 
             <div class="px-2!">
-              <MaksMoneyInput v-model="block.price" placeholder="0" no-margin size="sm" />
+              <MaksMoneyInput v-model="block.price" placeholder="0" no-margin size="md" />
             </div>
 
             <div class="flex justify-center!">
-              <button
-                @click="removeBlock(index)"
+              <BaseButton
                 v-if="blocks.length > 1"
-                class="w-8! h-8! flex! items-center! justify-center! text-slate-200! hover:text-red-500! hover:bg-red-50! rounded-lg! transition-all!"
-              >
-                <font-awesome-icon icon="trash" class="text-sm!" />
-              </button>
-              <div v-else class="w-8!"></div>
+                variant="ghost"
+                size="sm"
+                icon="trash"
+                @click="removeBlock(index)"
+                class="w-8! h-8! p-0! rounded-lg! border! border-slate-100! hover:border-red-200! hover:bg-red-50! text-slate-600! hover:text-red-600! shadow-sm!"
+                title="Hapus Blok"
+              />
             </div>
           </div>
         </div>
 
-        <div class="mt-8! px-4!">
+        <!-- Add Block Button -->
+        <div class="mt-8! flex! justify-center!">
           <button
             @click="addBlock"
-            class="flex! items-center! gap-2.5! text-sky-600! hover:text-sky-700! font-bold! text-xs! transition-all! group!"
+            class="flex! items-center! gap-3! px-6! py-3! bg-white! border-2! border-dashed! border-slate-200! rounded-2xl! text-slate-500! hover:border-blue-400! hover:text-blue-600! hover:bg-blue-50/30! transition-all! group!"
           >
             <div
-              class="w-6! h-6! rounded-full! bg-sky-100! flex! items-center! justify-center! group-hover:scale-110! transition-transform!"
+              class="w-8! h-8! rounded-full! bg-slate-100! text-slate-400! flex! items-center! justify-center! group-hover:bg-blue-100! group-hover:text-blue-600! transition-all!"
             >
-              <font-awesome-icon icon="plus" class="text-[10px]!" />
+              <font-awesome-icon icon="plus" class="text-xs!" />
             </div>
-            Tambah Blok Baru
-            <span
-              class="px-1.5! py-0.5! bg-slate-100! text-slate-400! text-[8px]! rounded-md! font-black! ml-1!"
-              >ALT + N</span
-            >
+            <span class="text-sm! font-bold!">Tambah Blok Baru</span>
           </button>
         </div>
       </div>
     </ContentCard>
 
-    <div class="mt-10! flex items-center justify-end gap-4!">
+    <div class="mt-10! flex items-center justify-end! gap-4!">
       <BaseButton
         variant="secondary"
         size="md"
         @click="handleSave"
-        class="px-10! py-3! font-bold! rounded-2xl! shadow-lg! shadow-slate-200/60! transform! transition-all! hover:translate-y-[-2px]! active:scale-95!"
+        class="px-12! py-4! font-bold! rounded-2xl! shadow-xl! shadow-slate-200! transform! transition-all! hover:translate-y-[-2px]! active:scale-95!"
         icon="save"
       >
-        Simpan Kelas Baru
+        Simpan Kelas Biaya
       </BaseButton>
     </div>
   </div>
@@ -175,13 +154,11 @@ import ContentCard from '@/presentations/components/ui/ContentCard.vue'
 import BaseInput from '@/presentations/components/ui/BaseInput.vue'
 import BaseButton from '@/presentations/components/ui/BaseButton.vue'
 import MaksMoneyInput from '@/presentations/components/MaksMoneyInput.vue'
-
 import Swal from 'sweetalert2'
 
 const router = useRouter()
 
 const namaKelas = ref('')
-
 const blockNames = ['Pertama', 'Kedua', 'Ketiga', 'Keempat', 'Kelima']
 const abodemen = ref(0)
 const denda = ref(0)
@@ -225,17 +202,17 @@ const handleBack = () => {
 }
 
 const handleSave = async () => {
-  console.log('Saving New Kelas:', {
-    nama: namaKelas.value,
-    blocks: blocks.value,
-  })
+  if (!namaKelas.value) {
+    Swal.fire('Error', 'Nama Kelas harus diisi!', 'error')
+    return
+  }
 
   await Swal.fire({
-    title: 'Berhasil Disimpan!',
-    text: 'Kelas biaya baru telah berhasil ditambahkan.',
+    title: 'Berhasil!',
+    text: 'Konfigurasi harga paket telah disimpan.',
     icon: 'success',
-    timer: 1500,
-    showConfirmButton: false,
+    confirmButtonText: 'Selesai',
+    confirmButtonColor: '#3b82f6',
   })
 
   router.push('/kelas-biaya')
@@ -258,20 +235,8 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-@reference "@/assets/css/main.css";
-
 .pricing-config-view {
   animation: fadeIn 0.5s ease-out;
-}
-
-input::-webkit-outer-spin-button,
-input::-webkit-inner-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
-}
-
-input[type='number'] {
-  -moz-appearance: textfield;
 }
 
 @keyframes fadeIn {
@@ -285,19 +250,13 @@ input[type='number'] {
   }
 }
 
-::-webkit-scrollbar {
-  width: 6px;
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
 }
 
-::-webkit-scrollbar-track {
-  @apply bg-transparent;
-}
-
-::-webkit-scrollbar-thumb {
-  @apply bg-slate-200 rounded-full;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  @apply bg-slate-300;
+input[type='number'] {
+  -moz-appearance: textfield;
 }
 </style>

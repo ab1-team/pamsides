@@ -189,10 +189,12 @@ const handleInput = (event) => {
 }
 
 .base-input__label {
+  display: block;
   font-size: 0.875rem;
-  font-weight: 500;
-  color: #334155;
-  margin-bottom: 0.25rem;
+  font-weight: 400;
+  color: #64748b;
+  margin-bottom: 0.375rem;
+  margin-left: 0.25rem;
 }
 
 .base-input__wrapper {
@@ -229,6 +231,13 @@ const handleInput = (event) => {
 
 .base-input__field--has-prefix {
   padding-left: 2.75rem;
+}
+
+.base-input__field--disabled {
+  background-color: #f1f5f9;
+  color: #94a3b8;
+  cursor: not-allowed;
+  border-color: #e2e8f0;
 }
 
 .base-input__password-toggle {

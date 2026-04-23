@@ -111,10 +111,10 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import axios from 'axios'
 import { useRouter, useRoute } from 'vue-router'
 import { MySwal } from '@/main.js'
 import { useUiStore } from '@/stores/uiStore'
+import authService from '@/services/auth.service'
 import '@/assets/css/login.css'
 
 const router = useRouter()
@@ -154,39 +154,38 @@ onMounted(() => {
 })
 
 const handleLogin = async () => {
+  if (!form.value.username || !form.value.password) {
+    MySwal.fire({
+      icon: 'warning',
+      title: 'Oops...',
+      text: 'Username dan password wajib diisi!',
+      confirmButtonColor: '#3b82f6',
+    })
+    return
+  }
+
   loading.value = true
   try {
-    if (form.value.username && form.value.password) {
-      // Mock role determination based on username
-      const username = form.value.username.toLowerCase()
-      let role = 'admin'
-
-      if (username.includes('surveyor')) role = 'surveyor'
-      else if (username.includes('teknisi')) role = 'teknisi'
-      else if (username.includes('pelanggan')) role = 'pelanggan'
-
-      uiStore.setUserRole(role)
-
-      router.push('/dashboard?login=success')
-    } else {
-      throw new Error('username atau kata sandi tidak boleh kosong')
-    }
-
-    const res = await axios.post('http://127.0.0.1:8000/api/login', {
-      email: form.value.username,
+    const res = await authService.login({
+      username: form.value.username,
       password: form.value.password,
     })
 
-    const token = res.data.data.token
+    if (res.success) {
+      // Simpan role ke store
+      uiStore.setUserRole(res.user.role)
+      // Simpan token (mock atau real)
+      localStorage.setItem('token', res.token)
 
-    localStorage.setItem('token', token)
-
-    router.push('/dashboard?login=success')
+      router.push('/dashboard?login=success')
+    } else {
+      throw new Error(res.message || 'Login Gagal')
+    }
   } catch (error) {
     MySwal.fire({
       icon: 'error',
       title: 'Login Gagal!',
-      text: error.response?.data?.message || error.message,
+      text: error.response?.data?.message || error.message || 'Terjadi kesalahan sistem',
       confirmButtonColor: '#ef4444',
     })
   } finally {

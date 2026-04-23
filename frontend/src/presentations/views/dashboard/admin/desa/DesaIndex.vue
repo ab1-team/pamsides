@@ -1,5 +1,13 @@
 <template>
   <div class="desa-root">
+    <div class="flex items-center justify-between mb-6!">
+      <div>
+        <h2 class="text-2xl! font-black! text-slate-800! tracking-tight!">Data Desa</h2>
+        <p class="text-sm! text-slate-500! font-medium!">
+          Daftar wilayah desa dan padukuhan terdaftar.
+        </p>
+      </div>
+    </div>
     <DataTable
       :data="filteredData"
       :columns="tableColumns"

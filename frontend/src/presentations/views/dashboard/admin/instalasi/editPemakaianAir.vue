@@ -169,9 +169,9 @@
 
 <script setup>
 import { ref, watch, computed } from 'vue'
-import BaseButton from '@/components/ui/BaseButton.vue'
-import BaseInput from '@/components/ui/BaseInput.vue'
-import AppDatePicker from '@/components/AppDatePicker.vue'
+import BaseButton from '@/presentations/components/ui/BaseButton.vue'
+import BaseInput from '@/presentations/components/ui/BaseInput.vue'
+import AppDatePicker from '@/presentations/components/AppDatePicker.vue'
 import { MySwal } from '@/utils/swal'
 
 const props = defineProps({ show: Boolean, data: { type: Object, default: () => ({}) } })

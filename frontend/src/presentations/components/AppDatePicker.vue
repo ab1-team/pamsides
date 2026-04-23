@@ -103,7 +103,7 @@ const formatDate = (date) => {
 }
 
 .label {
-  @apply block text-sm font-semibold text-slate-600 mb-1.5 ml-1;
+  @apply block text-sm font-normal text-slate-500 mb-1.5 ml-1;
 }
 
 .picker-wrapper {
