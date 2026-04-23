@@ -1,9 +1,31 @@
 <script setup>
+import { watch } from 'vue'
 import { RouterView } from 'vue-router'
+import { useUiStore } from '@/stores/uiStore'
+import { useToast } from 'primevue/usetoast'
+
+const uiStore = useUiStore()
+const toast = useToast()
+
+// Watch for global toast messages
+watch(
+  () => uiStore.toastMessage,
+  (newMsg) => {
+    if (newMsg) {
+      toast.add(newMsg)
+    }
+  },
+)
 </script>
 
 <template>
-  <RouterView />
+  <div id="app-root">
+    <PrimeToast />
+    <div v-if="uiStore.loading" class="global-loader">
+      <ProgressBar mode="indeterminate" style="height: 4px" />
+    </div>
+    <RouterView />
+  </div>
 </template>
 
 <style>
@@ -30,7 +52,8 @@ body {
     sans-serif;
 }
 
-#app {
+#app,
+#app-root {
   height: 100%;
   width: 100%;
   min-width: 100%;
@@ -45,5 +68,12 @@ body {
 
 .swal-toast-custom .swal2-html-container {
   margin-top: 5px !important;
+}
+.global-loader {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 9999;
 }
 </style>
