@@ -1,44 +1,48 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import LoginView from '@/views/auth/LoginView.vue'
-import MainView from '@/views/dashboard/layout/MainView.vue'
-import Dashbord from '@/views/dashboard/DashboardMain.vue'
-import SopIndex from '@/views/dashboard/sop/SopIndex.vue'
-import KelasBiayaView from '@/views/dashboard/kelas/KelasIndex.vue'
-import CreateKelasView from '@/views/dashboard/kelas/KelasCreate.vue'
-import EditKelasView from '@/views/dashboard/kelas/KelasEdit.vue'
-import pelangganView from '@/views/dashboard/pelanggan/PelangganIndex.vue'
-import PelangganCreate from '@/views/dashboard/pelanggan/PelangganCreate.vue'
-import PelangganEdit from '@/views/dashboard/pelanggan/PelangganEdit.vue'
-import caterView from '@/views/dashboard/cater/CaterIndex.vue'
-import CaterCreate from '@/views/dashboard/cater/CaterCreate.vue'
-import CaterEdit from '@/views/dashboard/cater/CaterEdit.vue'
-import desaView from '@/views/dashboard/desa/DesaIndex.vue'
-import DesaCreate from '@/views/dashboard/desa/DesaCreate.vue'
-import DesaEdit from '@/views/dashboard/desa/DesaEdit.vue'
-// import desaView from '@/views/dashboard/basis-data/desa/IndexView.vue'
-// import createcaterView from '@/views/dashboard/basis-data/cater/CreateView.vue'
-// import caterView from '@/views/dashboard/basis-data/cater/IndexView.vue'
-import datainstalasiView from '@/views/dashboard/instalasi/dataInstalasi.vue'
-import registerInstalasi from '@/views/dashboard/instalasi/registrasi.vue'
-import statusInstalasi from '@/views/dashboard/instalasi/InstalasiStatus.vue'
-import Caterpemakaianair from '@/views/dashboard/instalasi/caterPemakaianAir.vue'
-import pemakaianair from '@/views/dashboard/instalasi/pemakaianAir.vue'
-import retribusisampah from '@/views/dashboard/instalasi/retribusiSampah.vue'
-import DetailPermohonan from '@/views/dashboard/instalasi/partials/permohonan.vue'
-import DetailPasangBaru from '@/views/dashboard/instalasi/partials/pasangBaru.vue'
-import DetailAktif from '@/views/dashboard/instalasi/partials/aktif.vue'
-import DetailBlokir from '@/views/dashboard/instalasi/partials/blokir.vue'
-import DetailCabut from '@/views/dashboard/instalasi/partials/cabut.vue'
-import jurnalUmum from '@/views/dashboard/transaksi/jurnalUmum/JurnalUmumIndex.vue'
-import tagihanInstalasi from '@/views/dashboard/transaksi/Tagihan/tagihanInstalasi.vue'
-import tagihanBulanan from '@/views/dashboard/transaksi/Tagihan/tagihanBulanan.vue'
-import alokasiLaba from '@/views/dashboard/transaksi/arsip/alokasiLaba.vue'
-import ebudgeting from '@/views/dashboard/transaksi/EBudgetingView.vue'
-import tutupBuku from '@/views/dashboard/transaksi/tutupBuku.vue'
-import komisiSPS from '@/views/dashboard/transaksi/komisiSPS.vue'
-import laporan from '@/views/dashboard/pelaporan/PelaporanIndex.vue'
-import profil from '@/views/dashboard/profil/ProfilIndex.vue'
-import detailPemakaianAir from '@/views/dashboard/instalasi/partials/detailPemakaianAir.vue'
+import LoginView from '@/presentations/views/auth/LoginView.vue'
+import MainView from '@/presentations/layouts/dashboard/MainView.vue'
+import AdminDashbord from '@/presentations/views/dashboard/admin/DashboardMain.vue'
+import SurveyorDashboard from '@/presentations/views/dashboard/surveyor/DashboardMain.vue'
+import TeknisiDashboard from '@/presentations/views/dashboard/teknisi/DashboardMain.vue'
+import PelangganDashboard from '@/presentations/views/dashboard/pelanggan/DashboardMain.vue'
+import { useUiStore } from '@/stores/uiStore'
+import SopIndex from '@/presentations/views/dashboard/admin/sop/SopIndex.vue'
+// import COAView from '@/presentations/views/dashboard/admin/settings/COAView.vue'
+import KelasBiayaView from '@/presentations/views/dashboard/admin/kelas/KelasIndex.vue'
+import CreateKelasView from '@/presentations/views/dashboard/admin/kelas/KelasCreate.vue'
+import EditKelasView from '@/presentations/views/dashboard/admin/kelas/KelasEdit.vue'
+// import cretaepelangganView from '@/presentations/views/dashboard/admin/basis-data/pelanggan/CreateView.vue'
+// import editpelangganView from '@/presentations/views/dashboard/admin/basis-data/pelanggan/EditView.vue'
+import pelangganView from '@/presentations/views/dashboard/admin/pelanggan/PelangganIndex.vue'
+import PelangganCreate from '@/presentations/views/dashboard/admin/pelanggan/PelangganCreate.vue'
+import PelangganEdit from '@/presentations/views/dashboard/admin/pelanggan/PelangganEdit.vue'
+import caterView from '@/presentations/views/dashboard/admin/cater/CaterIndex.vue'
+import CaterCreate from '@/presentations/views/dashboard/admin/cater/CaterCreate.vue'
+import CaterEdit from '@/presentations/views/dashboard/admin/cater/CaterEdit.vue'
+import desaView from '@/presentations/views/dashboard/admin/desa/DesaIndex.vue'
+import DesaCreate from '@/presentations/views/dashboard/admin/desa/DesaCreate.vue'
+import DesaEdit from '@/presentations/views/dashboard/admin/desa/DesaEdit.vue'
+import datainstalasiView from '@/presentations/views/dashboard/admin/instalasi/dataInstalasi.vue'
+import registerInstalasi from '@/presentations/views/dashboard/admin/instalasi/registrasi.vue'
+import statusInstalasi from '@/presentations/views/dashboard/admin/instalasi/InstalasiStatus.vue'
+import TeknisiPemakaianAir from '@/presentations/views/dashboard/teknisi/PemakaianAir.vue'
+import pemakaianair from '@/presentations/views/dashboard/admin/instalasi/pemakaianAir.vue'
+import retribusisampah from '@/presentations/views/dashboard/admin/instalasi/retribusiSampah.vue'
+import DetailPermohonan from '@/presentations/views/dashboard/admin/instalasi/partials/permohonan.vue'
+import DetailPasangBaru from '@/presentations/views/dashboard/admin/instalasi/partials/pasangBaru.vue'
+import DetailAktif from '@/presentations/views/dashboard/admin/instalasi/partials/aktif.vue'
+import DetailBlokir from '@/presentations/views/dashboard/admin/instalasi/partials/blokir.vue'
+import DetailCabut from '@/presentations/views/dashboard/admin/instalasi/partials/cabut.vue'
+import jurnalUmum from '@/presentations/views/dashboard/admin/transaksi/jurnalUmum/JurnalUmumIndex.vue'
+import tagihanInstalasi from '@/presentations/views/dashboard/admin/transaksi/Tagihan/tagihanInstalasi.vue'
+import tagihanBulanan from '@/presentations/views/dashboard/admin/transaksi/Tagihan/tagihanBulanan.vue'
+import alokasiLaba from '@/presentations/views/dashboard/admin/transaksi/arsip/alokasiLaba.vue'
+import ebudgeting from '@/presentations/views/dashboard/admin/transaksi/EBudgetingView.vue'
+import tutupBuku from '@/presentations/views/dashboard/admin/transaksi/tutupBuku.vue'
+import komisiSPS from '@/presentations/views/dashboard/admin/transaksi/komisiSPS.vue'
+import laporan from '@/presentations/views/dashboard/admin/pelaporan/PelaporanIndex.vue'
+import profil from '@/presentations/views/dashboard/admin/profil/ProfilIndex.vue'
+import detailPemakaianAir from '@/presentations/views/dashboard/admin/instalasi/partials/detailPemakaianAir.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -60,7 +64,19 @@ const router = createRouter({
         {
           path: '',
           name: 'dashboard',
-          component: Dashbord,
+          component: () => {
+            const uiStore = useUiStore()
+            switch (uiStore.userRole) {
+              case 'surveyor':
+                return SurveyorDashboard
+              case 'teknisi':
+                return TeknisiDashboard
+              case 'pelanggan':
+                return PelangganDashboard
+              default:
+                return AdminDashbord
+            }
+          },
         },
         {
           path: '/profil',
@@ -75,7 +91,7 @@ const router = createRouter({
         {
           path: '/settings/coa',
           name: 'coa',
-          component: () => import('@/views/dashboard/sop/CoaIndex.vue'),
+          component: () => import('@/presentations/views/dashboard/admin/sop/CoaIndex.vue'),
         },
         // {
         //   path: '/settings',
@@ -208,9 +224,24 @@ const router = createRouter({
           component: detailPemakaianAir,
         },
         {
-          path: '/instalasi/caterPemakaianAir',
-          name: 'Cater Input Pemakaian Air',
-          component: Caterpemakaianair,
+          path: '/survey/input',
+          name: 'Input Survey',
+          component: () => import('@/presentations/views/dashboard/surveyor/TicketSurvey.vue'),
+        },
+        {
+          path: '/teknisi/pencatatan-meter',
+          name: 'Catat Meter',
+          component: () => import('@/presentations/views/dashboard/teknisi/MeterReading.vue'),
+        },
+        {
+          path: '/pelanggan/tagihan-detail',
+          name: 'Detail Tagihan',
+          component: () => import('@/presentations/views/dashboard/pelanggan/BillDetail.vue'),
+        },
+        {
+          path: '/instalasi/teknisiPemakaianAir',
+          name: 'Input Pemakaian Air Teknisi',
+          component: TeknisiPemakaianAir,
         },
         {
           path: '/instalasi/retribusi-sampah',
@@ -262,7 +293,8 @@ const router = createRouter({
     {
       path: '/usages/cetak_input',
       name: 'Cetak Input',
-      component: () => import('@/views/dashboard/instalasi/partials/view/cetakInput.vue'),
+      component: () =>
+        import('@/presentations/views/dashboard/admin/instalasi/partials/view/cetakInput.vue'),
     },
   ],
 })
