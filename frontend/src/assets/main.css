@@ -664,6 +664,7 @@ button {
 .avatar-dropdown-item {
   display: flex;
   align-items: center;
+  justify-content: flex-start !important;
   gap: 0.625rem;
   width: 100%;
   padding: 0.75rem 1rem;

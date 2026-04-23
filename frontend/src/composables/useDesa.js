@@ -1,4 +1,5 @@
 import { ref, computed } from 'vue'
+import Swal from 'sweetalert2'
 
 export function useDesa() {
   // State untuk filter pencarian
@@ -77,12 +78,34 @@ export function useDesa() {
   // Fungsi-fungsi penanganan aksi
   const handleEdit = (row) => {
     console.log('Edit Desa:', row)
+    if (router) {
+      router.push(`/data-desa/edit/${row.id}`)
+    }
   }
 
-  const handleDelete = (row) => {
-    console.log('Delete Desa:', row)
-    if (confirm(`Apakah Anda yakin ingin menghapus data desa ${row.desa}?`)) {
+  const handleDelete = async (row) => {
+    const result = await Swal.fire({
+      title: 'Hapus Desa?',
+      text: `Desa "${row.desa}" akan dihapus secara permanent dari aplikasi`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Ya, Hapus!',
+      cancelButtonText: 'Batal',
+      confirmButtonColor: '#ef4444',
+      cancelButtonColor: '#64748b',
+      reverseButtons: true,
+    })
+
+    if (result.isConfirmed) {
       tableData.value = tableData.value.filter((item) => item.id !== row.id)
+
+      Swal.fire({
+        title: 'Terhapus!',
+        text: 'Data desa telah berhasil dihapus.',
+        icon: 'success',
+        timer: 1500,
+        showConfirmButton: false,
+      })
     }
   }
 

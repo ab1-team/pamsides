@@ -140,15 +140,6 @@
 
     <div class="mt-10! flex items-center justify-end gap-4!">
       <BaseButton
-        variant="secondary-gradient"
-        size="md"
-        @click="handleBack"
-        class="px-10! py-3! font-bold! rounded-2xl! shadow-lg! shadow-slate-200/60! transform! transition-all! hover:translate-y-[-2px]! active:scale-95!"
-        icon="arrow-left"
-      >
-        Kembali
-      </BaseButton>
-      <BaseButton
         variant="secondary"
         size="md"
         @click="handleSave"
@@ -168,6 +159,8 @@ import ContentCard from '@/components/ui/ContentCard.vue'
 import BaseInput from '@/components/ui/BaseInput.vue'
 import BaseButton from '@/components/ui/BaseButton.vue'
 import MaksMoneyInput from '@/components/MaksMoneyInput.vue'
+
+import Swal from 'sweetalert2'
 
 const router = useRouter()
 const route = useRoute()
@@ -215,12 +208,21 @@ const handleBack = () => {
   router.back()
 }
 
-const handleSave = () => {
+const handleSave = async () => {
   console.log('Saving Edit:', {
     id: route.params.id,
     nama: namaKelas.value,
     blocks: blocks.value,
   })
+
+  await Swal.fire({
+    title: 'Berhasil Diperbarui!',
+    text: 'Perubahan pada kelas biaya telah disimpan.',
+    icon: 'success',
+    timer: 1500,
+    showConfirmButton: false,
+  })
+
   router.push('/kelas-biaya')
 }
 

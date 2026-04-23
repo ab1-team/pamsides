@@ -18,7 +18,7 @@
               Menu Pengaturan
             </p>
 
-            <div class="flex flex-col gap-1! pl-0! overflow-visible!">
+            <div class="flex flex-col gap-1! pl-2! overflow-visible!">
               <div
                 v-for="menu in menuList"
                 :key="menu.key"
@@ -28,7 +28,7 @@
                 <BaseButton
                   @click="activeSection = menu.key"
                   variant="ghost"
-                  class="w-full! justify-start! pl-5! pr-4! py-3.5! rounded-l-full! rounded-r-none! transition-all! duration-300! relative!"
+                  class="w-full! justify-start! pl-3! pr-4! py-3.5! rounded-l-full! rounded-r-none! transition-all! duration-300! relative!"
                   :class="[
                     activeSection === menu.key
                       ? 'bg-[#f8fafc]! text-slate-900! font-bold! z-10! translate-x-[1px]! ring-0! ring-offset-0! focus:ring-0! focus:ring-offset-0! outline-none! border-r-0! shadow-none!'

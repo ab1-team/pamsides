@@ -88,7 +88,7 @@
             :total-entries="filteredData.length"
             :show-toolbar="true"
             :search-query="searchQuery"
-            search-placeholder="Cari customer..."
+            search-placeholder="Cari pelanggan..."
             v-model="searchQuery"
             :no-card="true"
             :show-entries="false"
@@ -115,39 +115,39 @@
                   {{ row.initials }}
                 </div>
                 <div>
-                  <p class="text-sm! font-semibold! text-slate-800! leading-tight!">
+                  <p class="text-[13px]! font-semibold! text-slate-800! leading-tight!">
                     {{ row.name }}
                   </p>
-                  <p class="text-xs! text-slate-400!">{{ row.type }}</p>
+                  <p class="text-[11px]! text-blue-600! font-mono! font-bold!">ID: {{ row.id }}</p>
                 </div>
               </div>
             </template>
 
             <template #column-address="{ row }">
-              <p class="text-sm! text-slate-500! max-w-[200px]! truncate!">
+              <p class="text-xs! text-slate-500! max-w-[200px]! truncate!">
                 {{ row.address }}
               </p>
             </template>
 
             <template #column-status="{ row }">
               <span
-                class="text-xs! font-semibold! px-2.5! py-1! rounded-full! border!"
+                class="inline-flex! items-center! gap-1! px-2! py-0.5! rounded-md! text-[10px]! font-bold! tracking-wider! uppercase! whitespace-nowrap!"
                 :class="statusStyle[row.status]"
               >
-                {{ row.status }}
+                • {{ row.status }}
               </span>
             </template>
 
-            <template #column-action="{}">
+            <template #column-action="{ row }">
               <div class="flex! items-center! justify-center!">
-                <span
-                  class="w-7! h-7! rounded-full! bg-slate-100! hover:bg-indigo-100! flex! items-center! justify-center! transition-colors!"
-                >
-                  <font-awesome-icon
-                    icon="chevron-right"
-                    class="text-xs! text-slate-400! group-hover:text-indigo-500!"
-                  />
-                </span>
+                <BaseButton
+                  variant="ghost"
+                  size="sm"
+                  @click.stop="handleRowClick(row)"
+                  class="w-8! h-8! p-0! rounded-full! border! border-slate-100! hover:border-blue-200! hover:bg-blue-50! text-slate-600! hover:text-blue-600! shadow-sm!"
+                  title="View Detail"
+                  icon="chevron-right"
+                />
               </div>
             </template>
           </DataTable>
@@ -155,18 +155,18 @@
       </div>
 
       <div class="lg:hidden! flex! flex-col!">
-        <div class="px-4! pt-4! pb-3! border-b! border-slate-100! bg-white!">
-          <p class="text-[10px]! font-bold! text-slate-400! uppercase! tracking-widest! mb-2.5!">
+        <div class="px-3! pt-3! pb-2! border-b! border-slate-100! bg-white!">
+          <p class="text-[10px]! font-bold! text-slate-400! uppercase! tracking-widest! mb-2!">
             Filter Status
           </p>
 
-          <div class="grid grid-cols-1 sm:grid-cols-3 md:grid-cols-5 gap-3!">
+          <div class="grid grid-cols-1 sm:grid-cols-3 md:grid-cols-5 gap-2!">
             <BaseButton
               v-for="menu in menuList"
               :key="menu.key"
               @click="activeStatus = menu.key"
               :variant="activeStatus === menu.key ? menu.variant : 'ghost'"
-              class="px-3! py-2! rounded-full! transition-all! duration-300!"
+              class="px-3! py-1.5! rounded-full! transition-all! duration-300!"
             >
               <span class="w-full! flex! items-center! justify-between! gap-2!">
                 <div class="flex items-center gap-2!">
@@ -181,7 +181,7 @@
                     'text-[10px]! font-bold! px-1.5! py-0.5! rounded-full! min-w-[18px]! text-center! shrink-0! transition-colors! duration-300!',
                     activeStatus === menu.key
                       ? 'bg-white/25! text-white!'
-                      : 'bg-slate-300! text-slate-600!',
+                      : 'bg-slate-200! text-slate-500!',
                   ]"
                 >
                   {{ dataMap[menu.key]?.length || 0 }}
@@ -191,17 +191,22 @@
           </div>
         </div>
 
-        <div class="px-4! py-3! border-b! border-slate-100! bg-white!">
-          <div class="flex! items-center! justify-between! mb-3!">
-            <h2 class="text-sm! font-bold! text-slate-800!">{{ activeLabel }}</h2>
+        <div class="px-3! py-2! border-b! border-slate-100! bg-white!">
+          <div class="flex! items-center! justify-between! mb-2!">
+            <h2 class="text-xs! font-bold! text-slate-800!">{{ activeLabel }}</h2>
           </div>
 
-          <input
-            v-model="searchQuery"
-            type="text"
-            placeholder="Cari customer..."
-            class="w-full! pl-9! pr-4! py-2! bg-slate-50! border! border-slate-200! rounded-xl! text-sm! text-slate-700! focus:outline-none! focus:ring-2! focus:ring-blue-500/20! focus:border-blue-400! transition-all!"
-          />
+          <div class="relative!">
+            <span class="absolute! left-3! top-1/2! -translate-y-1/2! text-[10px]! text-slate-400!"
+              >🔍</span
+            >
+            <input
+              v-model="searchQuery"
+              type="text"
+              placeholder="Cari pelanggan..."
+              class="w-full! pl-8! pr-4! py-1.5! bg-slate-50! border! border-slate-200! rounded-lg! text-xs! text-slate-700! focus:outline-none! focus:ring-2! focus:ring-blue-500/10! focus:border-blue-400! transition-all!"
+            />
+          </div>
         </div>
 
         <div class="divide-y! divide-slate-50! bg-white!">
@@ -209,10 +214,10 @@
             v-for="row in paginatedData"
             :key="row.id"
             @click="handleRowClick(row)"
-            class="flex! items-center! gap-3! px-4! py-3! hover:bg-slate-50/80! transition-colors! cursor-pointer!"
+            class="flex! items-center! gap-3! px-4! py-2.5! hover:bg-slate-50/80! transition-colors! cursor-pointer!"
           >
             <div
-              class="w-10! h-10! rounded-full! flex! items-center! justify-center! text-white! text-sm! font-bold! shrink-0! shadow-sm!"
+              class="w-8! h-8! rounded-full! flex! items-center! justify-center! text-white! text-xs! font-bold! shrink-0! shadow-sm!"
               :style="{ backgroundColor: row.color }"
             >
               {{ row.initials }}
@@ -220,13 +225,13 @@
 
             <div class="flex-1! min-w-0!">
               <div class="flex! items-center! justify-between! mb-0.5!">
-                <p class="text-sm! font-semibold! text-slate-800! truncate!">{{ row.name }}</p>
+                <p class="text-[13px]! font-semibold! text-slate-800! truncate!">{{ row.name }}</p>
                 <span class="text-[10px]! font-bold! text-blue-600! font-mono!">{{ row.id }}</span>
               </div>
               <div class="flex! items-center! justify-between!">
-                <p class="text-xs! text-slate-400! truncate!">{{ row.type }}</p>
+                <p class="text-[11px]! text-slate-400! truncate!">ID: {{ row.id }}</p>
                 <span
-                  class="text-[9px]! font-semibold! px-1.5! py-0.5! rounded-full! border! shrink-0!"
+                  class="text-[9px]! font-semibold! px-1.5! py-0.5! rounded-full! border! shrink-0! uppercase! tracking-wide!"
                   :class="statusStyle[row.status]"
                 >
                   {{ row.status }}
@@ -237,18 +242,18 @@
         </div>
 
         <div
-          class="px-4! py-4! bg-slate-50/50! border-t! border-slate-100! flex! items-center! justify-between!"
+          class="px-3! py-3! bg-slate-50/50! border-t! border-slate-100! flex! items-center! justify-between!"
         >
-          <span class="text-xs! text-slate-500! font-medium!">
+          <span class="text-[10px]! text-slate-500! font-medium!">
             Page {{ currentPage }} of {{ totalPages }}
           </span>
-          <div class="flex! items-center! gap-2!">
+          <div class="flex! items-center! gap-1.5!">
             <BaseButton
               variant="ghost"
               size="sm"
               :disabled="currentPage === 1"
               @click="prevPage"
-              class="w-8! h-8! p-0! rounded-lg! border! border-slate-200! bg-white!"
+              class="w-7! h-7! p-0! rounded-lg! border! border-slate-200! bg-white!"
             >
               ‹
             </BaseButton>
@@ -257,7 +262,7 @@
               size="sm"
               :disabled="currentPage === totalPages"
               @click="nextPage"
-              class="w-8! h-8! p-0! rounded-lg! border! border-slate-200! bg-white!"
+              class="w-7! h-7! p-0! rounded-lg! border! border-slate-200! bg-white!"
             >
               ›
             </BaseButton>
@@ -311,11 +316,10 @@ const handleRowClick = (row) => {
 }
 
 const tableColumns = [
-  { key: 'id', title: 'Customer ID', tdClass: '' },
-  { key: 'name', title: 'Full Name', tdClass: '' },
-  { key: 'address', title: 'Address', tdClass: '' },
-  { key: 'status', title: 'Status', tdClass: '' },
-  { key: 'action', title: '', tdClass: 'w-12 text-center' },
+  { key: 'name', title: 'NAMA PELANGGAN', tdClass: '' },
+  { key: 'address', title: 'ALAMAT', tdClass: '' },
+  { key: 'status', title: 'STATUS', tdClass: '' },
+  { key: 'action', title: 'AKSI', tdClass: 'w-12 text-center' },
 ]
 
 const handlePrintData = () => {
@@ -333,11 +337,11 @@ const handlePrintData = () => {
       @media print{body{margin:10px}}
     </style></head><body>
     <h1>Data ${activeLabel.value}</h1>
-    <table><thead><tr><th>Customer ID</th><th>Full Name</th><th>Type</th><th>Address</th><th>Status</th></tr></thead>
+    <table><thead><tr><th>Nama Pelanggan</th><th>Type</th><th>Alamat</th><th>Status</th></tr></thead>
     <tbody>${filteredData.value
       .map(
         (r) =>
-          `<tr><td>${r.id}</td><td>${r.name}</td><td>${r.type}</td><td>${r.address}</td><td>${r.status}</td></tr>`,
+          `<tr><td>${r.name}</td><td>${r.type}</td><td>${r.address}</td><td>${r.status}</td></tr>`,
       )
       .join('')}</tbody>
     </table></body></html>

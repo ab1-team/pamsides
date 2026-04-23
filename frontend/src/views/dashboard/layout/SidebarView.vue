@@ -161,7 +161,7 @@
 
             <div class="sidebar-submenu nested" :class="{ open: desaOpen && sidebarOpen }">
               <router-link
-                to="/data/desa/create"
+                to="/data-desa/tambah"
                 class="sidebar-submenu-item nested-item"
                 @click="handleMenuClick"
               >
@@ -204,7 +204,7 @@
 
             <div class="sidebar-submenu nested" :class="{ open: masterDataOpen && sidebarOpen }">
               <router-link
-                to="/data/caters/create"
+                to="/data-cater/tambah"
                 class="sidebar-submenu-item nested-item"
                 @click="handleMenuClick"
               >

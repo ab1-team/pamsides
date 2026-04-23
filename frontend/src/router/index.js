@@ -10,7 +10,14 @@ import pelangganView from '@/views/dashboard/pelanggan/PelangganIndex.vue'
 import PelangganCreate from '@/views/dashboard/pelanggan/PelangganCreate.vue'
 import PelangganEdit from '@/views/dashboard/pelanggan/PelangganEdit.vue'
 import caterView from '@/views/dashboard/cater/CaterIndex.vue'
+import CaterCreate from '@/views/dashboard/cater/CaterCreate.vue'
+import CaterEdit from '@/views/dashboard/cater/CaterEdit.vue'
 import desaView from '@/views/dashboard/desa/DesaIndex.vue'
+import DesaCreate from '@/views/dashboard/desa/DesaCreate.vue'
+import DesaEdit from '@/views/dashboard/desa/DesaEdit.vue'
+// import desaView from '@/views/dashboard/basis-data/desa/IndexView.vue'
+// import createcaterView from '@/views/dashboard/basis-data/cater/CreateView.vue'
+// import caterView from '@/views/dashboard/basis-data/cater/IndexView.vue'
 import datainstalasiView from '@/views/dashboard/instalasi/dataInstalasi.vue'
 import registerInstalasi from '@/views/dashboard/instalasi/registrasi.vue'
 import statusInstalasi from '@/views/dashboard/instalasi/InstalasiStatus.vue'
@@ -66,6 +73,16 @@ const router = createRouter({
           component: SopIndex,
         },
         {
+          path: '/settings/coa',
+          name: 'coa',
+          component: () => import('@/views/dashboard/sop/CoaIndex.vue'),
+        },
+        // {
+        //   path: '/settings',
+        //   name: 'settings',
+        //   component: COAView,
+        // },
+        {
           path: '/kelas-biaya',
           name: 'kelas biaya',
           component: KelasBiayaView,
@@ -101,10 +118,45 @@ const router = createRouter({
           component: caterView,
         },
         {
+          path: '/data-cater/tambah',
+          name: 'Tambah Cater',
+          component: CaterCreate,
+        },
+        {
+          path: '/data-cater/edit/:id',
+          name: 'Edit Cater',
+          component: CaterEdit,
+        },
+        {
           path: '/data-desa',
           name: 'Data Desa',
           component: desaView,
         },
+        {
+          path: '/data-desa/tambah',
+          name: 'Tambah Desa',
+          component: DesaCreate,
+        },
+        {
+          path: '/data-desa/edit/:id',
+          name: 'Edit Desa',
+          component: DesaEdit,
+        },
+        // {
+        //   path: '/BasisData',
+        //   name: 'BasisData',
+        //   component: createcaterView,
+        // },
+        // {
+        //   path: '/BasisData',
+        //   name: 'BasisData',
+        //   component: createcaterView,
+        // },
+        // {
+        //   path: '/BasisData',
+        //   name: 'BasisData',
+        //   component: caterView,
+        // },
         {
           path: '/dataInstalasi',
           name: 'Data Instalasi',

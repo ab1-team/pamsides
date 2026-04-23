@@ -41,38 +41,38 @@
           </div>
 
           <div>
-            <div class="font-semibold! text-sm! text-slate-900! mb-0.5!">
+            <div class="font-semibold! text-[13px]! text-slate-900! mb-0.5!">
               {{ row.nama }}
             </div>
-            <div class="text-xs! text-slate-400! font-normal!">ID: {{ row.id }}</div>
+            <div class="text-[10px]! text-slate-400! font-normal!">ID: {{ row.id }}</div>
           </div>
         </div>
       </template>
 
       <template #column-meterRange="{ row }">
         <div class="flex items-center gap-2!">
-          <span class="text-sm! font-medium! text-slate-500!">
+          <span class="text-[13px]! font-medium! text-slate-500!">
             {{ row.meterAwal.toLocaleString('id-ID') }}
           </span>
-          <span class="text-sm! text-slate-300!">→</span>
-          <span class="text-sm! font-semibold! text-cyan-600!">
+          <span class="text-[13px]! text-slate-300!">→</span>
+          <span class="text-[13px]! font-semibold! text-cyan-600!">
             {{ row.meterAkhir.toLocaleString('id-ID') }}
           </span>
         </div>
       </template>
 
       <template #column-pemakaian="{ row }">
-        <span class="text-sm! font-semibold! text-slate-900!"> {{ row.pemakaian }} m³ </span>
+        <span class="text-[13px]! font-semibold! text-slate-900!"> {{ row.pemakaian }} m³ </span>
       </template>
 
       <template #column-tagihan="{ row }">
-        <div class="font-bold! text-sm! text-slate-900!">
+        <div class="font-bold! text-[13px]! text-slate-900!">
           {{ row.tagihan.toLocaleString('id-ID') }}
         </div>
       </template>
 
       <template #column-jatuhTempo="{ row }">
-        <span class="text-sm! text-slate-500! font-medium!">
+        <span class="text-[13px]! text-slate-500! font-medium!">
           {{ row.jatuhTempo }}
         </span>
       </template>
@@ -80,7 +80,7 @@
       <template #column-status="{ row }">
         <span
           :class="[
-            'inline-flex! items-center! gap-1! px-2! py-0.5! rounded-md! text-sm! font-semibold! tracking-wide!',
+            'inline-flex! items-center! gap-1! px-2! py-0.5! rounded-md! text-[10px]! font-bold! tracking-wider! uppercase! whitespace-nowrap!',
             STATUS_COLORS[row.status] || '',
           ]"
         >
