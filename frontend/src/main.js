@@ -1,8 +1,8 @@
-import './assets/main.css'
-import './assets/datepicker.css'
-import './assets/stat-card.css'
-import './assets/ui-base.css'
-import './assets/ui-modals.css'
+import './assets/css/main.css'
+import './assets/css/datepicker.css'
+import './assets/css/stat-card.css'
+import './assets/css/ui-base.css'
+import './assets/css/ui-modals.css'
 
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
@@ -18,6 +18,9 @@ import Button from 'primevue/button'
 import DatePicker from 'primevue/datepicker'
 import InputNumber from 'primevue/inputnumber'
 import Select from 'primevue/select'
+import Toast from 'primevue/toast'
+import ToastService from 'primevue/toastservice'
+import ProgressBar from 'primevue/progressbar'
 
 import { library } from '@fortawesome/fontawesome-svg-core'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
@@ -111,6 +114,23 @@ import {
   faCalendarAlt,
   faHashtag,
   faSitemap,
+  faCalendarCheck,
+  faClipboardList,
+  faClock,
+  faCheckDouble,
+  faMapMarkedAlt,
+  faExpand,
+  faUserClock,
+  faMapPin,
+  faTools,
+  faPlusCircle,
+  faProjectDiagram,
+  faBoxes,
+  faHardHat,
+  faWallet,
+  faReceipt,
+  faHeadset,
+  faBullhorn,
 } from '@fortawesome/free-solid-svg-icons'
 
 import { faWhatsapp } from '@fortawesome/free-brands-svg-icons'
@@ -206,6 +226,23 @@ library.add(
   faSyncAlt,
   faHashtag,
   faSitemap,
+  faCalendarCheck,
+  faClipboardList,
+  faClock,
+  faCheckDouble,
+  faMapMarkedAlt,
+  faExpand,
+  faUserClock,
+  faMapPin,
+  faTools,
+  faPlusCircle,
+  faProjectDiagram,
+  faBoxes,
+  faHardHat,
+  faWallet,
+  faReceipt,
+  faHeadset,
+  faBullhorn,
 )
 
 export { MySwal } from './utils/swal'
@@ -227,11 +264,14 @@ app.use(PrimeVue, {
     tooltip: 1100,
   },
 })
+app.use(ToastService)
 
 app.component('PrimeButton', Button)
 app.component('DatePicker', DatePicker)
 app.component('InputNumber', InputNumber)
 app.component('PrimeSelect', Select)
+app.component('PrimeToast', Toast)
+app.component('ProgressBar', ProgressBar)
 app.component('font-awesome-icon', FontAwesomeIcon)
 
 app.mount('#app')

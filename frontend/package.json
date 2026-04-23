@@ -21,6 +21,7 @@
     "axios": "^1.15.2",
     "jquery": "^4.0.0",
     "jstree": "^3.3.17",
+    "leaflet": "^1.9.4",
     "pinia": "^3.0.4",
     "primevue": "^4.5.4",
     "sweetalert2": "^11.26.24",
