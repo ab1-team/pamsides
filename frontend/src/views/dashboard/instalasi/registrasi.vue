@@ -212,6 +212,7 @@
               v-model="form.kodeInstalasi"
               label="Kode Instalasi"
               placeholder="INST-0000"
+              prefixIcon="hashtag"
               customClass="font-mono"
             />
 

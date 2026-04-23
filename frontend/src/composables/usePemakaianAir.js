@@ -1,5 +1,6 @@
 import { ref, computed } from 'vue'
 import { STATUS_TYPES, STATUS_COLORS } from '@/types/pemakaianAir'
+import Swal from 'sweetalert2'
 
 export function usePemakaianAir() {
   // Filter state
@@ -7,6 +8,10 @@ export function usePemakaianAir() {
   const searchQuery = ref('')
   const currentPage = ref(1)
   const perPage = ref(10)
+
+  // Edit Modal state
+  const showEditModal = ref(false)
+  const selectedRow = ref(null)
 
   // Options
   const tahunOptions = computed(() => {
@@ -43,6 +48,7 @@ export function usePemakaianAir() {
       meterAkhir: 10,
       pemakaian: 10,
       tagihan: 45000,
+      tanggalAkhir: '2024-04-20',
       jatuhTempo: '20 Mei 2024',
       status: STATUS_TYPES.PENDING,
     },
@@ -58,6 +64,7 @@ export function usePemakaianAir() {
       meterAkhir: 0,
       pemakaian: 0,
       tagihan: 10000,
+      tanggalAkhir: '2024-04-20',
       jatuhTempo: '20 Mei 2024',
       status: STATUS_TYPES.PENDING,
     },
@@ -73,6 +80,7 @@ export function usePemakaianAir() {
       meterAkhir: 1165,
       pemakaian: 25,
       tagihan: 125000,
+      tanggalAkhir: '2024-04-20',
       jatuhTempo: '20 Mei 2024',
       status: STATUS_TYPES.PAID,
     },
@@ -114,8 +122,44 @@ export function usePemakaianAir() {
   const handleCetakFormInput = () => console.log('Cetak Form Input')
   const handleHasilInput = () => console.log('Hasil Input')
   const handleInputPemakaian = () => console.log('Input Pemakaian')
-  const handleEdit = (row) => console.log('Edit:', row)
-  const handleDelete = (row) => console.log('Delete:', row)
+  const handleEdit = (row) => {
+    selectedRow.value = { ...row }
+    showEditModal.value = true
+  }
+
+  const handleSaveEdit = (updatedRow) => {
+    const index = tableData.value.findIndex((item) => item.id === updatedRow.id)
+    if (index !== -1) {
+      tableData.value[index] = updatedRow
+    }
+    showEditModal.value = false
+  }
+
+  const handleDelete = async (row) => {
+    const result = await Swal.fire({
+      title: 'Hapus Data Pemakaian?',
+      text: `Data pemakaian air untuk "${row.nama}" akan dihapus secara permanent`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Ya, Hapus!',
+      cancelButtonText: 'Batal',
+      confirmButtonColor: '#ef4444',
+      cancelButtonColor: '#64748b',
+      reverseButtons: true,
+    })
+
+    if (result.isConfirmed) {
+      tableData.value = tableData.value.filter((item) => item.id !== row.id)
+
+      Swal.fire({
+        title: 'Terhapus!',
+        text: 'Data pemakaian telah berhasil dihapus.',
+        icon: 'success',
+        timer: 1500,
+        showConfirmButton: false,
+      })
+    }
+  }
 
   return {
     // State
@@ -123,6 +167,8 @@ export function usePemakaianAir() {
     searchQuery,
     currentPage,
     perPage,
+    showEditModal,
+    selectedRow,
 
     // Options
     tahunOptions,
@@ -147,6 +193,7 @@ export function usePemakaianAir() {
     handleHasilInput,
     handleInputPemakaian,
     handleEdit,
+    handleSaveEdit,
     handleDelete,
   }
 }
