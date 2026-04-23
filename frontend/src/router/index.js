@@ -77,6 +77,11 @@ const router = createRouter({
           name: 'personalisasi-sop',
           component: SopIndex,
         },
+        {
+          path: '/settings/coa',
+          name: 'coa',
+          component: () => import('@/views/dashboard/sop/CoaIndex.vue'),
+        },
         // {
         //   path: '/settings',
         //   name: 'settings',

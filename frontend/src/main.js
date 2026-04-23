@@ -110,6 +110,7 @@ import {
   faSyncAlt,
   faCalendarAlt,
   faHashtag,
+  faSitemap,
 } from '@fortawesome/free-solid-svg-icons'
 
 import { faWhatsapp } from '@fortawesome/free-brands-svg-icons'
@@ -204,6 +205,7 @@ library.add(
   faTimesCircle,
   faSyncAlt,
   faHashtag,
+  faSitemap,
 )
 
 export { MySwal } from './utils/swal'
