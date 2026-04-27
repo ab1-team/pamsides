@@ -20,3 +20,7 @@ Thumbs.db
 
 # Docker volumes
 backend/docker/mysql/
+
+# Backups and nested repos
+.git_backup/
+frontend/pamsides/

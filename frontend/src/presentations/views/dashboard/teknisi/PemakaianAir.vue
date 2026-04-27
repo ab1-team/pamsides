@@ -1,6 +1,5 @@
 <template>
   <div class="cater-pemakaian-root p-4! lg:p-6!">
-    <!-- DESKTOP LAYOUT (lg and up) -->
     <div class="hidden! lg:block! max-w-7xl mx-auto">
       <div class="flex! justify-between! items-start! mb-8!">
         <div>
@@ -8,29 +7,22 @@
             Input Data Pemakaian
           </h1>
           <p class="text-slate-500! mt-1!">
-            Silakan lengkapi formulir di bawah ini untuk mencatat penggunaan air bulanan pelanggan
+            lengkapi formulir di bawah ini mencatat penggunaan air bulanan pelanggan
             dengan presisi.
           </p>
         </div>
         <div class="flex! gap-3!">
-          <BaseButton variant="success-gradient" icon="file-alt" class="shadow-sm!"
-            >Hasil Input</BaseButton
-          >
-          <BaseButton variant="warning-gradient" icon="print" class="shadow-sm!"
-            >Cetak Form</BaseButton
-          >
+          <BaseButton variant="success-gradient" icon="file-alt" class="shadow-sm!">Hasil Input</BaseButton>
+          <BaseButton variant="warning-gradient" icon="print" class="shadow-sm!">Cetak Form</BaseButton>
         </div>
       </div>
 
       <div class="grid! grid-cols-12! gap-6!">
-        <!-- Main Form Column -->
         <div class="col-span-8!">
           <ContentCard variant="elevated" padding="large" rounded="2xl" class="h-full! shadow-xl!">
             <div class="grid! grid-cols-2! gap-6! mb-6!">
               <div class="form-group!">
-                <label class="block! text-sm! font-bold! text-slate-700! mb-2!"
-                  >Tahun Pemakaian</label
-                >
+                <label class="block! text-sm! font-bold! text-slate-700! mb-2!">Tahun Pemakaian</label>
                 <SelectSearch
                   v-model="form.tahun"
                   :options="tahunOptions"
@@ -39,9 +31,7 @@
                 />
               </div>
               <div class="form-group!">
-                <label class="block! text-sm! font-bold! text-slate-700! mb-2!"
-                  >Bulan Pemakaian</label
-                >
+                <label class="block! text-sm! font-bold! text-slate-700! mb-2!">Bulan Pemakaian</label>
                 <SelectSearch
                   v-model="form.bulan"
                   :options="bulanOptions"
@@ -52,9 +42,7 @@
             </div>
 
             <div class="form-group! mb-8!">
-              <label class="block! text-sm! font-bold! text-slate-700! mb-2!"
-                >Petugas Cater (Staff)</label
-              >
+              <label class="block! text-sm! font-bold! text-slate-700! mb-2!">Petugas Cater (Staff)</label>
               <div class="relative!">
                 <input
                   type="text"
@@ -81,14 +69,10 @@
           </ContentCard>
         </div>
 
-        <!-- Info Column -->
         <div class="col-span-4! flex! flex-col! gap-6!">
-          <!-- Session Info Card -->
           <ContentCard variant="elevated" padding="large" rounded="2xl" class="shadow-xl!">
             <template #header>
-              <div
-                class="flex! items-center! gap-2! text-blue-600! font-bold! text-xs! uppercase! tracking-widest!"
-              >
+              <div class="flex! items-center! gap-2! text-blue-600! font-bold! text-xs! uppercase! tracking-widest!">
                 <font-awesome-icon icon="info-circle" />
                 <span>Informasi Sesi</span>
               </div>
@@ -96,10 +80,7 @@
             <div class="flex! flex-col! gap-4! mt-2!">
               <div class="flex! justify-between! items-center!">
                 <span class="text-slate-500! text-sm!">Status Input</span>
-                <span
-                  class="bg-orange-100! text-orange-600! px-3! py-1! rounded-full! text-[10px]! font-bold! uppercase! tracking-wider!"
-                  >Aktif</span
-                >
+                <span class="bg-orange-100! text-orange-600! px-3! py-1! rounded-full! text-[10px]! font-bold! uppercase! tracking-wider!">Aktif</span>
               </div>
               <div class="flex! justify-between! items-center! border-t! border-slate-100! pt-3!">
                 <span class="text-slate-500! text-sm!">Data Masuk</span>
@@ -108,18 +89,13 @@
             </div>
           </ContentCard>
 
-          <!-- Decorative Card -->
-          <div
-            class="relative! overflow-hidden! rounded-3xl! h-full! min-h-[220px]! shadow-xl! group!"
-          >
+          <div class="relative! overflow-hidden! rounded-3xl! h-full! min-h-[220px]! shadow-xl! group!">
             <img
               src="@/assets/images/digital-curating.png"
               alt="Workstation"
               class="absolute! inset-0! w-full! h-full! object-cover! transition-transform! duration-700! group-hover:scale-110!"
             />
-            <div
-              class="absolute! inset-0! bg-gradient-to-t! from-slate-900/80! via-slate-900/40! to-transparent!"
-            ></div>
+            <div class="absolute! inset-0! bg-gradient-to-t! from-slate-900/80! via-slate-900/40! to-transparent!"></div>
             <div class="absolute! bottom-6! left-6! right-6!">
               <p class="text-white! text-sm! font-medium! opacity-90! leading-tight!">
                 Digital Curating for Water Systems
@@ -129,7 +105,6 @@
         </div>
       </div>
 
-      <!-- Desktop Warning -->
       <ContentCard
         variant="elevated"
         padding="large"
@@ -137,9 +112,7 @@
         class="mt-8! border-l-8! border-red-500! bg-red-50/30! shadow-lg!"
       >
         <div class="flex! gap-4!">
-          <div
-            class="w-12! h-12! rounded-xl! bg-red-100! flex! items-center! justify-center! text-red-600! shrink-0!"
-          >
+          <div class="w-12! h-12! rounded-xl! bg-red-100! flex! items-center! justify-center! text-red-600! shrink-0!">
             <font-awesome-icon icon="exclamation-triangle" class="text-xl!" />
           </div>
           <div class="flex-1!">
@@ -148,15 +121,13 @@
               <div class="flex! gap-2!">
                 <span class="font-bold! text-red-600!">1.</span>
                 <p>
-                  Pilih Bulan dan Tahun Pemakaian Terlebih Dahulu Sebelum Melakukan Input data
-                  pemakaian.
+                  Pilih Bulan dan Tahun Pemakaian Terlebih Dahulu Sebelum Melakukan Input data pemakaian.
                 </p>
               </div>
               <div class="flex! gap-2!">
                 <span class="font-bold! text-red-600!">2.</span>
                 <p>
-                  Kesalahan pada pemilihan bulan dan tahun dapat menyebabkan duplikasi atau
-                  hilangnya record data lama.
+                  Kesalahan pada pemilihan bulan dan tahun dapat menyebabkan duplikasi atau hilangnya record data lama.
                 </p>
               </div>
             </div>
@@ -165,7 +136,6 @@
       </ContentCard>
     </div>
 
-    <!-- MOBILE LAYOUT (Default, hidden on lg) -->
     <div class="lg:hidden! flex! flex-col! gap-6! pb-20!">
       <div class="header!">
         <h1 class="text-2xl! font-extrabold! text-blue-800! tracking-tight! leading-none! mb-1!">
@@ -175,11 +145,8 @@
       </div>
 
       <div class="mobile-form! flex! flex-col! gap-6!">
-        <!-- Staff Input -->
         <div class="form-group!">
-          <label class="block! text-sm! font-bold! text-slate-600! mb-2!"
-            >Petugas Pencatat (Staff)</label
-          >
+          <label class="block! text-sm! font-bold! text-slate-600! mb-2!">Petugas Pencatat (Staff)</label>
           <div class="relative! shadow-md! rounded-2xl!">
             <input
               type="text"
@@ -193,7 +160,6 @@
           </div>
         </div>
 
-        <!-- Tahun Dropdown -->
         <div class="form-group!">
           <label class="block! text-sm! font-bold! text-slate-600! mb-2!">Tahun Anggaran</label>
           <SelectSearch
@@ -206,7 +172,6 @@
           />
         </div>
 
-        <!-- Bulan Grid -->
         <div class="form-group!">
           <label class="block! text-sm! font-bold! text-slate-600! mb-2!">Bulan Periode</label>
           <div class="grid! grid-cols-3! gap-2!">
@@ -226,7 +191,6 @@
           </div>
         </div>
 
-        <!-- Mobile Buttons -->
         <div class="flex! flex-col! gap-3! mt-4!">
           <BaseButton
             to="/instalasi/pemakaian-air/input"
@@ -240,37 +204,20 @@
           </BaseButton>
 
           <div class="flex! gap-3! mt-6!">
-            <BaseButton
-              variant="secondary"
-              size="lg"
-              block
-              icon="print"
-              class="bg-slate-200! text-slate-700! border-none! rounded-2xl! py-4! shadow-lg!"
-            >
+            <BaseButton variant="secondary" size="lg" block icon="print" class="bg-slate-200! text-slate-700! border-none! rounded-2xl! py-4! shadow-lg!">
               Cetak Form
             </BaseButton>
-            <BaseButton
-              variant="secondary"
-              size="lg"
-              block
-              icon="history"
-              class="bg-slate-200! text-slate-700! border-none! rounded-2xl! py-4! shadow-lg!"
-              @click="handleHistory"
-            >
+            <BaseButton variant="secondary" size="lg" block icon="history" class="bg-slate-200! text-slate-700! border-none! rounded-2xl! py-4! shadow-lg!" @click="handleHistory">
               History
             </BaseButton>
           </div>
         </div>
 
-        <div
-          class="bg-red-50! border! border-red-100! rounded-2xl! p-6! mt-4! shadow-lg! relative! overflow-hidden!"
-        >
+        <div class="bg-red-50! border! border-red-100! rounded-2xl! p-6! mt-4! shadow-lg! relative! overflow-hidden!">
           <div class="flex! items-start! gap-3! relative! z-10!">
             <font-awesome-icon icon="exclamation-triangle" class="text-red-700! mt-1!" />
             <div>
-              <h4 class="text-red-700! font-extrabold! text-sm! mb-2! uppercase! tracking-tight!">
-                PERHATIAN!
-              </h4>
+              <h4 class="text-red-700! font-extrabold! text-sm! mb-2! uppercase! tracking-tight!">PERHATIAN!</h4>
               <p class="text-slate-600! text-xs! leading-relaxed! font-medium!">
                 Mohon pastikan data <span class="text-red-600! font-bold!">Tahun</span> dan
                 <span class="text-red-600! font-bold!">Bulan</span> sudah benar sebelum melakukan
@@ -279,9 +226,7 @@
               </p>
             </div>
           </div>
-          <div
-            class="text-[10px]! text-slate-300! font-bold! uppercase! tracking-widest! text-right! mt-4!"
-          >
+          <div class="text-[10px]! text-slate-300! font-bold! uppercase! tracking-widest! text-right! mt-4!">
             System Version 2.0.4
           </div>
         </div>
@@ -302,7 +247,6 @@ const form = reactive({
   staff: 'ADMINISTRATOR PRINCIPAL',
 })
 
-// Options for selection fields
 const tahunOptions = [
   { id: '2023', text: '2023' },
   { id: '2024', text: '2024' },
@@ -340,31 +284,25 @@ const bulanGrid = [
   { label: 'Des', value: 'Des' },
 ]
 
-const handleHistory = () => {
-  // Navigation or logic here
-}
+const handleHistory = () => {}
 </script>
 
 <style scoped>
 @reference "@/assets/css/main.css";
 
-/* Any additional custom styles to fine-tune the layouts */
 .cater-pemakaian-root {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Custom shadow for mobile buttons if needed */
 .shadow-blue-200 {
   --tw-shadow-color: rgba(191, 219, 254, 0.4);
 }
 
-/* Specific styling for the staff input in mobile */
 input:read-only {
   @apply cursor-default;
 }
 
-/* Matching SelectSearch height to input fields in mobile */
 @media (max-width: 1024px) {
   :deep(.custom-select-search .select-display) {
     @apply !h-auto !py-4 !rounded-2xl;

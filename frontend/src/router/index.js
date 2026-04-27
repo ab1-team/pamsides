@@ -24,7 +24,8 @@ import registerInstalasi from '@/presentations/views/dashboard/admin/instalasi/r
 import statusInstalasi from '@/presentations/views/dashboard/admin/instalasi/InstalasiStatus.vue'
 import TeknisiPemakaianAir from '@/presentations/views/dashboard/teknisi/PemakaianAir.vue'
 import pemakaianair from '@/presentations/views/dashboard/admin/instalasi/pemakaianAir.vue'
-import retribusisampah from '@/presentations/views/dashboard/admin/instalasi/retribusiSampah.vue'
+import adminRetribusiSampah from '@/presentations/views/dashboard/admin/instalasi/retribusiSampah.vue'
+import teknisiRetribusiSampah from '@/presentations/views/dashboard/teknisi/retribusiSampah.vue'
 import DetailPermohonan from '@/presentations/views/dashboard/admin/instalasi/partials/permohonan.vue'
 import DetailPasangBaru from '@/presentations/views/dashboard/admin/instalasi/partials/pasangBaru.vue'
 import DetailAktif from '@/presentations/views/dashboard/admin/instalasi/partials/aktif.vue'
@@ -223,7 +224,10 @@ const router = createRouter({
         {
           path: '/instalasi/retribusi-sampah',
           name: 'Retribusi Sampah',
-          component: retribusisampah,
+          component: () => {
+            const uiStore = useUiStore()
+            return uiStore.userRole === 'teknisi' ? teknisiRetribusiSampah : adminRetribusiSampah
+          },
         },
         {
           path: '/transaksi/jurnal-umum',
