@@ -131,6 +131,9 @@ import {
   faReceipt,
   faHeadset,
   faBullhorn,
+  faPaperPlane,
+  faPhoneVolume,
+  faShareAlt,
 } from '@fortawesome/free-solid-svg-icons'
 
 import { faWhatsapp } from '@fortawesome/free-brands-svg-icons'
@@ -243,6 +246,9 @@ library.add(
   faReceipt,
   faHeadset,
   faBullhorn,
+  faPaperPlane,
+  faPhoneVolume,
+  faShareAlt,
 )
 
 export { MySwal } from './utils/swal'

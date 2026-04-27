@@ -282,13 +282,13 @@ const menuItems = [
   {
     label: 'Riwayat Tagihan',
     icon: 'history',
-    to: '/riwayat-tagihan',
+    to: '/pelanggan/riwayat-tagihan',
     roles: ['pelanggan'],
   },
   {
     label: 'Lapor Gangguan',
     icon: 'headset',
-    to: '/lapor-gangguan',
+    to: '/pelanggan/lapor-gangguan',
     roles: ['pelanggan'],
   },
 ]
