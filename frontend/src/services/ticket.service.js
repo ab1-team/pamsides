@@ -8,41 +8,73 @@ export const ticketService = {
    * Ambil daftar tiket dengan filter
    * @param {Object} params - { status, search, page }
    */
-  async getTickets(_params = {}) {
-    // Simulasi delay
-    await new Promise((resolve) => setTimeout(resolve, 500))
+  async getTickets(params = {}) {
+    const response = await api.get('/installation-tickets', { params })
+    return response.data
+  },
 
-    // Mock data untuk sementara
-    return {
-      success: true,
-      data: [
-        { id: 'TIC-001', customerName: 'Budi Santoso', status: 'pending', createdAt: '2025-05-01' },
-        { id: 'TIC-002', customerName: 'Siti Aminah', status: 'surveyed', createdAt: '2025-05-02' },
-      ],
-    }
+  /**
+   * Buat tiket baru
+   */
+  async createTicket(ticketData) {
+    const response = await api.post('/installation-tickets', ticketData)
+    return response.data
   },
 
   /**
    * Ambil detail tiket berdasarkan ID
    */
   async getTicketDetail(id) {
-    const response = await api.get(`/tickets/${id}`)
+    const response = await api.get(`/installation-tickets/${id}`)
     return response.data
   },
 
   /**
-   * Input hasil survey
+   * Transisi status tiket
    */
-  async submitSurvey(id, surveyData) {
-    const response = await api.post(`/tickets/${id}/survey`, surveyData)
+  async transitionStatus(id, status) {
+    const response = await api.patch(`/installation-tickets/${id}/transition`, { status })
+    return response.data
+  },
+
+  /**
+   * Input hasil survey (Surveyor)
+   */
+  async submitSurvey(id, formData) {
+    // Pastikan menggunakan form-data untuk upload foto
+    const response = await api.post(`/installation-tickets/${id}/survey`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    })
+    return response.data
+  },
+
+  /**
+   * Konfirmasi pembayaran instalasi
+   */
+  async confirmTicketPayment(id, amount) {
+    const response = await api.post(`/installation-tickets/${id}/payment`, { amount })
     return response.data
   },
 
   /**
    * Input hasil instalasi (Teknisi)
    */
-  async submitInstallation(id, installData) {
-    const response = await api.post(`/tickets/${id}/install`, installData)
+  async submitInstallationResult(id, formData) {
+    const response = await api.post(`/installation-tickets/${id}/installation-result`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    })
+    return response.data
+  },
+
+  /**
+   * Aktivasi pelanggan
+   */
+  async activateCustomer(id) {
+    const response = await api.post(`/installation-tickets/${id}/activate`)
     return response.data
   },
 }

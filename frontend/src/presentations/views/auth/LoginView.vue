@@ -35,18 +35,18 @@
 
           <form @submit.prevent="handleLogin" class="form">
             <div class="form-group">
-              <label for="username">Username Email</label>
+              <label for="email">Alamat Email</label>
               <div class="input-wrap">
                 <span class="icon-left">
                   <font-awesome-icon icon="user" />
                 </span>
                 <input
-                  id="username"
-                  v-model="form.username"
-                  type="text"
-                  placeholder="Masukkan Username Email"
+                  id="email"
+                  v-model="form.email"
+                  type="email"
+                  placeholder="Masukkan Alamat Email"
                   required
-                  autocomplete="username"
+                  autocomplete="email"
                 />
               </div>
             </div>
@@ -122,7 +122,7 @@ const route = useRoute()
 const uiStore = useUiStore()
 
 const form = ref({
-  username: '',
+  email: '',
   password: '',
 })
 
@@ -154,11 +154,11 @@ onMounted(() => {
 })
 
 const handleLogin = async () => {
-  if (!form.value.username || !form.value.password) {
+  if (!form.value.email || !form.value.password) {
     MySwal.fire({
       icon: 'warning',
       title: 'Oops...',
-      text: 'Username dan password wajib diisi!',
+      text: 'Email dan password wajib diisi!',
       confirmButtonColor: '#3b82f6',
     })
     return
@@ -167,27 +167,25 @@ const handleLogin = async () => {
   loading.value = true
   try {
     const res = await authService.login({
-      username: form.value.username,
+      email: form.value.email,
       password: form.value.password,
     })
 
     if (res.success) {
       // Simpan role ke store
-      uiStore.setUserRole(res.user.role)
-      // Simpan token (mock atau real)
-      localStorage.setItem('token', res.token)
+      uiStore.setUserRole(res.data.user.role)
+      // Simpan token (sesuai dengan axios interceptor yang mencari 'auth_token')
+      localStorage.setItem('auth_token', res.data.token)
+      // Simpan data user
+      localStorage.setItem('user_data', JSON.stringify(res.data.user))
 
       router.push('/dashboard?login=success')
     } else {
       throw new Error(res.message || 'Login Gagal')
     }
   } catch (error) {
-    MySwal.fire({
-      icon: 'error',
-      title: 'Login Gagal!',
-      text: error.response?.data?.message || error.message || 'Terjadi kesalahan sistem',
-      confirmButtonColor: '#ef4444',
-    })
+    console.error('Login error:', error)
+    // Error notification handled by axios interceptor
   } finally {
     loading.value = false
   }

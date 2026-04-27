@@ -9,35 +9,23 @@ export const authService = {
    * @param {Object} credentials - { username, password }
    */
   async login(credentials) {
-    // Simulasi delay untuk UX loading
-    await new Promise((resolve) => setTimeout(resolve, 800))
-
-    // Untuk saat ini masih mock, nanti ganti ke:
-    // const response = await api.post('/login', credentials)
-    // return response.data
-
-    return {
-      success: true,
-      token: 'mock-token-123',
-      user: {
-        id: 1,
-        username: credentials.username,
-        role: credentials.username.toLowerCase().includes('surveyor')
-          ? 'surveyor'
-          : credentials.username.toLowerCase().includes('teknisi')
-            ? 'teknisi'
-            : credentials.username.toLowerCase().includes('pelanggan')
-              ? 'pelanggan'
-              : 'admin',
-      },
-    }
+    const response = await api.post('/login', credentials)
+    return response.data
   },
 
   /**
-   * Logout pengguna
+   * Logout user
    */
   async logout() {
     const response = await api.post('/logout')
+    return response.data
+  },
+
+  /**
+   * Ambil profile user saat ini
+   */
+  async getProfile() {
+    const response = await api.get('/user')
     return response.data
   },
 

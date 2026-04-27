@@ -150,6 +150,7 @@ import ContentCard from '@/presentations/components/ui/ContentCard.vue'
 import BaseInput from '@/presentations/components/ui/BaseInput.vue'
 import BaseButton from '@/presentations/components/ui/BaseButton.vue'
 import MaksMoneyInput from '@/presentations/components/MaksMoneyInput.vue'
+import packageService from '@/services/package.service'
 import Swal from 'sweetalert2'
 
 const router = useRouter()
@@ -159,37 +160,28 @@ const namaKelas = ref('')
 const blockNames = ['Pertama', 'Kedua', 'Ketiga', 'Keempat', 'Kelima']
 const abodemen = ref(0)
 const denda = ref(0)
+const installationFee = ref(0)
 const blocks = ref([])
 
-const fetchKelasData = (id) => {
-  const mockData = {
-    1: {
-      nama: 'Rumah Tangga A',
-      abodemen: 7500,
-      denda: 15000,
-      blocks: [
-        { from: 0, to: 10, price: 2500 },
-        { from: 10, to: 20, price: 3500 },
-        { from: 20, to: 50, price: 4500 },
-      ],
-    },
-    2: {
-      nama: 'Rumah Tangga B',
-      abodemen: 10000,
-      denda: 20000,
-      blocks: [
-        { from: 0, to: 15, price: 3500 },
-        { from: 15, to: 30, price: 4500 },
-        { from: 30, to: 100, price: 6000 },
-      ],
-    },
+const fetchKelasData = async (id) => {
+  try {
+    const res = await packageService.getPackageDetail(id)
+    if (res.success) {
+      const pkg = res.data
+      namaKelas.value = pkg.name
+      abodemen.value = pkg.monthly_abodemen
+      denda.value = pkg.late_penalty
+      installationFee.value = pkg.installation_fee
+      blocks.value = pkg.water_tariff_blocks.map((b) => ({
+        id: b.id,
+        from: b.usage_min_m3,
+        to: b.usage_max_m3,
+        price: b.price_per_m3,
+      }))
+    }
+  } catch (error) {
+    Swal.fire('Error', 'Gagal mengambil data paket', 'error')
   }
-
-  const data = mockData[id] || mockData[1]
-  namaKelas.value = data.nama
-  abodemen.value = data.abodemen
-  denda.value = data.denda
-  blocks.value = data.blocks
 }
 
 const handleBack = () => {
@@ -197,15 +189,46 @@ const handleBack = () => {
 }
 
 const handleSave = async () => {
-  await Swal.fire({
-    title: 'Berhasil!',
-    text: 'Perubahan kelas biaya telah disimpan.',
-    icon: 'success',
-    confirmButtonText: 'Selesai',
-    confirmButtonColor: '#3b82f6',
-  })
+  try {
+    Swal.fire({
+      title: 'Menyimpan...',
+      allowOutsideClick: false,
+      didOpen: () => {
+        Swal.showLoading()
+      },
+    })
 
-  router.push('/kelas-biaya')
+    const packageId = route.params.id
+
+    // 1. Update Package
+    await packageService.updatePackage(packageId, {
+      name: namaKelas.value,
+      installation_fee: installationFee.value,
+      monthly_abodemen: abodemen.value,
+      late_penalty: denda.value,
+    })
+
+    // 2. Update Blocks
+    for (const block of blocks.value) {
+      await packageService.updateTariffBlock(packageId, block.id, {
+        usage_min_m3: block.from,
+        usage_max_m3: block.to,
+        price_per_m3: block.price,
+      })
+    }
+
+    await Swal.fire({
+      title: 'Berhasil!',
+      text: 'Perubahan kelas biaya telah disimpan.',
+      icon: 'success',
+      confirmButtonText: 'Selesai',
+      confirmButtonColor: '#3b82f6',
+    })
+
+    router.push('/kelas-biaya')
+  } catch (error) {
+    Swal.fire('Error', 'Gagal menyimpan perubahan: ' + (error.response?.data?.message || error.message), 'error')
+  }
 }
 
 onMounted(() => {

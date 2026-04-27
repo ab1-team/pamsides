@@ -136,7 +136,15 @@ defineEmits([
 
 const uiStore = useUiStore()
 
+const userData = computed(() => {
+  const data = localStorage.getItem('user_data')
+  return data ? JSON.parse(data) : null
+})
+
 const userName = computed(() => {
+  if (userData.value) {
+    return userData.value.name
+  }
   switch (uiStore.userRole) {
     case 'surveyor':
       return 'Ahmad Surveyor'
@@ -150,6 +158,9 @@ const userName = computed(() => {
 })
 
 const userRoleLabel = computed(() => {
+  if (userData.value) {
+    return userData.value.role.charAt(0).toUpperCase() + userData.value.role.slice(1)
+  }
   switch (uiStore.userRole) {
     case 'surveyor':
       return 'Field Surveyor'
