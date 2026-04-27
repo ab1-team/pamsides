@@ -20,7 +20,7 @@ class AuthController extends Controller
 
         if (! $user || ! Hash::check($request->password, $user->password)) {
             throw ValidationException::withMessages([
-                'email' => ['Kredensial tidak valid.'],
+                'email' => ['Cek email atau password.'],
             ]);
         }
 
