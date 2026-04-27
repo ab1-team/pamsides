@@ -17,11 +17,11 @@
 export const STATUS_TYPES = {
   PAID: 'PAID',
   PENDING: 'PENDING',
-  OVERDUE: 'OVERDUE',
+  UNPAID: 'UNPAID',
 }
 
 export const STATUS_COLORS = {
-  [STATUS_TYPES.PAID]: 'bg-emerald-100 text-emerald-700',
-  [STATUS_TYPES.PENDING]: 'bg-amber-100 text-amber-700',
-  [STATUS_TYPES.OVERDUE]: 'bg-red-100 text-red-700',
+  [STATUS_TYPES.PAID]: '#10b981', // emerald-500
+  [STATUS_TYPES.PENDING]: '#f59e0b', // amber-500
+  [STATUS_TYPES.UNPAID]: '#ef4444', // red-500
 }
