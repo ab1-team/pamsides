@@ -11,19 +11,21 @@
           <h1 class="blue">Masa Depan.</h1>
         </div>
 
-        <p class="desc">
-          Kelola kebutuhan air bersih dengan lebih transparan, mudah, dan terintegrasi dalam satu
-          sentuhan digital.
-        </p>
+        <div class="desc-group">
+          <p class="desc">
+            Kelola kebutuhan air bersih dengan lebih transparan, mudah, dan terintegrasi dalam satu
+            sentuhan digital.
+          </p>
 
-        <div class="chips">
-          <div class="chip">
-            <font-awesome-icon icon="shield-halved" class="icon-blue" />
-            <span>Kualitas Terjamin</span>
-          </div>
-          <div class="chip">
-            <font-awesome-icon icon="check-circle" class="icon-green" />
-            <span>Respon Cepat</span>
+          <div class="chips">
+            <div class="chip">
+              <font-awesome-icon icon="shield-halved" class="icon-blue" />
+              <span>Kualitas Terjamin</span>
+            </div>
+            <div class="chip">
+              <font-awesome-icon icon="check-circle" class="icon-green" />
+              <span>Respon Cepat</span>
+            </div>
           </div>
         </div>
       </div>
@@ -31,7 +33,7 @@
       <div class="right">
         <div class="card">
           <h2 class="card-title">Selamat Datang</h2>
-          <p class="card-sub">Silahkan login untuk mengakses dashboard</p>
+          <p class="card-sub">Login untuk akses dashboard</p>
 
           <form @submit.prevent="handleLogin" class="form">
             <div class="form-group">
