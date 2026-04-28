@@ -69,6 +69,8 @@ const handleSearch = (event) => {
   searchQuery.value = event.target.value
 }
 
+import authService from '@/services/auth.service'
+
 const handleLogout = async () => {
   const result = await MySwal.fire({
     title: 'Konfirmasi Logout',
@@ -91,8 +93,19 @@ const handleLogout = async () => {
       icon: 'swal2-icon-hide',
     },
   })
+
   if (result.isConfirmed) {
-    router.push('/login?logout=success')
+    try {
+      await authService.logout()
+    } catch (error) {
+      console.error('Logout error:', error)
+    } finally {
+      // Clear data and redirect regardless of API success
+      localStorage.removeItem('auth_token')
+      localStorage.removeItem('user_role')
+      localStorage.removeItem('user_data')
+      router.push('/login?logout=success')
+    }
   }
 }
 

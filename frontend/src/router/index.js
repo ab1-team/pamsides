@@ -290,4 +290,21 @@ const router = createRouter({
   ],
 })
 
+router.beforeEach((to, from, next) => {
+  const token = localStorage.getItem('auth_token')
+  const isAuthPage = to.name === 'login'
+
+  if (to.path.startsWith('/dashboard') || to.path === '/') {
+    if (!token) {
+      next({ name: 'login' })
+    } else {
+      next()
+    }
+  } else if (isAuthPage && token) {
+    next({ name: 'dashboard' })
+  } else {
+    next()
+  }
+})
+
 export default router

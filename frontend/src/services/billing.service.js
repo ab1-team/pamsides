@@ -7,28 +7,51 @@ export const billingService = {
   /**
    * Ambil daftar tagihan
    */
-  async getBills(_params = {}) {
-    // Simulasi delay
-    await new Promise((resolve) => setTimeout(resolve, 500))
-    return {
-      success: true,
-      data: [{ id: 'INV-2025-05-001', period: 'Mei 2025', amount: 85000, status: 'unpaid' }],
-    }
+  async getBills(params = {}) {
+    const response = await api.get('/monthly-bills', { params })
+    return response.data
+  },
+
+  /**
+   * Ambil rekap tagihan
+   */
+  async getRecap(params = {}) {
+    const response = await api.get('/bills/recap', { params })
+    return response.data
   },
 
   /**
    * Generate tagihan bulanan (Admin)
    */
-  async generateMonthlyBills(month, year) {
-    const response = await api.post('/billing/generate', { month, year })
+  async generateMonthlyBills(params = {}) {
+    // Backend mendukung POST /monthly-bills/generate (otomatis bulan ini)
+    // atau POST /bills/generate (dengan parameter year & month)
+    const endpoint = params.year && params.month ? '/bills/generate' : '/monthly-bills/generate'
+    const response = await api.post(endpoint, params)
     return response.data
   },
 
   /**
-   * Konfirmasi pembayaran
+   * Detail tagihan
    */
-  async confirmPayment(billId, paymentData) {
-    const response = await api.post(`/billing/${billId}/confirm`, paymentData)
+  async getBillDetail(id) {
+    const response = await api.get(`/bills/${id}`)
+    return response.data
+  },
+
+  /**
+   * Konfirmasi pembayaran tagihan
+   */
+  async confirmPayment(billId) {
+    const response = await api.post(`/monthly-bills/${billId}/pay`)
+    return response.data
+  },
+
+  /**
+   * Laporan tagihan per periode
+   */
+  async getBillingReport(params = {}) {
+    const response = await api.get('/reports/bills', { params })
     return response.data
   },
 }

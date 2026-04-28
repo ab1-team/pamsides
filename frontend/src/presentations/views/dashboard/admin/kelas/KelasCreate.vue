@@ -154,6 +154,7 @@ import ContentCard from '@/presentations/components/ui/ContentCard.vue'
 import BaseInput from '@/presentations/components/ui/BaseInput.vue'
 import BaseButton from '@/presentations/components/ui/BaseButton.vue'
 import MaksMoneyInput from '@/presentations/components/MaksMoneyInput.vue'
+import packageService from '@/services/package.service'
 import Swal from 'sweetalert2'
 
 const router = useRouter()
@@ -162,6 +163,7 @@ const namaKelas = ref('')
 const blockNames = ['Pertama', 'Kedua', 'Ketiga', 'Keempat', 'Kelima']
 const abodemen = ref(0)
 const denda = ref(0)
+const installationFee = ref(1500000) // Default installation fee
 const blocks = ref([
   { from: 0, to: 10, price: 2500 },
   { from: 10, to: 20, price: 3750 },
@@ -207,15 +209,48 @@ const handleSave = async () => {
     return
   }
 
-  await Swal.fire({
-    title: 'Berhasil!',
-    text: 'Konfigurasi harga paket telah disimpan.',
-    icon: 'success',
-    confirmButtonText: 'Selesai',
-    confirmButtonColor: '#3b82f6',
-  })
+  try {
+    Swal.fire({
+      title: 'Menyimpan...',
+      allowOutsideClick: false,
+      didOpen: () => {
+        Swal.showLoading()
+      },
+    })
 
-  router.push('/kelas-biaya')
+    // 1. Create Package
+    const packageRes = await packageService.createPackage({
+      name: namaKelas.value,
+      installation_fee: installationFee.value,
+      monthly_abodemen: abodemen.value,
+      late_penalty: denda.value,
+    })
+
+    if (packageRes.success) {
+      const packageId = packageRes.data.id
+
+      // 2. Create Blocks
+      for (const block of blocks.value) {
+        await packageService.createTariffBlock(packageId, {
+          usage_min_m3: block.from,
+          usage_max_m3: block.to,
+          price_per_m3: block.price,
+        })
+      }
+
+      await Swal.fire({
+        title: 'Berhasil!',
+        text: 'Konfigurasi harga paket telah disimpan.',
+        icon: 'success',
+        confirmButtonText: 'Selesai',
+        confirmButtonColor: '#3b82f6',
+      })
+
+      router.push('/kelas-biaya')
+    }
+  } catch (error) {
+    Swal.fire('Error', 'Gagal menyimpan konfigurasi: ' + (error.response?.data?.message || error.message), 'error')
+  }
 }
 
 const handleKeydown = (e) => {

@@ -102,12 +102,13 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import DataTable from '@/presentations/components/ui/DataTable.vue'
 import ContentCard from '@/presentations/components/ui/ContentCard.vue'
 import BaseButton from '@/presentations/components/ui/BaseButton.vue'
 import { useCurrencyFormat } from '@/composables/useCurrencyFormat.js'
+import packageService from '@/services/package.service'
 
 import Swal from 'sweetalert2'
 
@@ -115,24 +116,40 @@ const router = useRouter()
 
 const tableColumns = [
   { key: 'nama', title: 'Nama Kelas', tdClass: '' },
-  { key: 'block1', title: 'Block 1 (10 M³)', tdClass: '' },
-  { key: 'block2', title: 'Block 2 (20 M³)', tdClass: '' },
-  { key: 'block3', title: 'Block 3 (> 20 M³)', tdClass: '' },
+  { key: 'abodemen', title: 'Abodemen', tdClass: '' },
+  { key: 'denda', title: 'Denda', tdClass: '' },
   { key: 'aksi', title: 'AKSI', tdClass: 'w-20!' },
 ]
 
 const searchQuery = ref('')
 const currentPage = ref(1)
 const perPage = ref(10)
+const loading = ref(false)
 
-const kelasList = ref([
-  { id: 1, nama: 'Rumah Tangga A', block1: 2500, block2: 3500, block3: 4500 },
-  { id: 2, nama: 'Rumah Tangga B', block1: 3000, block2: 4000, block3: 5000 },
-  { id: 3, nama: 'Sosial / Masjid', block1: 1500, block2: 2500, block3: 3500 },
-  { id: 4, nama: 'Industri Kecil', block1: 5000, block2: 6500, block3: 8000 },
-  { id: 5, nama: 'Industri Besar', block1: 8000, block2: 10000, block3: 12000 },
-  { id: 6, nama: 'Instansi Pemerintah', block1: 4000, block2: 5000, block3: 6000 },
-])
+const kelasList = ref([])
+
+const fetchPackages = async () => {
+  try {
+    loading.value = true
+    const res = await packageService.getPackages()
+    if (res.success) {
+      kelasList.value = res.data.map((item) => ({
+        id: item.id,
+        nama: item.name,
+        abodemen: item.monthly_abodemen,
+        denda: item.late_penalty,
+      }))
+    }
+  } catch (error) {
+    Swal.fire('Error', 'Gagal mengambil data kelas biaya', 'error')
+  } finally {
+    loading.value = false
+  }
+}
+
+onMounted(() => {
+  fetchPackages()
+})
 
 const filteredData = computed(() => {
   if (!searchQuery.value) return kelasList.value
@@ -177,15 +194,21 @@ const deleteKelas = async (row) => {
   })
 
   if (result.isConfirmed) {
-    kelasList.value = kelasList.value.filter((item) => item.id !== row.id)
-
-    Swal.fire({
-      title: 'Terhapus!',
-      text: 'Data kelas telah berhasil dihapus.',
-      icon: 'success',
-      timer: 1500,
-      showConfirmButton: false,
-    })
+    try {
+      const res = await packageService.deletePackage(row.id)
+      if (res.success) {
+        Swal.fire({
+          title: 'Terhapus!',
+          text: 'Data kelas telah berhasil dihapus.',
+          icon: 'success',
+          timer: 1500,
+          showConfirmButton: false,
+        })
+        fetchPackages()
+      }
+    } catch (error) {
+      Swal.fire('Error', 'Gagal menghapus kelas', 'error')
+    }
   }
 }
 </script>
