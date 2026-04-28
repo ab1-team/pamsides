@@ -217,6 +217,16 @@ const router = createRouter({
           component: () => import('@/presentations/views/dashboard/pelanggan/BillDetail.vue'),
         },
         {
+          path: '/pelanggan/riwayat-tagihan',
+          name: 'Riwayat Tagihan',
+          component: () => import('@/presentations/views/dashboard/pelanggan/RiwayatTagihan.vue'),
+        },
+        {
+          path: '/pelanggan/lapor-gangguan',
+          name: 'Lapor Gangguan',
+          component: () => import('@/presentations/views/dashboard/pelanggan/LaporGangguan.vue'),
+        },
+        {
           path: '/instalasi/teknisiPemakaianAir',
           name: 'Input Pemakaian Air Teknisi',
           component: TeknisiPemakaianAir,

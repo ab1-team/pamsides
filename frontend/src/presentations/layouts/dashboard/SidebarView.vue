@@ -246,6 +246,7 @@ const menuItems = [
     children: [
       { label: 'Register Instalasi', to: '/instalasi/register', roles: ['admin', 'surveyor'] },
       { label: 'Status Instalasi', to: '/instalasi/status', roles: ['admin', 'surveyor'] },
+      { label: 'Analisis Survey', to: '/dashboard', roles: ['surveyor'] },
       {
         label: 'Pemakaian Air Bersih',
         to: '/instalasi/pemakaian-air',
@@ -286,13 +287,13 @@ const menuItems = [
   {
     label: 'Riwayat Tagihan',
     icon: 'history',
-    to: '/riwayat-tagihan',
+    to: '/pelanggan/riwayat-tagihan',
     roles: ['pelanggan'],
   },
   {
     label: 'Lapor Gangguan',
     icon: 'headset',
-    to: '/lapor-gangguan',
+    to: '/pelanggan/lapor-gangguan',
     roles: ['pelanggan'],
   },
 ]

@@ -21,6 +21,7 @@ import Select from 'primevue/select'
 import Toast from 'primevue/toast'
 import ToastService from 'primevue/toastservice'
 import ProgressBar from 'primevue/progressbar'
+import Chart from 'primevue/chart'
 
 import { library } from '@fortawesome/fontawesome-svg-core'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
@@ -132,6 +133,9 @@ import {
   faHeadset,
   faBullhorn,
   faSliders,
+  faPaperPlane,
+  faPhoneVolume,
+  faShareAlt,
 } from '@fortawesome/free-solid-svg-icons'
 
 import { faWhatsapp } from '@fortawesome/free-brands-svg-icons'
@@ -245,6 +249,9 @@ library.add(
   faHeadset,
   faBullhorn,
   faSliders,
+  faPaperPlane,
+  faPhoneVolume,
+  faShareAlt,
 )
 
 export { MySwal } from './utils/swal'
@@ -274,6 +281,7 @@ app.component('InputNumber', InputNumber)
 app.component('PrimeSelect', Select)
 app.component('PrimeToast', Toast)
 app.component('ProgressBar', ProgressBar)
+app.component('PrimeChart', Chart)
 app.component('font-awesome-icon', FontAwesomeIcon)
 
 app.mount('#app')

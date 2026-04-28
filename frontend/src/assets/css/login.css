@@ -41,7 +41,6 @@
   justify-content: center;
   padding: 2rem;
   font-family: 'Plus Jakarta Sans', 'Inter', sans-serif;
-  overflow: hidden;
   position: relative;
   
   
@@ -138,6 +137,7 @@
 
 .chips {
   display: flex;
+  flex-wrap: wrap;
   gap: 1rem;
   margin-top: 0.5rem;
 }
@@ -438,17 +438,46 @@ label {
 }
 
 @media (max-width: 850px) {
+  .login-container {
+    padding: 3rem 1.5rem;
+    align-items: flex-start;
+  }
   .wrapper {
     flex-direction: column;
     text-align: center;
-    max-width: 500px;
+    max-width: 550px;
+    gap: 2.5rem;
+    margin: 0 auto;
   }
   .left {
     align-items: center;
     max-width: 100%;
   }
-  .desc {
+  .headline h1 {
+    font-size: 3.5rem;
+  }
+  .desc-group {
+    display: block;
+    text-align: center;
     max-width: 100%;
+  }
+  .desc {
+    display: inline;
+    font-size: 1.1rem;
+    line-height: 1.8;
+  }
+  .chips {
+    display: inline-flex;
+    vertical-align: middle;
+    gap: 0.6rem;
+    margin-left: 0.5rem;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  .chip {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.75rem;
+    border-radius: 10px;
   }
   .right {
     width: 100%;
@@ -458,15 +487,107 @@ label {
 
 @media (max-width: 480px) {
   .login-container {
-    padding: 1.5rem 1rem;
+    padding: 1rem 0.6rem;
   }
-  .card {
-    padding: 1.8rem 1.5rem;
+  .wrapper {
+    gap: 2rem;
+    width: 100%;
+    padding: 0;
   }
   .headline h1 {
-    font-size: 2.5rem;
+    font-size: 2.8rem;
+  }
+  .desc {
+    display: inline;
+    font-size: 1rem;
+  }
+  .card {
+    padding: 2rem 1.1rem;
+    border-radius: 1.5rem;
+    width: 100%;
+    text-align: left;
+  }
+  label {
+    text-align: left;
+  }
+  .card-sub {
+    font-size: 0.85rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .chips {
+    display: inline-flex;
+    gap: 0.4rem;
+    margin: 0.5rem 0 0 0.4rem;
+    width: auto;
+    max-width: 100%;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .chip {
+    padding: 0.3rem 0.5rem;
+    font-size: 0.68rem;
+    flex: none;
+    white-space: nowrap;
+    gap: 0.3rem;
+  }
+  .card-title {
+    font-size: 1.5rem;
   }
   .quick-btns {
-    flex-direction: column;
+    flex-direction: row;
+    gap: 1rem;
+    justify-content: center;
+  }
+  .quick-btn {
+    padding: 0;
+    flex: 0 0 48px;
+    height: 48px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .quick-btn span {
+    display: none;
+  }
+  .q-icon {
+    width: 100%;
+    height: 100%;
+    background: transparent;
+  }
+  .q-icon svg {
+    width: 20px;
+    height: 20px;
+  }
+  .quick-btn:hover {
+    background: var(--primary);
+    color: white;
+    transform: translateY(-3px) scale(1.05);
+    box-shadow: 0 8px 15px rgba(37, 99, 235, 0.3);
+    border-color: var(--primary);
+  }
+  .quick-btn:active {
+    transform: translateY(0) scale(0.95);
+    box-shadow: 0 4px 8px rgba(37, 99, 235, 0.2);
+  }
+  .quick-btn:hover .q-icon svg {
+    color: white;
+  }
+  .quick-btn:hover .q-icon {
+    transform: rotate(10deg);
+  }
+}
+
+@media (max-width: 380px) {
+  .headline h1 {
+    font-size: 2.2rem;
+  }
+  .badge {
+    padding: 0.4rem 1rem;
+  }
+  .badge span {
+    font-size: 0.6rem;
   }
 }

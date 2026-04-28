@@ -100,7 +100,7 @@
               v-for="column in columns"
               :key="column.key"
               class="px-4! py-1.5! border-b! border-slate-100! align-middle! text-[13px]! text-slate-600!"
-              :class="column.tdClass"
+              :class="[column.tdClass, { 'cursor-pointer!': props.rowClickable }]"
             >
               <slot :name="`column-${column.key}`" :row="row" :column="column" :index="index">
                 <span v-if="column.render" v-html="column.render(row, column, index)"></span>

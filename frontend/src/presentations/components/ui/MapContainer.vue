@@ -1,5 +1,5 @@
 <template>
-  <div class="map-wrapper" :style="{ height: height }">
+  <div class="map-wrapper" :style="height ? { height: height } : {}">
     <div ref="mapContainer" class="map-container"></div>
 
     <!-- Info Overlay -->
@@ -26,7 +26,7 @@ const props = defineProps({
   },
   height: {
     type: String,
-    default: '400px',
+    default: '',
   },
   readOnly: {
     type: Boolean,
@@ -121,13 +121,72 @@ watch(
 )
 </script>
 
+<style>
+/* Global styles for custom marker (needs to be non-scoped or use deep) */
+.custom-marker {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.marker-pin {
+  width: 24px;
+  height: 24px;
+  background: white;
+  border: 4px solid #f97316;
+  border-radius: 50%;
+  position: relative;
+  box-shadow: 0 4px 10px rgba(249, 115, 22, 0.4);
+  z-index: 2;
+}
+
+.marker-inner {
+  width: 6px;
+  height: 6px;
+  background: #f97316;
+  border-radius: 50%;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.marker-pulse {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 48px;
+  height: 48px;
+  background: rgba(249, 115, 22, 0.2);
+  border-radius: 50%;
+  z-index: 1;
+  animation: marker-pulse 2s infinite;
+}
+
+@keyframes marker-pulse {
+  0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0.8; }
+  100% { transform: translate(-50%, -50%) scale(2); opacity: 0; }
+}
+
+/* Leaflet Overrides */
+.leaflet-container {
+  background: #f8fafc !important;
+}
+
+/* Custom Zoom Animations */
+.leaflet-fade-anim .leaflet-tile,.leaflet-zoom-anim .leaflet-tile {
+  transition-duration: 500ms;
+}
+</style>
+
 <style scoped>
 .map-wrapper {
   position: relative;
   width: 100%;
-  border-radius: 1rem;
+  border-radius: 1.5rem;
   overflow: hidden;
-  border: 1px solid #e2e8f0;
+  background: #f1f5f9;
 }
 
 .map-container {
@@ -139,15 +198,12 @@ watch(
 .map-loading {
   position: absolute;
   inset: 0;
-  background: rgba(255, 255, 255, 0.8);
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(8px);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 0.5rem;
-  z-index: 10;
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: #64748b;
+  z-index: 2000;
 }
 </style>
