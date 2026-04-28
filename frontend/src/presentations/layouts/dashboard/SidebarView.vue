@@ -256,7 +256,11 @@ const menuItems = [
         to: '/instalasi/teknisiPemakaianAir',
         roles: ['teknisi'],
       },
-      { label: 'Retribusi Sampah', to: '/instalasi/retribusi-sampah', roles: ['admin', 'teknisi'] },
+      {
+        label: 'Retribusi Sampah',
+        to: '/instalasi/retribusi-sampah',
+        roles: ['admin', 'teknisi'],
+      },
     ],
   },
   {

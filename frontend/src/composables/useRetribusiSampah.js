@@ -67,6 +67,34 @@ export function useRetribusiSampah() {
       jatuhTempo: '20 Mei 2024',
       status: STATUS_TYPES.PAID,
     },
+    {
+      id: 'RS-2024-0004',
+      nama: 'Bambang Pamungkas',
+      initials: 'BP',
+      avatarColor: '#f59e0b',
+      status: STATUS_TYPES.PENDING,
+    },
+    {
+      id: 'RS-2024-0005',
+      nama: 'Dewi Sartika',
+      initials: 'DS',
+      avatarColor: '#ec4899',
+      status: STATUS_TYPES.PAID,
+    },
+    {
+      id: 'RS-2024-0006',
+      nama: 'Eko Prasetyo',
+      initials: 'EP',
+      avatarColor: '#8b5cf6',
+      status: STATUS_TYPES.PENDING,
+    },
+    {
+      id: 'RS-2024-0007',
+      nama: 'Fatimah Az-Zahra',
+      initials: 'FA',
+      avatarColor: '#10b981',
+      status: STATUS_TYPES.PENDING,
+    },
   ])
 
   // Properti komputasi
