@@ -114,9 +114,9 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
+import axios from 'axios'
 import { MySwal } from '@/main.js'
 import { useUiStore } from '@/stores/uiStore'
-import authService from '@/services/auth.service'
 import '@/assets/css/login.css'
 
 const router = useRouter()
@@ -136,22 +136,25 @@ const togglePassword = () => {
 }
 
 onMounted(() => {
-  if (route.query.logout === 'success') {
+  const urlParams = new URLSearchParams(window.location.search)
+  if (urlParams.get('logout')) {
+    const name = urlParams.get('name')
     MySwal.fire({
       toast: true,
-      position: 'top-start',
+      position: 'top-start', 
       icon: 'success',
       title: 'Logout Berhasil',
-      text: 'Anda telah keluar dari sistem',
-      timer: 4000,
-      timerProgressBar: true,
+      text: name ? `Terima kasih, ${name}` : 'Terima kasih!',
       showConfirmButton: false,
+      timer: 3000,
+      timerProgressBar: true,
       customClass: {
         popup: 'swal-toast-custom',
         title: 'swal-toast-title',
         container: 'swal-toast-container',
       },
     })
+    window.history.replaceState({}, document.title, window.location.pathname)
   }
 })
 
@@ -168,26 +171,54 @@ const handleLogin = async () => {
 
   loading.value = true
   try {
-    const res = await authService.login({
+    // Request API mengirim data email dan password ke backend Laravel
+    const response = await axios.post('http://127.0.0.1:8000/api/login', {
       email: form.value.email,
       password: form.value.password,
     })
 
-    if (res.success) {
-      // Simpan role ke store
-      uiStore.setUserRole(res.data.user.role)
-      // Simpan token (sesuai dengan axios interceptor yang mencari 'auth_token')
-      localStorage.setItem('auth_token', res.data.token)
-      // Simpan data user
-      localStorage.setItem('user_data', JSON.stringify(res.data.user))
+    const res = response.data
 
-      router.push('/dashboard?login=success')
-    } else {
+    if (res.success) {
+      // 1. Simpan token ke localStorage
+      localStorage.setItem('auth_token', res.data.token)
+      
+      // 2. Simpan data user
+      localStorage.setItem('user_data', JSON.stringify(res.data.user))
+      
+      // 3. Update role di store
+      uiStore.setUserRole(res.data.user.role)
+      
+      MySwal.fire({
+        toast: true,
+        position: 'top-end',
+        icon: 'success',
+        title: 'Login Berhasil',
+        text: `Selamat datang, ${res.data.user.name}`,
+        showConfirmButton: false,
+        timer: 3000,
+        timerProgressBar: true,
+        customClass: {
+          popup: 'swal-toast-custom',
+          title: 'swal-toast-title',
+          container: 'swal-toast-container',
+        },
+      })
+      router.push('/dashboard')
+    }
+ else {
       throw new Error(res.message || 'Login Gagal')
     }
   } catch (error) {
-    console.error('Login error:', error)
-    // Error notification handled by axios interceptor
+    console.error('Login Error Details:', error)
+    const errorMessage = error.response?.data?.message || 'Email atau password salah.'
+    
+    MySwal.fire({
+      icon: 'error',
+      title: 'Akses Ditolak',
+      text: errorMessage,
+      confirmButtonColor: '#3b82f6',
+    })
   } finally {
     loading.value = false
   }
