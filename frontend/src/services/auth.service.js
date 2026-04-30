@@ -25,7 +25,7 @@ export const authService = {
    * Ambil profile user saat ini
    */
   async getProfile() {
-    const response = await api.get('/user')
+    const response = await api.get('/me')
     return response.data
   },
 
@@ -33,7 +33,7 @@ export const authService = {
    * Ambil data profil pengguna aktif
    */
   async getUser() {
-    const response = await api.get('/user')
+    const response = await api.get('/me')
     return response.data
   },
 }

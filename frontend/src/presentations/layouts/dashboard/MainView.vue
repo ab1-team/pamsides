@@ -37,6 +37,7 @@
 import { ref, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { MySwal } from '@/main.js'
+import axios from 'axios'
 import SidebarView from './SidebarView.vue'
 import TopNavigationView from './TopNavigationView.vue'
 import FooterView from './FooterView.vue'
@@ -96,15 +97,30 @@ const handleLogout = async () => {
 
   if (result.isConfirmed) {
     try {
-      await authService.logout()
+      const token = localStorage.getItem('auth_token')
+      if (token) {
+        await axios.post(
+          'http://127.0.0.1:8000/api/logout',
+          {},
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          },
+        )
+      }
     } catch (error) {
       console.error('Logout error:', error)
     } finally {
-      // Clear data and redirect regardless of API success
+      // Ambil nama user sebelum dihapus dari localStorage
+      const userData = JSON.parse(localStorage.getItem('user_data') || '{}')
+      const userName = userData.name || ''
+
+      // Hapus data dari localStorage
       localStorage.removeItem('auth_token')
       localStorage.removeItem('user_role')
       localStorage.removeItem('user_data')
-      router.push('/login?logout=success')
+
+      // Redirect ke login dengan param logout dan nama untuk notifikasi
+      router.push(`/login?logout=true&name=${encodeURIComponent(userName)}`)
     }
   }
 }
