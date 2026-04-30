@@ -12,7 +12,7 @@ class CustomerController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Customer::with('user');
+        $query = Customer::with(['user', 'ticket']);
 
         if ($request->search) {
             $query->where(function ($q) use ($request) {
@@ -30,7 +30,9 @@ class CustomerController extends Controller
                     'id' => $c->id,
                     'customer_code' => $c->customer_code,
                     'name' => $c->user->name,
+                    'nik' => optional($c->ticket)->nik ?? '-',
                     'address' => optional($c->ticket)->address ?? '-',
+                    'phone' => '-', // Tambahkan jika ada field phone di tabel terkait
                     'status' => $c->activated_at ? 'Aktif' : 'Belum Terdaftar'
                 ];
             })

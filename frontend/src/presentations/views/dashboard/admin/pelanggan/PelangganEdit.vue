@@ -119,6 +119,7 @@
         variant="secondary"
         size="md"
         @click="handleSave"
+        :loading="isLoading"
         class="px-12! py-4! font-bold! rounded-2xl! shadow-xl! shadow-slate-200! transform! transition-all! hover:translate-y-[-2px]! active:scale-95!"
         icon="save"
       >
@@ -137,9 +138,14 @@ import BaseButton from '@/presentations/components/ui/BaseButton.vue'
 import AppDatePicker from '@/presentations/components/AppDatePicker.vue'
 import SelectSearch from '@/presentations/components/SelectSearch.vue'
 import Swal from 'sweetalert2'
+import { useUiStore } from '@/stores/uiStore'
+import customerService from '@/services/customer.service'
 
 const router = useRouter()
 const route = useRoute()
+const uiStore = useUiStore()
+const isLoading = ref(false)
+const isFetching = ref(false)
 
 const form = ref({
   nik: '',
@@ -153,25 +159,51 @@ const form = ref({
   alamat_lengkap: '',
 })
 
-onMounted(() => {
+onMounted(async () => {
   const id = route.params.id
-  console.log('Fetching data for ID:', id)
+  if (!id) return
 
-  form.value = {
-    nik: '3201234567890001',
-    nama_lengkap: 'Budi Santoso',
-    nama_panggilan: 'Budi',
-    tempat_lahir: 'Bandung',
-    tgl_lahir: new Date(1990, 5, 15),
-    jenis_kelamin: 'Laki-laki',
-    no_telp: '08123456789',
-    pekerjaan: 'Wiraswasta',
-    alamat_lengkap: 'Jl. Merdeka No. 123, Bandung',
+  try {
+    isFetching.value = true
+    const response = await customerService.getCustomerDetail(id)
+    const data = response.data
+
+    form.value = {
+      nik: data.nik || '',
+      nama_lengkap: data.name || '',
+      nama_panggilan: data.nickname || '',
+      tempat_lahir: data.birth_place || '',
+      tgl_lahir: data.birth_date ? new Date(data.birth_date) : null,
+      jenis_kelamin: data.gender || '',
+      no_telp: data.phone || '',
+      pekerjaan: data.job || '',
+      alamat_lengkap: data.address || '',
+    }
+  } catch (error) {
+    console.error('Error fetching customer:', error)
+    Swal.fire({
+      title: 'Gagal!',
+      text: 'Tidak dapat mengambil data pelanggan.',
+      icon: 'error',
+    })
+  } finally {
+    isFetching.value = false
   }
 })
 
-const handleSave = () => {
+const handleSave = async () => {
+  const id = route.params.id
   const finalData = { ...form.value }
+
+  // Simple validation
+  if (!finalData.nik || !finalData.nama_lengkap) {
+    Swal.fire({
+      title: 'Peringatan!',
+      text: 'NIK dan Nama Lengkap wajib diisi.',
+      icon: 'warning',
+    })
+    return
+  }
 
   Object.keys(finalData).forEach((key) => {
     if (!finalData[key] || finalData[key].toString().trim() === '') {
@@ -183,15 +215,18 @@ const handleSave = () => {
     }
   })
 
-  Swal.fire({
-    title: 'Berhasil!',
-    text: 'Data pelanggan telah diperbarui.',
-    icon: 'success',
-    confirmButtonText: 'OK',
-    confirmButtonColor: '#64748b',
-  }).then(() => {
+  try {
+    isLoading.value = true
+    await customerService.updateCustomer(id, finalData)
+
+    uiStore.success('Data pelanggan berhasil diperbarui')
     router.push('/data-pelanggan')
-  })
+  } catch (error) {
+    console.error('Error updating customer:', error)
+    // Error handled globally
+  } finally {
+    isLoading.value = false
+  }
 }
 </script>
 

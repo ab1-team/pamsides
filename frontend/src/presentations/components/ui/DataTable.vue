@@ -32,16 +32,19 @@
         <slot name="toolbar-actions"></slot>
       </div>
 
-      <div class="relative! w-full! sm:w-auto!">
-        <span class="absolute! left-3.5! top-1/2! -translate-y-1/2! text-sm! text-slate-400!">
-          🔍
-        </span>
-        <input
-          v-model="searchQuery"
-          type="text"
-          :placeholder="searchPlaceholder"
-          class="pl-9! pr-4! py-2! bg-slate-50! border! border-slate-200! rounded-lg! text-sm! text-slate-900! w-full! sm:w-56! hover:bg-white! hover:border-slate-300! focus:border-cyan-600! focus:bg-white! focus:outline-none! transition-all!"
-        />
+      <div class="flex! items-center! gap-2! w-full! sm:w-auto!">
+        <div class="relative! flex-1! sm:w-auto!">
+          <span class="absolute! left-3.5! top-1/2! -translate-y-1/2! text-sm! text-slate-400!">
+            🔍
+          </span>
+          <input
+            v-model="searchQuery"
+            type="text"
+            :placeholder="searchPlaceholder"
+            class="pl-9! pr-4! py-2! bg-slate-50! border! border-slate-200! rounded-lg! text-sm! text-slate-900! w-full! sm:w-56! hover:bg-white! hover:border-slate-300! focus:border-cyan-600! focus:bg-white! focus:outline-none! transition-all!"
+          />
+        </div>
+        <slot name="search-actions"></slot>
       </div>
     </div>
 

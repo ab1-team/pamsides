@@ -1,5 +1,12 @@
 <template>
-  <div class="pelanggan-root">
+  <div class="pelanggan-root relative">
+    <!-- Loading Overlay -->
+    <div v-if="isLoading" class="absolute inset-0 z-50 flex items-center justify-center bg-white/60 backdrop-blur-sm rounded-3xl">
+      <div class="flex flex-col items-center gap-4">
+        <font-awesome-icon icon="spinner" class="text-blue-500 text-4xl animate-spin" />
+        <span class="text-slate-500 font-medium">Memuat data...</span>
+      </div>
+    </div>
     <DataTable
       :data="filteredData"
       :columns="tableColumns"
@@ -16,6 +23,18 @@
       empty-message="Mohon cek kembali kata kunci pencarian Anda atau tambahkan pelanggan baru."
       empty-icon="users-slash"
     >
+      <template #search-actions>
+        <BaseButton
+          variant="ghost"
+          size="sm"
+          @click="fetchCustomers"
+          :loading="isLoading"
+          class="w-9! h-9! p-0! rounded-lg! border! border-slate-200! hover:border-blue-200! hover:bg-blue-50! text-slate-500! hover:text-blue-600! transition-all!"
+          title="Muat Ulang Data"
+          icon="sync-alt"
+        />
+      </template>
+
       <template #column-nama="{ row }">
         <div class="flex items-center gap-3!">
           <div
@@ -88,11 +107,13 @@ const {
   currentPage,
   tableData,
   filteredData,
+  isLoading,
   totalPages,
   visiblePages,
   STATUS_COLORS,
   handleEdit,
   handleDelete,
+  fetchCustomers,
 } = usePelanggan(router)
 
 const tableColumns = [
