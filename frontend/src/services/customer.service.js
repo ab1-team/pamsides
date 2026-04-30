@@ -20,6 +20,34 @@ export const customerService = {
     const response = await api.get(`/customers/${id}`)
     return response.data
   },
+
+  /**
+   * Buat pelanggan baru
+   * @param {Object} data - Data pelanggan
+   */
+  async createCustomer(data) {
+    const response = await api.post('/customers', data)
+    return response.data
+  },
+
+  /**
+   * Perbarui data pelanggan
+   * @param {string|number} id - ID pelanggan
+   * @param {Object} data - Data pelanggan
+   */
+  async updateCustomer(id, data) {
+    const response = await api.put(`/customers/${id}`, data)
+    return response.data
+  },
+
+  /**
+   * Hapus data pelanggan
+   * @param {string|number} id - ID pelanggan
+   */
+  async deleteCustomer(id) {
+    const response = await api.delete(`/customers/${id}`)
+    return response.data
+  },
 }
 
 export default customerService

@@ -109,6 +109,7 @@
         variant="secondary"
         size="md"
         @click="handleSave"
+        :loading="isLoading"
         class="px-12! py-4! font-bold! rounded-2xl! shadow-xl! shadow-slate-200! transform! transition-all! hover:translate-y-[-2px]! active:scale-95!"
         icon="save"
       >
@@ -127,8 +128,12 @@ import BaseButton from '@/presentations/components/ui/BaseButton.vue'
 import AppDatePicker from '@/presentations/components/AppDatePicker.vue'
 import SelectSearch from '@/presentations/components/SelectSearch.vue'
 import Swal from 'sweetalert2'
+import { useUiStore } from '@/stores/uiStore'
+import customerService from '@/services/customer.service'
 
 const router = useRouter()
+const uiStore = useUiStore()
+const isLoading = ref(false)
 
 const form = ref({
   nik: '',
@@ -142,8 +147,18 @@ const form = ref({
   alamat_lengkap: '',
 })
 
-const handleSave = () => {
+const handleSave = async () => {
   const finalData = { ...form.value }
+
+  // Simple validation
+  if (!finalData.nik || !finalData.nama_lengkap) {
+    Swal.fire({
+      title: 'Peringatan!',
+      text: 'NIK dan Nama Lengkap wajib diisi.',
+      icon: 'warning',
+    })
+    return
+  }
 
   Object.keys(finalData).forEach((key) => {
     if (!finalData[key] || finalData[key].toString().trim() === '') {
@@ -155,15 +170,18 @@ const handleSave = () => {
     }
   })
 
-  Swal.fire({
-    title: 'Berhasil!',
-    text: 'Data pelanggan telah disimpan.',
-    icon: 'success',
-    confirmButtonText: 'OK',
-    confirmButtonColor: '#3b82f6',
-  }).then(() => {
+  try {
+    isLoading.value = true
+    await customerService.createCustomer(finalData)
+
+    uiStore.success('Data pelanggan berhasil disimpan')
     router.push('/data-pelanggan')
-  })
+  } catch (error) {
+    console.error('Error saving customer:', error)
+    // Error is handled globally by axios interceptor
+  } finally {
+    isLoading.value = false
+  }
 }
 </script>
 
