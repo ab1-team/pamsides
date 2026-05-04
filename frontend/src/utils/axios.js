@@ -59,8 +59,9 @@ axiosInstance.interceptors.response.use(
       }
     } else {
       // Handle generic errors
-      const message = error.response?.data?.message || 'Terjadi kesalahan pada server'
-      uiStore.error(message)
+      // Global toast removed to avoid duplication with local alerts/Swals
+      // const message = error.response?.data?.message || 'Terjadi kesalahan pada server'
+      // uiStore.error(message)
     }
 
     return Promise.reject(error)

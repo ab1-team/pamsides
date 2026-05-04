@@ -52,6 +52,9 @@
       <table class="w-full! text-left!">
         <thead class="bg-slate-50! border-b! border-slate-200!">
           <tr>
+            <!-- Expand Header -->
+            <th v-if="expandable" class="px-2! sm:px-4! py-2! w-8! sm:w-10!"></th>
+
             <!-- Checkbox Header -->
             <th v-if="selectable" class="px-4! py-2! w-10!">
               <input
@@ -74,43 +77,77 @@
 
         <tbody class="divide-y! divide-slate-100!">
           <tr v-if="data.length === 0">
-            <td :colspan="selectable ? columns.length + 1 : columns.length" class="px-4! py-4!">
+            <td :colspan="totalColumns" class="px-4! py-4!">
               <EmptyState :title="emptyTitle" :message="emptyMessage" :icon="emptyIcon" />
             </td>
           </tr>
 
-          <tr
-            v-else
-            v-for="(row, index) in paginatedData"
-            :key="row.id || index"
-            class="hover:bg-slate-50! transition-colors!"
-            :class="{
-              'cursor-pointer!': props.rowClickable,
-              'bg-blue-50/50!': isSelected(row),
-            }"
-            @click="props.rowClickable ? emit('row-click', row) : null"
-          >
-            <!-- Checkbox Cell -->
-            <td v-if="selectable" class="px-4! py-2! w-10!" @click.stop>
-              <input
-                type="checkbox"
-                :checked="isSelected(row)"
-                @change="toggleSelect(row)"
-                class="w-4! h-4! rounded! border-slate-300! text-blue-600! focus:ring-blue-500!"
-              />
-            </td>
-            <td
-              v-for="column in columns"
-              :key="column.key"
-              class="px-4! py-1.5! border-b! border-slate-100! align-middle! text-[13px]! text-slate-600!"
-              :class="[column.tdClass, { 'cursor-pointer!': props.rowClickable }]"
+          <template v-else v-for="(row, index) in paginatedData" :key="row.id || index">
+            <tr
+              class="hover:bg-slate-50! transition-colors!"
+              :class="{
+                'cursor-pointer!': props.rowClickable,
+                'bg-blue-50/50!': isSelected(row),
+                'bg-slate-50/30!': isExpanded(row),
+              }"
+              @click="props.rowClickable ? emit('row-click', row) : null"
             >
-              <slot :name="`column-${column.key}`" :row="row" :column="column" :index="index">
-                <span v-if="column.render" v-html="column.render(row, column, index)"></span>
-                <span v-else>{{ getNestedValue(row, column.key) }}</span>
-              </slot>
-            </td>
-          </tr>
+              <!-- Expand Toggle Cell -->
+              <td v-if="expandable" class="px-2! sm:px-4! py-2! w-8! sm:w-10! text-center!" @click.stop>
+                <button
+                  @click="toggleExpand(row)"
+                  class="w-7! h-7! sm:w-9! sm:h-9! flex! items-center! justify-center! rounded-full! transition-all! duration-300!"
+                  :class="
+                    isExpanded(row)
+                      ? 'bg-blue-600! text-white! shadow-lg! shadow-blue-200!'
+                      : 'bg-slate-100! text-slate-400! hover:bg-slate-200!'
+                  "
+                >
+                  <font-awesome-icon
+                    icon="chevron-right"
+                    class="text-[8px]! sm:text-[10px]! transition-transform! duration-300!"
+                    :class="{ 'rotate-90!': isExpanded(row) }"
+                  />
+                </button>
+              </td>
+
+              <!-- Checkbox Cell -->
+              <td v-if="selectable" class="px-4! py-2! w-10!" @click.stop>
+                <input
+                  type="checkbox"
+                  :checked="isSelected(row)"
+                  @change="toggleSelect(row)"
+                  class="w-4! h-4! rounded! border-slate-300! text-blue-600! focus:ring-blue-500!"
+                />
+              </td>
+
+              <td
+                v-for="column in columns"
+                :key="column.key"
+                class="px-4! py-1.5! border-b! border-slate-100! align-middle! text-[13px]! text-slate-600!"
+                :class="[column.tdClass, { 'cursor-pointer!': props.rowClickable }]"
+              >
+                <slot
+                  :name="`column-${column.key}`"
+                  :row="row"
+                  :column="column"
+                  :index="index"
+                  :isExpanded="isExpanded(row)"
+                  :toggleExpand="() => toggleExpand(row)"
+                >
+                  <span v-if="column.render" v-html="column.render(row, column, index)"></span>
+                  <span v-else>{{ getNestedValue(row, column.key) }}</span>
+                </slot>
+              </td>
+            </tr>
+
+            <!-- Expanded Row -->
+            <tr v-if="expandable && isExpanded(row)" class="bg-slate-50/50!">
+              <td :colspan="totalColumns" class="px-8! py-4! border-b! border-slate-100!">
+                <slot name="expanded-row" :row="row" :index="index"></slot>
+              </td>
+            </tr>
+          </template>
         </tbody>
       </table>
     </div>
@@ -264,13 +301,17 @@ const props = defineProps({
     type: Boolean,
     default: true,
   },
+  selection: {
+    type: Array,
+    default: () => [],
+  },
   selectable: {
     type: Boolean,
     default: false,
   },
-  selection: {
-    type: Array,
-    default: () => [],
+  expandable: {
+    type: Boolean,
+    default: false,
   },
   emptyTitle: String,
   emptyMessage: String,
@@ -314,6 +355,25 @@ const toggleSelectAll = () => {
     emit('update:selection', [...props.data])
   }
 }
+
+// Expansion Logic
+const expandedRows = ref(new Set())
+const isExpanded = (row) => expandedRows.value.has(row.id || JSON.stringify(row))
+const toggleExpand = (row) => {
+  const id = row.id || JSON.stringify(row)
+  if (expandedRows.value.has(id)) {
+    expandedRows.value.delete(id)
+  } else {
+    expandedRows.value.add(id)
+  }
+}
+
+const totalColumns = computed(() => {
+  let count = props.columns.length
+  if (props.selectable) count++
+  if (props.expandable) count++
+  return count
+})
 
 const clearSelection = () => {
   emit('update:selection', [])
@@ -416,3 +476,15 @@ const getNestedValue = (obj, path) => {
   }, obj)
 }
 </script>
+
+<style scoped>
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+</style>
