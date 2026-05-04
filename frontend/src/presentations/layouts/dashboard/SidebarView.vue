@@ -125,7 +125,7 @@
 
     <div class="sidebar-new-entry-area">
       <BaseButton
-        variant="primary-gradient"
+        variant="info"
         class="new-entry-btn"
         :class="{ 'icon-only': !sidebarOpen }"
         size="md"
