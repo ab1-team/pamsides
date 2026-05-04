@@ -2,6 +2,18 @@
   <div class="map-wrapper" :style="height ? { height: height } : {}">
     <div ref="mapContainer" class="map-container"></div>
 
+    <!-- Map Type Toggle -->
+    <div class="map-controls">
+      <button 
+        @click="toggleMapType" 
+        class="map-control-btn shadow-lg"
+        :title="isSatellite ? 'Switch to Roadmap' : 'Switch to Satellite'"
+      >
+        <font-awesome-icon :icon="isSatellite ? 'map' : 'satellite'" />
+        <span>{{ isSatellite ? 'Peta' : 'Satelit' }}</span>
+      </button>
+    </div>
+
     <!-- Info Overlay -->
     <div v-if="loading" class="map-loading">
       <font-awesome-icon icon="spinner" spin />
@@ -43,7 +55,9 @@ const emit = defineEmits(['update:modelValue', 'marker-click'])
 const mapContainer = ref(null)
 const map = ref(null)
 const marker = ref(null)
+const tileLayer = ref(null)
 const loading = ref(true)
+const isSatellite = ref(false)
 
 // Fix Leaflet Default Icon issue
 const fixLeafletIcon = () => {
@@ -55,6 +69,23 @@ const fixLeafletIcon = () => {
   })
 }
 
+const toggleMapType = () => {
+  if (map.value && tileLayer.value) {
+    map.value.removeLayer(tileLayer.value)
+    
+    isSatellite.value = !isSatellite.value
+    const layerType = isSatellite.value ? 's' : 'm'
+    
+    tileLayer.value = L.tileLayer('https://{s}.google.com/vt/lyrs=' + layerType + '&x={x}&y={y}&z={z}', {
+      maxZoom: 20,
+      subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
+      attribution: '&copy; Google Maps',
+    })
+    
+    tileLayer.value.addTo(map.value)
+  }
+}
+
 onMounted(() => {
   fixLeafletIcon()
 
@@ -63,9 +94,13 @@ onMounted(() => {
     props.zoom,
   )
 
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '&copy; OpenStreetMap contributors',
-  }).addTo(map.value)
+  // Initial Google Maps Layer
+  tileLayer.value = L.tileLayer('https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+    maxZoom: 20,
+    subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
+    attribution: '&copy; Google Maps',
+  })
+  tileLayer.value.addTo(map.value)
 
   // Add primary marker if not readOnly
   if (!props.readOnly) {
@@ -84,7 +119,6 @@ onMounted(() => {
       emit('update:modelValue', { lat, lng })
     })
   } else if (props.markers.length === 0) {
-    // Static marker for readOnly mode
     L.marker([props.modelValue.lat, props.modelValue.lng]).addTo(map.value)
   }
 
@@ -112,7 +146,7 @@ onBeforeUnmount(() => {
 watch(
   () => props.modelValue,
   (newVal) => {
-    if (map.value && !props.readOnly) {
+    if (map.value && !props.readOnly && marker.value) {
       marker.value.setLatLng([newVal.lat, newVal.lng])
       map.value.panTo([newVal.lat, newVal.lng])
     }
@@ -122,7 +156,7 @@ watch(
 </script>
 
 <style>
-/* Global styles for custom marker (needs to be non-scoped or use deep) */
+/* Global styles for custom marker */
 .custom-marker {
   display: flex;
   align-items: center;
@@ -169,12 +203,10 @@ watch(
   100% { transform: translate(-50%, -50%) scale(2); opacity: 0; }
 }
 
-/* Leaflet Overrides */
 .leaflet-container {
   background: #f8fafc !important;
 }
 
-/* Custom Zoom Animations */
 .leaflet-fade-anim .leaflet-tile,.leaflet-zoom-anim .leaflet-tile {
   transition-duration: 500ms;
 }
@@ -193,6 +225,33 @@ watch(
   width: 100%;
   height: 100%;
   z-index: 1;
+}
+
+.map-controls {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  z-index: 1000;
+}
+
+.map-control-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 1rem;
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: #1e293b;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.map-control-btn:hover {
+  background: #f8fafc;
+  transform: scale(1.05);
 }
 
 .map-loading {
