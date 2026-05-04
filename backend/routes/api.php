@@ -64,8 +64,8 @@ Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
 });
 
 Route::middleware(['auth:sanctum', 'role:surveyor'])->group(function () {
-    Route::get('/test-surveyor', fn() => response()->json(['message' => 'Kamu surveyor!']));
-
+    Route::get('installation-tickets',  [InstallationTicketController::class, 'index']);
+    Route::get('installation-tickets/{installationTicket}', [InstallationTicketController::class, 'show']);
     Route::post('installation-tickets/{installationTicket}/survey',[SurveyResultController::class, 'store'] );
 
     // route surveyor lainnya...

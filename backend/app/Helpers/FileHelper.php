@@ -11,7 +11,7 @@ class FileHelper
     {
         $path = $file->store($folder, 'public');
 
-        return Storage::url($path);
+        return url(Storage::url($path));
     }
 
     public static function deletePhoto(string $url): void
