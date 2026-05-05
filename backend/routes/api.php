@@ -16,6 +16,7 @@ use App\Http\Controllers\SurveyResultController;
 use App\Http\Controllers\WaterTariffBlockController;
 use App\Http\Controllers\MeterReadingController;
 use App\Http\Controllers\MonthlyBillController;
+use App\Http\Controllers\PelangganPortalController;
 
 Route::post('/login', [AuthController::class, 'login']);
 
@@ -82,9 +83,11 @@ Route::middleware(['auth:sanctum', 'role:teknisi'])->group(function () {
 
 });
 
-Route::middleware('role:pelanggan')->group(function () {
+Route::middleware(['auth:sanctum', 'role:pelanggan'])->group(function () {
     Route::get('/test-pelanggan', fn() => response()->json(['message' => 'Kamu pelanggan!']));
 
-    // route pelanggan lainnya...
-
+    Route::get('/pelanggan/dashboard', [PelangganPortalController::class, 'dashboard']);
+    Route::get('/pelanggan/bill-detail/{id?}', [PelangganPortalController::class, 'billDetail']);
+    Route::get('/pelanggan/bill-history', [PelangganPortalController::class, 'billHistory']);
+    Route::get('/pelanggan/profile',   [PelangganPortalController::class, 'profile']);
 });
