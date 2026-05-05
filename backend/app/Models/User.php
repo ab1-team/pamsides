@@ -31,11 +31,10 @@ class User extends Authenticatable
         return $this->hasMany(MeterReading::class, 'recorded_by');
     }
 
-    public function customers()
+    public function customer()
     {
-        return $this->hasMany(Customer::class, 'user_id');
+        return $this->hasOne(Customer::class, 'user_id');
     }
-
     protected function casts(): array
     {
         return [

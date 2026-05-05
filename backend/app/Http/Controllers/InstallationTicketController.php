@@ -3,8 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\InstallationTicket;
+use App\Models\User;
 use App\StateMachines\TicketStateMachine;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class InstallationTicketController extends Controller
 {
@@ -34,43 +36,78 @@ class InstallationTicketController extends Controller
         ]);
     }
 
+    public function searchCandidates(Request $request)
+    {
+        $search = $request->search;
+
+        // Mencari user yang sudah terdaftar sebagai pelanggan
+        $users = User::with(['customer.ticket'])
+            ->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhereHas('customer.ticket', function($ticketQuery) use ($search) {
+                      $ticketQuery->where('nik', 'like', "%{$search}%");
+                  });
+            })
+            ->limit(10)
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => $users->map(function ($user) {
+                // Mengambil NIK dan Alamat dari pendaftaran terakhir (tiket lama)
+                $lastTicket = optional($user->customer)->ticket;
+                return [
+                    'id'      => $user->id,
+                    'name'    => $user->name,
+                    'nik'     => $lastTicket ? $lastTicket->nik : null,
+                    'address' => $lastTicket ? $lastTicket->address : null,
+                    'lat'     => $lastTicket ? $lastTicket->lat : null,
+                    'lng'     => $lastTicket ? $lastTicket->lng : null,
+                ];
+            })
+        ]);
+    }
+
+    // REGISTER INSTALLATION
+    // Menyimpan data pendaftaran baru ke tabel installation_tickets
+
     public function store(Request $request)
     {
         $request->validate([
             'package_id'     => 'required|exists:installation_packages,id',
             'applicant_name' => 'required|string|max:255',
-            'nik'            => 'required|string|max:20|unique:installation_tickets,nik',
+            'nik'            => [
+                'required',
+                'string',
+                'max:20',
+                Rule::unique('installation_tickets')->where(function ($query) {
+                    return $query->whereIn('status', ['pending', 'surveyed', 'unpaid', 'processing']);
+                })
+            ],
+            
             'address'        => 'required|string',
-            'lat'            => 'required|numeric|between:-90,90',
-            'lng'            => 'required|numeric|between:-180,180',
+            'lat'            => 'required|numeric',
+            'lng'            => 'required|numeric',
         ], [
-            'package_id.required'     => 'Paket instalasi wajib dipilih.',
-            'package_id.exists'       => 'Paket instalasi tidak ditemukan.',
+            'nik.unique' => 'Gagal! Pelanggan dengan NIK ini masih memiliki proses pendaftaran yang sedang berjalan.',
+            'nik.required' => 'NIK wajib diisi.',
             'applicant_name.required' => 'Nama pemohon wajib diisi.',
-            'applicant_name.max'      => 'Nama pemohon maksimal 255 karakter.',
-            'nik.required'            => 'NIK wajib diisi.',
-            'nik.max'                 => 'NIK maksimal 20 karakter.',
-            'nik.unique'              => 'NIK sudah terdaftar.',
-            'address.required'        => 'Alamat wajib diisi.',
-            'lat.required'            => 'Koordinat latitude wajib diisi.',
-            'lat.between'             => 'Koordinat latitude tidak valid.',
-            'lng.required'            => 'Koordinat longitude wajib diisi.',
-            'lng.between'             => 'Koordinat longitude tidak valid.',
         ]);
 
         $ticket = InstallationTicket::create([
             'package_id'     => $request->package_id,
             'applicant_name' => $request->applicant_name,
-            'nik'            => $request->nik,
+            'nik'            => $request->nik, 
             'address'        => $request->address,
             'lat'            => $request->lat,
             'lng'            => $request->lng,
-            'status'         => 'pending',
+            'status'         => 'pending', 
             'created_by'     => $request->user()->id,
         ]);
 
         return response()->json([
             'success' => true,
+            'message' => 'Pendaftaran instalasi baru berhasil disimpan.',
             'data'    => $ticket->load('package'),
         ], 201);
     }
