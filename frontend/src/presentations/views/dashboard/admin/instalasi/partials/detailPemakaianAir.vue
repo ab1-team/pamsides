@@ -8,7 +8,7 @@
           variant="ghost"
           icon="chevron-left"
           class="w-8! h-8! md:w-10! md:h-10! p-0! rounded-full! bg-white! shadow-sm!"
-          @click="$router.push('/instalasi/pemakaian-air')"
+          @click="handleBack"
         />
         <div>
           <h1 class="text-xl! md:text-2xl! font-extrabold! text-slate-800! tracking-tight!">
@@ -68,7 +68,7 @@
             variant="ghost"
             icon="chevron-left"
             class="w-8! h-8! p-0! rounded-full! bg-slate-100! text-slate-500!"
-            @click="$router.push('/instalasi/pemakaian-air')"
+            @click="handleBack"
           />
           <div>
             <h1 class="text-lg! font-black! text-slate-800! leading-tight!">Input Pemakaian</h1>
@@ -136,25 +136,16 @@
           </div>
 
           <div
-            class="grid! grid-cols-3! gap-2! bg-slate-50! p-2! rounded-xl! border! border-slate-100/50!"
+            class="grid! grid-cols-2! gap-2! bg-slate-50! p-2! rounded-xl! border! border-slate-100/50!"
           >
             <div class="text-center!">
-              <p class="text-[8px]! font-black! text-slate-400! uppercase! mb-0!">Awal</p>
-              <p class="text-xs! font-bold! text-slate-600!">{{ row.meterAwal }}</p>
+              <p class="text-[8px]! font-black! text-slate-400! uppercase! mb-0!">ID PELANGGAN</p>
+              <p class="text-xs! font-bold! text-slate-600!">#{{ row.noInduk }}</p>
             </div>
-            <div class="text-center! border-x! border-slate-200!">
-              <p class="text-[8px]! font-black! text-slate-400! uppercase! mb-0!">Akhir</p>
-              <p
-                class="text-xs! font-bold!"
-                :class="row.meterAkhir === row.meterAwal ? 'text-red-500!' : 'text-orange-600!'"
-              >
-                {{ row.meterAkhir }}
-              </p>
-            </div>
-            <div class="text-center!">
-              <p class="text-[8px]! font-black! text-slate-400! uppercase! mb-0!">Konsumsi</p>
+            <div class="text-center! border-l! border-slate-200!">
+              <p class="text-[8px]! font-black! text-slate-400! uppercase! mb-0!">PAKAI LALU</p>
               <p class="text-xs! font-bold! text-cyan-600!">
-                {{ hitungPemakaian(row) }}
+                {{ row.usageLalu }} m³
               </p>
             </div>
           </div>
@@ -200,11 +191,69 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+import { useUiStore } from '@/stores/uiStore'
+import { meterService } from '@/services/meter.service'
 import BaseButton from '@/presentations/components/ui/BaseButton.vue'
 import DataTable from '@/presentations/components/ui/DataTable.vue'
 import ContentCard from '@/presentations/components/ui/ContentCard.vue'
 import InputMeterModal from './inputMeterModal.vue'
+
+const router = useRouter()
+const uiStore = useUiStore()
+
+const isLoading = ref(false)
+const customers = ref([])
+
+const fetchData = async () => {
+  try {
+    isLoading.value = true
+    const { month, year } = router.currentRoute.value.query
+    const res = await meterService.getPendingReadings({ month, year })
+    if (res.data) {
+      // Map data backend ke format tabel jika perlu
+      customers.value = res.data.map(item => {
+        // Meter Awal diambil dari pencatatan bulan lalu
+        const awal = item.meter_readings && item.meter_readings.length > 0 
+          ? item.meter_readings[0].meter_value 
+          : item.initial_meter_reading
+        
+        // Pemakaian bulan lalu dari MonthlyBill
+        const usageLalu = item.monthly_bills && item.monthly_bills.length > 0
+          ? item.monthly_bills[0].usage_m3
+          : 0
+          
+        return {
+          nama: item.user?.name || item.ticket?.applicant_name || 'Tanpa Nama',
+          noInduk: item.customer_code || '-',
+          dusun: item.ticket?.address || '-',
+          rt: '-',
+          meterAwal: awal || 0,
+          meterAkhir: awal || 0,
+          usageLalu: usageLalu,
+          id: item.id
+        }
+      })
+    }
+  } catch (error) {
+    console.error('Gagal mengambil data pelanggan:', error)
+  } finally {
+    isLoading.value = false
+  }
+}
+
+onMounted(() => {
+  fetchData()
+})
+
+const handleBack = () => {
+  if (uiStore.userRole === 'teknisi') {
+    router.push('/instalasi/teknisiPemakaianAir')
+  } else {
+    router.push('/instalasi/pemakaian-air')
+  }
+}
 
 const isModalOpen = ref(false)
 const selectedCustomer = ref({})
@@ -222,97 +271,52 @@ const handleRowClick = (row) => {
   isModalOpen.value = true
 }
 
-const handleSaveMeter = (newMeterAkhir) => {
-  const index = dummyData.value.findIndex((c) => c.noInduk === selectedCustomer.value.noInduk)
-  if (index !== -1) {
-    dummyData.value[index].meterAkhir = newMeterAkhir
+const handleSaveMeter = async (payload) => {
+  try {
+    uiStore.setLoading(true)
+
+    const formData = new FormData()
+    formData.append('customer_id', selectedCustomer.value.id)
+    formData.append('meter_value', payload.meterValue)
+    formData.append('photo', payload.photo)
+
+    await meterService.submitReading(formData)
+
+    uiStore.success('Data pemakaian dan foto berhasil disimpan!')
+    
+    const index = customers.value.findIndex((c) => c.noInduk === selectedCustomer.value.noInduk)
+    if (index !== -1) {
+      customers.value.splice(index, 1)
+    }
+    
+    isModalOpen.value = false
+  } catch (error) {
+    uiStore.error(error.response?.data?.message || 'Gagal menyimpan data')
+  } finally {
+    uiStore.setLoading(false)
   }
 }
 
 const tableColumns = [
-  { key: 'nama', title: 'NAMA', tdClass: 'font-medium! text-slate-500!' },
-  { key: 'dusun', title: 'DUSUN', tdClass: 'text-slate-500!' },
-  {
-    key: 'rt',
-    title: 'RT',
-    tdClass: 'text-slate-500! hidden! md:table-cell!',
-    thClass: 'hidden! md:table-cell!',
-  },
+  { key: 'nama', title: 'NAMA PELANGGAN', tdClass: 'font-medium! text-slate-500!' },
+  { key: 'dusun', title: 'DUSUN / ALAMAT', tdClass: 'text-slate-500!' },
   {
     key: 'noInduk',
     title: 'NO.INDUK',
     tdClass: 'text-slate-500! hidden! sm:table-cell!',
     thClass: 'hidden! sm:table-cell!',
   },
-  { key: 'meterAwal', title: 'METER AWAL', tdClass: 'text-right! w-24!' },
-  { key: 'meterAkhir', title: 'METER AKHIR', tdClass: 'text-right! w-32!' },
-  {
-    key: 'pemakaian',
-    title: 'PEMAKAIAN',
-    tdClass: 'text-right! w-24! hidden! sm:table-cell!',
-    thClass: 'hidden! sm:table-cell!',
-  },
+  { key: 'usageLalu', title: 'PAKAI BULAN LALU', tdClass: 'text-right! w-40! text-blue-600! font-bold!' },
 ]
-
-const dummyData = ref([
-  {
-    nama: 'Adi Sawal',
-    dusun: 'Mulo',
-    rt: '-',
-    noInduk: '2.03.0116.W',
-    meterAwal: 584,
-    meterAkhir: 584,
-  },
-  {
-    nama: 'Agung/yuni',
-    dusun: 'Mulo',
-    rt: '-',
-    noInduk: '2.8.121405.W',
-    meterAwal: 346,
-    meterAkhir: 346,
-  },
-  {
-    nama: 'Agus Setyawan',
-    dusun: 'Kamal',
-    rt: '-',
-    noInduk: '4.12.0946.W',
-    meterAwal: 921,
-    meterAkhir: 921,
-  },
-  {
-    nama: 'Agus Sukiyanto',
-    dusun: 'Mulo',
-    rt: '-',
-    noInduk: '2.03.0124.W',
-    meterAwal: 3941,
-    meterAkhir: 3941,
-  },
-  {
-    nama: 'Anis Suprihatin',
-    dusun: 'Karangasem',
-    rt: '-',
-    noInduk: '3.6.121383.W',
-    meterAwal: 14,
-    meterAkhir: 14,
-  },
-  {
-    nama: 'Arjo Senu/wastini',
-    dusun: 'Mulo',
-    rt: '-',
-    noInduk: '2.07.0206.W',
-    meterAwal: 1455,
-    meterAkhir: 1455,
-  },
-])
 
 const hitungPemakaian = (row) => {
   return Math.max(0, row.meterAkhir - row.meterAwal)
 }
 
 const filteredData = computed(() => {
-  if (!searchQuery.value) return dummyData.value
+  if (!searchQuery.value) return customers.value
   const q = searchQuery.value.toLowerCase()
-  return dummyData.value.filter((item) => {
+  return customers.value.filter((item) => {
     return (
       item.nama.toLowerCase().includes(q) ||
       item.noInduk.toLowerCase().includes(q) ||

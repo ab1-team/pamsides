@@ -113,14 +113,13 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
+import { useRouter } from 'vue-router'
 import axios from 'axios'
 import { MySwal } from '@/main.js'
 import { useUiStore } from '@/stores/uiStore'
 import '@/assets/css/login.css'
 
 const router = useRouter()
-const route = useRoute()
 const uiStore = useUiStore()
 
 const form = ref({
@@ -183,10 +182,8 @@ const handleLogin = async () => {
       // 1. Simpan token ke localStorage
       localStorage.setItem('auth_token', res.data.token)
       
-      // 2. Simpan data user
-      localStorage.setItem('user_data', JSON.stringify(res.data.user))
-      
-      // 3. Update role di store
+      // 2. Simpan data user & update role di store
+      uiStore.setUserData(res.data.user)
       uiStore.setUserRole(res.data.user.role)
       
       MySwal.fire({

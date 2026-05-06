@@ -9,6 +9,7 @@ export const useUiStore = defineStore('ui', () => {
   const loading = ref(false)
   const activeRequests = ref(0)
   const userRole = ref(localStorage.getItem('user_role') || 'admin')
+  const userData = ref(JSON.parse(localStorage.getItem('user_data')) || null)
 
   // Toast State
   const toastMessage = ref(null)
@@ -40,6 +41,11 @@ export const useUiStore = defineStore('ui', () => {
     localStorage.setItem('user_role', role)
   }
 
+  const setUserData = (data) => {
+    userData.value = data
+    localStorage.setItem('user_data', JSON.stringify(data))
+  }
+
   return {
     loading,
     toastMessage,
@@ -51,5 +57,7 @@ export const useUiStore = defineStore('ui', () => {
     warn,
     userRole,
     setUserRole,
+    userData,
+    setUserData,
   }
 })
