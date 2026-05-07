@@ -7,8 +7,8 @@ export const meterService = {
   /**
    * Ambil daftar pelanggan yang belum dicatat meter bulan ini
    */
-  async getPendingReadings() {
-    const response = await api.get('/meter-readings/pending')
+  async getPendingReadings(params = {}) {
+    const response = await api.get('/meter-readings/pending', { params })
     return response.data
   },
 

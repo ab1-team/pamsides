@@ -24,6 +24,12 @@ return new class extends Migration
                 ->constrained('users')
                 ->nullOnDelete();
 
+            // relasi user pelanggan
+            $table->foreignId('user_id')
+                  ->nullable()
+                  ->constrained('users')
+                  ->nullOnDelete();
+
             $table->string('applicant_name');
             $table->string('nik', 20);
 

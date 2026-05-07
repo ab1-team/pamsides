@@ -19,6 +19,7 @@ use App\Http\Controllers\WaterTariffBlockController;
 use App\Http\Controllers\MeterReadingController;
 use App\Http\Controllers\MonthlyBillController;
 use App\Http\Controllers\SettingController;
+use App\Http\Controllers\PelangganPortalController;
 
 /*
 |--------------------------------------------------------------------------
@@ -95,8 +96,12 @@ Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
 |--------------------------------------------------------------------------
 */
 Route::middleware(['auth:sanctum', 'role:surveyor'])->group(function () {
-    Route::get('/test-surveyor', fn() => response()->json(['message' => 'Kamu surveyor!']));
-    Route::post('installation-tickets/{installationTicket}/survey', [SurveyResultController::class, 'store']);
+    Route::get('installation-tickets',  [InstallationTicketController::class, 'index']);
+    Route::get('installation-tickets/{installationTicket}', [InstallationTicketController::class, 'show']);
+    Route::post('installation-tickets/{installationTicket}/survey',[SurveyResultController::class, 'store'] );
+
+    // route surveyor lainnya...
+
 });
 
 /*
@@ -112,12 +117,11 @@ Route::middleware(['auth:sanctum', 'role:teknisi'])->group(function () {
     Route::post('meter-readings', [MeterReadingController::class, 'store']);
 });
 
-/*
-|--------------------------------------------------------------------------
-| Pelanggan Routes
-|--------------------------------------------------------------------------
-*/
 Route::middleware(['auth:sanctum', 'role:pelanggan'])->group(function () {
     Route::get('/test-pelanggan', fn() => response()->json(['message' => 'Kamu pelanggan!']));
-    // Tambahkan route khusus pelanggan di sini (misal: cek tagihan mandiri)
+
+    Route::get('/pelanggan/dashboard', [PelangganPortalController::class, 'dashboard']);
+    Route::get('/pelanggan/bill-detail/{id?}', [PelangganPortalController::class, 'billDetail']);
+    Route::get('/pelanggan/bill-history', [PelangganPortalController::class, 'billHistory']);
+    Route::get('/pelanggan/profile',   [PelangganPortalController::class, 'profile']);
 });
