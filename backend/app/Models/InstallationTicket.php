@@ -8,6 +8,7 @@ class InstallationTicket extends Model
 {
     protected $fillable = [
         'package_id',
+        'user_id',
         'applicant_name',
         'nik',
         'address',
