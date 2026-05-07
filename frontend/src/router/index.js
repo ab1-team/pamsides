@@ -202,9 +202,9 @@ const router = createRouter({
           component: detailPemakaianAir,
         },
         {
-          path: '/survey/input',
-          name: 'Input Survey',
-          component: () => import('@/presentations/views/dashboard/surveyor/TicketSurvey.vue'),
+          path: '/survey/create',
+          name: 'Create Survey',
+          component: () => import('@/presentations/views/dashboard/surveyor/createSurvey.vue'),
         },
         {
           path: '/teknisi/pencatatan-meter',

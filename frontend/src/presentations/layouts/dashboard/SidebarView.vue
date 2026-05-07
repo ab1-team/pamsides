@@ -185,11 +185,17 @@ function toggleSubmenu(label) {
 }
 
 const menuItems = [
-  {
+    {
     label: 'Dashboard',
     icon: 'home',
     to: '/dashboard',
     roles: ['admin', 'surveyor', 'teknisi', 'pelanggan'],
+  },
+  {
+    label: 'Create Survey Baru',
+    icon: 'plus-circle',
+    to: '/survey/create',
+    roles: ['surveyor'],
   },
   {
     label: 'Settings',
@@ -204,7 +210,7 @@ const menuItems = [
   {
     label: 'Basis Data',
     icon: 'database',
-    roles: ['admin', 'surveyor'],
+    roles: ['admin'],
     children: [
       {
         label: 'Pelanggan',
@@ -236,11 +242,10 @@ const menuItems = [
   {
     label: 'Master Instalasi',
     icon: 'chart-bar',
-    roles: ['admin', 'surveyor', 'teknisi'],
+    roles: ['admin', 'teknisi'],
     children: [
-      { label: 'Register Instalasi', to: '/instalasi/register', roles: ['admin', 'surveyor'] },
-      { label: 'Status Instalasi', to: '/instalasi/status', roles: ['admin', 'surveyor'] },
-      { label: 'Analisis Survey', to: '/dashboard', roles: ['surveyor'] },
+      { label: 'Register Instalasi', to: '/instalasi/register', roles: ['admin'] },
+      { label: 'Status Instalasi', to: '/instalasi/status', roles: ['admin'] },
       {
         label: 'Pemasangan',
         icon: 'tools',
