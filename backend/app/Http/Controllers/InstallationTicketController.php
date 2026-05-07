@@ -10,7 +10,7 @@ class InstallationTicketController extends Controller
 {
     public function index(Request $request)
     {
-        $query = InstallationTicket::with('package')
+        $query = InstallationTicket::with(['package', 'survey'])
             ->orderBy('created_at', 'desc');
 
         // Filter status

@@ -170,7 +170,6 @@ const handleLogin = async () => {
 
   loading.value = true
   try {
-    // Request API mengirim data email dan password ke backend Laravel
     const response = await axios.post('http://127.0.0.1:8000/api/login', {
       email: form.value.email,
       password: form.value.password,
@@ -179,7 +178,6 @@ const handleLogin = async () => {
     const res = response.data
 
     if (res.success) {
-      // 1. Simpan token ke localStorage
       localStorage.setItem('auth_token', res.data.token)
       
       // 2. Simpan data user & update role di store
@@ -202,8 +200,7 @@ const handleLogin = async () => {
         },
       })
       router.push('/dashboard')
-    }
- else {
+    } else {
       throw new Error(res.message || 'Login Gagal')
     }
   } catch (error) {
