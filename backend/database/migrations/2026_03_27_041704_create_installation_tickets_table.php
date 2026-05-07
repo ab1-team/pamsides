@@ -18,8 +18,23 @@ return new class extends Migration
                   ->constrained('installation_packages')
                   ->cascadeOnDelete();
 
+            // relasi user pelanggan
+            $table->foreignId('user_id')
+                  ->nullable()
+                  ->constrained('users')
+                  ->nullOnDelete();
+
             $table->string('applicant_name');
             $table->string('nik', 20);
+
+            // tambahan
+            $table->string('phone', 20)->nullable();
+
+            $table->enum('gender', [
+                'male',
+                'female'
+            ])->nullable();
+
             $table->text('address');
 
             $table->decimal('lat', 10, 7);
@@ -30,7 +45,9 @@ return new class extends Migration
                 'surveyed',
                 'unpaid',
                 'processing',
-                'completed'
+                'completed',
+                'suspended',
+                'terminated'
             ])->default('pending');
 
             $table->foreignId('created_by')
