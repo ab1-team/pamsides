@@ -41,6 +41,9 @@ import axios from 'axios'
 import SidebarView from './SidebarView.vue'
 import TopNavigationView from './TopNavigationView.vue'
 import FooterView from './FooterView.vue'
+import { useUiStore } from '@/stores/uiStore'
+
+const uiStore = useUiStore()
 
 const router = useRouter()
 const route = useRoute()
@@ -110,16 +113,15 @@ const handleLogout = async () => {
     } catch (error) {
       console.error('Logout error:', error)
     } finally {
-      // Ambil nama user sebelum dihapus dari localStorage
       const userData = JSON.parse(localStorage.getItem('user_data') || '{}')
       const userName = userData.name || ''
 
-      // Hapus data dari localStorage
       localStorage.removeItem('auth_token')
       localStorage.removeItem('user_role')
       localStorage.removeItem('user_data')
 
-      // Redirect ke login dengan param logout dan nama untuk notifikasi
+      uiStore.setUserRole('admin')
+
       router.push(`/login?logout=true&name=${encodeURIComponent(userName)}`)
     }
   }

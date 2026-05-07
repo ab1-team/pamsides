@@ -5,6 +5,8 @@ import AdminDashbord from '@/presentations/views/dashboard/admin/DashboardMain.v
 import SurveyorDashboard from '@/presentations/views/dashboard/surveyor/DashboardMain.vue'
 import TeknisiDashboard from '@/presentations/views/dashboard/teknisi/DashboardMain.vue'
 import PelangganDashboard from '@/presentations/views/dashboard/pelanggan/DashboardMain.vue'
+import DashboardHome from '@/presentations/views/dashboard/DashboardHome.vue'
+import RetribusiSampahHome from '@/presentations/views/dashboard/RetribusiSampahHome.vue'
 import { useUiStore } from '@/stores/uiStore'
 import SopIndex from '@/presentations/views/dashboard/admin/sop/SopIndex.vue'
 import KelasBiayaView from '@/presentations/views/dashboard/admin/kelas/KelasIndex.vue'
@@ -62,19 +64,7 @@ const router = createRouter({
         {
           path: '',
           name: 'dashboard',
-          component: () => {
-            const uiStore = useUiStore()
-            switch (uiStore.userRole) {
-              case 'surveyor':
-                return SurveyorDashboard
-              case 'teknisi':
-                return TeknisiDashboard
-              case 'pelanggan':
-                return PelangganDashboard
-              default:
-                return AdminDashbord
-            }
-          },
+          component: DashboardHome,
         },
         {
           path: '/profil',
@@ -234,10 +224,7 @@ const router = createRouter({
         {
           path: '/instalasi/retribusi-sampah',
           name: 'Retribusi Sampah',
-          component: () => {
-            const uiStore = useUiStore()
-            return uiStore.userRole === 'teknisi' ? teknisiRetribusiSampah : adminRetribusiSampah
-          },
+          component: RetribusiSampahHome,
         },
         {
           path: '/transaksi/jurnal-umum',
