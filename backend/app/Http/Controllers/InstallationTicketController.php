@@ -34,45 +34,47 @@ class InstallationTicketController extends Controller
         ]);
     }
 
-    public function store(Request $request)
+    /**
+     * Melengkapi registrasi instalasi (Update dari draft menjadi pending).
+     */
+    public function registerInstallation(Request $request, $id)
     {
         $request->validate([
-            'package_id'     => 'required|exists:installation_packages,id',
-            'applicant_name' => 'required|string|max:255',
-            'nik'            => 'required|string|max:20|unique:installation_tickets,nik',
-            'address'        => 'required|string',
-            'lat'            => 'required|numeric|between:-90,90',
-            'lng'            => 'required|numeric|between:-180,180',
+            'package_id' => 'required|exists:installation_packages,id',
+            'lat'        => 'required|numeric|between:-90,90',
+            'lng'        => 'required|numeric|between:-180,180',
         ], [
-            'package_id.required'     => 'Paket instalasi wajib dipilih.',
-            'package_id.exists'       => 'Paket instalasi tidak ditemukan.',
-            'applicant_name.required' => 'Nama pemohon wajib diisi.',
-            'applicant_name.max'      => 'Nama pemohon maksimal 255 karakter.',
-            'nik.required'            => 'NIK wajib diisi.',
-            'nik.max'                 => 'NIK maksimal 20 karakter.',
-            'nik.unique'              => 'NIK sudah terdaftar.',
-            'address.required'        => 'Alamat wajib diisi.',
-            'lat.required'            => 'Koordinat latitude wajib diisi.',
-            'lat.between'             => 'Koordinat latitude tidak valid.',
-            'lng.required'            => 'Koordinat longitude wajib diisi.',
-            'lng.between'             => 'Koordinat longitude tidak valid.',
+            'package_id.required' => 'Paket instalasi wajib dipilih.',
+            'package_id.exists'   => 'Paket instalasi tidak ditemukan.',
+            'lat.required'        => 'Koordinat latitude wajib diisi.',
+            'lat.between'         => 'Koordinat latitude tidak valid.',
+            'lng.required'        => 'Koordinat longitude wajib diisi.',
+            'lng.between'         => 'Koordinat longitude tidak valid.',
         ]);
 
-        $ticket = InstallationTicket::create([
-            'package_id'     => $request->package_id,
-            'applicant_name' => $request->applicant_name,
-            'nik'            => $request->nik,
-            'address'        => $request->address,
-            'lat'            => $request->lat,
-            'lng'            => $request->lng,
-            'status'         => 'pending',
-            'created_by'     => $request->user()->id,
-        ]);
+        try {
+            $ticket = InstallationTicket::findOrFail($id);
 
-        return response()->json([
-            'success' => true,
-            'data'    => $ticket->load('package'),
-        ], 201);
+            // Melengkapi data draft dan mengubah status menjadi pending
+            $ticket->update([
+                'package_id' => $request->package_id,
+                'lat'        => $request->lat,
+                'lng'        => $request->lng,
+                'status'     => 'pending',
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Registrasi instalasi berhasil dilengkapi dan status menjadi pending.',
+                'data'    => $ticket->load('package'),
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal memproses data: ' . $e->getMessage(),
+            ], 500);
+        }
     }
 
     public function show(InstallationTicket $installationTicket)
@@ -106,11 +108,12 @@ class InstallationTicketController extends Controller
             'data'    => $installationTicket,
         ]);
     }
+
     public function report(Request $request)
     {
         $request->validate([
             'month' => 'required|integer',
-            'year' => 'required|integer',
+            'year'  => 'required|integer',
         ]);
 
         $tickets = InstallationTicket::whereMonth('created_at', $request->month)
@@ -121,7 +124,7 @@ class InstallationTicketController extends Controller
 
         return response()->json([
             'success' => true,
-            'data' => [
+            'data'    => [
                 'periode' => $request->month . '-' . $request->year,
                 'summary' => $summary,
                 'tickets' => $tickets
