@@ -1,18 +1,18 @@
 <template>
-  <div class="pricing-config-view w-full! max-w-5xl! mx-auto! pb-20!">
-    <div class="mb-8! flex! items-center! gap-4!">
+  <div class="pricing-config-view w-full! max-w-5xl! mx-auto! pb-20! px-4! sm:px-0!">
+    <div class="mb-6! sm:mb-8! flex! items-center! gap-3! sm:gap-4!">
       <BaseButton
         variant="ghost"
         icon="arrow-left"
         @click="handleBack"
-        class="w-12! h-12! p-0! rounded-full! border! border-slate-200! bg-white! hover:bg-slate-50! hover:border-slate-300! text-slate-600! shadow-sm! shrink-0!"
+        class="w-10! h-10! sm:w-12! sm:h-12! p-0! rounded-full! border! border-slate-200! bg-white! hover:bg-slate-50! hover:border-slate-300! text-slate-600! shadow-sm! shrink-0!"
       />
       <div>
-        <h1 class="text-3xl font-extrabold text-slate-900! tracking-tight mb-0.5!">
-          Tentukan Harga Paket
+        <h1 class="text-xl! sm:text-3xl! font-extrabold text-slate-900! tracking-tight mb-0.5!">
+          Tambah Paket & Tarif
         </h1>
-        <p class="text-sm font-medium text-slate-500! leading-relaxed">
-          Konfigurasikan tarif bertingkat berdasarkan blok volume penggunaan air.
+        <p class="text-xs! sm:text-sm! font-medium text-slate-500! leading-relaxed">
+          Atur biaya pasang dan skema tarif air bertingkat.
         </p>
       </div>
     </div>
@@ -20,27 +20,26 @@
     <ContentCard
       variant="elevated"
       padding="none"
-      class="mb-6! border-0! shadow-xl! shadow-slate-200/40! overflow-visible! bg-white! rounded-3xl!"
+      class="mb-6! border-0! shadow-xl! shadow-slate-200/40! overflow-visible! bg-white! rounded-2xl! sm:rounded-3xl!"
     >
-      <div class="p-6! sm:p-10!">
-        <div class="flex items-center justify-between mb-8!">
+      <div class="p-5! sm:p-10!">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3! mb-6! sm:mb-8!">
           <div class="flex items-center gap-3!">
             <div class="w-1.5! h-6! bg-blue-600! rounded-full!"></div>
-            <h2 class="text-xl! font-bold! text-slate-800!">Konfigurasi Blok Tarif</h2>
+            <h2 class="text-lg! sm:text-xl! font-bold! text-slate-800!">Konfigurasi Blok Tarif</h2>
           </div>
           <div class="flex items-center gap-2!">
             <span
-              class="px-3! py-1! bg-blue-50! text-blue-700! text-[10px]! font-black! rounded-lg! uppercase! tracking-widest!"
+              class="px-2! py-1! bg-blue-50! text-blue-700! text-[9px]! sm:text-[10px]! font-black! rounded-lg! uppercase! tracking-widest!"
               >UNIT: M3</span
             >
             <span
-              class="px-3! py-1! bg-amber-50! text-amber-700! text-[10px]! font-black! rounded-lg! uppercase! tracking-widest!"
+              class="px-2! py-1! bg-amber-50! text-amber-700! text-[9px]! sm:text-[10px]! font-black! rounded-lg! uppercase! tracking-widest!"
               >IDR</span
             >
           </div>
         </div>
 
-        <!-- Reduced margin here -->
         <div class="mb-6!">
           <BaseInput
             v-model="namaKelas"
@@ -49,15 +48,14 @@
           />
         </div>
 
-        <!-- Reduced gap and margin here -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6! mb-8! pb-8! border-b! border-slate-100!">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4! sm:gap-6! mb-8! pb-8! border-b! border-slate-100!">
+          <MaksMoneyInput v-model="installationFee" label="Biaya Pasang Baru" placeholder="0" />
           <MaksMoneyInput v-model="abodemen" label="Biaya Abodemen" placeholder="0" />
-          <MaksMoneyInput v-model="denda" label="Biaya Denda" placeholder="0" />
+          <MaksMoneyInput v-model="denda" label="Denda Keterlambatan" placeholder="0" />
         </div>
 
-        <!-- Table Header -->
         <div
-          class="grid grid-cols-[1.5fr_2fr_2fr_80px] gap-4! px-6! mb-4! text-[11px]! font-bold! text-slate-400! uppercase! tracking-widest!"
+          class="hidden sm:grid grid-cols-[1.5fr_2fr_2fr_80px] gap-4! px-6! mb-4! text-[11px]! font-bold! text-slate-400! uppercase! tracking-widest!"
         >
           <div>URUTAN BLOK</div>
           <div class="text-center!">RENTANG VOLUME (M3)</div>
@@ -65,44 +63,64 @@
           <div class="text-center!">AKSI</div>
         </div>
 
-        <!-- Table Rows -->
-        <div class="space-y-3!">
+        <div class="space-y-4! sm:space-y-3!">
           <div
             v-for="(block, index) in blocks"
             :key="index"
-            class="group grid grid-cols-[1.5fr_2fr_2fr_80px] gap-4! items-center! py-4! px-6! rounded-2xl! bg-slate-50/50! border! border-transparent! hover:border-blue-100! hover:bg-white! hover:shadow-lg! hover:shadow-blue-500/5! transition-all! duration-300!"
+            class="group relative! flex flex-col sm:grid sm:grid-cols-[1.5fr_2fr_2fr_80px] gap-4! sm:items-center! py-5! px-5! sm:py-4! sm:px-6! rounded-2xl! bg-slate-50/50! border! border-slate-100! sm:border-transparent! hover:border-blue-100! hover:bg-white! hover:shadow-lg! hover:shadow-blue-500/5! transition-all! duration-300!"
           >
-            <div class="flex items-center gap-4!">
-              <div
-                class="w-10! h-10! rounded-xl! bg-blue-600! text-white! flex! items-center! justify-center! text-xs! font-black! shrink-0! shadow-lg! shadow-blue-200!"
-              >
-                {{ (index + 1).toString().padStart(2, '0') }}
+            <div class="flex items-center justify-between w-full sm:w-auto!">
+              <div class="flex items-center gap-3! sm:gap-4!">
+                <div
+                  class="w-9! h-9! sm:w-10! sm:h-10! rounded-xl! bg-blue-600! text-white! flex! items-center! justify-center! text-xs! font-black! shrink-0! shadow-lg! shadow-blue-200!"
+                >
+                  {{ (index + 1).toString().padStart(2, '0') }}
+                </div>
+                <div class="flex flex-col!">
+                  <span class="text-sm! font-bold! text-slate-700!"
+                    >Blok {{ blockNames[index] || 'Lanjutan' }}</span
+                  >
+                  <span class="text-[10px]! font-medium! text-slate-400! uppercase! tracking-tight!"
+                    >Tarif Tier {{ index + 1 }}</span
+                  >
+                </div>
               </div>
-              <span class="text-sm! font-bold! text-slate-700!"
-                >Blok {{ blockNames[index] || 'Lanjutan' }}</span
-              >
-            </div>
 
-            <div class="flex items-center gap-3! justify-center!">
-              <input
-                type="number"
-                v-model="block.from"
-                class="w-20! text-center! py-2.5! bg-white! border! border-slate-200! rounded-xl! text-sm! font-bold! text-slate-700! focus:outline-none! focus:border-blue-500! focus:ring-4! focus:ring-blue-500/5! transition-all!"
-                :disabled="index === 0"
-              />
-              <span class="text-slate-300! font-bold!">to</span>
-              <input
-                type="number"
-                v-model="block.to"
-                class="w-20! text-center! py-2.5! bg-white! border! border-slate-200! rounded-xl! text-sm! font-bold! text-slate-700! focus:outline-none! focus:border-blue-500! focus:ring-4! focus:ring-blue-500/5! transition-all!"
+              <BaseButton
+                v-if="blocks.length > 1"
+                variant="ghost"
+                size="sm"
+                icon="trash"
+                @click="removeBlock(index)"
+                class="sm:hidden! w-8! h-8! p-0! rounded-lg! border! border-red-100! bg-red-50/50! text-red-500!"
               />
             </div>
 
-            <div class="px-2!">
+            <div class="flex flex-col sm:flex-row items-start sm:items-center gap-2! sm:gap-3! justify-center!">
+              <span class="sm:hidden! text-[10px]! font-bold! text-slate-400! uppercase! tracking-wider!">Rentang Volume (m³)</span>
+              <div class="flex items-center gap-3! w-full sm:w-auto!">
+                <input
+                  type="number"
+                  v-model="block.from"
+                  class="w-full sm:w-20! text-center! py-2.5! bg-white! border! border-slate-200! rounded-xl! text-sm! font-bold! text-slate-400! cursor-not-allowed! outline-none!"
+                  disabled
+                />
+                <span class="text-slate-300! font-bold!">to</span>
+                <input
+                  type="number"
+                  v-model="block.to"
+                  @input="updateNextBlockFrom(index)"
+                  class="w-full sm:w-20! text-center! py-2.5! bg-white! border! border-slate-200! rounded-xl! text-sm! font-bold! text-slate-700! focus:outline-none! focus:border-blue-500! focus:ring-4! focus:ring-blue-500/5! transition-all!"
+                />
+              </div>
+            </div>
+
+            <div class="sm:px-2! w-full!">
+               <span class="sm:hidden! block! mb-1.5! text-[10px]! font-bold! text-slate-400! uppercase! tracking-wider!">Harga per m³</span>
               <MaksMoneyInput v-model="block.price" placeholder="0" no-margin size="md" />
             </div>
 
-            <div class="flex justify-center!">
+            <div class="hidden sm:flex justify-center!">
               <BaseButton
                 v-if="blocks.length > 1"
                 variant="ghost"
@@ -116,7 +134,6 @@
           </div>
         </div>
 
-        <!-- Add Block Button -->
         <div class="mt-8! flex! justify-center!">
           <button
             @click="addBlock"
@@ -125,7 +142,7 @@
             <div
               class="w-8! h-8! rounded-full! bg-slate-100! text-slate-400! flex! items-center! justify-center! group-hover:bg-blue-100! group-hover:text-blue-600! transition-all!"
             >
-              <font-awesome-icon icon="plus" class="text-xs!" />
+              <font-awesome-icon icon="circle-plus" class="text-xs!" />
             </div>
             <span class="text-sm! font-bold!">Tambah Blok Baru</span>
           </button>
@@ -133,15 +150,16 @@
       </div>
     </ContentCard>
 
-    <div class="mt-10! flex items-center justify-end! gap-4!">
+    <div class="mt-8! sm:mt-10! flex items-center justify-end!">
       <BaseButton
         variant="secondary"
         size="md"
         @click="handleSave"
-        class="px-12! py-4! font-bold! rounded-2xl! shadow-xl! shadow-slate-200! transform! transition-all! hover:translate-y-[-2px]! active:scale-95!"
+        :loading="isSaving"
+        class="w-full! sm:w-auto! sm:px-12! py-4! font-bold! rounded-2xl! shadow-xl! shadow-slate-200! transform! transition-all! hover:translate-y-[-2px]! active:scale-95!"
         icon="save"
       >
-        Simpan Kelas Biaya
+        Simpan Paket & Tarif
       </BaseButton>
     </div>
   </div>
@@ -159,24 +177,37 @@ import Swal from 'sweetalert2'
 
 const router = useRouter()
 
+const isSaving = ref(false)
 const namaKelas = ref('')
 const blockNames = ['Pertama', 'Kedua', 'Ketiga', 'Keempat', 'Kelima']
 const abodemen = ref(0)
 const denda = ref(0)
-const installationFee = ref(1500000) // Default installation fee
+const installationFee = ref(150000)
 const blocks = ref([
   { from: 0, to: 10, price: 2500 },
-  { from: 10, to: 20, price: 3750 },
-  { from: 20, to: 100, price: 5000 },
+  { from: 11, to: 20, price: 3750 },
+  { from: 21, to: 100, price: 5000 },
 ])
 
 const addBlock = () => {
   const lastBlock = blocks.value[blocks.value.length - 1]
+  const nextFrom = lastBlock ? parseInt(lastBlock.to || 0) + 1 : 0
   blocks.value.push({
-    from: lastBlock ? lastBlock.to : 0,
-    to: (lastBlock ? lastBlock.to : 0) + 10,
+    from: nextFrom,
+    to: nextFrom + 9,
     price: lastBlock ? lastBlock.price + 500 : 1000,
   })
+}
+
+const updateNextBlockFrom = (index) => {
+  if (index < blocks.value.length - 1) {
+    const currentTo = parseInt(blocks.value[index].to || 0)
+    blocks.value[index + 1].from = currentTo + 1
+    if (blocks.value[index + 1].to <= blocks.value[index + 1].from) {
+      blocks.value[index + 1].to = blocks.value[index + 1].from + 10
+    }
+    updateNextBlockFrom(index + 1)
+  }
 }
 
 const removeBlock = (index) => {
@@ -191,10 +222,10 @@ const adjustBlocksAfterDelete = () => {
     if (i === 0) {
       blocks.value[i].from = 0
     } else {
-      blocks.value[i].from = blocks.value[i - 1].to
+      blocks.value[i].from = parseInt(blocks.value[i - 1].to || 0) + 1
     }
     if (blocks.value[i].to <= blocks.value[i].from) {
-      blocks.value[i].to = blocks.value[i].from + 10
+      blocks.value[i].to = blocks.value[i].from + 9
     }
   }
 }
@@ -205,42 +236,37 @@ const handleBack = () => {
 
 const handleSave = async () => {
   if (!namaKelas.value) {
-    Swal.fire('Error', 'Nama Kelas harus diisi!', 'error')
-    return
+    return Swal.fire('Peringatan', 'Nama kelas harus diisi', 'warning')
   }
 
+  isSaving.value = true
+  let createdPackageId = null
+
   try {
-    Swal.fire({
-      title: 'Menyimpan...',
-      allowOutsideClick: false,
-      didOpen: () => {
-        Swal.showLoading()
-      },
-    })
-
-    // 1. Create Package
-    const packageRes = await packageService.createPackage({
+    const packagePayload = {
       name: namaKelas.value,
-      installation_fee: installationFee.value,
-      monthly_abodemen: abodemen.value,
-      late_penalty: denda.value,
-    })
+      installation_fee: parseInt(installationFee.value),
+      monthly_abodemen: parseInt(abodemen.value),
+      late_penalty: parseInt(denda.value),
+    }
 
-    if (packageRes.success) {
-      const packageId = packageRes.data.id
+    const resPackage = await packageService.createPackage(packagePayload)
 
-      // 2. Create Blocks
+    if (resPackage.success) {
+      createdPackageId = resPackage.data.id
+
       for (const block of blocks.value) {
-        await packageService.createTariffBlock(packageId, {
-          usage_min_m3: block.from,
-          usage_max_m3: block.to,
-          price_per_m3: block.price,
-        })
+        const blockPayload = {
+          usage_min_m3: parseInt(block.from),
+          usage_max_m3: block.to ? parseInt(block.to) : null,
+          price_per_m3: parseInt(block.price),
+        }
+        await packageService.createTariffBlock(createdPackageId, blockPayload)
       }
 
       await Swal.fire({
         title: 'Berhasil!',
-        text: 'Konfigurasi harga paket telah disimpan.',
+        text: 'Paket & tarif layanan baru telah disimpan.',
         icon: 'success',
         confirmButtonText: 'Selesai',
         confirmButtonColor: '#3b82f6',
@@ -249,23 +275,35 @@ const handleSave = async () => {
       router.push('/kelas-biaya')
     }
   } catch (error) {
-    Swal.fire('Error', 'Gagal menyimpan konfigurasi: ' + (error.response?.data?.message || error.message), 'error')
-  }
-}
+    if (createdPackageId) {
+      await packageService.deletePackage(createdPackageId)
+    }
 
-const handleKeydown = (e) => {
-  if (e.altKey && e.key === 'n') {
-    e.preventDefault()
-    addBlock()
+    let errorMsg = 'Range pemakaian overlap dengan blok tarif yang sudah ada.'
+    if (error.response?.data?.message) {
+      errorMsg = error.response.data.message
+      if (errorMsg.includes('The name has already been taken')) {
+        errorMsg = 'Nama kelas sudah digunakan, silakan gunakan nama lain.'
+      }
+    }
+
+    Swal.fire({
+      title: 'Gagal Menyimpan',
+      text: errorMsg,
+      icon: 'error',
+      confirmButtonColor: '#ef4444',
+    })
+  } finally {
+    isSaving.value = false
   }
 }
 
 onMounted(() => {
-  window.addEventListener('keydown', handleKeydown)
+  document.body.style.overflowX = 'hidden'
 })
 
 onUnmounted(() => {
-  window.removeEventListener('keydown', handleKeydown)
+  document.body.style.overflowX = 'auto'
 })
 </script>
 
