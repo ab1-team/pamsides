@@ -53,20 +53,7 @@
               </p>
             </div>
 
-            <div class="form-group!">
-              <label class="block! text-xs! font-black! text-slate-400! uppercase! tracking-widest! mb-3!">Kondisi Meteran</label>
-              <div class="flex! gap-3!">
-                <button
-                  v-for="opt in ['Bagus', 'Rusak', 'Buram']"
-                  :key="opt"
-                  @click="formData.condition = opt"
-                  :class="formData.condition === opt ? 'bg-blue-600! text-white! border-blue-600!' : 'bg-white! text-slate-500! border-slate-200!'"
-                  class="flex-1! py-3! rounded-xl! border-2! font-bold! transition-all!"
-                >
-                  {{ opt }}
-                </button>
-              </div>
-            </div>
+
           </div>
 
           <div class="space-y-6!">
@@ -154,7 +141,6 @@ const lastReading = 1240
 
 const formData = reactive({
   currentReading: '',
-  condition: 'Bagus',
   photo: null,
 })
 

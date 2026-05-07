@@ -137,7 +137,11 @@ import {
   faPaperPlane,
   faPhoneVolume,
   faShareAlt,
+  faTachometerAlt,
+  faTasks,
+  faChartPie,
   faExclamationCircle,
+  faToolbox,
 } from '@fortawesome/free-solid-svg-icons'
 
 import { faWhatsapp } from '@fortawesome/free-brands-svg-icons'
@@ -255,7 +259,11 @@ library.add(
   faPaperPlane,
   faPhoneVolume,
   faShareAlt,
+  faTachometerAlt,
+  faTasks,
+  faChartPie,
   faExclamationCircle,
+  faToolbox,
 )
 
 export { MySwal } from './utils/swal'
