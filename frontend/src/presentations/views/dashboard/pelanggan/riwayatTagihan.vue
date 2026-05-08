@@ -27,7 +27,7 @@
               class="text-[9px]! lg:text-[10px]! font-black! text-indigo-400! uppercase! tracking-widest!"
               >ID PELANGGAN</span
             >
-            <div class="text-sm! lg:text-base! text-indigo-600! font-black!">PAM-2025-09821</div>
+            <div class="text-sm! lg:text-base! text-indigo-600! font-black!"> {{ customerCode }} </div>
           </div>
         </div>
       </div>
@@ -37,30 +37,34 @@
           v-for="(stat, idx) in stats"
           :key="idx"
           variant="elevated"
-          class="border-0! shadow-xl! shadow-slate-200/40! hover:scale-[1.02]! transition-transform! p-4! lg:p-6!"
+          class="border-0! shadow-lg! shadow-slate-200/30! hover:scale-[1.01]! transition-transform! p-3! lg:p-4!"
         >
-          <div class="flex! items-center! justify-between! gap-4!">
-            <div class="flex! items-center! gap-3! lg:gap-4!">
-              <div
-                :class="`w-10! h-10! lg:w-12! lg:h-12! rounded-xl! lg:rounded-2xl! ${stat.bg}! ${stat.color}! flex! items-center! justify-center! flex-shrink-0!`"
-              >
-                <font-awesome-icon :icon="stat.icon" class="text-base! lg:text-xl! !m-auto!" />
-              </div>
+          <div class="flex! flex-col! gap-2!">
+            <div class="flex! items-center! justify-between!">
               <span
-                class="text-[10px]! lg:text-xs! font-black! text-slate-400! uppercase! tracking-wider! leading-tight! max-w-[80px]! lg:max-w-none!"
+                class="text-[8px]! lg:text-[9px]! font-black! text-slate-400! uppercase! tracking-widest! whitespace-nowrap!"
               >
                 {{ stat.label }}
               </span>
+              <div
+                :class="`w-6! h-6! lg:w-7! lg:h-7! rounded-lg! ${stat.bg}! ${stat.color}! flex! items-center! justify-center! flex-shrink-0!`"
+              >
+                <font-awesome-icon :icon="stat.icon" class="text-[10px]! lg:text-xs! !m-auto!" />
+              </div>
             </div>
-            <div class="text-right!">
-              <div class="text-lg! lg:text-2xl! font-black! text-slate-800! tracking-tighter!">
+            
+            <div class="flex! flex-col! gap-0!">
+              <div class="text-base! lg:text-lg! font-black! text-slate-800! tracking-tighter! whitespace-nowrap!">
                 {{ stat.value }}
               </div>
               <div
                 v-if="idx === 2"
-                class="text-[9px]! font-bold! text-green-500! uppercase! tracking-widest!"
+                :class="[
+                  'text-[8px]! font-black! uppercase! tracking-[0.15em]! whitespace-nowrap!',
+                  stat.value === 'Lancar' ? 'text-emerald-500!' : 'text-amber-500!'
+                ]"
               >
-                STATUS OK
+                {{ stat.value === 'Lancar' ? 'STATUS OK' : 'PERLU BAYAR' }}
               </div>
             </div>
           </div>
@@ -82,7 +86,7 @@
           empty-title="Tagihan Tidak Ditemukan"
           :empty-message="'Mohon cek kembali periode yang Anda cari.'"
           row-clickable
-          @row-click="$router.push('/pelanggan/tagihan-detail')"
+          @row-click="(row) => $router.push({ path: '/pelanggan/tagihan-detail', query: { id: row.id } })"
           no-card
         >
           <template #column-period="{ row }">
@@ -116,41 +120,49 @@
               class="w-full! px-5! h-12! bg-slate-50! rounded-2xl! border! border-slate-100! text-sm! focus:bg-white! focus:border-indigo-500! transition-all!"
             />
           </div>
-          <div class="divide-y! divide-slate-100!">
+          <div class="divide-y! divide-slate-50!">
             <div
               v-for="bill in filteredBills"
               :key="bill.id"
-              class="p-5! active:bg-slate-50! transition-colors! flex! items-center! gap-4! cursor-pointer!"
-              @click="$router.push('/pelanggan/tagihan-detail')"
+              class="p-5! lg:p-6! active:bg-slate-50! transition-all! cursor-pointer! group!"
+              @click="$router.push({ path: '/pelanggan/tagihan-detail', query: { id: bill.id } })"
             >
-              <div class="flex-1!">
-                <div class="flex! items-center! justify-between! mb-2!">
-                  <div class="font-black! text-slate-800!">{{ bill.period }}</div>
-                  <span :class="getStatusClass(bill.status)">{{ bill.status }}</span>
-                </div>
-                <div class="flex! items-center! justify-between!">
-                  <div class="text-[10px]! font-black! text-slate-300! uppercase! tracking-widest!">
-                    #{{ bill.id }}
+              <div class="flex! items-center! justify-between! mb-5!">
+                <div class="flex! items-center! gap-3!">
+                  <div class="w-10! h-10! bg-indigo-50! rounded-xl! flex! items-center! justify-center! text-indigo-600! group-hover:scale-110! transition-transform!">
+                    <font-awesome-icon icon="file-invoice-dollar" />
                   </div>
-                  <div class="flex! items-center! gap-5!">
-                    <div class="text-right!">
-                      <div class="text-[10px]! font-bold! text-slate-400! uppercase! mb-0.5!">
-                        Pemakaian
-                      </div>
-                      <div class="text-sm! font-black! text-slate-700!">
-                        {{ bill.usage }}<span class="text-[10px]! opacity-30! ml-1!">m³</span>
-                      </div>
+                  <div>
+                    <div class="text-base! font-black! text-slate-800! leading-tight!">
+                      {{ bill.period }}
                     </div>
-                    <div class="text-right!">
-                      <div class="text-[10px]! font-bold! text-slate-400! uppercase! mb-0.5!">
-                        Total Tagihan
-                      </div>
-                      <div class="text-sm! font-black! text-indigo-600!">
-                        Rp. {{ (bill.amount / 1000).toFixed(0) }}k
-                      </div>
+                    <div class="text-[10px]! font-black! text-slate-400! uppercase! tracking-widest! mt-0.5!">
+                      #INV-{{ bill.id }}
                     </div>
                   </div>
                 </div>
+                <span :class="getStatusClass(bill.status)">{{ bill.status }}</span>
+              </div>
+
+              <div class="space-y-3! bg-slate-50/50! p-4! rounded-2xl! border! border-slate-100/50!">
+                <div class="flex! justify-between! items-center!">
+                  <span class="text-xs! font-bold! text-slate-500!">Pemakaian Air</span>
+                  <span class="text-xs! font-black! text-slate-800!">
+                    {{ bill.usage }} m³
+                  </span>
+                </div>
+                <div class="w-full! h-px! bg-slate-100!"></div>
+                <div class="flex! justify-between! items-center!">
+                  <span class="text-xs! font-bold! text-slate-500!">Total Tagihan</span>
+                  <span class="text-sm! font-black! text-indigo-600!">
+                    Rp. {{ bill.amount.toLocaleString() }}
+                  </span>
+                </div>
+              </div>
+
+              <div class="mt-4! flex! items-center! justify-center! text-[10px]! font-black! text-indigo-500! uppercase! tracking-[0.2em]! opacity-0! group-hover:opacity-100! transition-opacity!">
+                Lihat Detail Lengkap
+                <font-awesome-icon icon="chevron-right" class="ml-2!" />
               </div>
             </div>
           </div>
@@ -173,15 +185,53 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import ContentCard from '@/presentations/components/ui/ContentCard.vue'
 import BaseButton from '@/presentations/components/ui/BaseButton.vue'
 import DataTable from '@/presentations/components/ui/DataTable.vue'
+import pelangganService from '@/services/pelanggan.service'
 
 const isMobile = ref(false)
 const checkMobile = () => {
   isMobile.value = window.innerWidth < 1024
 }
 
+const bills = ref([])
+const historyStats = ref({
+  total_usage_3_months: 0,
+  avg_amount: 0,
+  current_status: '-'
+})
+const customerCode = ref('-')
+const isLoading = ref(true)
+
+const fetchHistory = async () => {
+  isLoading.value = true
+  try {
+    const response = await pelangganService.getBillHistory()
+    if (response.success) {
+      bills.value = response.data.bills.map(bill => ({
+        id: bill.id.toString(),
+        period: getMonthName(bill.billing_period_month) + ' ' + bill.billing_period_year,
+        usage: bill.usage_m3,
+        amount: bill.total_amount,
+        status: bill.status === 'paid' ? 'Lunas' : 'Belum Bayar'
+      }))
+      historyStats.value = response.data.stats
+      customerCode.value = response.data.customer_code
+    }
+  } catch (error) {
+    console.error('Failed to fetch history:', error)
+  } finally {
+    isLoading.value = false
+  }
+}
+
+const getMonthName = (month) => {
+  const months = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember']
+  return months[month - 1] || '-'
+}
+
 onMounted(() => {
   checkMobile()
   window.addEventListener('resize', checkMobile)
+  fetchHistory()
 })
 
 onUnmounted(() => {
@@ -197,36 +247,28 @@ const tableColumns = [
   { key: 'status', title: 'Status' },
 ]
 
-const stats = ref([
+const stats = computed(() => [
   {
-    label: 'Total Pemakaian (6 Bln)',
-    value: '142 m³',
+    label: 'Total Pemakaian (3 Bln)',
+    value: `${historyStats.value.total_usage_3_months || 0} m³`,
     icon: 'droplet',
     bg: 'bg-blue-50',
     color: 'text-blue-600',
   },
   {
     label: 'Rata-rata Tagihan',
-    value: 'Rp. 82.500',
+    value: `Rp. ${new Intl.NumberFormat('id-ID').format(Math.round(historyStats.value.avg_amount))}`,
     icon: 'chart-line',
     bg: 'bg-indigo-50',
     color: 'text-indigo-600',
   },
   {
     label: 'Status Saat Ini',
-    value: 'Lancar',
-    icon: 'check-circle',
-    bg: 'bg-green-50',
-    color: 'text-green-600',
+    value: historyStats.value.current_status,
+    icon: historyStats.value.current_status === 'Lancar' ? 'check-circle' : 'exclamation-circle',
+    bg: historyStats.value.current_status === 'Lancar' ? 'bg-green-50' : 'bg-amber-50',
+    color: historyStats.value.current_status === 'Lancar' ? 'text-green-600' : 'text-amber-600',
   },
-])
-
-const bills = ref([
-  { id: '882109', period: 'Mei 2025', usage: 25, amount: 85000, status: 'Belum Bayar' },
-  { id: '881092', period: 'April 2025', usage: 22, amount: 78000, status: 'Lunas' },
-  { id: '879921', period: 'Maret 2025', usage: 28, amount: 92000, status: 'Lunas' },
-  { id: '878810', period: 'Februari 2025', usage: 18, amount: 65000, status: 'Lunas' },
-  { id: '877701', period: 'Januari 2025', usage: 20, amount: 72000, status: 'Lunas' },
 ])
 
 const filteredBills = computed(() => {
@@ -235,7 +277,8 @@ const filteredBills = computed(() => {
   return bills.value.filter(
     (bill) => bill.period.toLowerCase().includes(query) || bill.id.toLowerCase().includes(query),
   )
-})
+}
+)
 
 const getStatusClass = (status) => {
   if (status === 'Lunas') {

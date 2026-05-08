@@ -31,7 +31,6 @@
 
     <nav class="sidebar-nav">
       <template v-for="(item, index) in filteredMenuItems" :key="index">
-        <!-- Single Nav Item -->
         <router-link
           v-if="!item.children"
           :to="item.to"
@@ -44,7 +43,6 @@
           <span class="sidebar-nav-label">{{ item.label }}</span>
         </router-link>
 
-        <!-- Nav Group (with Submenu) -->
         <div v-else class="sidebar-nav-group">
           <router-link
             to="#"
@@ -63,10 +61,8 @@
             />
           </router-link>
 
-          <!-- Submenu -->
           <div class="sidebar-submenu" :class="{ open: openSubmenus[item.label] && sidebarOpen }">
             <template v-for="(sub, subIdx) in item.children" :key="subIdx">
-              <!-- Nested Submenu -->
               <div v-if="sub.children" class="sidebar-nav-group">
                 <router-link
                   to="#"
@@ -101,7 +97,6 @@
                 </div>
               </div>
 
-              <!-- Simple Submenu Item -->
               <router-link
                 v-else
                 :to="sub.to"
@@ -125,7 +120,7 @@
 
     <div class="sidebar-new-entry-area">
       <BaseButton
-        variant="primary-gradient"
+        variant="info"
         class="new-entry-btn"
         :class="{ 'icon-only': !sidebarOpen }"
         size="md"
@@ -181,7 +176,6 @@ const roleSubtitle = computed(() => {
   }
 })
 
-// Submenu States (Reactive Object)
 const openSubmenus = reactive({})
 
 function toggleSubmenu(label) {
@@ -191,11 +185,17 @@ function toggleSubmenu(label) {
 }
 
 const menuItems = [
-  {
+    {
     label: 'Dashboard',
     icon: 'home',
     to: '/dashboard',
     roles: ['admin', 'surveyor', 'teknisi', 'pelanggan'],
+  },
+  {
+    label: 'Create Survey Baru',
+    icon: 'plus-circle',
+    to: '/survey/create',
+    roles: ['surveyor'],
   },
   {
     label: 'Settings',
@@ -203,14 +203,14 @@ const menuItems = [
     roles: ['admin'],
     children: [
       { label: 'Personalisasi SOP', to: '/settings/personalisasi-sop' },
-      { label: 'Cart of Account COA', to: '/settings/coa' },
-      { label: 'Kelas Dan Biaya', to: '/kelas-biaya' },
+      { label: 'Chart of Account COA', to: '/settings/coa' },
+      { label: 'Paket & Tarif Layanan', to: '/kelas-biaya' },
     ],
   },
   {
     label: 'Basis Data',
     icon: 'database',
-    roles: ['admin', 'surveyor'],
+    roles: ['admin'],
     children: [
       {
         label: 'Pelanggan',
@@ -242,89 +242,40 @@ const menuItems = [
   {
     label: 'Master Instalasi',
     icon: 'chart-bar',
-    roles: ['admin', 'surveyor', 'teknisi'],
+    roles: ['admin', 'teknisi'],
     children: [
-      { label: 'Register Instalasi', to: '/instalasi/register', roles: ['admin', 'surveyor'] },
-      { label: 'Status Instalasi', to: '/instalasi/status', roles: ['admin', 'surveyor'] },
-      { label: 'Analisis Survey', to: '/dashboard', roles: ['surveyor'] },
+      { label: 'Register Instalasi', to: '/instalasi/register', roles: ['admin'] },
+      { label: 'Status Instalasi', to: '/instalasi/status', roles: ['admin'] },
       {
-        label: 'Pemakaian Air Bersih',
-        to: '/instalasi/pemakaian-air',
-        roles: ['admin'],
-      },
-      {
-        label: 'Pemakaian Air Bersih',
-        to: '/instalasi/teknisiPemakaianAir',
-        roles: ['teknisi'],
-      },
-      {
-        label: 'Retribusi Sampah',
-        to: '/instalasi/retribusi-sampah',
+        label: 'Pemasangan',
+        icon: 'tools',
         roles: ['admin', 'teknisi'],
+        children: [
+          { label: 'Pemasangan Baru', to: '/instalasi/pemasangan' },
+          { label: 'Daftar Pemasangan', to: '/instalasi/pemasangan/daftar' },
+        ],
       },
     ],
-  },
-  {
-    label: 'Transaksi',
-    icon: 'assistive-listening-systems',
-    roles: ['admin'],
-    children: [
-      { label: 'Jurnal Umum', to: '/transaksi/jurnal-umum' },
-      { label: 'Tagihan Instalasi', to: '/transaksi/tagihan-instalasi' },
-      { label: 'Tagihan Bulanan', to: '/transaksi/tagihan-bulanan' },
-      { label: 'E-Budgeting', to: '/transaksi/e-budgeting' },
-      { label: 'Tutup Buku', to: '/transaksi/tutup-buku' },
-      { label: 'Komisi SPS', to: '/transaksi/komisi-sps' },
-    ],
-  },
-  {
-    label: 'Pelaporan',
-    icon: 'file-powerpoint',
-    to: '/pelaporan',
-    roles: ['admin'],
-  },
-  // Pelanggan Specific Items
-  {
-    label: 'Riwayat Tagihan',
-    icon: 'history',
-    to: '/pelanggan/riwayat-tagihan',
-    roles: ['pelanggan'],
-  },
-  {
-    label: 'Lapor Gangguan',
-    icon: 'headset',
-    to: '/pelanggan/lapor-gangguan',
-    roles: ['pelanggan'],
   },
 ]
 
 const filteredMenuItems = computed(() => {
-  return menuItems
-    .filter((item) => item.roles.includes(uiStore.userRole))
-    .map((item) => {
-      if (item.children) {
-        return {
-          ...item,
-          children: item.children.filter(
-            (sub) => !sub.roles || sub.roles.includes(uiStore.userRole),
-          ),
-        }
-      }
-      return item
-    })
+  return menuItems.filter((item) => {
+    if (item.roles && !item.roles.includes(uiStore.userRole)) return false
+    return true
+  })
 })
 
 function handleMenuClick() {
-  if (props.mobileSidebarOpen) {
+  if (window.innerWidth < 1024) {
     emit('close-mobile-sidebar')
   }
 }
 
 watch(
   () => props.sidebarOpen,
-  (val) => {
-    if (!val) {
-      // Close all submenus when sidebar is collapsed
+  (newVal) => {
+    if (!newVal) {
       Object.keys(openSubmenus).forEach((key) => {
         openSubmenus[key] = false
       })
@@ -332,3 +283,5 @@ watch(
   },
 )
 </script>
+
+<style scoped></style>

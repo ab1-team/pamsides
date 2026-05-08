@@ -113,14 +113,13 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
+import { useRouter } from 'vue-router'
 import axios from 'axios'
 import { MySwal } from '@/main.js'
 import { useUiStore } from '@/stores/uiStore'
 import '@/assets/css/login.css'
 
 const router = useRouter()
-const route = useRoute()
 const uiStore = useUiStore()
 
 const form = ref({
@@ -171,7 +170,6 @@ const handleLogin = async () => {
 
   loading.value = true
   try {
-    // Request API mengirim data email dan password ke backend Laravel
     const response = await axios.post('http://127.0.0.1:8000/api/login', {
       email: form.value.email,
       password: form.value.password,
@@ -180,13 +178,10 @@ const handleLogin = async () => {
     const res = response.data
 
     if (res.success) {
-      // 1. Simpan token ke localStorage
       localStorage.setItem('auth_token', res.data.token)
       
-      // 2. Simpan data user
-      localStorage.setItem('user_data', JSON.stringify(res.data.user))
-      
-      // 3. Update role di store
+      // 2. Simpan data user & update role di store
+      uiStore.setUserData(res.data.user)
       uiStore.setUserRole(res.data.user.role)
       
       MySwal.fire({
@@ -205,8 +200,7 @@ const handleLogin = async () => {
         },
       })
       router.push('/dashboard')
-    }
- else {
+    } else {
       throw new Error(res.message || 'Login Gagal')
     }
   } catch (error) {

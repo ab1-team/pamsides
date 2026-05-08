@@ -24,9 +24,16 @@ return new class extends Migration
                 ->constrained('users')
                 ->nullOnDelete();
 
+            // relasi user pelanggan
+            $table->foreignId('user_id')
+                  ->nullable()
+                  ->constrained('users')
+                  ->nullOnDelete();
+
             $table->string('applicant_name');
             $table->string('nik', 20);
 
+            // tambahan
             $table->string('phone', 20)->nullable();
 
             $table->enum('gender', [
@@ -51,7 +58,7 @@ return new class extends Migration
                 'completed',
                 'suspended',
                 'terminated'
-            ])->default('draft');
+            ])->default('pending');
 
             $table->foreignId('created_by')
                 ->constrained('users');
