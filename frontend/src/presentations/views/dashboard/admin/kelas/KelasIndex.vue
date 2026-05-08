@@ -24,56 +24,55 @@
     <ContentCard padding="none" class="border-0! shadow-xl! shadow-slate-200/50! rounded-3xl! overflow-hidden!">
       <DataTable
         :columns="columns"
-        :items="items"
+        :data="items"
         :loading="loading"
-        :show-index="true"
-        class="border-0!"
-        hover
+        :total-entries="items.length"
+        expandable
       >
-        <template #cell-nama="{ item }">
+        <template #column-nama="{ row }">
           <div class="flex items-center gap-3!">
             <div
               class="w-10! h-10! rounded-xl! bg-blue-50! text-blue-600! flex! items-center! justify-center! font-bold! text-xs!"
             >
-              {{ item.name.substring(0, 2).toUpperCase() }}
+              {{ row.name.substring(0, 2).toUpperCase() }}
             </div>
             <div>
-              <div class="font-bold! text-slate-900!">{{ item.name }}</div>
+              <div class="font-bold! text-slate-900!">{{ row.name }}</div>
               <div class="text-[10px]! font-medium! text-slate-400! uppercase! tracking-tight!">
-                ID: #{{ item.id }}
+                ID: #{{ row.id }}
               </div>
             </div>
           </div>
         </template>
 
-        <template #cell-biaya_pasang="{ item }">
+        <template #column-biaya_pasang="{ row }">
           <div class="text-right! pr-8!">
             <div class="text-sm! font-bold! text-slate-700!">
-              {{ formatCurrency(item.installation_fee) }}
+              {{ formatCurrency(row.installation_fee) }}
             </div>
             <div class="text-[10px]! text-slate-400! font-medium!">ONE TIME</div>
           </div>
         </template>
 
-        <template #cell-abodemen="{ item }">
+        <template #column-abodemen="{ row }">
           <div class="text-right! pr-8!">
             <div class="text-sm! font-bold! text-slate-700!">
-              {{ formatCurrency(item.monthly_abodemen) }}
+              {{ formatCurrency(row.monthly_abodemen) }}
             </div>
             <div class="text-[10px]! text-slate-400! font-medium!">MONTHLY</div>
           </div>
         </template>
 
-        <template #cell-denda="{ item }">
+        <template #column-denda="{ row }">
           <div class="text-right! pr-8!">
             <div class="text-sm! font-bold! text-amber-600!">
-              {{ formatCurrency(item.late_penalty) }}
+              {{ formatCurrency(row.late_penalty) }}
             </div>
             <div class="text-[10px]! text-slate-400! font-medium!">PER VIOLATION</div>
           </div>
         </template>
 
-        <template #expand="{ item }">
+        <template #expanded-row="{ row }">
           <div class="p-6! bg-slate-50/50! border-t! border-slate-100!">
             <div class="flex items-center gap-3! mb-5!">
               <div class="w-1! h-5! bg-blue-500! rounded-full!"></div>
@@ -85,34 +84,45 @@
             <div
               class="grid gap-4!"
               :style="{
-                gridTemplateColumns: `repeat(${Math.min(item.water_tariff_blocks.length, 4)}, minmax(0, 1fr))`,
+                gridTemplateColumns: `repeat(auto-fill, minmax(200px, 1fr))`,
               }"
             >
               <div
-                v-for="(block, idx) in item.water_tariff_blocks"
+                v-for="(block, idx) in row.water_tariff_blocks"
                 :key="idx"
-                class="bg-white! p-4! rounded-2xl! border! border-slate-100! shadow-sm! hover:shadow-md! hover:border-blue-100! transition-all!"
+                class="bg-white! p-5! rounded-2xl! border! border-slate-100! shadow-sm! hover:shadow-md! hover:border-blue-100! transition-all! relative! overflow-hidden!"
               >
-                <div class="flex items-center justify-between mb-3!">
+                <div 
+                  v-if="!block.usage_max_m3"
+                  class="absolute! -right-6! -top-6! w-12! h-12! bg-blue-500/10! rounded-full! flex! items-center! justify-center! rotate-12!"
+                >
+                  <span class="text-blue-500! font-black! text-lg!">∞</span>
+                </div>
+
+                <div class="flex items-center justify-between mb-4!">
                   <span class="text-[10px]! font-black! text-slate-300! uppercase! tracking-widest!"
                     >BLOCK {{ idx + 1 }}</span
                   >
                   <div
-                    class="w-6! h-6! rounded-lg! bg-blue-50! text-blue-600! flex! items-center! justify-center! text-[10px]! font-black!"
+                    class="w-7! h-7! rounded-lg! bg-blue-50! text-blue-600! flex! items-center! justify-center! text-xs! font-black!"
                   >
                     {{ idx + 1 }}
                   </div>
                 </div>
-                <div class="space-y-1!">
-                  <div class="text-[10px]! font-bold! text-slate-400! uppercase!">Range (m³)</div>
-                  <div class="text-sm! font-black! text-slate-800!">
-                    {{ block.usage_min_m3 }} - {{ block.usage_max_m3 || '∞' }}
+                
+                <div class="grid grid-cols-2 gap-4!">
+                  <div class="space-y-1!">
+                    <div class="text-[9px]! font-bold! text-slate-400! uppercase! tracking-tighter!">Volume</div>
+                    <div class="text-sm! font-black! text-slate-800!">
+                      {{ block.usage_min_m3 }} - {{ block.usage_max_m3 || '∞' }}
+                      <span class="text-[10px]! text-slate-400! font-bold! ml-0.5!">m³</span>
+                    </div>
                   </div>
-                </div>
-                <div class="mt-3! pt-3! border-t! border-slate-50!">
-                  <div class="text-[10px]! font-bold! text-slate-400! uppercase!">Harga</div>
-                  <div class="text-base! font-black! text-blue-600!">
-                    {{ formatCurrency(block.price_per_m3) }}
+                  <div class="space-y-1!">
+                    <div class="text-[9px]! font-bold! text-slate-400! uppercase! tracking-tighter!">Harga</div>
+                    <div class="text-sm! font-black! text-blue-600!">
+                      {{ formatCurrency(block.price_per_m3) }}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -120,21 +130,21 @@
           </div>
         </template>
 
-        <template #cell-actions="{ item }">
+        <template #column-actions="{ row }">
           <div class="flex items-center justify-center gap-2!">
             <BaseButton
               variant="ghost"
               size="sm"
               icon="edit"
-              @click="handleEdit(item)"
-              class="w-9! h-9! p-0! rounded-xl! text-slate-400! hover:text-blue-600! hover:bg-blue-50! transition-all!"
+              @click="handleEdit(row)"
+              class="w-8! h-8! p-0! rounded-lg! border! border-slate-100! hover:border-blue-200! hover:bg-blue-50! text-slate-600! hover:text-blue-600! shadow-sm! transition-all!"
             />
             <BaseButton
               variant="ghost"
               size="sm"
               icon="trash"
-              @click="handleDelete(item)"
-              class="w-9! h-9! p-0! rounded-xl! text-slate-400! hover:text-red-600! hover:bg-red-50! transition-all!"
+              @click="handleDelete(row)"
+              class="w-8! h-8! p-0! rounded-lg! border! border-slate-100! hover:border-red-200! hover:bg-red-50! text-slate-600! hover:text-red-600! shadow-sm! transition-all!"
             />
           </div>
         </template>
@@ -208,11 +218,11 @@ const formatCurrency = (value) => {
 }
 
 const handleAdd = () => {
-  router.push('/kelas-biaya/tambah')
+  router.push('/kelas-biaya/config')
 }
 
 const handleEdit = (item) => {
-  router.push(`/kelas-biaya/edit/${item.id}`)
+  router.push(`/kelas-biaya/config/${item.id}`)
 }
 
 const handleDelete = async (item) => {
