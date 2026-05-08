@@ -3,7 +3,7 @@
     <div class="grid! items-start! grid-cols-1! sm:grid-cols-2! lg:grid-cols-4! gap-4! mb-8!">
       <statCard
         label="INSTALASI"
-        value="100"
+        :value="statInstalasi.toString()"
         :link="null"
         @detail-click="openDetailModal('instalasi')"
       >
@@ -12,7 +12,7 @@
 
       <statCard
         label="PEMAKAIAN"
-        value="100"
+        :value="statPemakaian.toString()"
         :link="null"
         @detail-click="openDetailModal('pemakaian')"
       >
@@ -21,14 +21,14 @@
 
       <statCard
         label="TUNGGAKAN"
-        value="100"
+        :value="statTunggakan.toString()"
         :link="null"
         @detail-click="openDetailModal('tunggakan')"
       >
         <font-awesome-icon icon="balance-scale" />
       </statCard>
 
-      <statCard label="TAGIHAN" value="100" :link="null" @detail-click="openDetailModal('tagihan')">
+      <statCard label="TAGIHAN" :value="statTagihan.toString()" :link="null" @detail-click="openDetailModal('tagihan')">
         <font-awesome-icon icon="file-invoice" />
       </statCard>
     </div>
@@ -45,10 +45,11 @@
               >Pendapatan</span
             >
             <div
-              class="flex! items-center! gap-1! px-2! py-1! bg-rose-50! text-rose-600! rounded-md! text-[10px]! font-bold!"
+              class="flex! items-center! gap-1! px-2! py-1! rounded-md! text-[10px]! font-bold!"
+              :class="financialData.pendapatan > 0 ? 'bg-emerald-50! text-emerald-600!' : 'bg-rose-50! text-rose-600!'"
             >
-              <font-awesome-icon icon="arrow-down" class="w-2.5! h-2.5!" />
-              <span>NEGATIVE</span>
+              <font-awesome-icon :icon="financialData.pendapatan > 0 ? 'arrow-up' : 'arrow-down'" class="w-2.5! h-2.5!" />
+              <span>{{ financialData.pendapatan > 0 ? 'POSITIVE' : 'NEGATIVE' }}</span>
             </div>
           </div>
           <div class="flex! items-baseline! gap-1!">
@@ -95,10 +96,11 @@
               >Surplus</span
             >
             <div
-              class="flex! items-center! gap-1! px-2! py-1! bg-rose-50! text-rose-600! rounded-md! text-[10px]! font-bold!"
+              class="flex! items-center! gap-1! px-2! py-1! rounded-md! text-[10px]! font-bold!"
+              :class="financialData.surplus > 0 ? 'bg-emerald-50! text-emerald-600!' : 'bg-rose-50! text-rose-600!'"
             >
-              <font-awesome-icon icon="arrow-down" class="w-2.5! h-2.5!" />
-              <span>NEGATIVE</span>
+              <font-awesome-icon :icon="financialData.surplus > 0 ? 'arrow-up' : 'arrow-down'" class="w-2.5! h-2.5!" />
+              <span>{{ financialData.surplus > 0 ? 'POSITIVE' : 'NEGATIVE' }}</span>
             </div>
           </div>
           <div class="flex! items-baseline! gap-1!">
@@ -240,10 +242,10 @@
           </div>
 
           <div class="flex-1! overflow-y-auto! relative! bg-white!">
-            <component :is="activeComponent" />
+            <component :is="activeComponent" @close="closeDetailModal" />
           </div>
 
-          <div class="px-6! py-4! border-t! border-slate-100! flex! justify-end! bg-white!">
+          <div v-if="currentDetailType !== 'tagihan'" class="px-6! py-4! border-t! border-slate-100! flex! justify-end! bg-white!">
             <button
               @click="closeDetailModal"
               class="px-6! py-2! text-sm! font-medium! text-slate-700! bg-white! border! border-slate-300! rounded-lg! hover:bg-slate-50! transition-colors!"
@@ -261,6 +263,7 @@
 import { ref, computed, onMounted } from 'vue'
 import statCard from '@/presentations/components/stat-card.vue'
 import ContentCard from '@/presentations/components/ui/ContentCard.vue'
+import api from '@/utils/axios'
 
 import InstalasiDetail from './arsipDashbord/ArsipInstalasi.vue'
 import PemakaianDetail from './arsipDashbord/ArsipPemakaian.vue'
@@ -269,6 +272,11 @@ import TagihanDetail from './arsipDashbord/ArsipTagihan.vue'
 
 const activeModal = ref(false)
 const currentDetailType = ref('')
+
+const statInstalasi = ref(0)
+const statPemakaian = ref(0)
+const statTunggakan = ref(0)
+const statTagihan = ref(0)
 
 const openDetailModal = (type) => {
   currentDetailType.value = type
@@ -328,9 +336,9 @@ const modalIcon = computed(() => {
 })
 
 const financialData = ref({
-  pendapatan: 2300000,
+  pendapatan: 0,
   beban: 0,
-  surplus: 2300000,
+  surplus: 0,
 })
 
 const formattedPendapatan = ref('')
@@ -346,10 +354,44 @@ const formatCurrency = (amount) => {
 }
 
 const loadData = async () => {
-  await new Promise((resolve) => setTimeout(resolve, 1000))
-  formattedPendapatan.value = formatCurrency(financialData.value.pendapatan)
-  formattedBeban.value = formatCurrency(financialData.value.beban)
-  formattedSurplus.value = formatCurrency(financialData.value.surplus)
+  try {
+    const response = await api.get('/dashboard/statistics')
+    if (response.data && response.data.success) {
+      const stats = response.data.data
+
+      // 1. INSTALASI: Total dari semua tiket di tickets_by_status
+      if (stats.tickets_by_status) {
+        statInstalasi.value = Object.values(stats.tickets_by_status).reduce(
+          (sum, val) => sum + parseInt(val || 0),
+          0,
+        )
+      } else {
+        statInstalasi.value = 0
+      }
+
+      // 2. PEMAKAIAN: Total customers terdaftar
+      statPemakaian.value = stats.total_customers || 0
+
+      // 3. TUNGGAKAN: Jumlah tagihan unpaid bulan ini
+      statTunggakan.value = stats.bills_this_month?.unpaid || 0
+
+      // 4. TAGIHAN: Total tagihan bulan ini (paid + unpaid)
+      const unpaidBills = parseInt(stats.bills_this_month?.unpaid || 0)
+      const paidBills = parseInt(stats.bills_this_month?.paid || 0)
+      statTagihan.value = unpaidBills + paidBills
+
+      // 5. Data Keuangan
+      financialData.value.pendapatan = stats.revenue_this_month || 0
+      financialData.value.beban = 0 // Masih statis 0 karena backend belum menyediakan data beban
+      financialData.value.surplus = financialData.value.pendapatan - financialData.value.beban
+    }
+  } catch (error) {
+    console.error('Gagal mengambil data statistik dashboard:', error)
+  } finally {
+    formattedPendapatan.value = formatCurrency(financialData.value.pendapatan)
+    formattedBeban.value = formatCurrency(financialData.value.beban)
+    formattedSurplus.value = formatCurrency(financialData.value.surplus)
+  }
 }
 
 onMounted(() => {

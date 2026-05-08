@@ -2415,3 +2415,7 @@ utilities;
     }
   }
 }
+
+.swal2-container {
+  z-index: 100000 !important;
+}

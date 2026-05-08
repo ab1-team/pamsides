@@ -1,5 +1,5 @@
 <template>
-  <div class="h-full bg-white flex flex-col pt-2 pb-4">
+  <div class="h-full! bg-white! flex! flex-col! px-6! pt-2! pb-4!">
     <DataTable
       v-model="searchQuery"
       :data="filteredData"
@@ -10,17 +10,20 @@
       v-model:per-page="perPage"
       :total-entries="filteredData.length"
       :no-card="true"
+      :show-entries="false"
     />
   </div>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import DataTable from '@/presentations/components/ui/DataTable.vue'
+import api from '@/utils/axios'
 
 const searchQuery = ref('')
 const currentPage = ref(1)
-const perPage = ref(5)
+const perPage = ref(10)
+const isLoading = ref(false)
 
 const columns = [
   { key: 'nomorInduk', title: 'Nomor Induk' },
@@ -29,57 +32,32 @@ const columns = [
   { key: 'paket', title: 'Paket' },
 ]
 
-const mockData = ref([
-  {
-    id: 1,
-    nomorInduk: 'INS-24001',
-    customer: 'Budi Santoso',
-    alamat: 'Jl. Merpati No. 10',
-    paket: 'Rumah Tangga A',
-  },
-  {
-    id: 2,
-    nomorInduk: 'INS-24002',
-    customer: 'Siti Aminah',
-    alamat: 'Jl. Kenari No. 5',
-    paket: 'Rumah Tangga B',
-  },
-  {
-    id: 3,
-    nomorInduk: 'INS-24003',
-    customer: 'Ahmad Dahlan',
-    alamat: 'Jl. Mawar No. 12',
-    paket: 'Niaga',
-  },
-  {
-    id: 4,
-    nomorInduk: 'INS-24004',
-    customer: 'Dewi Lestari',
-    alamat: 'Jl. Melati No. 8',
-    paket: 'Rumah Tangga A',
-  },
-  {
-    id: 5,
-    nomorInduk: 'INS-24005',
-    customer: 'Joko Widodo',
-    alamat: 'Jl. Anggrek No. 15',
-    paket: 'Rumah Tangga C',
-  },
-  {
-    id: 6,
-    nomorInduk: 'INS-24006',
-    customer: 'Indah Pertiwi',
-    alamat: 'Jl. Tulip No. 20',
-    paket: 'Rumah Tangga A',
-  },
-  {
-    id: 7,
-    nomorInduk: 'INS-24007',
-    customer: 'Hendra Gunawan',
-    alamat: 'Jl. Flamboyan No. 3',
-    paket: 'Sosial',
-  },
-])
+const mockData = ref([])
+
+const loadCustomers = async () => {
+  try {
+    isLoading.value = true
+    const response = await api.get('/customers')
+    if (response.data && response.data.success) {
+      const customers = response.data.data || []
+      mockData.value = customers.map((c) => ({
+        id: c.id,
+        nomorInduk: c.customer_code || '-',
+        customer: c.name,
+        alamat: c.address || '-',
+        paket: 'Rumah Tangga',
+      }))
+    }
+  } catch (error) {
+    console.error('Gagal mengambil data pelanggan:', error)
+  } finally {
+    isLoading.value = false
+  }
+}
+
+onMounted(() => {
+  loadCustomers()
+})
 
 const filteredData = computed(() => {
   const query = searchQuery.value.toLowerCase()
