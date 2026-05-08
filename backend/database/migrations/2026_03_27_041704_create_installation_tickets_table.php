@@ -15,26 +15,46 @@ return new class extends Migration
             $table->id();
 
             $table->foreignId('package_id')
-                  ->constrained('installation_packages')
-                  ->cascadeOnDelete();
+                ->constrained('installation_packages')
+                ->cascadeOnDelete();
+
+            // relasi user pelanggan
+            $table->foreignId('user_id')
+                ->nullable()
+                ->constrained('users')
+                ->nullOnDelete();
 
             $table->string('applicant_name');
             $table->string('nik', 20);
+
+            $table->string('phone', 20)->nullable();
+
+            $table->enum('gender', [
+                'male',
+                'female'
+            ])->nullable();
+
+            $table->string('birth_place')->nullable();
+            $table->date('birth_date')->nullable();
+
             $table->text('address');
 
             $table->decimal('lat', 10, 7);
             $table->decimal('lng', 10, 7);
 
             $table->enum('status', [
+                'draft',
                 'pending',
                 'surveyed',
                 'unpaid',
                 'processing',
-                'completed'
-            ])->default('pending');
+                'completed',
+                'suspended',
+                'terminated'
+            ])->default('draft');
 
             $table->foreignId('created_by')
-                  ->constrained('users');
+                ->constrained('users');
 
             $table->timestamps();
         });

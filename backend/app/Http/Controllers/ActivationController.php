@@ -4,20 +4,18 @@ namespace App\Http\Controllers;
 
 use App\Models\Customer;
 use App\Models\InstallationTicket;
-use App\Models\User;
 use App\StateMachines\TicketStateMachine;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 
 class ActivationController extends Controller
 {
     public function activate(Request $request, InstallationTicket $installationTicket)
     {
-        // Validasi status tiket harus processing
+        // 1. Validasi status tiket dari pending/processing ke completed
         TicketStateMachine::validate($installationTicket->status, 'completed');
 
-        // Ambil data hasil instalasi dari cache
+        // 2. Ambil data hasil instalasi dari cache
         $installationResult = cache()->get("installation_result_{$installationTicket->id}");
 
         if (! $installationResult) {
@@ -27,40 +25,37 @@ class ActivationController extends Controller
             ], 422);
         }
 
-        // Buat akun user untuk pelanggan
-        $user = User::create([
-            'name'     => $installationTicket->applicant_name,
-            'email'    => Str::slug($installationTicket->applicant_name) . '_' . $installationTicket->nik . '@pelanggan.pdam',
-            'password' => Hash::make($installationTicket->nik),
-            'role'     => 'pelanggan',
-        ]);
+        // 3. Gunakan user yang sudah ada saat registrasi awal
+        $user = $installationTicket->user; // Relasi ke User
 
-        // Generate customer code
-        $customerCode = 'PDAM-' . strtoupper(Str::random(3)) . '-' . str_pad(Customer::count() + 1, 5, '0', STR_PAD_LEFT);
+        // 4. Buat customer_code dengan format yang seragam
+        $customerCode = 'PAM-' . date('Ym') . '-' . Str::padLeft($user->id, 4, '0');
 
-        // Buat record customer
-        $customer = Customer::create([
-            'ticket_id'             => $installationTicket->id,
-            'user_id'               => $user->id,
-            'customer_code'         => $customerCode,
-            'initial_meter_reading' => $installationResult['initial_meter_reading'],
-            'meter_photo_url'       => $installationResult['meter_photo_url'],
-            'activated_at'          => now(),
-        ]);
+        // 5. Buat record customer
+        $customer = Customer::updateOrCreate(
+            ['ticket_id' => $installationTicket->id, 'user_id' => $user->id],
+            [
+                'customer_code'         => $customerCode,
+                'initial_meter_reading' => $installationResult['initial_meter_reading'] ?? 0,
+                'meter_photo_url'       => $installationResult['meter_photo_url'] ?? null,
+                'activated_at'          => now(),
+            ]
+        );
 
-        // Update status tiket ke completed
+        // 6. Update status tiket ke completed
         $installationTicket->update(['status' => 'completed']);
 
-        // Hapus cache
+        // 7. Hapus cache setelah selesai
         cache()->forget("installation_result_{$installationTicket->id}");
 
         return response()->json([
             'success' => true,
+            'message' => 'Aktivasi pelanggan berhasil. Kode pelanggan telah dibuat.',
             'data'    => [
-                'customer'      => $customer,
-                'user'          => $user,
-                'ticket'        => $installationTicket,
+                'customer' => $customer,
+                'user'     => $user,
+                'ticket'   => $installationTicket,
             ],
-        ], 201);
+        ], 200);
     }
 }

@@ -1,15 +1,17 @@
 <?php
 
 namespace App\Http\Controllers;
-use App\Models\Customer;
 
+use App\Models\User;
+use App\Models\Customer;
+use App\Models\InstallationTicket;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 
 class CustomerController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index(Request $request)
     {
         $query = Customer::with(['user', 'ticket']);
@@ -23,51 +25,85 @@ class CustomerController extends Controller
             });
         }
 
+        $customers = $query->paginate(10);
+
         return response()->json([
             'success' => true,
-            'data' => $query->get()->map(function ($c) {
+            'data' => $customers->map(function ($c) {
                 return [
                     'id' => $c->id,
-                    'customer_code' => $c->customer_code,
-                    'name' => $c->user->name,
+                    'customer_code' => $c->customer_code, 
+                    'name' => optional($c->user)->name,
                     'nik' => optional($c->ticket)->nik ?? '-',
                     'address' => optional($c->ticket)->address ?? '-',
-                    'phone' => '-', // Tambahkan jika ada field phone di tabel terkait
-                    'status' => $c->activated_at ? 'Aktif' : 'Belum Terdaftar'
+                    'status' => optional($c->ticket)->status ?? 'draft'
                 ];
             })
         ]);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
+    
+    //  SIMPAN REGISTRASI (Sekali klik simpan ke Users, Tickets, dan Customers)
     public function store(Request $request)
     {
-        //
-    }
+        // 1. Validasi input dari form "Registrasi Pelanggan"
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email',
+            'password' => 'required|min:6',
+            'nik' => 'required',
+            'address' => 'required',
+        ]);
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
-    {
-        //
-    }
+        try {
+            return DB::transaction(function () use ($request) {
+                // 2. Buat User (Identitas Login)
+                $user = User::create([
+                    'name' => $request->name,
+                    'email' => $request->email,
+                    'password' => Hash::make($request->password),
+                    'role' => 'pelanggan',
+                ]);
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
-    {
-        //
-    }
+                // 3. Buat Tiket (Draft Instalasi)
+                $ticket = InstallationTicket::create([
+                    'package_id' => $request->package_id ?? 1,
+                    'user_id' => $user->id,
+                    'applicant_name' => $request->name,
+                    'nik' => $request->nik,
+                    'phone' => $request->phone ?? '-', 
+                    'gender' => $request->gender ?? 'male',
+                    'birth_place' => $request->birth_place ?? '-',
+                    'birth_date' => $request->birth_date ?? now(),
+                    'address' => $request->address,
+                    'lat' => 0, 
+                    'lng' => 0, 
+                    'status' => 'draft',
+                    'created_by' => auth()->id() ?? 1, 
+                ]);
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
-    {
-        //
+                // 4. Buat Customer Code (Identitas Pembayaran)
+                $customerCode = 'PAM-' . date('Ym') . '-' . Str::padLeft($user->id, 4, '0');
+                
+                $customer = Customer::create([
+                    'ticket_id' => $ticket->id,
+                    'user_id' => $user->id,
+                    'customer_code' => $customerCode,
+                    'initial_meter_reading' => 0,
+                    'activated_at' => now(),
+                ]);
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Registrasi Berhasil. Data tersimpan',
+                    'customer_code' => $customerCode
+                ], 201);
+            });
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false, 
+                'message' => 'Error DB: ' . $e->getMessage() 
+            ], 500);
+        }
     }
 }
