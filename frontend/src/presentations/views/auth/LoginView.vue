@@ -179,8 +179,8 @@ const handleLogin = async () => {
 
     if (res.success) {
       localStorage.setItem('auth_token', res.data.token)
-      
-      // 2. Simpan data user & update role di store
+      const expireTime = Date.now() + 2 * 60 * 60 * 1000
+      localStorage.setItem('auth_expires_at', expireTime.toString())
       uiStore.setUserData(res.data.user)
       uiStore.setUserRole(res.data.user.role)
       

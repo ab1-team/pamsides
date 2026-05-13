@@ -279,7 +279,21 @@ const router = createRouter({
 
 router.beforeEach((to, from, next) => {
   const token = localStorage.getItem('auth_token')
+  const expiresAt = localStorage.getItem('auth_expires_at')
   const isAuthPage = to.name === 'login'
+  const now = Date.now()
+
+  if (token && expiresAt && now > parseInt(expiresAt)) {
+    localStorage.removeItem('auth_token')
+    localStorage.removeItem('user_data')
+    localStorage.removeItem('user_role')
+    localStorage.removeItem('auth_expires_at')
+    
+    const uiStore = useUiStore()
+    uiStore.error('Sesi Anda telah berakhir. Silakan login kembali.')
+    next({ name: 'login' })
+    return
+  }
 
   if (to.path.startsWith('/dashboard') || to.path === '/') {
     if (!token) {
