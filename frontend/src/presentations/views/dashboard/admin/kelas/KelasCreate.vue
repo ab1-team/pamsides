@@ -99,25 +99,41 @@
             <div class="flex flex-col sm:flex-row items-start sm:items-center gap-2! sm:gap-3! justify-center!">
               <span class="sm:hidden! text-[10px]! font-bold! text-slate-400! uppercase! tracking-wider!">Rentang Volume (m³)</span>
               <div class="flex items-center gap-3! w-full sm:w-auto!">
-                <input
-                  type="number"
-                  v-model="block.from"
-                  class="w-full sm:w-20! text-center! py-2.5! bg-white! border! border-slate-200! rounded-xl! text-sm! font-bold! text-slate-400! cursor-not-allowed! outline-none!"
-                  disabled
-                />
+                <div class="relative! w-full sm:w-24!">
+                  <input
+                    type="number"
+                    v-model="block.from"
+                    class="w-full! text-center! py-2.5! bg-slate-50! border! border-slate-200! rounded-xl! text-sm! font-bold! text-slate-400! cursor-not-allowed! outline-none!"
+                    disabled
+                  />
+                  <span class="absolute! -top-2! left-3! bg-white! px-1! text-[8px]! font-bold! text-slate-400! uppercase!">Dari</span>
+                </div>
+                
                 <span class="text-slate-300! font-bold!">to</span>
-                <input
-                  type="number"
-                  v-model="block.to"
-                  @input="updateNextBlockFrom(index)"
-                  class="w-full sm:w-20! text-center! py-2.5! bg-white! border! border-slate-200! rounded-xl! text-sm! font-bold! text-slate-700! focus:outline-none! focus:border-blue-500! focus:ring-4! focus:ring-blue-500/5! transition-all!"
-                />
+                
+                <div class="relative! w-full sm:w-32!">
+                  <input
+                    type="number"
+                    step="0.01"
+                    v-model="block.to"
+                    @input="updateNextBlockFrom(index)"
+                    :placeholder="index === blocks.length - 1 ? '∞' : '0'"
+                    class="w-full! text-center! py-2.5! bg-white! border! border-slate-200! rounded-xl! text-sm! font-bold! text-slate-700! focus:outline-none! focus:border-blue-500! focus:ring-4! focus:ring-blue-500/5! transition-all!"
+                  />
+                  <span class="absolute! -top-2! left-3! bg-white! px-1! text-[8px]! font-bold! text-slate-400! uppercase!">Hingga</span>
+                  <div 
+                    v-if="index === blocks.length - 1 && !block.to"
+                    class="absolute! right-3! top-1/2! -translate-y-1/2! text-[10px]! font-bold! text-blue-500! uppercase! pointer-events-none!"
+                  >
+                    ∞ Bebas
+                  </div>
+                </div>
               </div>
             </div>
 
             <div class="sm:px-2! w-full!">
                <span class="sm:hidden! block! mb-1.5! text-[10px]! font-bold! text-slate-400! uppercase! tracking-wider!">Harga per m³</span>
-              <MaksMoneyInput v-model="block.price" placeholder="0" no-margin size="md" />
+              <MaksMoneyInput v-model="block.price" placeholder="0" no-margin />
             </div>
 
             <div class="hidden sm:flex justify-center!">
@@ -162,6 +178,32 @@
         Simpan Paket & Tarif
       </BaseButton>
     </div>
+
+    <!-- Loading Overlay -->
+    <Teleport to="body">
+      <Transition name="fade">
+        <div v-if="isSaving" class="fixed! inset-0! z-[9999]! flex! items-center! justify-center! bg-slate-900/60! backdrop-blur-sm! pointer-events-auto!">
+          <div class="bg-white! p-8! rounded-3xl! shadow-2xl! flex! flex-col! items-center! gap-4! max-w-xs! w-full! animate-in! zoom-in! duration-300!">
+            <div class="relative! w-16! h-16!">
+              <div class="absolute! inset-0! border-4! border-blue-100! rounded-full!"></div>
+              <div class="absolute! inset-0! border-4! border-blue-600! border-t-transparent! rounded-full! animate-spin!"></div>
+            </div>
+            <div class="text-center!">
+              <h3 class="text-lg! font-black! text-slate-900! mb-1!">Memproses Data</h3>
+              <p class="text-sm! font-medium! text-slate-500! leading-relaxed!">
+                {{ savingStatus }}
+              </p>
+            </div>
+            <div class="w-full! bg-slate-100! h-1.5! rounded-full! overflow-hidden! mt-2!">
+              <div 
+                class="h-full! bg-blue-600! transition-all! duration-500!" 
+                :style="{ width: saveProgress + '%' }"
+              ></div>
+            </div>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
   </div>
 </template>
 
@@ -178,6 +220,8 @@ import Swal from 'sweetalert2'
 const router = useRouter()
 
 const isSaving = ref(false)
+const savingStatus = ref('')
+const saveProgress = ref(0)
 const namaKelas = ref('')
 const blockNames = ['Pertama', 'Kedua', 'Ketiga', 'Keempat', 'Kelima']
 const abodemen = ref(0)
@@ -201,10 +245,23 @@ const addBlock = () => {
 
 const updateNextBlockFrom = (index) => {
   if (index < blocks.value.length - 1) {
-    const currentTo = parseInt(blocks.value[index].to || 0)
-    blocks.value[index + 1].from = currentTo + 1
-    if (blocks.value[index + 1].to <= blocks.value[index + 1].from) {
-      blocks.value[index + 1].to = blocks.value[index + 1].from + 10
+    const currentTo = Number(blocks.value[index].to)
+    
+    if (isNaN(currentTo)) {
+      blocks.value[index + 1].from = null 
+      return
+    }
+
+    // Untuk decimal, kita biasanya menambah 0.01 atau tetap sama tergantung aturan bisnis.
+    // Tapi di aplikasi ini nampaknya menggunakan sistem diskrit N+1.
+    // Jika di DB decimal, mungkin user ingin 10.5 ke 10.51.
+    // Namun untuk memudahkan, kita ikuti pola yang ada: +1 atau biarkan user input.
+    // Kita gunakan +0.01 jika ada desimal, atau +1 jika bulat.
+    const increment = currentTo % 1 === 0 ? 1 : 0.01
+    blocks.value[index + 1].from = Number((currentTo + increment).toFixed(2))
+    
+    if (blocks.value[index + 1].to && Number(blocks.value[index + 1].to) <= Number(blocks.value[index + 1].from)) {
+      blocks.value[index + 1].to = Number((Number(blocks.value[index + 1].from) + 10).toFixed(2))
     }
     updateNextBlockFrom(index + 1)
   }
@@ -222,10 +279,17 @@ const adjustBlocksAfterDelete = () => {
     if (i === 0) {
       blocks.value[i].from = 0
     } else {
-      blocks.value[i].from = parseInt(blocks.value[i - 1].to || 0) + 1
+      const prevTo = Number(blocks.value[i - 1].to)
+      if (isNaN(prevTo)) {
+        blocks.value[i].from = null
+      } else {
+        const increment = prevTo % 1 === 0 ? 1 : 0.01
+        blocks.value[i].from = Number((prevTo + increment).toFixed(2))
+      }
     }
-    if (blocks.value[i].to <= blocks.value[i].from) {
-      blocks.value[i].to = blocks.value[i].from + 9
+    
+    if (blocks.value[i].to && blocks.value[i].from && Number(blocks.value[i].to) <= Number(blocks.value[i].from)) {
+      blocks.value[i].to = Number((Number(blocks.value[i].from) + 10).toFixed(2))
     }
   }
 }
@@ -239,30 +303,66 @@ const handleSave = async () => {
     return Swal.fire('Peringatan', 'Nama kelas harus diisi', 'warning')
   }
 
+  // Validasi blok
+  for (let i = 0; i < blocks.value.length; i++) {
+    const block = blocks.value[i]
+    
+    if (block.price === null || block.price === undefined || block.price < 0) {
+      return Swal.fire('Peringatan', `Harga pada Blok ${i + 1} harus diisi`, 'warning')
+    }
+
+    if (i < blocks.value.length - 1) {
+      if (!block.to) {
+        return Swal.fire('Peringatan', `Batas atas pada Blok ${i + 1} harus diisi. Hanya blok terakhir yang boleh kosong (tak terbatas).`, 'warning')
+      }
+      if (Number(block.to) <= Number(block.from)) {
+        return Swal.fire('Peringatan', `Batas atas pada Blok ${i + 1} harus lebih besar dari batas bawah (${block.from})`, 'warning')
+      }
+    } else {
+      // Blok terakhir
+      if (block.to && Number(block.to) <= Number(block.from)) {
+        return Swal.fire('Peringatan', `Batas atas pada Blok ${i + 1} harus lebih besar dari batas bawah (${block.from})`, 'warning')
+      }
+    }
+  }
+
   isSaving.value = true
+  savingStatus.value = 'Mempersiapkan data...'
+  saveProgress.value = 5
   let createdPackageId = null
 
   try {
     const packagePayload = {
       name: namaKelas.value,
-      installation_fee: parseInt(installationFee.value),
-      monthly_abodemen: parseInt(abodemen.value),
-      late_penalty: parseInt(denda.value),
+      installation_fee: Number(installationFee.value),
+      monthly_abodemen: Number(abodemen.value),
+      late_penalty: Number(denda.value),
     }
 
+    savingStatus.value = 'Menyimpan konfigurasi paket...'
+    saveProgress.value = 20
     const resPackage = await packageService.createPackage(packagePayload)
 
     if (resPackage.success) {
       createdPackageId = resPackage.data.id
+      const totalBlocks = blocks.value.length
 
-      for (const block of blocks.value) {
+      for (let i = 0; i < totalBlocks; i++) {
+        const block = blocks.value[i]
+        savingStatus.value = `Menyimpan blok tarif ${i + 1} dari ${totalBlocks}...`
+        saveProgress.value = 20 + ((i + 1) / totalBlocks) * 70
+
         const blockPayload = {
-          usage_min_m3: parseInt(block.from),
-          usage_max_m3: block.to ? parseInt(block.to) : null,
-          price_per_m3: parseInt(block.price),
+          usage_min_m3: Number(block.from),
+          usage_max_m3: block.to ? Number(block.to) : null,
+          price_per_m3: Number(block.price),
         }
         await packageService.createTariffBlock(createdPackageId, blockPayload)
       }
+
+      saveProgress.value = 100
+      savingStatus.value = 'Selesai!'
+      isSaving.value = false
 
       await Swal.fire({
         title: 'Berhasil!',
