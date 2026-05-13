@@ -154,11 +154,11 @@
 
             console.error('Error saving customer:', error)
 
-            console.log(error.response ? .data)
+            console.log(error.response?.data)
 
             Swal.fire({
                 title: 'Gagal!',
-                text: error.response ? .data ? .message ||
+                text: error.response ?.data ?.message ||
                     'Terjadi kesalahan saat menyimpan data',
                 icon: 'error',
             })
