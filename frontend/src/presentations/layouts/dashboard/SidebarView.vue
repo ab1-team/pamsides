@@ -220,22 +220,6 @@ const menuItems = [
           { label: 'Data Pelanggan', to: '/data-pelanggan' },
         ],
       },
-      {
-        label: 'Desa',
-        icon: 'building',
-        children: [
-          { label: 'Create Desa', to: '/data-desa/tambah' },
-          { label: 'Data Desa', to: '/data-desa' },
-        ],
-      },
-      {
-        label: 'Caters',
-        icon: 'archive',
-        children: [
-          { label: 'Create Caters', to: '/data-cater/tambah' },
-          { label: 'Data Caters', to: '/data-cater' },
-        ],
-      },
       { label: 'Daftar Instalasi', icon: 'building', to: '/dataInstalasi' },
     ],
   },
