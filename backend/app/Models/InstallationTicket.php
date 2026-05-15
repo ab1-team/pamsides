@@ -12,11 +12,20 @@ class InstallationTicket extends Model
         'applicant_name',
         'nik',
         'address',
+        'phone',
+        'gender',
+        'birth_place',
+        'birth_date',
         'lat',
         'lng',
         'status',
         'created_by'
     ];
+    
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
 
     public function package()
     {
