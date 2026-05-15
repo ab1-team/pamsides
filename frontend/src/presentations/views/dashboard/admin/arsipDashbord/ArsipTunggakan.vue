@@ -1,6 +1,6 @@
 <!-- eslint-disable vue/multi-word-component-names -->
 <template>
-  <div class="h-full bg-white flex flex-col pt-2 pb-4">
+  <div class="h-full! bg-white! flex! flex-col! px-6! pt-2! pb-4!">
     <DataTable
       v-model="searchQuery"
       :data="filteredData"
@@ -11,6 +11,7 @@
       v-model:per-page="perPage"
       :total-entries="filteredData.length"
       :no-card="true"
+      :show-entries="false"
     >
       <template #column-jumlahTunggakan="{ row }">
         <span class="font-semibold text-slate-700">
@@ -34,8 +35,9 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import DataTable from '@/presentations/components/ui/DataTable.vue'
+import api from '@/utils/axios'
 
 const formatCurrency = (amount) => {
   return new Intl.NumberFormat('id-ID', {
@@ -47,7 +49,8 @@ const formatCurrency = (amount) => {
 
 const searchQuery = ref('')
 const currentPage = ref(1)
-const perPage = ref(5)
+const perPage = ref(10)
+const isLoading = ref(false)
 
 const columns = [
   { key: 'nomorInduk', title: 'Nomor Induk' },
@@ -58,53 +61,34 @@ const columns = [
   { key: 'status', title: 'Status' },
 ]
 
-const mockData = ref([
-  {
-    id: 1,
-    nomorInduk: 'INS-24001',
-    customer: 'Budi Santoso',
-    alamat: 'Jl. Merpati No. 10',
-    paket: 'Rumah Tangga A',
-    jumlahTunggakan: 150000,
-    status: 'Belum Bayar',
-  },
-  {
-    id: 2,
-    nomorInduk: 'INS-24002',
-    customer: 'Siti Aminah',
-    alamat: 'Jl. Kenari No. 5',
-    paket: 'Rumah Tangga B',
-    jumlahTunggakan: 75000,
-    status: 'Sebagian',
-  },
-  {
-    id: 4,
-    nomorInduk: 'INS-24004',
-    customer: 'Dewi Lestari',
-    alamat: 'Jl. Melati No. 8',
-    paket: 'Rumah Tangga A',
-    jumlahTunggakan: 300000,
-    status: 'Belum Bayar',
-  },
-  {
-    id: 6,
-    nomorInduk: 'INS-24006',
-    customer: 'Indah Pertiwi',
-    alamat: 'Jl. Tulip No. 20',
-    paket: 'Rumah Tangga A',
-    jumlahTunggakan: 150000,
-    status: 'Belum Bayar',
-  },
-  {
-    id: 8,
-    nomorInduk: 'INS-24008',
-    customer: 'Rudi Hermawan',
-    alamat: 'Jl. Kamboja No. 9',
-    paket: 'Niaga',
-    jumlahTunggakan: 500000,
-    status: 'Belum Bayar',
-  },
-])
+const mockData = ref([])
+
+const loadOverdueBills = async () => {
+  try {
+    isLoading.value = true
+    const response = await api.get('/monthly-bills', { params: { status: 'unpaid' } })
+    if (response.data && response.data.success) {
+      const bills = response.data.data?.bills || response.data.data || []
+      mockData.value = bills.map((b) => ({
+        id: b.id,
+        nomorInduk: b.customer?.customer_code || 'PAM-' + String(b.customer_id).padStart(5, '0'),
+        customer: b.customer?.user?.name || 'Customer #' + b.customer_id,
+        alamat: b.customer?.ticket?.address || '-',
+        paket: b.customer?.ticket?.package?.name || 'Rumah Tangga',
+        jumlahTunggakan: b.total_amount,
+        status: 'Belum Bayar',
+      }))
+    }
+  } catch (error) {
+    console.error('Gagal mengambil data tunggakan:', error)
+  } finally {
+    isLoading.value = false
+  }
+}
+
+onMounted(() => {
+  loadOverdueBills()
+})
 
 const filteredData = computed(() => {
   const query = searchQuery.value.toLowerCase()
