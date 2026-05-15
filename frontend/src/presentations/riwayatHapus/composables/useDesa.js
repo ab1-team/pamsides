@@ -8,48 +8,7 @@ export function useDesa(router) {
   const perPage = ref(10)
 
   // Data dummy untuk Desa
-  const tableData = ref([
-    {
-      id: 'D-001',
-      kode: '320101',
-      desa: 'Sukamaju',
-      dusun: 'Krajan',
-      alamat: 'Jl. Merdeka No. 1, Balai Desa Sukamaju',
-      telepon: '021-1234567',
-    },
-    {
-      id: 'D-002',
-      kode: '320102',
-      desa: 'Sukarame',
-      dusun: 'Sukamukti',
-      alamat: 'Jl. Pahlawan No. 45, Balai Desa Sukarame',
-      telepon: '021-1234568',
-    },
-    {
-      id: 'D-003',
-      kode: '320103',
-      desa: 'Mulyasari',
-      dusun: 'Mekarjati',
-      alamat: 'Jl. Raya Mulyasari No. 10',
-      telepon: '021-1234569',
-    },
-    {
-      id: 'D-004',
-      kode: '320104',
-      desa: 'Karanganyar',
-      dusun: 'Karangtengah',
-      alamat: 'Jl. Bima No. 22',
-      telepon: '021-1234570',
-    },
-    {
-      id: 'D-005',
-      kode: '320105',
-      desa: 'Caringin',
-      dusun: 'Caringin Kulon',
-      alamat: 'Jl. Raya Caringin No. 5',
-      telepon: '021-1234571',
-    },
-  ])
+  const tableData = ref([])
 
   // Properti komputasi
   const filteredData = computed(() => {
