@@ -46,4 +46,8 @@ class InstallationTicket extends Model
     {
         return $this->hasMany(Customer::class, 'ticket_id');
     }
+    public function village()
+    {
+        return $this->belongsTo(Village::class);
+    }
 }
