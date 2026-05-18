@@ -20,6 +20,8 @@ use App\Http\Controllers\MeterReadingController;
 use App\Http\Controllers\MonthlyBillController;
 use App\Http\Controllers\SettingController;
 use App\Http\Controllers\PelangganPortalController;
+use App\Http\Controllers\VillageController;
+
 
 /*
 |--------------------------------------------------------------------------
@@ -51,6 +53,9 @@ Route::middleware('auth:sanctum')->group(function () {
 Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
     Route::get('/test-admin', fn() => response()->json(['message' => 'Kamu admin!']));
     
+    // Master Villages
+    Route::apiResource('villages', VillageController::class);
+
     // Master Customers
     Route::get('/customers', [CustomerController::class, 'index']);
     Route::post('/customers', [CustomerController::class, 'store']); // Untuk Registrasi Pelanggan Awal
