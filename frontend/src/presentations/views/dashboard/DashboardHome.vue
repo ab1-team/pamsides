@@ -17,11 +17,11 @@ const uiStore = useUiStore()
 
 const activeDashboard = computed(() => {
   const role = uiStore.userRole
-  
+
   if (role === 'surveyor') return SurveyorDashboard
   if (role === 'teknisi') return TeknisiDashboard
   if (role === 'pelanggan') return PelangganDashboard
-  
+
   return AdminDashboard
 })
 </script>

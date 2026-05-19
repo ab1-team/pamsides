@@ -1,6 +1,7 @@
 <template>
   <div class="billing-form" @click.stop>
-    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+    <!-- Baris 1: Tanggal, Abodemen, Denda -->
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-5">
       <AppDatePicker
         v-model="formData.tanggal"
         placeholder="Pilih tanggal transaksi"
@@ -8,91 +9,75 @@
         @date-select="(date) => (formData.tanggal = date)"
       />
 
+      <MaksMoneyInput
+        v-model="formData.abodemen"
+        placeholder="0,00"
+        :show-helper="false"
+        label="Abodemen"
+      />
+
+      <MaksMoneyInput
+        v-model="formData.denda"
+        placeholder="0,00"
+        :show-helper="false"
+        label="Denda"
+      />
+    </div>
+
+    <!-- Baris 2: Meter Awal, Meter Akhir, Pemakaian -->
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-5">
       <BaseInput
-        id="kode-instalasi"
-        v-model="formData.kode"
-        label="Kode Instalasi"
-        type="text"
-        placeholder="1.01.0002"
+        id="meter-awal"
+        v-model="formData.meterAwal"
+        label="Meter Awal"
+        type="number"
+        placeholder="0"
         @click.stop
         @focus.stop
       />
 
-      <!-- Baris 2: Meter Awal, Meter Akhir, Pemakaian -->
-      <div class="col-span-1 sm:col-span-2 grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <BaseInput
-          id="meter-awal"
-          v-model="formData.meterAwal"
-          label="Meter Awal"
-          type="number"
-          placeholder="0"
-          @click.stop
-          @focus.stop
-        />
-
-        <BaseInput
-          id="meter-akhir"
-          v-model="formData.meterAkhir"
-          label="Meter Akhir"
-          type="number"
-          placeholder="0"
-          @click.stop
-          @focus.stop
-        />
-
-        <BaseInput
-          id="pemakaian"
-          v-model="formData.pemakaian"
-          label="Pemakaian"
-          type="number"
-          placeholder="0"
-          @click.stop
-          @focus.stop
-        />
-      </div>
-
-      <!-- Baris 3: Tagihan & Abodemen -->
-      <MaksMoneyInput
-        v-model="formData.tagihan"
-        placeholder="0,00"
-        :show-helper="true"
-        label="Tagihan"
+      <BaseInput
+        id="meter-akhir"
+        v-model="formData.meterAkhir"
+        label="Meter Akhir"
+        type="number"
+        placeholder="0"
+        @click.stop
+        @focus.stop
       />
 
-      <MaksMoneyInput
-        v-model="formData.abodemen"
-        placeholder="0,00"
-        :show-helper="true"
-        label="Abodemen"
+      <BaseInput
+        id="pemakaian"
+        v-model="formData.pemakaian"
+        label="Pemakaian"
+        type="number"
+        placeholder="0"
+        @click.stop
+        @focus.stop
       />
+    </div>
 
-      <!-- Baris 4: Denda & Pembayaran -->
-      <MaksMoneyInput
-        v-model="formData.denda"
-        placeholder="0,00"
-        :show-helper="true"
-        label="Denda"
-      />
-
+    <!-- Baris 3: Total Pembayaran (Full width) -->
+    <div class="mb-8">
       <MaksMoneyInput
         v-model="formData.pembayaran"
         placeholder="0,00"
-        :show-helper="true"
-        label="Pembayaran"
+        :show-helper="false"
+        label="Total Pembayaran"
       />
     </div>
 
     <!-- Tombol Simpan Pembayaran -->
-    <div class="flex justify-end mt-6! pt-4 border-t border-slate-200/60">
+    <div class="flex justify-end mt-4! pt-4! pb-2! border-t! border-slate-200/60!">
       <BaseButton
         variant="secondary"
         icon="save"
         size="md"
-        class="px-8! rounded-xl shadow-lg shadow-blue-200/50"
+        class="px-8! rounded-xl shadow-lg shadow-emerald-200/50 bg-emerald-500! hover:bg-emerald-600! text-white! border-emerald-500!"
         @click="handleSave"
         @click.stop
       >
-        Simpan Pembayaran
+        Konfirmasi Pembayaran
       </BaseButton>
     </div>
   </div>
@@ -104,6 +89,7 @@ import BaseInput from '../ui/BaseInput.vue'
 import BaseButton from '../ui/BaseButton.vue'
 import AppDatePicker from '../AppDatePicker.vue'
 import MaksMoneyInput from '../MaksMoneyInput.vue'
+import { formatRupiah } from '@/composables/useFormatCurrency'
 
 // Properti untuk data awal
 const props = defineProps({
@@ -123,19 +109,19 @@ const emit = defineEmits(['save', 'change'])
 // Data formulir reaktif
 const formData = reactive({
   tanggal: props.initialData.tanggal ? new Date(props.initialData.tanggal) : new Date(),
-  kode: props.initialData.kode || props.customerInfo.installationCode || '',
+  periodId: props.initialData.periodId,
   meterAwal: props.initialData.meterAwal || 0,
   meterAkhir: props.initialData.meterAkhir || 0,
   pemakaian: props.initialData.pemakaian || 0,
   tagihan: props.initialData.tagihan || 0,
-  abodemen: props.initialData.abodemen || 10000,
+  abodemen: props.initialData.abodemen || 0,
   denda: props.initialData.denda || 0,
   pembayaran: props.initialData.pembayaran || 0,
 })
 
 // Hitung otomatis pemakaian
 watch([() => formData.meterAwal, () => formData.meterAkhir], ([awal, akhir]) => {
-  if (awal && akhir && akhir >= awal) {
+  if (awal !== undefined && akhir !== undefined && akhir >= awal) {
     formData.pemakaian = akhir - awal
   }
 })
@@ -144,7 +130,7 @@ watch([() => formData.meterAwal, () => formData.meterAkhir], ([awal, akhir]) => 
 watch(
   [() => formData.tagihan, () => formData.abodemen, () => formData.denda],
   ([tagihan, abodemen, denda]) => {
-    formData.pembayaran = tagihan + abodemen + denda
+    formData.pembayaran = (Number(tagihan) || 0) + (Number(abodemen) || 0) + (Number(denda) || 0)
   },
 )
 
@@ -160,13 +146,8 @@ watch(
 // Fungsi penanganan simpan
 const handleSave = () => {
   // Validasi
-  if (!formData.tanggal || !formData.kode) {
-    alert('Mohon lengkapi data tanggal dan kode instalasi')
-    return
-  }
-
-  if (formData.meterAkhir < formData.meterAwal) {
-    alert('Meter akhir tidak boleh kurang dari meter awal')
+  if (!formData.tanggal) {
+    alert('Mohon lengkapi data tanggal transaksi')
     return
   }
 
@@ -180,12 +161,11 @@ defineExpose({
   resetForm: () => {
     Object.assign(formData, {
       tanggal: new Date(),
-      kode: props.customerInfo.installationCode || '',
       meterAwal: 0,
       meterAkhir: 0,
       pemakaian: 0,
       tagihan: 0,
-      abodemen: 10000,
+      abodemen: 0,
       denda: 0,
       pembayaran: 0,
     })

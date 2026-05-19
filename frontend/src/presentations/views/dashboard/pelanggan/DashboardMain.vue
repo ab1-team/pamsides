@@ -23,17 +23,20 @@
               Selamat Datang,<br v-if="isMobile" />
               <span
                 class="bg-gradient-to-r! from-indigo-600! to-blue-500! bg-clip-text! text-transparent!"
-              >{{ dashboardData.user.name }}</span
+                >{{ dashboardData.user.name }}</span
               >
               👋
             </h1>
             <p class="text-slate-500! font-medium! text-sm! lg:text-lg! max-w-md! lg:mx-0!">
-              Kode Pelanggan: <span class="font-black! text-indigo-600!">{{ dashboardData.user.customer_code }}</span>
+              Kode Pelanggan:
+              <span class="font-black! text-indigo-600!">{{
+                dashboardData.user.customer_code
+              }}</span>
             </p>
           </div>
         </div>
       </div>
-      
+
       <div class="grid! grid-cols-1! lg:grid-cols-12! gap-10! mb-12!">
         <div class="lg:col-span-4!">
           <ContentCard
@@ -74,7 +77,8 @@
                 </h3>
                 <div class="flex! items-baseline! justify-end! gap-1!">
                   <span class="text-base! lg:text-lg! font-black! text-slate-400!">Rp.</span>
-                  <span class="text-3xl! lg:text-4xl! font-black! text-slate-800! tracking-tighter!"
+                  <span
+                    class="text-3xl! lg:text-4xl! font-black! text-slate-800! tracking-tighter!"
                     >{{ formatNumber(dashboardData.latest_bill?.total_amount || 0) }}</span
                   >
                 </div>
@@ -103,7 +107,7 @@
                 block
                 class="rounded-full! font-black! h-12! text-sm! shadow-xl! shadow-indigo-200! hover:-translate-y-1! transition-all!"
                 @click="$router.push('/pelanggan/tagihan-detail')"
-                >
+              >
                 CEK DETAIL
                 <font-awesome-icon icon="chevron-right" class="ml-2! text-[10px]!" />
               </BaseButton>
@@ -144,14 +148,22 @@
             <div
               class="px-5! lg:px-8! pb-8! lg:pb-10! flex! flex-col! lg:flex-row! items-center! justify-center! gap-8! lg:gap-10! min-h-[280px]! lg:min-h-[300px]!"
             >
-              <div v-if="usageValues.length === 0" class="flex-1! flex! flex-col! items-center! justify-center! gap-3!">
-                <div class="w-16! h-16! bg-slate-50! rounded-full! flex! items-center! justify-center! text-slate-200!">
+              <div
+                v-if="usageValues.length === 0"
+                class="flex-1! flex! flex-col! items-center! justify-center! gap-3!"
+              >
+                <div
+                  class="w-16! h-16! bg-slate-50! rounded-full! flex! items-center! justify-center! text-slate-200!"
+                >
                   <font-awesome-icon icon="chart-bar" size="2x" />
                 </div>
                 <p class="text-slate-400! text-xs! font-medium!">Belum ada riwayat pemakaian</p>
               </div>
 
-              <div v-else-if="viewType === 'bar'" class="flex-1! w-full! h-64! lg:h-72! relative! flex! flex-col! pt-10!">
+              <div
+                v-else-if="viewType === 'bar'"
+                class="flex-1! w-full! h-64! lg:h-72! relative! flex! flex-col! pt-10!"
+              >
                 <svg viewBox="0 0 100 40" class="w-full! h-full! overflow-visible!">
                   <defs>
                     <linearGradient id="areaGradient" x1="0%" y1="0%" x2="0%" y2="100%">
@@ -160,35 +172,32 @@
                     </linearGradient>
                   </defs>
 
-                  <path 
-                    :d="generateAreaPath" 
-                    fill="url(#areaGradient)"
-                  />
+                  <path :d="generateAreaPath" fill="url(#areaGradient)" />
 
-                  <path 
-                    :d="generateLinePath" 
-                    fill="none" 
-                    stroke="#6366f1" 
-                    stroke-width="1.5" 
-                    stroke-linecap="round" 
+                  <path
+                    :d="generateLinePath"
+                    fill="none"
+                    stroke="#6366f1"
+                    stroke-width="1.5"
+                    stroke-linecap="round"
                     stroke-linejoin="round"
                     class="drop-shadow-[0_4px_10px_rgba(99,102,241,0.4)]!"
                   />
 
                   <g v-for="(val, idx) in usageValues" :key="'point-' + idx">
-                    <circle 
-                      :cx="getPointX(idx)" 
-                      :cy="getPointY(val)" 
-                      r="2.5" 
-                      fill="white" 
-                      stroke="#6366f1" 
+                    <circle
+                      :cx="getPointX(idx)"
+                      :cy="getPointY(val)"
+                      r="2.5"
+                      fill="white"
+                      stroke="#6366f1"
                       stroke-width="1.5"
                       class="hover:r-4! transition-all! cursor-pointer!"
                     />
-                    <text 
-                      :x="getPointX(idx)" 
-                      :y="getPointY(val) - 5" 
-                      text-anchor="middle" 
+                    <text
+                      :x="getPointX(idx)"
+                      :y="getPointY(val) - 5"
+                      text-anchor="middle"
                       class="text-[4px]! font-black! fill-slate-800!"
                     >
                       {{ val }}
@@ -197,8 +206,8 @@
                 </svg>
 
                 <div class="flex! justify-between! mt-6! px-2!">
-                  <span 
-                    v-for="(label, idx) in usageLabels" 
+                  <span
+                    v-for="(label, idx) in usageLabels"
                     :key="'lbl-' + idx"
                     class="text-[10px]! font-black! text-slate-400! uppercase! tracking-tighter!"
                   >
@@ -207,7 +216,10 @@
                 </div>
               </div>
 
-              <div v-else-if="viewType === 'pie'" class="relative! w-48! lg:w-52! h-48! lg:h-52! flex-shrink-0!">
+              <div
+                v-else-if="viewType === 'pie'"
+                class="relative! w-48! lg:w-52! h-48! lg:h-52! flex-shrink-0!"
+              >
                 <svg viewBox="0 0 100 100" class="w-full! h-full! -rotate-90!">
                   <circle
                     cx="50"
@@ -225,11 +237,17 @@
                     cy="50"
                     r="40"
                     fill="transparent"
-                    :stroke="idx === (usageValues.length - 1) ? 'url(#indigoGradient)' : getChartColor(idx)"
+                    :stroke="
+                      idx === usageValues.length - 1 ? 'url(#indigoGradient)' : getChartColor(idx)
+                    "
                     stroke-width="12"
                     :stroke-dasharray="`${getDashArray(val)} 100`"
                     :stroke-dashoffset="getDashOffset(idx)"
-                    :class="idx === (usageValues.length - 1) ? 'transition-all! duration-1000! hover:stroke-width-[14!]' : 'opacity-80!'"
+                    :class="
+                      idx === usageValues.length - 1
+                        ? 'transition-all! duration-1000! hover:stroke-width-[14!]'
+                        : 'opacity-80!'
+                    "
                   />
 
                   <defs>
@@ -240,10 +258,10 @@
                   </defs>
                 </svg>
                 <div class="absolute! inset-0! flex! flex-col! items-center! justify-center!">
-                  <span 
+                  <span
                     :class="[
                       'font-black! text-slate-800! transition-all!',
-                      totalUsage.toString().length > 5 ? 'text-lg!' : 'text-2xl!'
+                      totalUsage.toString().length > 5 ? 'text-lg!' : 'text-2xl!',
                     ]"
                   >
                     {{ formatNumber(totalUsage) }}
@@ -254,7 +272,6 @@
                 </div>
               </div>
 
-
               <div class="grid! grid-cols-1! gap-4! w-full! max-w-[240px]!">
                 <div
                   v-for="(val, idx) in usageValues"
@@ -264,11 +281,9 @@
                   <div class="flex! items-center! gap-3!">
                     <div
                       class="w-3! h-3! rounded-full!"
-                      :class="idx === (usageValues.length - 1) ? 'bg-indigo-600!' : 'bg-indigo-200!'"
+                      :class="idx === usageValues.length - 1 ? 'bg-indigo-600!' : 'bg-indigo-200!'"
                     ></div>
-                    <span class="text-sm! font-bold! text-slate-600!">{{
-                      usageLabels[idx]
-                    }}</span>
+                    <span class="text-sm! font-bold! text-slate-600!">{{ usageLabels[idx] }}</span>
                   </div>
                   <div class="flex! items-center! gap-2!">
                     <span class="text-sm! font-black! text-slate-800!">{{ val }} m³</span>
@@ -333,14 +348,27 @@ const dashboardData = ref({
 })
 
 const usageLabels = computed(() => {
-  return dashboardData.value.usage_history.map(bill => {
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des']
+  return dashboardData.value.usage_history.map((bill) => {
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'Mei',
+      'Jun',
+      'Jul',
+      'Agu',
+      'Sep',
+      'Okt',
+      'Nov',
+      'Des',
+    ]
     return months[bill.billing_period_month - 1]
   })
 })
 
 const usageValues = computed(() => {
-  return dashboardData.value.usage_history.map(bill => parseFloat(bill.usage_m3 || 0))
+  return dashboardData.value.usage_history.map((bill) => parseFloat(bill.usage_m3 || 0))
 })
 
 const totalUsage = computed(() => {
@@ -363,13 +391,13 @@ const getPointY = (val) => {
 const generateLinePath = computed(() => {
   if (usageValues.value.length === 0) return ''
   let d = `M ${getPointX(0)} ${getPointY(usageValues.value[0])}`
-  
+
   for (let i = 1; i < usageValues.value.length; i++) {
     const x = getPointX(i)
     const y = getPointY(usageValues.value[i])
     const prevX = getPointX(i - 1)
     const prevY = getPointY(usageValues.value[i - 1])
-    
+
     const cp1x = prevX + (x - prevX) / 2
     d += ` C ${cp1x} ${prevY}, ${cp1x} ${y}, ${x} ${y}`
   }

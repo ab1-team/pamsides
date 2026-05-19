@@ -34,7 +34,7 @@ export const pelangganService = {
   async getProfile() {
     const response = await api.get('/pelanggan/profile')
     return response.data
-  }
+  },
 }
 
 export default pelangganService

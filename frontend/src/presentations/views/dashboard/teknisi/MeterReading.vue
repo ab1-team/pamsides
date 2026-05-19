@@ -2,7 +2,9 @@
   <div class="meter-reading-view p-4! lg:p-8!">
     <div class="mb-8! flex! items-center! justify-between!">
       <div>
-        <BaseButton variant="ghost" icon="arrow-left" @click="$router.back()" class="mb-4!">Kembali</BaseButton>
+        <BaseButton variant="ghost" icon="arrow-left" @click="$router.back()" class="mb-4!"
+          >Kembali</BaseButton
+        >
         <h1 class="text-3xl! font-extrabold! text-slate-800! tracking-tight!">
           Pencatatan <span class="text-blue-500!">Meter Air</span>
         </h1>
@@ -19,7 +21,9 @@
         class="border-0! shadow-xl! shadow-slate-200/40!"
       >
         <div class="flex! items-center! gap-4! mb-8! p-4! bg-blue-50! rounded-2xl!">
-          <div class="w-12! h-12! bg-blue-500! text-white! rounded-xl! flex! items-center! justify-center! shadow-lg!">
+          <div
+            class="w-12! h-12! bg-blue-500! text-white! rounded-xl! flex! items-center! justify-center! shadow-lg!"
+          >
             <font-awesome-icon icon="user" />
           </div>
           <div>
@@ -27,7 +31,9 @@
             <p class="text-xs! text-slate-500! font-bold!">ID: #MA-882109 • Southern Spring</p>
           </div>
           <div class="ml-auto! text-right!">
-            <p class="text-[10px]! font-black! text-slate-400! uppercase! tracking-widest!">Meter Lalu</p>
+            <p class="text-[10px]! font-black! text-slate-400! uppercase! tracking-widest!">
+              Meter Lalu
+            </p>
             <p class="text-xl! font-black! text-slate-700!">
               1,240 <span class="text-xs!">m³</span>
             </p>
@@ -37,7 +43,10 @@
         <div class="grid! grid-cols-1! md:grid-cols-2! gap-8!">
           <div class="space-y-6!">
             <div class="form-group!">
-              <label class="block! text-xs! font-black! text-slate-400! uppercase! tracking-widest! mb-3!">Angka Meteran Baru</label>
+              <label
+                class="block! text-xs! font-black! text-slate-400! uppercase! tracking-widest! mb-3!"
+                >Angka Meteran Baru</label
+              >
               <div class="relative!">
                 <input
                   v-model="formData.currentReading"
@@ -45,32 +54,44 @@
                   class="w-full! text-3xl! bg-slate-50! border-4! border-slate-100! rounded-3xl! px-6! py-5! focus:border-blue-500! focus:outline-none! font-black! text-blue-600!"
                   placeholder="0000"
                 />
-                <span class="absolute! right-6! top-1/2! -translate-y-1/2! text-slate-400! font-black!">m³</span>
+                <span
+                  class="absolute! right-6! top-1/2! -translate-y-1/2! text-slate-400! font-black!"
+                  >m³</span
+                >
               </div>
-              <p v-if="usage > 0" class="mt-3! text-sm! font-bold! text-emerald-600! flex! items-center! gap-2!">
+              <p
+                v-if="usage > 0"
+                class="mt-3! text-sm! font-bold! text-emerald-600! flex! items-center! gap-2!"
+              >
                 <font-awesome-icon icon="chart-line" />
                 Estimasi Pemakaian: {{ usage }} m³
               </p>
             </div>
-
-
           </div>
 
           <div class="space-y-6!">
-            <label class="block! text-xs! font-black! text-slate-400! uppercase! tracking-widest! mb-3!">Bukti Foto Meteran</label>
+            <label
+              class="block! text-xs! font-black! text-slate-400! uppercase! tracking-widest! mb-3!"
+              >Bukti Foto Meteran</label
+            >
             <div class="relative!">
               <div
                 v-if="!photoPreview"
                 class="h-64! border-4! border-dashed! border-slate-100! rounded-3xl! flex! flex-col! items-center! justify-center! bg-slate-50! cursor-pointer! hover:bg-slate-100! transition-all!"
                 @click="$refs.fileInput.click()"
               >
-                <div class="w-16! h-16! bg-white! rounded-full! flex! items-center! justify-center! shadow-sm! mb-3! text-blue-500!">
+                <div
+                  class="w-16! h-16! bg-white! rounded-full! flex! items-center! justify-center! shadow-sm! mb-3! text-blue-500!"
+                >
                   <font-awesome-icon icon="camera" size="2x" />
                 </div>
                 <span class="text-sm! font-bold! text-slate-500!">Ambil Foto Meteran</span>
               </div>
               <div v-else class="relative! group!">
-                <img :src="photoPreview" class="w-full! h-64! object-cover! rounded-3xl! shadow-lg! border-4! border-white!" />
+                <img
+                  :src="photoPreview"
+                  class="w-full! h-64! object-cover! rounded-3xl! shadow-lg! border-4! border-white!"
+                />
                 <button
                   @click="photoPreview = null"
                   class="absolute! top-4! right-4! w-10! h-10! bg-red-500! text-white! rounded-full! flex! items-center! justify-center! shadow-lg!"
@@ -129,7 +150,7 @@ const Toast = Swal.mixin({
   didOpen: (toast) => {
     toast.addEventListener('mouseenter', Swal.stopTimer)
     toast.addEventListener('mouseleave', Swal.resumeTimer)
-  }
+  },
 })
 
 const router = useRouter()
@@ -168,9 +189,15 @@ const handlePhotoUpload = async (e) => {
 }
 
 const submitReading = async () => {
-  if (!formData.currentReading) return Toast.fire({ icon: 'warning', title: 'Angka meteran wajib diisi!' })
-  if (formData.currentReading < lastReading) return Toast.fire({ icon: 'error', title: 'Angka meteran tidak boleh lebih kecil dari bulan lalu!' })
-  if (!formData.photo) return Toast.fire({ icon: 'warning', title: 'Foto meteran wajib dilampirkan!' })
+  if (!formData.currentReading)
+    return Toast.fire({ icon: 'warning', title: 'Angka meteran wajib diisi!' })
+  if (formData.currentReading < lastReading)
+    return Toast.fire({
+      icon: 'error',
+      title: 'Angka meteran tidak boleh lebih kecil dari bulan lalu!',
+    })
+  if (!formData.photo)
+    return Toast.fire({ icon: 'warning', title: 'Foto meteran wajib dilampirkan!' })
 
   try {
     isSubmitting.value = true
@@ -193,7 +220,13 @@ const submitReading = async () => {
 }
 
 @keyframes slideUp {
-  from { opacity: 0; transform: translateY(30px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 </style>
