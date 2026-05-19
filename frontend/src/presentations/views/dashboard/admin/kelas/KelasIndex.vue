@@ -21,7 +21,10 @@
       </BaseButton>
     </div>
 
-    <ContentCard padding="none" class="border-0! shadow-xl! shadow-slate-200/50! rounded-3xl! overflow-hidden!">
+    <ContentCard
+      padding="none"
+      class="border-0! shadow-xl! shadow-slate-200/50! rounded-3xl! overflow-hidden!"
+    >
       <DataTable
         :columns="columns"
         :data="items"
@@ -92,7 +95,7 @@
                 :key="idx"
                 class="bg-white! p-5! rounded-2xl! border! border-slate-100! shadow-sm! hover:shadow-md! hover:border-blue-100! transition-all! relative! overflow-hidden!"
               >
-                <div 
+                <div
                   v-if="!block.usage_max_m3"
                   class="absolute! -right-6! -top-6! w-12! h-12! bg-blue-500/10! rounded-full! flex! items-center! justify-center! rotate-12!"
                 >
@@ -109,17 +112,25 @@
                     {{ idx + 1 }}
                   </div>
                 </div>
-                
+
                 <div class="grid grid-cols-2 gap-4!">
                   <div class="space-y-1!">
-                    <div class="text-[9px]! font-bold! text-slate-400! uppercase! tracking-tighter!">Volume</div>
+                    <div
+                      class="text-[9px]! font-bold! text-slate-400! uppercase! tracking-tighter!"
+                    >
+                      Volume
+                    </div>
                     <div class="text-sm! font-black! text-slate-800!">
                       {{ block.usage_min_m3 }} - {{ block.usage_max_m3 || '∞' }}
                       <span class="text-[10px]! text-slate-400! font-bold! ml-0.5!">m³</span>
                     </div>
                   </div>
                   <div class="space-y-1!">
-                    <div class="text-[9px]! font-bold! text-slate-400! uppercase! tracking-tighter!">Harga</div>
+                    <div
+                      class="text-[9px]! font-bold! text-slate-400! uppercase! tracking-tighter!"
+                    >
+                      Harga
+                    </div>
                     <div class="text-sm! font-black! text-blue-600!">
                       {{ formatCurrency(block.price_per_m3) }}
                     </div>

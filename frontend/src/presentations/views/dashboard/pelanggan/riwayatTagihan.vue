@@ -27,7 +27,9 @@
               class="text-[9px]! lg:text-[10px]! font-black! text-indigo-400! uppercase! tracking-widest!"
               >ID PELANGGAN</span
             >
-            <div class="text-sm! lg:text-base! text-indigo-600! font-black!"> {{ customerCode }} </div>
+            <div class="text-sm! lg:text-base! text-indigo-600! font-black!">
+              {{ customerCode }}
+            </div>
           </div>
         </div>
       </div>
@@ -52,16 +54,18 @@
                 <font-awesome-icon :icon="stat.icon" class="text-[10px]! lg:text-xs! !m-auto!" />
               </div>
             </div>
-            
+
             <div class="flex! flex-col! gap-0!">
-              <div class="text-base! lg:text-lg! font-black! text-slate-800! tracking-tighter! whitespace-nowrap!">
+              <div
+                class="text-base! lg:text-lg! font-black! text-slate-800! tracking-tighter! whitespace-nowrap!"
+              >
                 {{ stat.value }}
               </div>
               <div
                 v-if="idx === 2"
                 :class="[
                   'text-[8px]! font-black! uppercase! tracking-[0.15em]! whitespace-nowrap!',
-                  stat.value === 'Lancar' ? 'text-emerald-500!' : 'text-amber-500!'
+                  stat.value === 'Lancar' ? 'text-emerald-500!' : 'text-amber-500!',
                 ]"
               >
                 {{ stat.value === 'Lancar' ? 'STATUS OK' : 'PERLU BAYAR' }}
@@ -86,7 +90,9 @@
           empty-title="Tagihan Tidak Ditemukan"
           :empty-message="'Mohon cek kembali periode yang Anda cari.'"
           row-clickable
-          @row-click="(row) => $router.push({ path: '/pelanggan/tagihan-detail', query: { id: row.id } })"
+          @row-click="
+            (row) => $router.push({ path: '/pelanggan/tagihan-detail', query: { id: row.id } })
+          "
           no-card
         >
           <template #column-period="{ row }">
@@ -129,14 +135,18 @@
             >
               <div class="flex! items-center! justify-between! mb-5!">
                 <div class="flex! items-center! gap-3!">
-                  <div class="w-10! h-10! bg-indigo-50! rounded-xl! flex! items-center! justify-center! text-indigo-600! group-hover:scale-110! transition-transform!">
+                  <div
+                    class="w-10! h-10! bg-indigo-50! rounded-xl! flex! items-center! justify-center! text-indigo-600! group-hover:scale-110! transition-transform!"
+                  >
                     <font-awesome-icon icon="file-invoice-dollar" />
                   </div>
                   <div>
                     <div class="text-base! font-black! text-slate-800! leading-tight!">
                       {{ bill.period }}
                     </div>
-                    <div class="text-[10px]! font-black! text-slate-400! uppercase! tracking-widest! mt-0.5!">
+                    <div
+                      class="text-[10px]! font-black! text-slate-400! uppercase! tracking-widest! mt-0.5!"
+                    >
                       #INV-{{ bill.id }}
                     </div>
                   </div>
@@ -144,12 +154,12 @@
                 <span :class="getStatusClass(bill.status)">{{ bill.status }}</span>
               </div>
 
-              <div class="space-y-3! bg-slate-50/50! p-4! rounded-2xl! border! border-slate-100/50!">
+              <div
+                class="space-y-3! bg-slate-50/50! p-4! rounded-2xl! border! border-slate-100/50!"
+              >
                 <div class="flex! justify-between! items-center!">
                   <span class="text-xs! font-bold! text-slate-500!">Pemakaian Air</span>
-                  <span class="text-xs! font-black! text-slate-800!">
-                    {{ bill.usage }} m³
-                  </span>
+                  <span class="text-xs! font-black! text-slate-800!"> {{ bill.usage }} m³ </span>
                 </div>
                 <div class="w-full! h-px! bg-slate-100!"></div>
                 <div class="flex! justify-between! items-center!">
@@ -160,7 +170,9 @@
                 </div>
               </div>
 
-              <div class="mt-4! flex! items-center! justify-center! text-[10px]! font-black! text-indigo-500! uppercase! tracking-[0.2em]! opacity-0! group-hover:opacity-100! transition-opacity!">
+              <div
+                class="mt-4! flex! items-center! justify-center! text-[10px]! font-black! text-indigo-500! uppercase! tracking-[0.2em]! opacity-0! group-hover:opacity-100! transition-opacity!"
+              >
                 Lihat Detail Lengkap
                 <font-awesome-icon icon="chevron-right" class="ml-2!" />
               </div>
@@ -196,7 +208,7 @@ const bills = ref([])
 const historyStats = ref({
   total_usage_3_months: 0,
   avg_amount: 0,
-  current_status: '-'
+  current_status: '-',
 })
 const customerCode = ref('-')
 const isLoading = ref(true)
@@ -206,12 +218,12 @@ const fetchHistory = async () => {
   try {
     const response = await pelangganService.getBillHistory()
     if (response.success) {
-      bills.value = response.data.bills.map(bill => ({
+      bills.value = response.data.bills.map((bill) => ({
         id: bill.id.toString(),
         period: getMonthName(bill.billing_period_month) + ' ' + bill.billing_period_year,
         usage: bill.usage_m3,
         amount: bill.total_amount,
-        status: bill.status === 'paid' ? 'Lunas' : 'Belum Bayar'
+        status: bill.status === 'paid' ? 'Lunas' : 'Belum Bayar',
       }))
       historyStats.value = response.data.stats
       customerCode.value = response.data.customer_code
@@ -224,7 +236,20 @@ const fetchHistory = async () => {
 }
 
 const getMonthName = (month) => {
-  const months = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember']
+  const months = [
+    'Januari',
+    'Februari',
+    'Maret',
+    'April',
+    'Mei',
+    'Juni',
+    'Juli',
+    'Agustus',
+    'September',
+    'Oktober',
+    'November',
+    'Desember',
+  ]
   return months[month - 1] || '-'
 }
 
@@ -277,8 +302,7 @@ const filteredBills = computed(() => {
   return bills.value.filter(
     (bill) => bill.period.toLowerCase().includes(query) || bill.id.toLowerCase().includes(query),
   )
-}
-)
+})
 
 const getStatusClass = (status) => {
   if (status === 'Lunas') {

@@ -1,9 +1,6 @@
-
-
-
 .active-tab-curve::before,
 .active-tab-curve::after {
-  content: "";
+  content: '';
   position: absolute;
   right: 0;
   width: 25px;
@@ -25,10 +22,11 @@
   box-shadow: 15px -15px 0 15px #f8fafc !important;
 }
 
-
 .fade-enter-active,
 .fade-leave-active {
-  transition: opacity 0.3s ease, transform 0.3s ease !important;
+  transition:
+    opacity 0.3s ease,
+    transform 0.3s ease !important;
 }
 
 .fade-enter-from,
@@ -36,9 +34,6 @@
   opacity: 0 !important;
   transform: translateY(10px) !important;
 }
-
-
-
 
 @keyframes item-reveal {
   from {
@@ -55,26 +50,29 @@
   animation: item-reveal 0.4s cubic-bezier(0.23, 1, 0.32, 1) forwards !important;
 }
 
-
 @keyframes reveal-up {
-  from { 
-    opacity: 0; 
-    transform: translateY(20px); 
+  from {
+    opacity: 0;
+    transform: translateY(20px);
   }
-  to { 
-    opacity: 1; 
-    transform: translateY(0); 
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
-.animate-reveal-up { 
-  animation: reveal-up 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards !important; 
+.animate-reveal-up {
+  animation: reveal-up 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
 }
-
 
 @keyframes bounce-subtle {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-3px); }
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-3px);
+  }
 }
 
 .animate-bounce-subtle {

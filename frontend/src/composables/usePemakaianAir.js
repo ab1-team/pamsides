@@ -1,25 +1,9 @@
 import { ref, computed } from 'vue'
 import { STATUS_TYPES, STATUS_COLORS } from '@/types/pemakaianAir'
+import { billingService } from '@/services/billing.service'
 import Swal from 'sweetalert2'
 
 export function usePemakaianAir() {
-  // State untuk filter pencarian
-  const filter = ref({ tahun: '', bulan: '', cater: '' })
-  const searchQuery = ref('')
-  const currentPage = ref(1)
-  const perPage = ref(10)
-
-  // Pilihan opsi
-  // Edit Modal state
-  const showEditModal = ref(false)
-  const selectedRow = ref(null)
-
-  // Options
-  const tahunOptions = computed(() => {
-    const y = new Date().getFullYear()
-    return Array.from({ length: 5 }, (_, i) => y - i)
-  })
-
   const bulanOptions = [
     'Januari',
     'Februari',
@@ -35,57 +19,55 @@ export function usePemakaianAir() {
     'Desember',
   ]
 
-  // Data dummy
-  const tableData = ref([
-    {
-      id: '1..08.561 P',
-      nama: 'Tarsim',
-      initials: 'T',
-      avatarColor: '#0ea5e9',
-      desa: 'Karangasem',
-      dusun: 'Karangasem',
-      rt: '',
-      meterAwal: 0,
-      meterAkhir: 10,
-      pemakaian: 10,
-      tagihan: 45000,
-      tanggalAkhir: '2024-04-20',
-      jatuhTempo: '20 Mei 2024',
-      status: STATUS_TYPES.PENDING,
-    },
-    {
-      id: '1.0002.02.568 P',
-      nama: 'Fuji Riyanta',
-      initials: 'FR',
-      avatarColor: '#06b6d4',
-      desa: 'Mulo',
-      dusun: 'Mulo',
-      rt: '02',
-      meterAwal: 0,
-      meterAkhir: 0,
-      pemakaian: 0,
-      tagihan: 10000,
-      tanggalAkhir: '2024-04-20',
-      jatuhTempo: '20 Mei 2024',
-      status: STATUS_TYPES.PENDING,
-    },
-    {
-      id: '102808473',
-      nama: 'Hadi Supriyanto',
-      initials: 'HS',
-      avatarColor: '#14b8a6',
-      desa: 'Mulo',
-      dusun: 'Mulo',
-      rt: '01',
-      meterAwal: 1140,
-      meterAkhir: 1165,
-      pemakaian: 25,
-      tagihan: 125000,
-      tanggalAkhir: '2024-04-20',
-      jatuhTempo: '20 Mei 2024',
-      status: STATUS_TYPES.PAID,
-    },
-  ])
+  // State untuk filter pencarian
+  const filter = ref({
+    tahun: new Date().getFullYear(),
+    bulan: bulanOptions[new Date().getMonth()],
+  })
+  const searchQuery = ref('')
+  const currentPage = ref(1)
+  const perPage = ref(10)
+
+  // State untuk edit modal
+  const showEditModal = ref(false)
+  const selectedRow = ref(null)
+
+  // Options
+  const tahunOptions = computed(() => {
+    const y = new Date().getFullYear()
+    return Array.from({ length: 5 }, (_, i) => y - i)
+  })
+
+  const tableData = ref([])
+
+  // Data dinamis dari API
+  const loadTableData = async () => {
+    try {
+      const monthIndex = filter.value.bulan
+        ? bulanOptions.indexOf(filter.value.bulan) + 1
+        : new Date().getMonth() + 1
+      const yearVal = filter.value.tahun || new Date().getFullYear()
+
+      const res = await billingService.getUsageList({ month: monthIndex, year: yearVal })
+      if (res.success && res.data) {
+        tableData.value = res.data.map((item) => ({
+          ...item,
+          status:
+            item.status === 'PAID'
+              ? STATUS_TYPES.PAID
+              : item.status === 'UNPAID'
+                ? STATUS_TYPES.PENDING
+                : STATUS_TYPES.PENDING, // Pending for unpaid or no bill yet
+        }))
+      }
+    } catch (err) {
+      console.error('Gagal memuat data pemakaian air:', err)
+    }
+  }
+
+  const refreshData = () => {
+    return loadTableData()
+  }
 
   // Properti komputasi
   const filteredData = computed(() => {
@@ -100,7 +82,7 @@ export function usePemakaianAir() {
 
   const groupedData = computed(() => {
     const groups = {}
-    filteredData.value.forEach((item) => {
+    tableData.value.forEach((item) => {
       const dusun = item.dusun || 'Lainnya'
       if (!groups[dusun]) {
         groups[dusun] = []
@@ -119,7 +101,9 @@ export function usePemakaianAir() {
   })
 
   // Fungsi-fungsi penanganan aksi
-  const handleApplyFilter = () => console.log('Apply filter:', filter.value)
+  const handleApplyFilter = () => {
+    loadTableData()
+  }
   const handleCetakFormInput = () => console.log('Cetak Form Input')
   const handleHasilInput = () => console.log('Hasil Input')
   const handleInputPemakaian = () => console.log('Input Pemakaian')
@@ -189,6 +173,7 @@ export function usePemakaianAir() {
     STATUS_COLORS,
 
     // Penanganan Aksi
+    refreshData,
     handleApplyFilter,
     handleCetakFormInput,
     handleHasilInput,

@@ -1,17 +1,7 @@
-import {
-  ref,
-  computed,
-  onMounted,
-  watch
-} from 'vue'
-import {
-  STATUS_TYPES,
-  STATUS_COLORS
-} from '@/types/pelanggan'
+import { ref, computed, onMounted, watch } from 'vue'
+import { STATUS_TYPES, STATUS_COLORS } from '@/types/pelanggan'
 import Swal from 'sweetalert2'
-import {
-  useUiStore
-} from '@/stores/uiStore'
+import { useUiStore } from '@/stores/uiStore'
 import customerService from '@/services/customer.service'
 
 export function usePelanggan(router = null) {
@@ -40,16 +30,15 @@ export function usePelanggan(router = null) {
         id: c.customer_code || c.id,
         realId: c.id,
         nama: c.name,
-        initials: c.name ?
-          c.name
-          .split(' ')
-          .map((n) => n[0])
-          .join('')
-          .toUpperCase()
-          .substring(0, 2) : '??',
-        avatarColor: ['#0ea5e9', '#f43f5e', '#10b981', '#8b5cf6', '#f59e0b'][
-          c.id % 5
-        ],
+        initials: c.name
+          ? c.name
+              .split(' ')
+              .map((n) => n[0])
+              .join('')
+              .toUpperCase()
+              .substring(0, 2)
+          : '??',
+        avatarColor: ['#0ea5e9', '#f43f5e', '#10b981', '#8b5cf6', '#f59e0b'][c.id % 5],
         nik: c.nik || '-',
         alamat: c.address || '-',
         no_telp: c.no_telp || '-',
@@ -85,10 +74,10 @@ export function usePelanggan(router = null) {
     const q = searchQuery.value.toLowerCase()
     return tableData.value.filter(
       (r) =>
-      r.nama.toLowerCase().includes(q) ||
-      r.id.toLowerCase().includes(q) ||
-      r.nik.includes(q) ||
-      r.alamat.toLowerCase().includes(q),
+        r.nama.toLowerCase().includes(q) ||
+        r.id.toLowerCase().includes(q) ||
+        r.nik.includes(q) ||
+        r.alamat.toLowerCase().includes(q),
     )
   })
 

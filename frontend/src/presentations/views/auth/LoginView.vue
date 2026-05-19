@@ -140,7 +140,7 @@ onMounted(() => {
     const name = urlParams.get('name')
     MySwal.fire({
       toast: true,
-      position: 'top-start', 
+      position: 'top-start',
       icon: 'success',
       title: 'Logout Berhasil',
       text: name ? `Terima kasih, ${name}` : 'Terima kasih!',
@@ -183,7 +183,7 @@ const handleLogin = async () => {
       localStorage.setItem('auth_expires_at', expireTime.toString())
       uiStore.setUserData(res.data.user)
       uiStore.setUserRole(res.data.user.role)
-      
+
       MySwal.fire({
         toast: true,
         position: 'top-end',
@@ -206,7 +206,7 @@ const handleLogin = async () => {
   } catch (error) {
     console.error('Login Error Details:', error)
     const errorMessage = error.response?.data?.message || 'Email atau password salah.'
-    
+
     MySwal.fire({
       icon: 'error',
       title: 'Akses Ditolak',
