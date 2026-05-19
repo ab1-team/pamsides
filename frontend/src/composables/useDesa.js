@@ -1,72 +1,66 @@
-import { ref, computed } from 'vue'
+import {
+  ref,
+  computed,
+  onMounted
+} from 'vue'
 import Swal from 'sweetalert2'
+import villageService from '@/services/village.service'
 
 export function useDesa(router) {
-  // State untuk filter pencarian
+  // State
   const searchQuery = ref('')
   const currentPage = ref(1)
   const perPage = ref(10)
 
-  // Data dummy untuk Desa
-  const tableData = ref([
-    {
-      id: 'D-001',
-      kode: '320101',
-      desa: 'Sukamaju',
-      dusun: 'Krajan',
-      alamat: 'Jl. Merdeka No. 1, Balai Desa Sukamaju',
-      telepon: '021-1234567',
-    },
-    {
-      id: 'D-002',
-      kode: '320102',
-      desa: 'Sukarame',
-      dusun: 'Sukamukti',
-      alamat: 'Jl. Pahlawan No. 45, Balai Desa Sukarame',
-      telepon: '021-1234568',
-    },
-    {
-      id: 'D-003',
-      kode: '320103',
-      desa: 'Mulyasari',
-      dusun: 'Mekarjati',
-      alamat: 'Jl. Raya Mulyasari No. 10',
-      telepon: '021-1234569',
-    },
-    {
-      id: 'D-004',
-      kode: '320104',
-      desa: 'Karanganyar',
-      dusun: 'Karangtengah',
-      alamat: 'Jl. Bima No. 22',
-      telepon: '021-1234570',
-    },
-    {
-      id: 'D-005',
-      kode: '320105',
-      desa: 'Caringin',
-      dusun: 'Caringin Kulon',
-      alamat: 'Jl. Raya Caringin No. 5',
-      telepon: '021-1234571',
-    },
-  ])
+  // Data dari API
+  const tableData = ref([])
 
-  // Properti komputasi
-  const filteredData = computed(() => {
-    if (!searchQuery.value) return tableData.value
-    const q = searchQuery.value.toLowerCase()
-    return tableData.value.filter(
-      (r) =>
-        r.desa.toLowerCase().includes(q) ||
-        r.kode.toLowerCase().includes(q) ||
-        r.dusun.toLowerCase().includes(q) ||
-        r.alamat.toLowerCase().includes(q),
-    )
+  // FETCH DATA
+  const getData = async () => {
+    try {
+      const res = await villageService.getVillages()
+
+      // mapping supaya sesuai dengan table kamu
+      tableData.value = res.data.data.map(item => ({
+        id: item.id,
+        desa: item.village_name,
+        dusun: item.hamlet_name,
+        alamat: item.address,
+        telepon: item.phone,
+      }))
+
+      console.log('DATA DESA:', tableData.value)
+
+    } catch (err) {
+      console.error('Gagal ambil desa:', err)
+    }
+  }
+
+  onMounted(() => {
+    getData()
   })
 
+  // FILTER
+  const filteredData = computed(() => {
+    if (!searchQuery.value) return tableData.value
+
+    const q = searchQuery.value.toLowerCase()
+
+    return tableData.value.filter((r) => {
+      return (
+        (r.desa && r.desa.toLowerCase().includes(q)) ||
+        (r.dusun && r.dusun.toLowerCase().includes(q)) ||
+        (r.alamat && r.alamat.toLowerCase().includes(q)) ||
+        (r.telepon && r.telepon.toLowerCase().includes(q))
+      )
+    })
+  })
+
+  // PAGINATION
   const totalPages = computed(() =>
     Math.max(1, Math.ceil(filteredData.value.length / perPage.value)),
   )
+
   const visiblePages = computed(() => {
     const pages = []
     for (let i = 1; i <= totalPages.value; i++) {
@@ -75,7 +69,7 @@ export function useDesa(router) {
     return pages
   })
 
-  // Fungsi-fungsi penanganan aksi
+  // EDIT
   const handleEdit = (row) => {
     console.log('Edit Desa:', row)
     if (router) {
@@ -83,10 +77,11 @@ export function useDesa(router) {
     }
   }
 
+  // DELETE 
   const handleDelete = async (row) => {
     const result = await Swal.fire({
       title: 'Hapus Desa?',
-      text: `Desa "${row.desa}" akan dihapus secara permanent dari aplikasi`,
+      text: `Desa "${row.desa}" akan dihapus`,
       icon: 'warning',
       showCancelButton: true,
       confirmButtonText: 'Ya, Hapus!',
@@ -97,33 +92,35 @@ export function useDesa(router) {
     })
 
     if (result.isConfirmed) {
-      tableData.value = tableData.value.filter((item) => item.id !== row.id)
+      try {
+        await villageService.deleteVillage(row.id)
 
-      Swal.fire({
-        title: 'Terhapus!',
-        text: 'Data desa telah berhasil dihapus.',
-        icon: 'success',
-        timer: 1500,
-        showConfirmButton: false,
-      })
+        // refresh data dari server
+        await getData()
+
+        Swal.fire({
+          title: 'Terhapus!',
+          text: 'Data desa berhasil dihapus.',
+          icon: 'success',
+          timer: 1500,
+          showConfirmButton: false,
+        })
+      } catch (err) {
+        console.error('Gagal hapus:', err)
+
+        Swal.fire('Error', 'Gagal menghapus data', 'error')
+      }
     }
   }
 
   return {
-    // State
     searchQuery,
     currentPage,
     perPage,
-
-    // Data
     tableData,
     filteredData,
-
-    // Komputasi
     totalPages,
     visiblePages,
-
-    // Penanganan Aksi
     handleEdit,
     handleDelete,
   }

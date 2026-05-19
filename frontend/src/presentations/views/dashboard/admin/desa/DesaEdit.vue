@@ -111,54 +111,90 @@ import BaseInput from '@/presentations/components/ui/BaseInput.vue'
 import BaseButton from '@/presentations/components/ui/BaseButton.vue'
 import SelectSearch from '@/presentations/components/SelectSearch.vue'
 import Swal from 'sweetalert2'
+import villageService from '@/services/village.service'
 
 const router = useRouter()
 const route = useRoute()
 
 const form = ref({
   id: '',
-  provinsi: 'Lampung',
-  kabupaten: 'Pringsewu',
-  kecamatan: 'Gading Rejo',
-  desa: 'Gading Rejo Utara',
-  dusun: 'Krajan',
-  no_hp: '081234567890',
+  desa: '',
+  dusun: '',
+  no_hp: '',
   alamat: '',
 })
 
-const provinsiOptions = [{ id: 'Lampung', text: 'Lampung' }]
-const kabupatenOptions = [{ id: 'Pringsewu', text: 'Pringsewu' }]
-const kecamatanOptions = [{ id: 'Gading Rejo', text: 'Gading Rejo' }]
-const desaOptions = [{ id: 'Gading Rejo Utara', text: 'Gading Rejo Utara' }]
+// dummy static (biar tetap tampil)
+const provinsiOptions = [{ id: 'DIY', text: 'DIY' }]
+const kabupatenOptions = [{ id: 'Gunungkidul', text: 'Gunungkidul' }]
+const kecamatanOptions = [{ id: 'Playen', text: 'Playen' }]
+const desaOptions = ref([])
 
+// LOAD DATA DARI API
+const getDetail = async () => {
+  try {
+    const id = route.params.id
+
+    const res = await villageService.getVillageById(id)
+
+    const data = res.data.data
+
+    form.value = {
+      id: data.id,
+      desa: data.village_name,
+      dusun: data.hamlet_name,
+      no_hp: data.phone,
+      alamat: data.address,
+    }
+
+    // set option desa biar SelectSearch bisa nampilin
+    desaOptions.value = [
+      { id: data.village_name, text: data.village_name }
+    ]
+
+  } catch (err) {
+    console.error('Gagal ambil detail:', err)
+  }
+}
+
+onMounted(() => {
+  getDetail()
+})
+
+// AUTO ALAMAT (pakai yang lama kalau ada)
 const generatedAlamat = computed(() => {
+  if (form.value.alamat) return form.value.alamat
+
   const parts = []
   if (form.value.dusun) parts.push(`Dusun ${form.value.dusun}`)
   if (form.value.desa) parts.push(`Desa ${form.value.desa}`)
-  if (form.value.kecamatan) parts.push(`Kec. ${form.value.kecamatan}`)
-  if (form.value.kabupaten) parts.push(`Kab. ${form.value.kabupaten}`)
-  if (form.value.provinsi) parts.push(`Prov. ${form.value.provinsi}`)
 
   return parts.join(', ')
 })
 
-onMounted(() => {
-  const id = route.params.id
-  form.value.id = id
-})
+// UPDATE KE BACKEND
+const handleSave = async () => {
+  try {
+    await villageService.updateVillage(form.value.id, {
+      village_name: form.value.desa,
+      hamlet_name: form.value.dusun,
+      address: generatedAlamat.value,
+      phone: form.value.no_hp,
+    })
 
-const handleSave = () => {
-  form.value.alamat = generatedAlamat.value
+    Swal.fire({
+      title: 'Berhasil!',
+      text: 'Data desa berhasil diperbarui.',
+      icon: 'success',
+    }).then(() => {
+      router.push('/data-desa')
+    })
 
-  Swal.fire({
-    title: 'Berhasil!',
-    text: 'Perubahan data desa telah disimpan.',
-    icon: 'success',
-    confirmButtonText: 'OK',
-    confirmButtonColor: '#3b82f6',
-  }).then(() => {
-    router.push('/data-desa')
-  })
+  } catch (err) {
+    console.error(err)
+
+    Swal.fire('Error', 'Gagal update data', 'error')
+  }
 }
 </script>
 
