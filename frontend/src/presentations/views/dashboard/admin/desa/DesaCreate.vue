@@ -100,13 +100,15 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import villageService from '@/services/village.service'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import ContentCard from '@/presentations/components/ui/ContentCard.vue'
 import BaseInput from '@/presentations/components/ui/BaseInput.vue'
 import BaseButton from '@/presentations/components/ui/BaseButton.vue'
 import SelectSearch from '@/presentations/components/SelectSearch.vue'
 import Swal from 'sweetalert2'
+import axios from 'axios'
 
 const router = useRouter()
 
@@ -117,42 +119,168 @@ const form = ref({
   desa: '',
   dusun: '',
   no_hp: '',
-  alamat: '',
 })
 
-const provinsiOptions = [{ id: 'Lampung', text: 'Lampung' }]
-const kabupatenOptions = [{ id: 'Pringsewu', text: 'Pringsewu' }]
-const kecamatanOptions = [{ id: 'Gading Rejo', text: 'Gading Rejo' }]
-const desaOptions = [{ id: 'Gading Rejo Utara', text: 'Gading Rejo Utara' }]
+// OPTIONS (DINAMIS)
+const provinsiOptions = ref([])
+const kabupatenOptions = ref([])
+const kecamatanOptions = ref([])
+const desaOptions = ref([])
 
+// LOAD PROVINSI
+onMounted(async () => {
+  try {
+    const res = await axios.get('https://www.emsifa.com/api-wilayah-indonesia/api/provinces.json')
+
+    provinsiOptions.value = res.data.map(item => ({
+      id: item.id,
+      text: item.name
+    }))
+  } catch (err) {
+    console.error('Gagal load provinsi', err)
+  }
+})
+
+// PILIH PROVINSI → LOAD KABUPATEN
+watch(() => form.value.provinsi, async (val) => {
+  if (!val) return
+
+  form.value.kabupaten = ''
+  form.value.kecamatan = ''
+  form.value.desa = ''
+
+  kabupatenOptions.value = []
+  kecamatanOptions.value = []
+  desaOptions.value = []
+
+  try {
+    const res = await axios.get(`https://www.emsifa.com/api-wilayah-indonesia/api/regencies/${val}.json`)
+
+    kabupatenOptions.value = res.data.map(item => ({
+      id: item.id,
+      text: item.name
+    }))
+  } catch (err) {
+    console.error('Gagal load kabupaten', err)
+  }
+})
+
+// PILIH KABUPATEN → LOAD KECAMATAN
+watch(() => form.value.kabupaten, async (val) => {
+  if (!val) return
+
+  form.value.kecamatan = ''
+  form.value.desa = ''
+
+  kecamatanOptions.value = []
+  desaOptions.value = []
+
+  try {
+    const res = await axios.get(`https://www.emsifa.com/api-wilayah-indonesia/api/districts/${val}.json`)
+
+    kecamatanOptions.value = res.data.map(item => ({
+      id: item.id,
+      text: item.name
+    }))
+  } catch (err) {
+    console.error('Gagal load kecamatan', err)
+  }
+})
+
+// PILIH KECAMATAN → LOAD DESA
+watch(() => form.value.kecamatan, async (val) => {
+  if (!val) return
+
+  form.value.desa = ''
+  desaOptions.value = []
+
+  try {
+    const res = await axios.get(`https://www.emsifa.com/api-wilayah-indonesia/api/villages/${val}.json`)
+
+    desaOptions.value = res.data.map(item => ({
+      id: item.id,
+      text: item.name
+    }))
+  } catch (err) {
+    console.error('Gagal load desa', err)
+  }
+})
+
+// AUTO ALAMAT
 const generatedAlamat = computed(() => {
   const parts = []
+
   if (form.value.dusun) parts.push(`Dusun ${form.value.dusun}`)
-  if (form.value.desa) parts.push(`Desa ${form.value.desa}`)
-  if (form.value.kecamatan) parts.push(`Kec. ${form.value.kecamatan}`)
-  if (form.value.kabupaten) parts.push(`Kab. ${form.value.kabupaten}`)
-  if (form.value.provinsi) parts.push(`Prov. ${form.value.provinsi}`)
+
+  const desa = desaOptions.value.find(d => d.id === form.value.desa)
+  if (desa) parts.push(`Desa ${desa.text}`)
+
+  const kec = kecamatanOptions.value.find(k => k.id === form.value.kecamatan)
+  if (kec) parts.push(`Kec. ${kec.text}`)
+
+  const kab = kabupatenOptions.value.find(k => k.id === form.value.kabupaten)
+  if (kab) parts.push(`Kab. ${kab.text}`)
+
+  const prov = provinsiOptions.value.find(p => p.id === form.value.provinsi)
+  if (prov) parts.push(`Prov. ${prov.text}`)
 
   return parts.join(', ')
 })
 
-const handleSave = () => {
-  if (!form.value.desa || !form.value.provinsi) {
-    Swal.fire('Error', 'Provinsi dan Desa harus dipilih!', 'error')
+// SIMPAN
+const isLoading = ref(false)
+const handleSave = async () => {
+  if (!form.value.desa || !form.value.dusun) {
+    Swal.fire('Error', 'Desa dan Dusun wajib diisi!', 'error')
     return
   }
 
-  form.value.alamat = generatedAlamat.value
+  const selectedDesaId = typeof form.value.desa === 'object' ? form.value.desa.id : form.value.desa
 
-  Swal.fire({
-    title: 'Berhasil!',
-    text: 'Data desa telah disimpan.',
-    icon: 'success',
-    confirmButtonText: 'OK',
-    confirmButtonColor: '#3b82f6',
-  }).then(() => {
-    router.push('/data-desa')
-  })
+  const targetDesa = desaOptions.value.find(d => d.id === selectedDesaId)
+  const finalVillageName = targetDesa ? targetDesa.text : (typeof form.value.desa === 'object' ? form.value.desa.text : '')
+
+  if (!finalVillageName) {
+    Swal.fire('Error', 'Nama Desa tidak valid atau belum terpilih dengan benar!', 'error')
+    return
+  }
+
+  try {
+    isLoading.value = true 
+    
+    await villageService.createVillage({
+      village_name: finalVillageName, // Nama desa asli (String) yang sudah divalidasi
+      hamlet_name: form.value.dusun,
+      address: generatedAlamat.value,
+      phone: form.value.no_hp
+    })
+
+    Swal.fire({
+      title: 'Berhasil!',
+      text: 'Data desa telah disimpan.',
+      icon: 'success',
+      confirmButtonColor: '#3b82f6',
+    }).then(() => {
+      router.push('/data-desa')
+    })
+
+  } catch (err) {
+    console.error('Detail Error Server:', err.response?.data)
+    
+    // Tampilkan pesan error validasi spesifik dari Laravel jika ada
+    let msg = err.response?.data?.message || 'Gagal menyimpan data'
+    if (err.response?.data?.errors) {
+      msg = Object.values(err.response.data.errors).flat().join('<br>')
+    }
+    
+    Swal.fire({
+      title: 'Error',
+      html: msg, // Pakai html agar baris baru rapi jika errornya banyak
+      icon: 'error'
+    })
+  } finally {
+    isLoading.value = false
+  }
 }
 </script>
 

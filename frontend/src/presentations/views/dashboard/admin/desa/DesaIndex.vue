@@ -65,11 +65,7 @@ const {
 } = useDesa(router)
 
 const tableColumns = [
-  {
-    key: 'kode',
-    title: 'KODE',
-    tdClass: 'font-medium text-slate-900',
-  },
+  
   {
     key: 'desa',
     title: 'DESA / KELURAHAN',

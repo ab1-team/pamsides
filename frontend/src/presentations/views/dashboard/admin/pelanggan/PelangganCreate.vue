@@ -41,7 +41,7 @@
               { id: 'Laki-laki', text: 'Laki-laki' },
               { id: 'Perempuan', text: 'Perempuan' },
             ]" label="Jenis Kelamin" placeholder="Pilih Jenis Kelamin" icon="users" />
-                    <BaseInput v-model="form.email" label="Ussername" placeholder="Masukkan Email" icon="envelope" />
+                    <BaseInput v-model="form.email" label="Username" placeholder="Masukkan Email" icon="envelope" />
 
                     <BaseInput v-model="form.password" type="password" label="Password" placeholder="Masukkan Password"
                         icon="lock" />
