@@ -58,7 +58,10 @@ Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
 
     // Master Customers
     Route::get('/customers', [CustomerController::class, 'index']);
-    Route::post('/customers', [CustomerController::class, 'store']); // Untuk Registrasi Pelanggan Awal
+    Route::post('/customers', [CustomerController::class, 'store']); 
+    Route::put('/customers/{id}', [CustomerController::class, 'update']);
+    Route::delete('/customers/{id}', [CustomerController::class, 'destroy']);
+    Route::get('/customers/{id}', [CustomerController::class, 'show']);
 
     // Master Packages & Tariffs
     Route::apiResource('installation-packages', InstallationPackageController::class);

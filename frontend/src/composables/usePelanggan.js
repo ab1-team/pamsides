@@ -34,24 +34,27 @@ export function usePelanggan(router = null) {
       })
 
       console.log('Response from API', response)
+
       // Mapping data dari API ke format tabel
       tableData.value = response.data.map((c) => ({
         id: c.customer_code || c.id,
         realId: c.id,
         nama: c.name,
-        initials: c.name
+        initials: c.name ?
+          c.name
           .split(' ')
           .map((n) => n[0])
           .join('')
           .toUpperCase()
-          .substring(0, 2),
+          .substring(0, 2) : '??',
         avatarColor: ['#0ea5e9', '#f43f5e', '#10b981', '#8b5cf6', '#f59e0b'][
           c.id % 5
         ],
         nik: c.nik || '-',
         alamat: c.address || '-',
-        no_hp: c.phone || '-',
-        status: c.status || STATUS_TYPES.AKTIF,
+        no_telp: c.no_telp || '-',
+
+        status: c.status || 'draft',
       }))
     } catch (error) {
       console.error('Error fetching customers:', error)
