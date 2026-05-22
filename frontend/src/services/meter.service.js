@@ -13,10 +13,9 @@ export const meterService = {
   },
 
   /**
-   * Input angka meter bulanan + foto (Teknisi)
+   * Input angka meter bulanan + foto (Teknisi/Admin)
    */
   async submitReading(formData) {
-    // Pastikan menggunakan form-data untuk upload foto
     const response = await api.post('/meter-readings', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',

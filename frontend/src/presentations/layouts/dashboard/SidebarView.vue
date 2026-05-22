@@ -185,7 +185,7 @@ function toggleSubmenu(label) {
 }
 
 const menuItems = [
-    {
+  {
     label: 'Dashboard',
     icon: 'home',
     to: '/dashboard',
@@ -220,22 +220,6 @@ const menuItems = [
           { label: 'Data Pelanggan', to: '/data-pelanggan' },
         ],
       },
-      {
-        label: 'Desa',
-        icon: 'building',
-        children: [
-          { label: 'Create Desa', to: '/data-desa/tambah' },
-          { label: 'Data Desa', to: '/data-desa' },
-        ],
-      },
-      {
-        label: 'Caters',
-        icon: 'archive',
-        children: [
-          { label: 'Create Caters', to: '/data-cater/tambah' },
-          { label: 'Data Caters', to: '/data-cater' },
-        ],
-      },
       { label: 'Daftar Instalasi', icon: 'building', to: '/dataInstalasi' },
     ],
   },
@@ -255,6 +239,16 @@ const menuItems = [
           { label: 'Daftar Pemasangan', to: '/instalasi/pemasangan/daftar' },
         ],
       },
+    ],
+  },
+  {
+    label: 'Tagihan & Pembayaran',
+    icon: 'file-invoice-dollar',
+    roles: ['admin'],
+    children: [
+      { label: 'Input Tagihan', to: '/instalasi/pemakaian-air' },
+      { label: 'Daftar Tagihan', to: '/instalasi/daftar-tagihan' },
+      { label: 'Pembayaran Tagihan', to: '/transaksi/tagihan-bulanan' },
     ],
   },
 ]

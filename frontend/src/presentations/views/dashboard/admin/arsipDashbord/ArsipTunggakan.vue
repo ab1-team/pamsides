@@ -34,8 +34,9 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import DataTable from '@/presentations/components/ui/DataTable.vue'
+import billingService from '@/services/billing.service'
 
 const formatCurrency = (amount) => {
   return new Intl.NumberFormat('id-ID', {
@@ -48,6 +49,7 @@ const formatCurrency = (amount) => {
 const searchQuery = ref('')
 const currentPage = ref(1)
 const perPage = ref(5)
+const loading = ref(false)
 
 const columns = [
   { key: 'nomorInduk', title: 'Nomor Induk' },
@@ -58,59 +60,42 @@ const columns = [
   { key: 'status', title: 'Status' },
 ]
 
-const mockData = ref([
-  {
-    id: 1,
-    nomorInduk: 'INS-24001',
-    customer: 'Budi Santoso',
-    alamat: 'Jl. Merpati No. 10',
-    paket: 'Rumah Tangga A',
-    jumlahTunggakan: 150000,
-    status: 'Belum Bayar',
-  },
-  {
-    id: 2,
-    nomorInduk: 'INS-24002',
-    customer: 'Siti Aminah',
-    alamat: 'Jl. Kenari No. 5',
-    paket: 'Rumah Tangga B',
-    jumlahTunggakan: 75000,
-    status: 'Sebagian',
-  },
-  {
-    id: 4,
-    nomorInduk: 'INS-24004',
-    customer: 'Dewi Lestari',
-    alamat: 'Jl. Melati No. 8',
-    paket: 'Rumah Tangga A',
-    jumlahTunggakan: 300000,
-    status: 'Belum Bayar',
-  },
-  {
-    id: 6,
-    nomorInduk: 'INS-24006',
-    customer: 'Indah Pertiwi',
-    alamat: 'Jl. Tulip No. 20',
-    paket: 'Rumah Tangga A',
-    jumlahTunggakan: 150000,
-    status: 'Belum Bayar',
-  },
-  {
-    id: 8,
-    nomorInduk: 'INS-24008',
-    customer: 'Rudi Hermawan',
-    alamat: 'Jl. Kamboja No. 9',
-    paket: 'Niaga',
-    jumlahTunggakan: 500000,
-    status: 'Belum Bayar',
-  },
-])
+const itemsList = ref([])
+
+const fetchUnpaidBills = async () => {
+  try {
+    loading.value = true
+    const response = await billingService.getBills({ status: 'unpaid' })
+    if (response?.success && response?.data?.bills) {
+      itemsList.value = response.data.bills.map((bill) => {
+        const ticket = bill.customer?.ticket
+        return {
+          id: bill.id,
+          nomorInduk: bill.customer?.customer_code || '-',
+          customer: ticket?.applicant_name || '-',
+          alamat: ticket?.address || '-',
+          paket: ticket?.package?.name || '-',
+          jumlahTunggakan: Number(bill.total_amount) || 0,
+          status: bill.status === 'unpaid' ? 'Belum Bayar' : 'Sebagian',
+        }
+      })
+    }
+  } catch (error) {
+    console.error('Failed to fetch unpaid bills', error)
+  } finally {
+    loading.value = false
+  }
+}
+
+onMounted(() => {
+  fetchUnpaidBills()
+})
 
 const filteredData = computed(() => {
   const query = searchQuery.value.toLowerCase()
-  if (!query) return mockData.value
+  if (!query) return itemsList.value
 
-  return mockData.value.filter(
+  return itemsList.value.filter(
     (item) =>
       item.customer.toLowerCase().includes(query) || item.nomorInduk.toLowerCase().includes(query),
   )

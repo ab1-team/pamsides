@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Models\Village;
+use Illuminate\Http\Request;
 
 class VillageController extends Controller
 {
@@ -16,7 +16,7 @@ class VillageController extends Controller
 
         return response()->json([
             'success' => true,
-            'data' => $villages
+            'data' => $villages,
         ]);
     }
 
@@ -30,23 +30,24 @@ class VillageController extends Controller
         $village = Village::create([
             'village_name' => $request->village_name,
             'hamlet_name' => $request->hamlet_name,
-            'address'      => $request->address,
-            'phone'        => $request->phone,
+            'address' => $request->address,
+            'phone' => $request->phone,
         ]);
 
         return response()->json([
             'success' => true,
             'message' => 'Village berhasil ditambahkan',
-            'data' => $village
+            'data' => $village,
         ]);
     }
+
     public function show($id)
     {
         $village = Village::findOrFail($id);
 
         return response()->json([
             'success' => true,
-            'data' => $village
+            'data' => $village,
         ]);
     }
 
@@ -72,7 +73,7 @@ class VillageController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Village berhasil diupdate',
-            'data' => $village
+            'data' => $village,
         ]);
     }
 
@@ -87,7 +88,7 @@ class VillageController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Village berhasil dihapus'
+            'message' => 'Village berhasil dihapus',
         ]);
     }
 }

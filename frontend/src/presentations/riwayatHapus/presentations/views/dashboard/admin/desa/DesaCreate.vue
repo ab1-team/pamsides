@@ -132,9 +132,9 @@ onMounted(async () => {
   try {
     const res = await axios.get('https://www.emsifa.com/api-wilayah-indonesia/api/provinces.json')
 
-    provinsiOptions.value = res.data.map(item => ({
+    provinsiOptions.value = res.data.map((item) => ({
       id: item.id,
-      text: item.name
+      text: item.name,
     }))
   } catch (err) {
     console.error('Gagal load provinsi', err)
@@ -142,69 +142,84 @@ onMounted(async () => {
 })
 
 // PILIH PROVINSI → LOAD KABUPATEN
-watch(() => form.value.provinsi, async (val) => {
-  if (!val) return
+watch(
+  () => form.value.provinsi,
+  async (val) => {
+    if (!val) return
 
-  form.value.kabupaten = ''
-  form.value.kecamatan = ''
-  form.value.desa = ''
+    form.value.kabupaten = ''
+    form.value.kecamatan = ''
+    form.value.desa = ''
 
-  kabupatenOptions.value = []
-  kecamatanOptions.value = []
-  desaOptions.value = []
+    kabupatenOptions.value = []
+    kecamatanOptions.value = []
+    desaOptions.value = []
 
-  try {
-    const res = await axios.get(`https://www.emsifa.com/api-wilayah-indonesia/api/regencies/${val}.json`)
+    try {
+      const res = await axios.get(
+        `https://www.emsifa.com/api-wilayah-indonesia/api/regencies/${val}.json`,
+      )
 
-    kabupatenOptions.value = res.data.map(item => ({
-      id: item.id,
-      text: item.name
-    }))
-  } catch (err) {
-    console.error('Gagal load kabupaten', err)
-  }
-})
+      kabupatenOptions.value = res.data.map((item) => ({
+        id: item.id,
+        text: item.name,
+      }))
+    } catch (err) {
+      console.error('Gagal load kabupaten', err)
+    }
+  },
+)
 
 // PILIH KABUPATEN → LOAD KECAMATAN
-watch(() => form.value.kabupaten, async (val) => {
-  if (!val) return
+watch(
+  () => form.value.kabupaten,
+  async (val) => {
+    if (!val) return
 
-  form.value.kecamatan = ''
-  form.value.desa = ''
+    form.value.kecamatan = ''
+    form.value.desa = ''
 
-  kecamatanOptions.value = []
-  desaOptions.value = []
+    kecamatanOptions.value = []
+    desaOptions.value = []
 
-  try {
-    const res = await axios.get(`https://www.emsifa.com/api-wilayah-indonesia/api/districts/${val}.json`)
+    try {
+      const res = await axios.get(
+        `https://www.emsifa.com/api-wilayah-indonesia/api/districts/${val}.json`,
+      )
 
-    kecamatanOptions.value = res.data.map(item => ({
-      id: item.id,
-      text: item.name
-    }))
-  } catch (err) {
-    console.error('Gagal load kecamatan', err)
-  }
-})
+      kecamatanOptions.value = res.data.map((item) => ({
+        id: item.id,
+        text: item.name,
+      }))
+    } catch (err) {
+      console.error('Gagal load kecamatan', err)
+    }
+  },
+)
 
 // PILIH KECAMATAN → LOAD DESA
-watch(() => form.value.kecamatan, async (val) => {
-  if (!val) return
+watch(
+  () => form.value.kecamatan,
+  async (val) => {
+    if (!val) return
 
-  form.value.desa = ''
-  desaOptions.value = []
+    form.value.desa = ''
+    desaOptions.value = []
 
-  try {
-    const res = await axios.get(`https://www.emsifa.com/api-wilayah-indonesia/api/villages/${val}.json`)
+    try {
+      const res = await axios.get(
+        `https://www.emsifa.com/api-wilayah-indonesia/api/villages/${val}.json`,
+      )
 
-    desaOptions.value = res.data.map(item => ({
-      id: item.id,
-      text: item.name
-    }))
-  } catch (err) {
-    console.error('Gagal load desa', err)
-  }
-})
+      desaOptions.value = res.data.map((item) => ({
+        id: item.id,
+        text: item.name,
+      }))
+    } catch (err) {
+      console.error('Gagal load desa', err)
+    }
+  },
+)
 
 // AUTO ALAMAT
 const generatedAlamat = computed(() => {
@@ -212,16 +227,16 @@ const generatedAlamat = computed(() => {
 
   if (form.value.dusun) parts.push(`Dusun ${form.value.dusun}`)
 
-  const desa = desaOptions.value.find(d => d.id === form.value.desa)
+  const desa = desaOptions.value.find((d) => d.id === form.value.desa)
   if (desa) parts.push(`Desa ${desa.text}`)
 
-  const kec = kecamatanOptions.value.find(k => k.id === form.value.kecamatan)
+  const kec = kecamatanOptions.value.find((k) => k.id === form.value.kecamatan)
   if (kec) parts.push(`Kec. ${kec.text}`)
 
-  const kab = kabupatenOptions.value.find(k => k.id === form.value.kabupaten)
+  const kab = kabupatenOptions.value.find((k) => k.id === form.value.kabupaten)
   if (kab) parts.push(`Kab. ${kab.text}`)
 
-  const prov = provinsiOptions.value.find(p => p.id === form.value.provinsi)
+  const prov = provinsiOptions.value.find((p) => p.id === form.value.provinsi)
   if (prov) parts.push(`Prov. ${prov.text}`)
 
   return parts.join(', ')
@@ -237,8 +252,12 @@ const handleSave = async () => {
 
   const selectedDesaId = typeof form.value.desa === 'object' ? form.value.desa.id : form.value.desa
 
-  const targetDesa = desaOptions.value.find(d => d.id === selectedDesaId)
-  const finalVillageName = targetDesa ? targetDesa.text : (typeof form.value.desa === 'object' ? form.value.desa.text : '')
+  const targetDesa = desaOptions.value.find((d) => d.id === selectedDesaId)
+  const finalVillageName = targetDesa
+    ? targetDesa.text
+    : typeof form.value.desa === 'object'
+      ? form.value.desa.text
+      : ''
 
   if (!finalVillageName) {
     Swal.fire('Error', 'Nama Desa tidak valid atau belum terpilih dengan benar!', 'error')
@@ -246,13 +265,13 @@ const handleSave = async () => {
   }
 
   try {
-    isLoading.value = true 
-    
+    isLoading.value = true
+
     await villageService.createVillage({
       village_name: finalVillageName, // Nama desa asli (String) yang sudah divalidasi
       hamlet_name: form.value.dusun,
       address: generatedAlamat.value,
-      phone: form.value.no_hp
+      phone: form.value.no_hp,
     })
 
     Swal.fire({
@@ -263,20 +282,19 @@ const handleSave = async () => {
     }).then(() => {
       router.push('/data-desa')
     })
-
   } catch (err) {
     console.error('Detail Error Server:', err.response?.data)
-    
+
     // Tampilkan pesan error validasi spesifik dari Laravel jika ada
     let msg = err.response?.data?.message || 'Gagal menyimpan data'
     if (err.response?.data?.errors) {
       msg = Object.values(err.response.data.errors).flat().join('<br>')
     }
-    
+
     Swal.fire({
       title: 'Error',
       html: msg, // Pakai html agar baris baru rapi jika errornya banyak
-      icon: 'error'
+      icon: 'error',
     })
   } finally {
     isLoading.value = false

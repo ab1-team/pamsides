@@ -117,7 +117,10 @@
                     class="grid! md:grid-cols-2! gap-4! md:gap-6! p-4! md:p-8! bg-slate-50/50! border! border-slate-100! rounded-2xl! md:rounded-3xl!"
                   >
                     <div class="space-y-1.5!">
-                      <label class="text-[11px]! font-black! text-slate-500! uppercase! tracking-wider!">Jumlah Tagihan (Rp)</label>
+                      <label
+                        class="text-[11px]! font-black! text-slate-500! uppercase! tracking-wider!"
+                        >Jumlah Tagihan (Rp)</label
+                      >
                       <BaseInput
                         v-model="localData.tagihan"
                         type="number"
@@ -128,7 +131,10 @@
                     </div>
 
                     <div class="space-y-1.5!">
-                      <label class="text-[11px]! font-black! text-slate-500! uppercase! tracking-wider!">Unit Pemakaian</label>
+                      <label
+                        class="text-[11px]! font-black! text-slate-500! uppercase! tracking-wider!"
+                        >Unit Pemakaian</label
+                      >
                       <BaseInput
                         v-model="localData.pemakaian"
                         type="number"
@@ -139,7 +145,10 @@
                     </div>
 
                     <div class="space-y-1.5!">
-                      <label class="text-[11px]! font-black! text-slate-500! uppercase! tracking-wider!">Jatuh Tempo</label>
+                      <label
+                        class="text-[11px]! font-black! text-slate-500! uppercase! tracking-wider!"
+                        >Jatuh Tempo</label
+                      >
                       <BaseInput
                         v-model="localData.jatuhTempo"
                         placeholder="20 Mei 2024"
@@ -149,7 +158,10 @@
                     </div>
 
                     <div class="space-y-1.5!">
-                      <label class="text-[11px]! font-black! text-slate-500! uppercase! tracking-wider!">Status Pembayaran</label>
+                      <label
+                        class="text-[11px]! font-black! text-slate-500! uppercase! tracking-wider!"
+                        >Status Pembayaran</label
+                      >
                       <div class="grid! grid-cols-2! gap-2!">
                         <button
                           v-for="status in ['Sudah Bayar', 'Belum Bayar']"
@@ -159,7 +171,7 @@
                             'py-2.5! rounded-xl! text-[10px]! font-black! uppercase! tracking-widest! transition-all!',
                             localData.status === status
                               ? 'bg-cyan-600! text-white! shadow-lg! shadow-cyan-200!'
-                              : 'bg-white! text-slate-400! border! border-slate-200! hover:border-cyan-200!'
+                              : 'bg-white! text-slate-400! border! border-slate-200! hover:border-cyan-200!',
                           ]"
                         >
                           {{ status }}
@@ -206,7 +218,7 @@ import Swal from 'sweetalert2'
 
 const props = defineProps({
   show: Boolean,
-  data: { type: Object, default: () => ({}) }
+  data: { type: Object, default: () => ({}) },
 })
 
 const emit = defineEmits(['close', 'save'])
@@ -217,7 +229,7 @@ const localData = ref({
   tagihan: 0,
   pemakaian: 0,
   jatuhTempo: '',
-  status: ''
+  status: '',
 })
 
 watch(
@@ -227,7 +239,7 @@ watch(
       localData.value = { ...v }
     }
   },
-  { immediate: true }
+  { immediate: true },
 )
 
 const handleClose = () => emit('close')
@@ -238,7 +250,7 @@ const handleSave = () => {
       icon: 'error',
       title: 'Validasi Gagal',
       text: 'Jumlah tagihan tidak boleh kosong!',
-      confirmButtonColor: '#0891b2'
+      confirmButtonColor: '#0891b2',
     })
   }
 
@@ -250,7 +262,7 @@ const handleSave = () => {
     position: 'top-end',
     showConfirmButton: false,
     timer: 3000,
-    timerProgressBar: true
+    timerProgressBar: true,
   })
 
   emit('save', { ...localData.value })
@@ -282,6 +294,6 @@ const handleSave = () => {
 
 :deep(.premium-input input:focus) {
   border-color: #06b6d4! !important;
-  box-shadow: 0 0 0 4px rgba(6, 182, 212, 0.1)! !important;
+  box-shadow: 0 0 0 4px rgba(6, 182, 212, 0.1) ! !important;
 }
 </style>

@@ -14,6 +14,14 @@ export const customerService = {
   },
 
   /**
+   * Cari pelanggan aktif
+   */
+  async searchActive(params = {}) {
+    const response = await api.get('/customers/search', { params })
+    return response.data
+  },
+
+  /**
    * Ambil detail pelanggan
    */
   async getCustomerDetail(id) {

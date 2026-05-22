@@ -22,9 +22,9 @@ return new class extends Migration
     {
         Schema::table('villages', function (Blueprint $table) {
             $table->foreignId('setting_id')
-                  ->nullable()
-                  ->constrained('settings')
-                  ->cascadeOnDelete();
+                ->nullable()
+                ->constrained('settings')
+                ->cascadeOnDelete();
         });
     }
 };

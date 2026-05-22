@@ -148,10 +148,7 @@ const getDetail = async () => {
     }
 
     // set option desa biar SelectSearch bisa nampilin
-    desaOptions.value = [
-      { id: data.village_name, text: data.village_name }
-    ]
-
+    desaOptions.value = [{ id: data.village_name, text: data.village_name }]
   } catch (err) {
     console.error('Gagal ambil detail:', err)
   }
@@ -189,7 +186,6 @@ const handleSave = async () => {
     }).then(() => {
       router.push('/data-desa')
     })
-
   } catch (err) {
     console.error(err)
 

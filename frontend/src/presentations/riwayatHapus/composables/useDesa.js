@@ -1,8 +1,4 @@
-import {
-  ref,
-  computed,
-  onMounted
-} from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import Swal from 'sweetalert2'
 import villageService from '@/services/village.service'
 
@@ -21,7 +17,7 @@ export function useDesa(router) {
       const res = await villageService.getVillages()
 
       // mapping supaya sesuai dengan table kamu
-      tableData.value = res.data.data.map(item => ({
+      tableData.value = res.data.data.map((item) => ({
         id: item.id,
         desa: item.village_name,
         dusun: item.hamlet_name,
@@ -30,7 +26,6 @@ export function useDesa(router) {
       }))
 
       console.log('DATA DESA:', tableData.value)
-
     } catch (err) {
       console.error('Gagal ambil desa:', err)
     }
@@ -77,7 +72,7 @@ export function useDesa(router) {
     }
   }
 
-  // DELETE 
+  // DELETE
   const handleDelete = async (row) => {
     const result = await Swal.fire({
       title: 'Hapus Desa?',

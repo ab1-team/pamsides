@@ -13,6 +13,14 @@ export const billingService = {
   },
 
   /**
+   * Ambil data pemakaian air bulanan (gabungan pelanggan, meter, tagihan)
+   */
+  async getUsageList(params = {}) {
+    const response = await api.get('/monthly-bills/usage', { params })
+    return response.data
+  },
+
+  /**
    * Ambil rekap tagihan
    */
   async getRecap(params = {}) {
@@ -24,8 +32,6 @@ export const billingService = {
    * Generate tagihan bulanan (Admin)
    */
   async generateMonthlyBills(params = {}) {
-    // Backend mendukung POST /monthly-bills/generate (otomatis bulan ini)
-    // atau POST /bills/generate (dengan parameter year & month)
     const endpoint = params.year && params.month ? '/bills/generate' : '/monthly-bills/generate'
     const response = await api.post(endpoint, params)
     return response.data

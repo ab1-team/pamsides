@@ -37,7 +37,7 @@
 import { ref, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { MySwal } from '@/main.js'
-import axios from 'axios'
+import axios from '@/utils/axios.js'
 import SidebarView from './SidebarView.vue'
 import TopNavigationView from './TopNavigationView.vue'
 import FooterView from './FooterView.vue'
@@ -73,8 +73,6 @@ const handleSearch = (event) => {
   searchQuery.value = event.target.value
 }
 
-import authService from '@/services/auth.service'
-
 const handleLogout = async () => {
   const result = await MySwal.fire({
     title: 'Konfirmasi Logout',
@@ -102,13 +100,7 @@ const handleLogout = async () => {
     try {
       const token = localStorage.getItem('auth_token')
       if (token) {
-        await axios.post(
-          'http://127.0.0.1:8000/api/logout',
-          {},
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          },
-        )
+        await axios.post('/logout')
       }
     } catch (error) {
       console.error('Logout error:', error)
