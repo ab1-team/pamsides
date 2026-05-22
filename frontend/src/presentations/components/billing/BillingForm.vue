@@ -89,7 +89,6 @@ import BaseInput from '../ui/BaseInput.vue'
 import BaseButton from '../ui/BaseButton.vue'
 import AppDatePicker from '../AppDatePicker.vue'
 import MaksMoneyInput from '../MaksMoneyInput.vue'
-import { formatRupiah } from '@/composables/useFormatCurrency'
 
 // Properti untuk data awal
 const props = defineProps({

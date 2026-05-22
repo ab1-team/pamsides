@@ -462,9 +462,9 @@ onUnmounted(() => {
   window.removeEventListener('resize', checkMobile)
 })
 
-const printInvoice = () => {
-  window.print()
-}
+// const printInvoice = () => {
+//   window.print()
+// }
 </script>
 
 <style scoped>

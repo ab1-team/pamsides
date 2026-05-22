@@ -82,14 +82,18 @@
               </thead>
               <tbody class="divide-y divide-slate-200">
                 <template v-if="paidBills.length > 0">
-                  <tr 
-                    v-for="(bill, index) in paidBills" 
-                    :key="bill.id" 
+                  <tr
+                    v-for="(bill, index) in paidBills"
+                    :key="bill.id"
                     class="hover:bg-slate-50 transition-colors"
                   >
                     <td class="py-4! px-4! text-center text-slate-600">{{ index + 1 }}</td>
                     <td class="py-4! px-4! text-slate-700">
-                      {{ bill.payments && bill.payments[0] ? bill.payments[0].paidAt : bill.statusDate || '-' }}
+                      {{
+                        bill.payments && bill.payments[0]
+                          ? bill.payments[0].paidAt
+                          : bill.statusDate || '-'
+                      }}
                     </td>
                     <td class="py-4! px-4! font-mono text-xs text-slate-500">1101</td>
                     <td class="py-4! px-4! text-slate-700">
@@ -162,7 +166,7 @@ const billingStore = useBillingStore()
 
 const paidBills = computed(() => {
   return billingStore.billingPeriods.filter(
-    (p) => (p.type === 'paid' || p.status === 'LUNAS') && p.payments && p.payments.length > 0
+    (p) => (p.type === 'paid' || p.status === 'LUNAS') && p.payments && p.payments.length > 0,
   )
 })
 

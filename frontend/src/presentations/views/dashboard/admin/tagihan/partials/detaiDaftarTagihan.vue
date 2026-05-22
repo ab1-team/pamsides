@@ -201,7 +201,13 @@
                         >
                           <span class="text-slate-500! font-medium!">Biaya Penggunaan Air</span>
                           <span class="font-bold! text-slate-800!">
-                            Rp. {{ Number(bill?.usage_charge || 0).toLocaleString('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}
+                            Rp.
+                            {{
+                              Number(bill?.usage_charge || 0).toLocaleString('id-ID', {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2,
+                              })
+                            }}
                           </span>
                         </div>
 
@@ -210,14 +216,26 @@
                             >Biaya Beban Tetap (Abodemen)</span
                           >
                           <span class="font-bold! text-slate-800!">
-                            Rp. {{ Number(bill?.abodemen || 0).toLocaleString('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}
+                            Rp.
+                            {{
+                              Number(bill?.abodemen || 0).toLocaleString('id-ID', {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2,
+                              })
+                            }}
                           </span>
                         </div>
 
                         <div class="flex! items-center! justify-between! py-1!">
                           <span class="text-slate-500! font-medium!">Denda Keterlambatan</span>
                           <span class="font-bold! text-rose-500!">
-                            Rp. {{ Number(bill?.penalty_amount || 0).toLocaleString('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}
+                            Rp.
+                            {{
+                              Number(bill?.penalty_amount || 0).toLocaleString('id-ID', {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2,
+                              })
+                            }}
                           </span>
                         </div>
                       </div>
@@ -228,7 +246,13 @@
                     >
                       <span class="text-slate-700! font-black! text-sm!">Total Pembayaran</span>
                       <span class="font-black! text-rose-600! text-base!">
-                        Rp. {{ Number(bill?.total_amount || 0).toLocaleString('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}
+                        Rp.
+                        {{
+                          Number(bill?.total_amount || 0).toLocaleString('id-ID', {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          })
+                        }}
                       </span>
                     </div>
                   </div>
@@ -280,7 +304,6 @@
 <script setup>
 import { computed, watch } from 'vue'
 import BaseButton from '@/presentations/components/ui/BaseButton.vue'
-import ContentCard from '@/presentations/components/ui/ContentCard.vue'
 
 const props = defineProps({
   show: {
@@ -340,6 +363,7 @@ const formatDate = (dateStr) => {
     ]
     return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`
   } catch (err) {
+    console.error('Error formatting date:', err)
     return dateStr
   }
 }

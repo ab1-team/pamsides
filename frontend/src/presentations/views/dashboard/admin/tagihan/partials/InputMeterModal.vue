@@ -367,6 +367,7 @@ const openLiveCamera = async () => {
       videoRef.value.srcObject = stream
     }
   } catch (err) {
+    console.error('Error accessing camera:', err)
     isCameraOpen.value = false
     MySwal.fire({
       icon: 'error',
@@ -392,6 +393,7 @@ const toggleCamera = async () => {
       videoRef.value.srcObject = stream
     }
   } catch (err) {
+    console.error('Error toggling camera:', err)
     MySwal.fire({
       icon: 'warning',
       title: 'Tukar Kamera Gagal',

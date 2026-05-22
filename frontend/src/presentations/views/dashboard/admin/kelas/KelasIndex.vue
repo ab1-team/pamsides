@@ -214,6 +214,7 @@ const fetchData = async () => {
       items.value = res.data
     }
   } catch (error) {
+    console.error('Error fetching packages:', error)
     Swal.fire('Error', 'Gagal mengambil data paket', 'error')
   } finally {
     loading.value = false
@@ -257,6 +258,7 @@ const handleDelete = async (item) => {
         fetchData()
       }
     } catch (error) {
+      console.error('Error deleting package:', error)
       Swal.fire('Gagal!', 'Terjadi kesalahan saat menghapus data.', 'error')
     }
   }

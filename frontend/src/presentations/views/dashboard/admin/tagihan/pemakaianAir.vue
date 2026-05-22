@@ -67,7 +67,6 @@
           />
         </div>
 
-
         <BaseButton
           variant="info-gradient"
           @click="handleApplyFilter"
@@ -127,7 +126,13 @@
 
       <template #column-tagihan="{ row }">
         <div class="font-bold! text-sm! text-slate-900!">
-          Rp. {{ Number(row.tagihan || 0).toLocaleString('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}
+          Rp.
+          {{
+            Number(row.tagihan || 0).toLocaleString('id-ID', {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            })
+          }}
         </div>
       </template>
 

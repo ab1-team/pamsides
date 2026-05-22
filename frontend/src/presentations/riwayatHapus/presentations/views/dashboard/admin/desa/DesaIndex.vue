@@ -66,11 +66,6 @@ const {
 
 const tableColumns = [
   {
-    key: 'kode',
-    title: 'KODE',
-    tdClass: 'font-medium text-slate-900',
-  },
-  {
     key: 'desa',
     title: 'DESA / KELURAHAN',
     tdClass: 'font-semibold! text-slate-900!',

@@ -102,7 +102,6 @@ const {
   isLoading,
   totalPages,
   visiblePages,
-  STATUS_COLORS,
   handleEdit,
   handleDelete,
   fetchCustomers,

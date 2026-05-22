@@ -90,10 +90,25 @@
         <template #column-total="{ row }">
           <div class="flex flex-col!">
             <span class="text-sm! font-extrabold! text-slate-800!">
-              Rp. {{ Number(row.total_amount || 0).toLocaleString('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}
+              Rp.
+              {{
+                Number(row.total_amount || 0).toLocaleString('id-ID', {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })
+              }}
             </span>
-            <span v-if="Number(row.penalty_amount || 0) > 0" class="text-[9px]! text-rose-500! font-bold!">
-              Termasuk Denda Rp. {{ Number(row.penalty_amount || 0).toLocaleString('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}
+            <span
+              v-if="Number(row.penalty_amount || 0) > 0"
+              class="text-[9px]! text-rose-500! font-bold!"
+            >
+              Termasuk Denda Rp.
+              {{
+                Number(row.penalty_amount || 0).toLocaleString('id-ID', {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })
+              }}
             </span>
           </div>
         </template>
@@ -127,7 +142,6 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { billingService } from '@/services/billing.service.js'
-import { MySwal } from '@/utils/swal.js'
 import BaseButton from '@/presentations/components/ui/BaseButton.vue'
 import ContentCard from '@/presentations/components/ui/ContentCard.vue'
 import DataTable from '@/presentations/components/ui/DataTable.vue'
@@ -220,6 +234,7 @@ const formatDueDate = (dateStr) => {
     ]
     return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`
   } catch (err) {
+    console.error('Error formatting date:', err)
     return dateStr
   }
 }
@@ -243,6 +258,7 @@ const getOverdueDays = (dateStr) => {
       return `Tersisa ${Math.abs(diffDays)} hari`
     }
   } catch (err) {
+    console.error('Error calculating overdue days:', err)
     return ''
   }
 }
@@ -278,31 +294,31 @@ const visiblePages = computed(() => {
   return pages
 })
 
-const handleSendWAReminder = (bill) => {
-  const customerName = getCustomerName(bill)
-  const phone = bill.customer?.ticket?.phone || ''
-  const total = new Intl.NumberFormat('id-ID').format(bill.total_amount)
-  const month = getMonthName(bill.billing_period_month)
-  const year = bill.billing_period_year
+// const handleSendWAReminder = (bill) => {
+//   const customerName = getCustomerName(bill)
+//   const phone = bill.customer?.ticket?.phone || ''
+//   const total = new Intl.NumberFormat('id-ID').format(bill.total_amount)
+//   const month = getMonthName(bill.billing_period_month)
+//   const year = bill.billing_period_year
 
-  const text = `Halo Bapak/Ibu *${customerName}*,\n\nKami dari *PAMSIMAS* ingin menginformasikan bahwa tagihan air Anda untuk periode *${month} ${year}* sebesar *Rp. ${total}* belum dilunasi.\n\nMohon untuk segera melakukan pembayaran demi kelancaran distribusi air bersih.\n\nTerima kasih.`
+//   const text = `Halo Bapak/Ibu *${customerName}*,\n\nKami dari *PAMSIMAS* ingin menginformasikan bahwa tagihan air Anda untuk periode *${month} ${year}* sebesar *Rp. ${total}* belum dilunasi.\n\nMohon untuk segera melakukan pembayaran demi kelancaran distribusi air bersih.\n\nTerima kasih.`
 
-  const cleanPhone = phone.replace(/[^0-9]/g, '')
-  const formattedPhone = cleanPhone.startsWith('0') ? '62' + cleanPhone.slice(1) : cleanPhone
+//   const cleanPhone = phone.replace(/[^0-9]/g, '')
+//   const formattedPhone = cleanPhone.startsWith('0') ? '62' + cleanPhone.slice(1) : cleanPhone
 
-  const url = `https://wa.me/${formattedPhone}?text=${encodeURIComponent(text)}`
-  window.open(url, '_blank')
-}
+//   const url = `https://wa.me/${formattedPhone}?text=${encodeURIComponent(text)}`
+//   window.open(url, '_blank')
+// }
 
-const handlePrintInvoice = (bill) => {
-  MySwal.fire({
-    title: 'Cetak Invoice',
-    text: 'Fitur cetak invoice sedang disiapkan.',
-    icon: 'info',
-    timer: 1500,
-    showConfirmButton: false,
-  })
-}
+// const handlePrintInvoice = (bill) => {
+//   MySwal.fire({
+//     title: 'Cetak Invoice',
+//     text: 'Fitur cetak invoice sedang disiapkan.',
+//     icon: 'info',
+//     timer: 1500,
+//     showConfirmButton: false,
+//   })
+// }
 
 const handleOpenDetail = (row) => {
   selectedBill.value = row

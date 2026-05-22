@@ -240,16 +240,37 @@ const customers = ref([])
 const getMonthNumber = (m) => {
   if (!m) return new Date().getMonth() + 1
   if (!isNaN(m)) return parseInt(m)
-  
+
   const monthNamesId = [
-    'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
-    'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+    'Januari',
+    'Februari',
+    'Maret',
+    'April',
+    'Mei',
+    'Juni',
+    'Juli',
+    'Agustus',
+    'September',
+    'Oktober',
+    'November',
+    'Desember',
   ]
   const idxId = monthNamesId.indexOf(m)
   if (idxId !== -1) return idxId + 1
 
   const monthNamesEn = [
-    'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Ags', 'Sep', 'Okt', 'Nov', 'Des'
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'Mei',
+    'Jun',
+    'Jul',
+    'Ags',
+    'Sep',
+    'Okt',
+    'Nov',
+    'Des',
   ]
   const idxEn = monthNamesEn.indexOf(m)
   if (idxEn !== -1) return idxEn + 1
@@ -261,7 +282,7 @@ const fetchData = async () => {
   try {
     isLoading.value = true
     const { month, year, bulan, tahun } = router.currentRoute.value.query
-    
+
     const monthVal = getMonthNumber(month || bulan)
     const yearVal = parseInt(year || tahun) || new Date().getFullYear()
 
@@ -281,7 +302,7 @@ const fetchData = async () => {
 
         const address = item.ticket?.address || ''
         let rtVal = '-'
-        const rtMatch = address.match(/rt\s*[:\.]?\s*(\d+)/i)
+        const rtMatch = address.match(/rt\s*[:.]?\s*(\d+)/i)
         if (rtMatch) {
           rtVal = 'RT ' + rtMatch[1]
         }
@@ -361,7 +382,11 @@ const handleGenerateBills = async () => {
 
     router.push('/instalasi/daftar-tagihan')
   } catch (error) {
-    uiStore.error(error.response?.data?.data?.message || error.response?.data?.message || 'Gagal generate tagihan')
+    uiStore.error(
+      error.response?.data?.data?.message ||
+        error.response?.data?.message ||
+        'Gagal generate tagihan',
+    )
   } finally {
     uiStore.setLoading(false)
   }

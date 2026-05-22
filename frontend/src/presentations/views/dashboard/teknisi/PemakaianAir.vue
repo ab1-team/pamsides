@@ -93,7 +93,7 @@
             <BaseButton
               :to="{
                 path: '/instalasi/pemakaian-air/input',
-                query: { month: monthToNumber(form.bulan), year: form.tahun }
+                query: { month: monthToNumber(form.bulan), year: form.tahun },
               }"
               variant="primary-gradient"
               size="lg"

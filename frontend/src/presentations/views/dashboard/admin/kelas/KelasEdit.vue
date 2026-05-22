@@ -273,6 +273,7 @@ const fetchKelasData = async (id) => {
       }))
     }
   } catch (error) {
+    console.error('Error fetching package data:', error)
     Swal.fire('Error', 'Gagal mengambil data paket', 'error')
   }
 }

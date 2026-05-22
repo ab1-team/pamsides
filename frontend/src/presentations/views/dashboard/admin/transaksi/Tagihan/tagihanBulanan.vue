@@ -1,6 +1,8 @@
 <template>
   <div>
-    <div class="sticky! top-[56px]! z-30! bg-white/20! backdrop-blur-md! pt-1! pb-4! mb-6! -mx-4! px-4! md:-mx-10! md:px-10! border-b! border-slate-200/20!">
+    <div
+      class="sticky! top-[56px]! z-30! bg-white/20! backdrop-blur-md! pt-1! pb-4! mb-6! -mx-4! px-4! md:-mx-10! md:px-10! border-b! border-slate-200/20!"
+    >
       <div class="relative!">
         <CustomSearch
           v-model="billingStore.searchQuery"
@@ -9,9 +11,9 @@
           @input="billingStore.searchCustomers($event)"
           @search="handleSearch"
         />
-  
+
         <DetailModal :show="showDetailModal" @close="showDetailModal = false" />
-  
+
         <div
           v-if="billingStore.searchResults.length > 0"
           class="absolute! top-full! left-0! right-0! bg-white! border! border-gray-200! rounded-lg! shadow-lg! z-50! max-h-60! overflow-y-auto! mx-2! sm:mx-4!"
@@ -45,52 +47,84 @@
     <div v-if="billingStore.selectedCustomer" class="flex! flex-col! xl:flex-row! gap-4! xl:gap-6!">
       <div class="flex-1! min-w-0!">
         <div class="mb-4!">
-          <div class="relative! overflow-hidden! rounded-xl! border! border-blue-100/85! bg-gradient-to-br! from-slate-50! via-blue-50/20! to-white! p-2.5! sm:p-3! md:pr-5! shadow-sm! transition-all! hover:shadow-md!">
-            <div class="absolute! -right-8! -top-8! w-24! h-24! rounded-full! bg-gradient-to-br! from-blue-400/10! to-sky-400/5! blur-xl!"></div>
-            
-            <div class="relative! flex! flex-col! md:flex-row! md:items-center! justify-between! gap-3!">
+          <div
+            class="relative! overflow-hidden! rounded-xl! border! border-blue-100/85! bg-gradient-to-br! from-slate-50! via-blue-50/20! to-white! p-2.5! sm:p-3! md:pr-5! shadow-sm! transition-all! hover:shadow-md!"
+          >
+            <div
+              class="absolute! -right-8! -top-8! w-24! h-24! rounded-full! bg-gradient-to-br! from-blue-400/10! to-sky-400/5! blur-xl!"
+            ></div>
+
+            <div
+              class="relative! flex! flex-col! md:flex-row! md:items-center! justify-between! gap-3!"
+            >
               <div class="flex! items-center! gap-2.5! flex-1!">
-                <div class="w-9! h-9! rounded-lg! bg-gradient-to-tr! from-blue-600! to-sky-400! flex! items-center! justify-center! text-white! shadow-md! shadow-blue-500/20! flex-shrink-0! transform! transition-transform! hover:scale-105!">
+                <div
+                  class="w-9! h-9! rounded-lg! bg-gradient-to-tr! from-blue-600! to-sky-400! flex! items-center! justify-center! text-white! shadow-md! shadow-blue-500/20! flex-shrink-0! transform! transition-transform! hover:scale-105!"
+                >
                   <font-awesome-icon icon="box" class="text-sm!" />
                 </div>
-                
+
                 <div class="space-y-0.5!">
                   <div class="flex! items-center! gap-1.5!">
-                    <span class="text-[8px]! font-extrabold! tracking-widest! text-blue-600! uppercase! bg-blue-100/60! px-1.5! py-0.5! rounded-md!">Informasi Paket</span>
+                    <span
+                      class="text-[8px]! font-extrabold! tracking-widest! text-blue-600! uppercase! bg-blue-100/60! px-1.5! py-0.5! rounded-md!"
+                      >Informasi Paket</span
+                    >
                     <span class="w-1! h-1! rounded-full! bg-emerald-500! animate-pulse!"></span>
                   </div>
-                  
-                  <h3 class="text-sm! sm:text-base! font-extrabold! text-slate-800! tracking-tight! leading-tight!">
+
+                  <h3
+                    class="text-sm! sm:text-base! font-extrabold! text-slate-800! tracking-tight! leading-tight!"
+                  >
                     {{ billingStore.selectedCustomer?.packageName || 'Paket Standar' }}
                   </h3>
-                  
+
                   <div class="flex! items-center! gap-1.5! text-[10px]!">
-                    <span class="inline-flex! items-center! whitespace-nowrap! px-1.5! py-0.5! rounded-md! bg-slate-100! text-slate-605! font-medium! border! border-slate-200/50!">
-                      Abodemen: <strong class="ml-1! text-slate-850!">{{ billingStore.formatAmount(billingStore.selectedCustomer?.abodemen || 10000) }}</strong>
+                    <span
+                      class="inline-flex! items-center! whitespace-nowrap! px-1.5! py-0.5! rounded-md! bg-slate-100! text-slate-605! font-medium! border! border-slate-200/50!"
+                    >
+                      Abodemen:
+                      <strong class="ml-1! text-slate-850!">{{
+                        billingStore.formatAmount(billingStore.selectedCustomer?.abodemen || 10000)
+                      }}</strong>
                     </span>
-                    <span class="inline-flex! items-center! whitespace-nowrap! px-1.5! py-0.5! rounded-md! bg-red-50! text-red-650! font-medium! border! border-red-100/50!">
-                      Denda: <strong class="ml-1! text-red-850!">{{ billingStore.formatAmount(billingStore.selectedCustomer?.penalty || 5000) }}</strong>
+                    <span
+                      class="inline-flex! items-center! whitespace-nowrap! px-1.5! py-0.5! rounded-md! bg-red-50! text-red-650! font-medium! border! border-red-100/50!"
+                    >
+                      Denda:
+                      <strong class="ml-1! text-red-850!">{{
+                        billingStore.formatAmount(billingStore.selectedCustomer?.penalty || 5000)
+                      }}</strong>
                     </span>
                   </div>
                 </div>
               </div>
-              
-              <div class="hidden! md:block! w-px! h-9! bg-gradient-to-b! from-transparent! via-slate-200! to-transparent!"></div>
-              
-              <div class="flex-shrink-0! bg-white/60! backdrop-blur-sm! p-2! sm:p-2.5! rounded-lg! border! border-slate-105! shadow-sm! md:min-w-[250px]!">
-                <h4 class="text-[8px]! font-extrabold! text-slate-500! uppercase! tracking-wider! mb-1! flex! items-center! gap-1.5!">
+
+              <div
+                class="hidden! md:block! w-px! h-9! bg-gradient-to-b! from-transparent! via-slate-200! to-transparent!"
+              ></div>
+
+              <div
+                class="flex-shrink-0! bg-white/60! backdrop-blur-sm! p-2! sm:p-2.5! rounded-lg! border! border-slate-105! shadow-sm! md:min-w-[250px]!"
+              >
+                <h4
+                  class="text-[8px]! font-extrabold! text-slate-500! uppercase! tracking-wider! mb-1! flex! items-center! gap-1.5!"
+                >
                   <span class="w-1! h-1! rounded-full! bg-blue-500!"></span>
                   Tarif Pemakaian Air
                 </h4>
-                
+
                 <div class="space-y-0.5!">
-                  <div 
-                    v-for="(block, idx) in (billingStore.selectedCustomer?.tariffBlocks || [])" 
+                  <div
+                    v-for="(block, idx) in billingStore.selectedCustomer?.tariffBlocks || []"
                     :key="idx"
                     class="text-[10px]! flex! items-center! justify-between! gap-4!"
                   >
                     <span class="font-medium! text-slate-500!">
-                      Blok {{ idx + 1 }} <span class="text-[8px]! text-slate-400! font-normal!">({{ block.min }}-{{ block.max }} m³)</span>
+                      Blok {{ idx + 1 }}
+                      <span class="text-[8px]! text-slate-400! font-normal!"
+                        >({{ block.min }}-{{ block.max }} m³)</span
+                      >
                     </span>
                     <span class="font-extrabold! text-blue-600!">
                       {{ billingStore.formatAmount(block.price) }}/m³
@@ -290,8 +324,6 @@
                     </div>
                   </div>
                 </div>
-
-
               </div>
             </div>
           </div>
@@ -323,7 +355,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useBillingStore } from '@/stores/billingStore.js'
 import CustomSearch from '@/presentations/components/ui/CustomSearch.vue'
 import ContentCard from '@/presentations/components/ui/ContentCard.vue'
@@ -353,7 +385,7 @@ const handleSavePayment = async (paymentData) => {
       confirmButtonText: 'OK',
       confirmButtonColor: '#10B981',
     })
-    
+
     if (billingStore.selectedCustomer) {
       await billingStore.fetchBillingPeriods(billingStore.selectedCustomer.customer_id)
     }
@@ -390,8 +422,6 @@ const getCustomerInitials = () => {
     .join('')
     .toUpperCase()
 }
-
-
 
 onMounted(async () => {
   await billingStore.initializeStore()

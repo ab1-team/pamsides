@@ -74,7 +74,7 @@
           />
           <BaseInput
             v-model="form.email"
-            label="Ussername"
+            label="Username"
             placeholder="Masukkan Email"
             icon="envelope"
           />

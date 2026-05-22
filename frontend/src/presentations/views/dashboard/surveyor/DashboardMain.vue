@@ -223,12 +223,10 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
 import ContentCard from '@/presentations/components/ui/ContentCard.vue'
 import BaseButton from '@/presentations/components/ui/BaseButton.vue'
 import ticketService from '@/services/ticket.service'
 
-const router = useRouter()
 const tasks = ref([])
 const loading = ref(false)
 const userData = JSON.parse(localStorage.getItem('user_data') || '{}')
@@ -342,70 +340,70 @@ const fetchDashboardData = async () => {
   }
 }
 
-const scrollToQueue = () => {
-  const queueSection = document.querySelector('.lg\\:col-span-4')
-  if (queueSection) {
-    queueSection.scrollIntoView({ behavior: 'smooth' })
-  }
-}
+// const scrollToQueue = () => {
+//   const queueSection = document.querySelector('.lg\\:col-span-4')
+//   if (queueSection) {
+//     queueSection.scrollIntoView({ behavior: 'smooth' })
+//   }
+// }
 
-const lineChartData = ref({
-  labels: ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'],
-  datasets: [
-    {
-      label: 'Survey Selesai',
-      data: [12, 19, 15, 25, 22, 30, 28],
-      fill: true,
-      borderColor: '#f97316',
-      backgroundColor: 'rgba(249, 115, 22, 0.05)',
-      tension: 0.4,
-      pointBackgroundColor: '#f97316',
-      pointBorderColor: '#fff',
-      pointBorderWidth: 2,
-      pointRadius: 4,
-    },
-    {
-      label: 'Target',
-      data: [15, 15, 15, 15, 15, 15, 15],
-      borderColor: '#cbd5e1',
-      borderDash: [5, 5],
-      pointRadius: 0,
-      fill: false,
-    },
-  ],
-})
+// const lineChartData = ref({
+//   labels: ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'],
+//   datasets: [
+//     {
+//       label: 'Survey Selesai',
+//       data: [12, 19, 15, 25, 22, 30, 28],
+//       fill: true,
+//       borderColor: '#f97316',
+//       backgroundColor: 'rgba(249, 115, 22, 0.05)',
+//       tension: 0.4,
+//       pointBackgroundColor: '#f97316',
+//       pointBorderColor: '#fff',
+//       pointBorderWidth: 2,
+//       pointRadius: 4,
+//     },
+//     {
+//       label: 'Target',
+//       data: [15, 15, 15, 15, 15, 15, 15],
+//       borderColor: '#cbd5e1',
+//       borderDash: [5, 5],
+//       pointRadius: 0,
+//       fill: false,
+//     },
+//   ],
+// })
 
-const lineChartOptions = ref({
-  responsive: true,
-  maintainAspectRatio: false,
-  plugins: {
-    legend: {
-      display: false,
-    },
-  },
-  scales: {
-    y: {
-      beginAtZero: true,
-      grid: {
-        display: true,
-        color: '#f1f5f9',
-      },
-      ticks: {
-        font: { size: 10, weight: 'bold' },
-        color: '#94a3b8',
-      },
-    },
-    x: {
-      grid: {
-        display: false,
-      },
-      ticks: {
-        font: { size: 10, weight: 'bold' },
-        color: '#94a3b8',
-      },
-    },
-  },
-})
+// const lineChartOptions = ref({
+//   responsive: true,
+//   maintainAspectRatio: false,
+//   plugins: {
+//     legend: {
+//       display: false,
+//     },
+//   },
+//   scales: {
+//     y: {
+//       beginAtZero: true,
+//       grid: {
+//         display: true,
+//         color: '#f1f5f9',
+//       },
+//       ticks: {
+//         font: { size: 10, weight: 'bold' },
+//         color: '#94a3b8',
+//       },
+//     },
+//     x: {
+//       grid: {
+//         display: false,
+//       },
+//       ticks: {
+//         font: { size: 10, weight: 'bold' },
+//         color: '#94a3b8',
+//       },
+//     },
+//   },
+// })
 
 const barChartData = ref({
   labels: ['< 5m', '5-15m', '15-30m', '> 30m'],

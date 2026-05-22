@@ -275,6 +275,7 @@ const fetchPendingTickets = async () => {
       label: `${t.applicant_name} (${t.nik}) - ${t.address}`,
     }))
   } catch (err) {
+    console.Consoleerror(err)
     uiStore.error('Gagal mengambil daftar permohonan.')
   } finally {
     loadingTickets.value = false
@@ -292,6 +293,7 @@ const handleCameraCapture = async (file) => {
     formData.photo = compressed
     photoPreview.value = URL.createObjectURL(compressed)
   } catch (err) {
+    console.error(err)
     uiStore.error('Gagal memproses foto.')
   } finally {
     uiStore.setLoading(false)
