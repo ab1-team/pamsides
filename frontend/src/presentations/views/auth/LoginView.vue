@@ -114,7 +114,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import axios from 'axios'
+import axios from '@/utils/axios.js'
 import { MySwal } from '@/main.js'
 import { useUiStore } from '@/stores/uiStore'
 import '@/assets/css/login.css'
@@ -170,7 +170,7 @@ const handleLogin = async () => {
 
   loading.value = true
   try {
-    const response = await axios.post('http://127.0.0.1:8000/api/login', {
+    const response = await axios.post('/login', {
       email: form.value.email,
       password: form.value.password,
     })
@@ -179,7 +179,7 @@ const handleLogin = async () => {
 
     if (res.success) {
       localStorage.setItem('auth_token', res.data.token)
-      const expireTime = Date.now() + 2 * 60 * 60 * 1000
+      const expireTime = Date.now() + 8 * 60 * 60 * 1000
       localStorage.setItem('auth_expires_at', expireTime.toString())
       uiStore.setUserData(res.data.user)
       uiStore.setUserRole(res.data.user.role)
