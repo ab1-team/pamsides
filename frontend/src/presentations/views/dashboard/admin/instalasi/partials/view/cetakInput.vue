@@ -27,7 +27,7 @@
           <div class="right-info">
             <div class="flex gap-2">
               <span class="w-12">Dusun</span>
-              <span>: {{ dusun || 'Kepil' }}</span>
+              <span>: {{ dusun || 'Semua' }}</span>
             </div>
           </div>
         </div>
@@ -52,6 +52,11 @@
               </th>
               <th class="border border-slate-800 px-2 py-2 w-10 text-center uppercase">RT</th>
               <th
+                class="border border-slate-800 px-3 py-2 w-20 text-center uppercase font-bold tracking-tight"
+              >
+                Dusun
+              </th>
+              <th
                 class="border border-slate-800 px-3 py-2 w-16 text-center uppercase font-bold tracking-tight"
               >
                 Awal
@@ -69,23 +74,25 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="(item, index) in filteredData" :key="index" class="h-9">
+            <tr v-for="(item, index) in printedData" :key="index" class="h-9">
               <td class="border border-slate-800 px-2 text-center">{{ index + 1 }}</td>
               <td class="border border-slate-800 px-3 text-left font-medium">{{ item.nama }}</td>
               <td class="border border-slate-800 px-3 text-center font-mono">{{ item.id }}</td>
               <td class="border border-slate-800 px-2 text-center">{{ item.rt || '-' }}</td>
+              <td class="border border-slate-800 px-3 text-center">{{ item.dusun || '-' }}</td>
               <td class="border border-slate-800 px-3 text-center">{{ item.meterAwal || 0 }}</td>
               <td class="border border-slate-800 px-3 text-center"></td>
               <td class="border border-slate-800 px-3 text-center"></td>
             </tr>
 
-            <tr v-for="n in Math.max(0, 15 - filteredData.length)" :key="'empty-' + n" class="h-9">
+            <tr v-for="n in Math.max(0, 15 - printedData.length)" :key="'empty-' + n" class="h-9">
               <td class="border border-slate-800 px-2 text-center">
-                {{ filteredData.length + n }}
+                {{ printedData.length + n }}
               </td>
               <td class="border border-slate-800 px-3"></td>
               <td class="border border-slate-800 px-3"></td>
               <td class="border border-slate-800 px-2"></td>
+              <td class="border border-slate-800 px-3"></td>
               <td class="border border-slate-800 px-3"></td>
               <td class="border border-slate-800 px-3"></td>
               <td class="border border-slate-800 px-3"></td>
@@ -108,16 +115,36 @@
 </template>
 
 <script setup>
-import { onMounted } from 'vue'
+import { onMounted, ref, computed } from 'vue'
+import { useRoute } from 'vue-router'
 import { usePemakaianAir } from '@/composables/usePemakaianAir'
 
-const { filteredData, filter } = usePemakaianAir()
+const route = useRoute()
+const { filteredData, filter, refreshData } = usePemakaianAir()
+
+const dusun = ref(route.query.dusun || '')
+
+const printedData = computed(() => {
+  if (!dusun.value || dusun.value === 'Semua') {
+    return filteredData.value
+  }
+  return filteredData.value.filter((item) => item.dusun === dusun.value)
+})
 
 const triggerPrint = () => {
   window.print()
 }
 
-onMounted(() => {
+onMounted(async () => {
+  if (route.query.tahun) {
+    filter.value.tahun = parseInt(route.query.tahun)
+  }
+  if (route.query.bulan) {
+    filter.value.bulan = route.query.bulan
+  }
+
+  await refreshData()
+
   setTimeout(() => {
     window.print()
   }, 500)

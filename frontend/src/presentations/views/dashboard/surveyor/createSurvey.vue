@@ -1,8 +1,10 @@
 <template>
   <div class="survey-create-view p-4! lg:p-8!">
-    <div class="header-section flex! flex-col! md:flex-row! md:items-center! md:justify-between! gap-4! mb-8!">
+    <div
+      class="header-section flex! flex-col! md:flex-row! md:items-center! md:justify-between! gap-4! mb-8!"
+    >
       <div class="flex! items-center! gap-4!">
-        <button 
+        <button
           v-if="route.query.id"
           @click="router.push('/dashboard')"
           class="w-10! h-10! bg-white! border! border-slate-200! rounded-full! flex! items-center! justify-center! text-slate-500! hover:bg-slate-50! hover:text-orange-500! transition-all! shadow-sm!"
@@ -13,17 +15,29 @@
           <h1 class="text-2xl! md:text-3xl! font-black! text-slate-800! tracking-tight!">
             Buat <span class="text-orange-500!">Survey Baru</span>
           </h1>
-          <p class="text-slate-500! text-xs! md:text-sm! font-medium! mt-1!">Input hasil survey lapangan untuk permohonan baru.</p>
+          <p class="text-slate-500! text-xs! md:text-sm! font-medium! mt-1!">
+            Input hasil survey lapangan untuk permohonan baru.
+          </p>
         </div>
       </div>
 
-      <div class="bg-white! border! border-slate-200! rounded-2xl! px-4! py-2.5! flex! items-center! gap-3! shadow-sm! self-start! md:self-center!">
-        <div class="w-9! h-9! bg-slate-100! rounded-xl! flex! items-center! justify-center! text-slate-500! shrink-0!">
+      <div
+        class="bg-white! border! border-slate-200! rounded-2xl! px-4! py-2.5! flex! items-center! gap-3! shadow-sm! self-start! md:self-center!"
+      >
+        <div
+          class="w-9! h-9! bg-slate-100! rounded-xl! flex! items-center! justify-center! text-slate-500! shrink-0!"
+        >
           <font-awesome-icon icon="user" />
         </div>
         <div class="min-w-0!">
-          <p class="text-xs! font-bold! text-slate-400! uppercase! tracking-wider! leading-none! mb-1!">Surveyor</p>
-          <p class="text-xs! font-black! text-slate-800! leading-none! truncate!">{{ surveyorName }}</p>
+          <p
+            class="text-xs! font-bold! text-slate-400! uppercase! tracking-wider! leading-none! mb-1!"
+          >
+            Surveyor
+          </p>
+          <p class="text-xs! font-black! text-slate-800! leading-none! truncate!">
+            {{ surveyorName }}
+          </p>
         </div>
       </div>
     </div>
@@ -38,7 +52,9 @@
 
           <div class="space-y-6! md:space-y-8!">
             <div class="form-group">
-              <label class="block! text-xs! font-bold! text-slate-400! uppercase! tracking-wider! mb-3!">
+              <label
+                class="block! text-xs! font-bold! text-slate-400! uppercase! tracking-wider! mb-3!"
+              >
                 Pilih Permohonan Instalasi
               </label>
               <SelectSearch
@@ -48,14 +64,19 @@
                 :loading="loadingTickets"
                 :disabled="!!route.query.id"
               />
-              <p v-if="ticketOptions.length === 0 && !loadingTickets" class="mt-2! text-xs! text-orange-500! font-bold!">
+              <p
+                v-if="ticketOptions.length === 0 && !loadingTickets"
+                class="mt-2! text-xs! text-orange-500! font-bold!"
+              >
                 * Tidak ada permohonan yang menunggu survey.
               </p>
             </div>
 
             <div class="grid! grid-cols-1! gap-6!">
               <div class="form-group">
-                <label class="block! text-xs! font-bold! text-slate-400! uppercase! tracking-wider! mb-3!">
+                <label
+                  class="block! text-xs! font-bold! text-slate-400! uppercase! tracking-wider! mb-3!"
+                >
                   Jarak ke Pipa Utama
                 </label>
                 <div class="relative!">
@@ -66,13 +87,18 @@
                     class="w-full! h-12! px-4! bg-slate-50! border! border-slate-200! rounded-xl! text-sm! text-slate-700! focus:outline-none! focus:border-orange-500! focus:bg-white! transition-all! font-bold!"
                     placeholder="0"
                   />
-                  <span class="absolute! right-4! top-1/2! -translate-y-1/2! text-xs! font-bold! text-slate-400!">METER</span>
+                  <span
+                    class="absolute! right-4! top-1/2! -translate-y-1/2! text-xs! font-bold! text-slate-400!"
+                    >METER</span
+                  >
                 </div>
               </div>
             </div>
 
             <div class="form-group">
-              <label class="block! text-xs! font-bold! text-slate-400! uppercase! tracking-wider! mb-3!">
+              <label
+                class="block! text-xs! font-bold! text-slate-400! uppercase! tracking-wider! mb-3!"
+              >
                 Catatan Material & Teknis Lapangan
               </label>
               <textarea
@@ -95,26 +121,24 @@
 
           <div class="photo-uploader">
             <div v-if="!photoPreview" class="grid! grid-cols-1! gap-4!">
-              <div
-                class="upload-placeholder group p-8! md:p-10!"
-                @click="triggerCamera"
-              >
+              <div class="upload-placeholder group p-8! md:p-10!" @click="triggerCamera">
                 <div class="icon-box w-12! h-12! md:w-16! md:h-16! mb-4! md:mb-6!">
                   <font-awesome-icon icon="camera" class="text-xl! md:text-2xl!" />
                 </div>
-                <h4 class="text-xs! md:text-sm! font-black! text-slate-700! uppercase!">Ambil Foto</h4>
+                <h4 class="text-xs! md:text-sm! font-black! text-slate-700! uppercase!">
+                  Ambil Foto
+                </h4>
                 <p class="text-xs! text-slate-400! font-bold! mt-2!">Kamera Perangkat</p>
               </div>
 
-              <div
-                class="upload-placeholder-secondary group p-4!"
-                @click="triggerGallery"
-              >
+              <div class="upload-placeholder-secondary group p-4!" @click="triggerGallery">
                 <div class="icon-box-sm shrink-0!">
                   <font-awesome-icon icon="images" />
                 </div>
                 <div class="text-left! min-w-0!">
-                  <h4 class="text-[11px]! font-black! text-slate-700! uppercase! truncate!">Pilih Galeri</h4>
+                  <h4 class="text-[11px]! font-black! text-slate-700! uppercase! truncate!">
+                    Pilih Galeri
+                  </h4>
                   <p class="text-xs! text-slate-400! font-bold! truncate!">Upload file yang ada</p>
                 </div>
               </div>
@@ -133,7 +157,7 @@
                 </div>
               </div>
             </div>
-            
+
             <div class="hidden!">
               <input
                 ref="galleryInput"
@@ -144,8 +168,8 @@
               />
             </div>
 
-            <CameraModal 
-              :show="showCameraModal" 
+            <CameraModal
+              :show="showCameraModal"
               @close="showCameraModal = false"
               @capture="handleCameraCapture"
             />
@@ -173,11 +197,19 @@
           <h4 class="text-sm! font-black! uppercase! tracking-widest! mb-4!">Instruksi Survey</h4>
           <ul class="space-y-3!">
             <li class="flex! gap-3! text-xs! font-bold! opacity-90!">
-              <div class="w-5! h-5! rounded-full! bg-white/20! flex! items-center! justify-center! shrink-0!">1</div>
+              <div
+                class="w-5! h-5! rounded-full! bg-white/20! flex! items-center! justify-center! shrink-0!"
+              >
+                1
+              </div>
               <span>Ukur jarak dari pipa distribusi utama ke titik meter.</span>
             </li>
             <li class="flex! gap-3! text-xs! font-bold! opacity-90!">
-              <div class="w-5! h-5! rounded-full! bg-white/20! flex! items-center! justify-center! shrink-0!">2</div>
+              <div
+                class="w-5! h-5! rounded-full! bg-white/20! flex! items-center! justify-center! shrink-0!"
+              >
+                2
+              </div>
               <span>Foto harus mencakup area calon lokasi meteran.</span>
             </li>
           </ul>
@@ -220,15 +252,14 @@ const formData = reactive({
 })
 
 const isFormValid = computed(() => {
-  return formData.ticket_id && 
-         formData.distance_to_pipe_m && 
-         formData.photo && 
-         formData.material_notes
+  return (
+    formData.ticket_id && formData.distance_to_pipe_m && formData.photo && formData.material_notes
+  )
 })
 
 onMounted(async () => {
   await fetchPendingTickets()
-  
+
   if (route.query.id) {
     formData.ticket_id = Number(route.query.id)
   }
@@ -239,9 +270,9 @@ const fetchPendingTickets = async () => {
     loadingTickets.value = true
     const response = await ticketService.getTickets({ status: 'pending' })
     const tickets = response.data.data || []
-    ticketOptions.value = tickets.map(t => ({
+    ticketOptions.value = tickets.map((t) => ({
       value: t.id,
-      label: `${t.applicant_name} (${t.nik}) - ${t.address}`
+      label: `${t.applicant_name} (${t.nik}) - ${t.address}`,
     }))
   } catch (err) {
     uiStore.error('Gagal mengambil daftar permohonan.')
@@ -278,10 +309,10 @@ const handlePhotoUpload = async (e) => {
   try {
     uiStore.setLoading(true)
     photoPreview.value = URL.createObjectURL(file)
-    
+
     const compressedBlob = await cameraUtils.compressImage(file)
     formData.photo = compressedBlob
-    
+
     uiStore.success('Foto berhasil diproses.')
   } catch {
     uiStore.error('Gagal memproses gambar.')
@@ -305,7 +336,7 @@ const submitSurvey = async () => {
     await ticketService.submitSurvey(formData.ticket_id, submitData)
 
     uiStore.success('Hasil survey berhasil dikirim.')
-    
+
     if (route.query.id) {
       router.push('/dashboard')
     } else {
@@ -380,7 +411,13 @@ const submitSurvey = async () => {
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 </style>

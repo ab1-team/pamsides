@@ -1,72 +1,110 @@
 <template>
   <div>
-    <div class="relative! mb-6!">
-      <CustomSearch
-        v-model="billingStore.searchQuery"
-        placeholder="Search customer name, ID, or installation code..."
-        button-text="Detail Transaksi"
-        @input="billingStore.searchCustomers($event)"
-        @search="handleSearch"
-      />
-
-      <DetailModal :show="showDetailModal" @close="showDetailModal = false" />
-
-      <div
-        v-if="billingStore.searchResults.length > 0"
-        class="absolute! top-full! left-0! right-0! bg-white! border! border-gray-200! rounded-lg! shadow-lg! z-50! max-h-60! overflow-y-auto! mx-2! sm:mx-4!"
-      >
+    <div class="sticky! top-[56px]! z-30! bg-white/20! backdrop-blur-md! pt-1! pb-4! mb-6! -mx-4! px-4! md:-mx-10! md:px-10! border-b! border-slate-200/20!">
+      <div class="relative!">
+        <CustomSearch
+          v-model="billingStore.searchQuery"
+          placeholder="Search customer name, ID, or installation code..."
+          button-text="Detail Transaksi"
+          @input="billingStore.searchCustomers($event)"
+          @search="handleSearch"
+        />
+  
+        <DetailModal :show="showDetailModal" @close="showDetailModal = false" />
+  
         <div
-          v-for="customer in billingStore.searchResults"
-          :key="customer.id"
-          class="px-3! py-2! sm:px-4! hover:bg-gray-50! cursor-pointer! border-b! border-gray-100! last:border-b-0!"
-          @click="selectCustomer(customer)"
+          v-if="billingStore.searchResults.length > 0"
+          class="absolute! top-full! left-0! right-0! bg-white! border! border-gray-200! rounded-lg! shadow-lg! z-50! max-h-60! overflow-y-auto! mx-2! sm:mx-4!"
         >
-          <div class="flex! flex-col! sm:flex-row! sm:items-center! sm:justify-between! gap-2!">
-            <div class="flex-1!">
-              <div class="font-semibold! text-gray-900! text-sm! sm:text-base!">
-                {{ customer.name }}
+          <div
+            v-for="customer in billingStore.searchResults"
+            :key="customer.id"
+            class="px-3! py-2! sm:px-4! hover:bg-gray-50! cursor-pointer! border-b! border-gray-100! last:border-b-0!"
+            @click="selectCustomer(customer)"
+          >
+            <div class="flex! flex-col! sm:flex-row! sm:items-center! sm:justify-between! gap-2!">
+              <div class="flex-1!">
+                <div class="font-semibold! text-gray-900! text-sm! sm:text-base!">
+                  {{ customer.name }}
+                </div>
+                <div class="text-xs! sm:text-sm! text-gray-600!">
+                  {{ customer.id }} • {{ customer.installationCode }}
+                </div>
               </div>
-              <div class="text-xs! sm:text-sm! text-gray-600!">
-                {{ customer.id }} • {{ customer.installationCode }}
+              <div
+                class="text-xs! bg-green-100! text-green-800! px-2! py-1! rounded-full! w-fit! sm:w-auto!"
+              >
+                {{ customer.status }}
               </div>
-            </div>
-            <div
-              class="text-xs! bg-green-100! text-green-800! px-2! py-1! rounded-full! w-fit! sm:w-auto!"
-            >
-              {{ customer.status }}
             </div>
           </div>
         </div>
       </div>
     </div>
 
-    <div v-if="billingStore.selectedCustomer" class="flex! flex-col! lg:flex-row! gap-4! lg:gap-6!">
+    <div v-if="billingStore.selectedCustomer" class="flex! flex-col! xl:flex-row! gap-4! xl:gap-6!">
       <div class="flex-1! min-w-0!">
-        <div class="grid! grid-cols-1! sm:grid-cols-2! lg:grid-cols-3! gap-2! mb-6!">
-          <MeterDisplay
-            type="initial"
-            title="INITIAL METER"
-            :value="currentPeriod?.meterAwal || 1240"
-            unit="m³"
-          />
-          <MeterDisplay
-            type="final"
-            title="DENDA PENUNGGAKAN"
-            :value="currentPeriod?.meterAkhir || 1265"
-            unit="m³"
-          />
-          <MeterDisplay
-            type="total"
-            title="HARGA METER"
-            :value="currentPeriod?.pemakaian || 25"
-            unit="m³"
-            :show-decoration="true"
-          />
+        <div class="mb-4!">
+          <div class="relative! overflow-hidden! rounded-xl! border! border-blue-100/85! bg-gradient-to-br! from-slate-50! via-blue-50/20! to-white! p-2.5! sm:p-3! md:pr-5! shadow-sm! transition-all! hover:shadow-md!">
+            <div class="absolute! -right-8! -top-8! w-24! h-24! rounded-full! bg-gradient-to-br! from-blue-400/10! to-sky-400/5! blur-xl!"></div>
+            
+            <div class="relative! flex! flex-col! md:flex-row! md:items-center! justify-between! gap-3!">
+              <div class="flex! items-center! gap-2.5! flex-1!">
+                <div class="w-9! h-9! rounded-lg! bg-gradient-to-tr! from-blue-600! to-sky-400! flex! items-center! justify-center! text-white! shadow-md! shadow-blue-500/20! flex-shrink-0! transform! transition-transform! hover:scale-105!">
+                  <font-awesome-icon icon="box" class="text-sm!" />
+                </div>
+                
+                <div class="space-y-0.5!">
+                  <div class="flex! items-center! gap-1.5!">
+                    <span class="text-[8px]! font-extrabold! tracking-widest! text-blue-600! uppercase! bg-blue-100/60! px-1.5! py-0.5! rounded-md!">Informasi Paket</span>
+                    <span class="w-1! h-1! rounded-full! bg-emerald-500! animate-pulse!"></span>
+                  </div>
+                  
+                  <h3 class="text-sm! sm:text-base! font-extrabold! text-slate-800! tracking-tight! leading-tight!">
+                    {{ billingStore.selectedCustomer?.packageName || 'Paket Standar' }}
+                  </h3>
+                  
+                  <div class="flex! items-center! gap-1.5! text-[10px]!">
+                    <span class="inline-flex! items-center! whitespace-nowrap! px-1.5! py-0.5! rounded-md! bg-slate-100! text-slate-605! font-medium! border! border-slate-200/50!">
+                      Abodemen: <strong class="ml-1! text-slate-850!">{{ billingStore.formatAmount(billingStore.selectedCustomer?.abodemen || 10000) }}</strong>
+                    </span>
+                    <span class="inline-flex! items-center! whitespace-nowrap! px-1.5! py-0.5! rounded-md! bg-red-50! text-red-650! font-medium! border! border-red-100/50!">
+                      Denda: <strong class="ml-1! text-red-850!">{{ billingStore.formatAmount(billingStore.selectedCustomer?.penalty || 5000) }}</strong>
+                    </span>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="hidden! md:block! w-px! h-9! bg-gradient-to-b! from-transparent! via-slate-200! to-transparent!"></div>
+              
+              <div class="flex-shrink-0! bg-white/60! backdrop-blur-sm! p-2! sm:p-2.5! rounded-lg! border! border-slate-105! shadow-sm! md:min-w-[250px]!">
+                <h4 class="text-[8px]! font-extrabold! text-slate-500! uppercase! tracking-wider! mb-1! flex! items-center! gap-1.5!">
+                  <span class="w-1! h-1! rounded-full! bg-blue-500!"></span>
+                  Tarif Pemakaian Air
+                </h4>
+                
+                <div class="space-y-0.5!">
+                  <div 
+                    v-for="(block, idx) in (billingStore.selectedCustomer?.tariffBlocks || [])" 
+                    :key="idx"
+                    class="text-[10px]! flex! items-center! justify-between! gap-4!"
+                  >
+                    <span class="font-medium! text-slate-500!">
+                      Blok {{ idx + 1 }} <span class="text-[8px]! text-slate-400! font-normal!">({{ block.min }}-{{ block.max }} m³)</span>
+                    </span>
+                    <span class="font-extrabold! text-blue-600!">
+                      {{ billingStore.formatAmount(block.price) }}/m³
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
         <div class="space-y-3!">
           <ContentCard
-            v-for="period in billingStore.filteredBillingPeriods.slice(1)"
+            v-for="period in billingStore.filteredBillingPeriods"
             :key="period.id"
             variant="bordered"
             padding="normal"
@@ -166,8 +204,8 @@
         </div>
       </div>
 
-      <div class="w-full! lg:w-[320px]! flex-shrink-0!">
-        <ContentCard variant="elevated" padding="large">
+      <div class="w-full! xl:w-[280px]! flex-shrink-0!">
+        <ContentCard variant="elevated" padding="large" class="overflow-hidden!">
           <div
             class="bg-gradient-to-br! from-[#0B7A9E]! to-[#094e67]! rounded-2xl! shadow-lg! p-4! sm:p-6! text-white! relative! overflow-hidden! -m-4! sm:-m-6!"
           >
@@ -253,71 +291,7 @@
                   </div>
                 </div>
 
-                <div class="mt-3! sm:mt-4! pt-3! sm:pt-4! border-t! border-white/20!">
-                  <div class="flex! items-center! justify-between!">
-                    <div class="flex! items-center! gap-2! sm:gap-4!">
-                      <div class="relative! group!">
-                        <div
-                          class="absolute! inset-0! bg-gradient-to-br! from-emerald-400/20! to-blue-400/20! rounded-xl! blur-xl! group-hover:blur-2xl! transition-all! duration-300!"
-                        ></div>
 
-                        <div
-                          class="relative! w-10! h-10! sm:w-14! sm:h-14! rounded-xl! bg-gradient-to-br! from-white/90! to-white/70! backdrop-blur-md! p-1.5! sm:p-2! shadow-lg! border! border-white/30!"
-                        >
-                          <img
-                            :src="getQRCodeUrl()"
-                            alt="QR Code"
-                            class="w-full! h-full! rounded-md!"
-                          />
-
-                          <div
-                            class="absolute! top-0! left-0! w-1.5! h-1.5! sm:w-2! sm:h-2! border-t-2! border-l-2! border-emerald-400! rounded-tl!"
-                          ></div>
-                          <div
-                            class="absolute! top-0! right-0! w-1.5! h-1.5! sm:w-2! sm:h-2! border-t-2! border-r-2! border-blue-400! rounded-tr!"
-                          ></div>
-                          <div
-                            class="absolute! bottom-0! left-0! w-1.5! h-1.5! sm:w-2! sm:h-2! border-b-2! border-l-2! border-blue-400! rounded-bl!"
-                          ></div>
-                          <div
-                            class="absolute! bottom-0! right-0! w-1.5! h-1.5! sm:w-2! sm:h-2! border-b-2! border-r-2! border-emerald-400! rounded-br!"
-                          ></div>
-
-                          <div
-                            class="absolute! inset-0! rounded-xl! bg-gradient-to-t! from-transparent! via-emerald-400/10! to-transparent! animate-pulse!"
-                          ></div>
-                        </div>
-
-                        <div
-                          class="absolute! -top-1! -right-1! w-3! h-3! sm:w-4! sm:h-4! bg-emerald-400! rounded-full! flex! items-center! justify-center! shadow-lg!"
-                        >
-                          <font-awesome-icon icon="check" class="text-white! text-xs!" />
-                        </div>
-                      </div>
-
-                      <div class="flex-1! min-w-0!">
-                        <div class="text-xs! text-white/70! font-medium!">QR Verification</div>
-                        <div
-                          class="text-xs! sm:text-sm! font-mono! font-bold! text-white! truncate!"
-                        >
-                          {{ billingStore.selectedCustomer?.id || 'PAM-2025-09821' }}
-                        </div>
-                        <div class="flex! items-center! gap-1! mt-1!">
-                          <div
-                            class="w-1.5! h-1.5! bg-emerald-400! rounded-full! animate-pulse!"
-                          ></div>
-                          <div class="text-xs! text-white/60!">Ready to scan</div>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div
-                      class="w-5! h-5! sm:w-7! sm:h-7! rounded-full! bg-gradient-to-br! from-emerald-400/20! to-blue-400/20! backdrop-blur-sm! flex! items-center! justify-center! border! border-white/30!"
-                    >
-                      <font-awesome-icon icon="qrcode" class="text-white! text-xs!" />
-                    </div>
-                  </div>
-                </div>
               </div>
             </div>
           </div>
@@ -349,18 +323,15 @@
 </template>
 
 <script setup>
-import { onMounted, computed } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useBillingStore } from '@/stores/billingStore.js'
 import CustomSearch from '@/presentations/components/ui/CustomSearch.vue'
 import ContentCard from '@/presentations/components/ui/ContentCard.vue'
-import MeterDisplay from '@/presentations/components/ui/MeterDisplay.vue'
 import BillingForm from '@/presentations/components/billing/BillingForm.vue'
 import DetailModal from './partials/BillingDetail.vue'
-import { ref } from 'vue'
+import { MySwal } from '@/utils/swal.js'
 
 const billingStore = useBillingStore()
-
-const currentPeriod = computed(() => billingStore.currentPeriod)
 
 const showDetailModal = ref(false)
 
@@ -375,9 +346,25 @@ const selectCustomer = async (customer) => {
 const handleSavePayment = async (paymentData) => {
   const result = await billingStore.savePayment(paymentData)
   if (result.success) {
-    console.log('Payment saved successfully:', result)
+    MySwal.fire({
+      title: 'Pembayaran Berhasil',
+      text: 'Tagihan bulan ini berhasil dikonfirmasi dan lunas.',
+      icon: 'success',
+      confirmButtonText: 'OK',
+      confirmButtonColor: '#10B981',
+    })
+    
+    if (billingStore.selectedCustomer) {
+      await billingStore.fetchBillingPeriods(billingStore.selectedCustomer.customer_id)
+    }
   } else {
-    console.error('Payment save failed:', result)
+    MySwal.fire({
+      title: 'Pembayaran Gagal',
+      text: result.message || 'Terjadi kesalahan saat memproses pembayaran.',
+      icon: 'error',
+      confirmButtonText: 'OK',
+      confirmButtonColor: '#EF4444',
+    })
   }
 }
 
@@ -385,14 +372,13 @@ const getInitialFormData = (period) => {
   return {
     periodId: period.id,
     tanggal: new Date(),
-    kode: billingStore.selectedCustomer?.installationCode || '1.01.0002',
-    meterAwal: period.meterAwal || 352,
-    meterAkhir: period.meterAkhir || 368,
-    pemakaian: period.pemakaian || 16,
-    tagihan: 64000,
-    abodemen: 10000,
-    denda: period.type === 'overdue' ? 5000 : 0,
-    pembayaran: 74000,
+    meterAwal: period.meterAwal || 0,
+    meterAkhir: period.meterAkhir || 0,
+    pemakaian: period.pemakaian || 0,
+    tagihan: period.usage_charge || 0,
+    abodemen: period.abodemen || 0,
+    denda: period.denda || 0,
+    pembayaran: period.amount || 0,
   }
 }
 
@@ -405,11 +391,7 @@ const getCustomerInitials = () => {
     .toUpperCase()
 }
 
-const getQRCodeUrl = () => {
-  const customerId = billingStore.selectedCustomer?.id || 'PAM-2025-09821'
-  const period = 'MEI2025'
-  return `https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${customerId}-${period}&color=0B7A9E`
-}
+
 
 onMounted(async () => {
   await billingStore.initializeStore()

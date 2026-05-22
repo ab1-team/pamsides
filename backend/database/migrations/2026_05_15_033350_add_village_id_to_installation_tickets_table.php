@@ -14,9 +14,9 @@ return new class extends Migration
         Schema::table('installation_tickets', function (Blueprint $table) {
 
             $table->foreignId('village_id')
-                  ->nullable()
-                  ->after('address')
-                  ->constrained('villages');
+                ->nullable()
+                ->after('address')
+                ->constrained('villages');
 
         });
     }

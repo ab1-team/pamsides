@@ -60,8 +60,15 @@ const fetchInstallations = async () => {
         customer: ticket.applicant_name || '-',
         alamat: ticket.address || '-',
         paket: ticket.package?.name || '-',
-        tanggalOrder: ticket.created_at ? new Date(ticket.created_at).toISOString().split('T')[0] : '-',
-        status: ticket.status === 'completed' ? 'Aktif' : (['cancelled', 'batal'].includes(ticket.status) ? 'Batal' : 'Proses'),
+        tanggalOrder: ticket.created_at
+          ? new Date(ticket.created_at).toISOString().split('T')[0]
+          : '-',
+        status:
+          ticket.status === 'completed'
+            ? 'Aktif'
+            : ['cancelled', 'batal'].includes(ticket.status)
+              ? 'Batal'
+              : 'Proses',
       }))
     }
   } catch (error) {

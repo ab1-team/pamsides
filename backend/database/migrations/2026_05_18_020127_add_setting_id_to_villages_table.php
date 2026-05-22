@@ -13,9 +13,9 @@ return new class extends Migration
     {
         Schema::table('villages', function (Blueprint $table) {
             $table->foreignId('setting_id')
-                  ->after('id')
-                  ->constrained('settings')
-                  ->cascadeOnDelete();
+                ->after('id')
+                ->constrained('settings')
+                ->cascadeOnDelete();
         });
     }
 

@@ -185,7 +185,7 @@ function toggleSubmenu(label) {
 }
 
 const menuItems = [
-    {
+  {
     label: 'Dashboard',
     icon: 'home',
     to: '/dashboard',
@@ -239,6 +239,16 @@ const menuItems = [
           { label: 'Daftar Pemasangan', to: '/instalasi/pemasangan/daftar' },
         ],
       },
+    ],
+  },
+  {
+    label: 'Tagihan & Pembayaran',
+    icon: 'file-invoice-dollar',
+    roles: ['admin'],
+    children: [
+      { label: 'Input Tagihan', to: '/instalasi/pemakaian-air' },
+      { label: 'Daftar Tagihan', to: '/instalasi/daftar-tagihan' },
+      { label: 'Pembayaran Tagihan', to: '/transaksi/tagihan-bulanan' },
     ],
   },
 ]

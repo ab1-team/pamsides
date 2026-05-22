@@ -45,7 +45,7 @@
       </div>
     </div>
 
-    <ContentCard variant="elevated" padding="normal" hoverable class="mt-4!">
+    <ContentCard variant="elevated" padding="normal" hoverable class="mt-4! relative! z-[50]!">
       <div
         class="flex flex-col md:grid md:grid-cols-2 lg:flex lg:flex-row lg:items-end gap-3 md:gap-4!"
       >
@@ -67,19 +67,6 @@
           />
         </div>
 
-        <div class="flex-1! min-w-[120px]!">
-          <SelectSearch
-            v-model="filter.cater"
-            :options="[
-              { id: '', text: 'Cater' },
-              { id: 'cater-001', text: 'Cater-001' },
-              { id: 'cater-002', text: 'Cater-002' },
-              { id: 'cater-003', text: 'Cater-003' },
-            ]"
-            placeholder="Cater"
-            no-margin
-          />
-        </div>
 
         <BaseButton
           variant="info-gradient"
@@ -140,7 +127,7 @@
 
       <template #column-tagihan="{ row }">
         <div class="font-bold! text-sm! text-slate-900!">
-          {{ row.tagihan.toLocaleString('id-ID') }}
+          Rp. {{ Number(row.tagihan || 0).toLocaleString('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}
         </div>
       </template>
 
@@ -202,7 +189,7 @@ import BaseButton from '@/presentations/components/ui/BaseButton.vue'
 import HasilInputModal from './partials/hasilInputModal.vue'
 import EditPemakaianModal from './editPemakaianAir.vue'
 import { useRouter } from 'vue-router'
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 
 const {
   filter,
@@ -218,11 +205,16 @@ const {
   STATUS_COLORS,
   showEditModal,
   selectedRow,
+  refreshData,
   handleApplyFilter,
   handleEdit,
   handleSaveEdit,
   handleDelete,
 } = usePemakaianAir()
+
+onMounted(() => {
+  refreshData()
+})
 
 const showHasilModal = ref(false)
 
@@ -233,11 +225,23 @@ const handleHasilInput = () => {
 const router = useRouter()
 
 const handleInputPemakaian = () => {
-  router.push({ name: 'Input Pemakaian Air' })
+  router.push({
+    name: 'Input Pemakaian Air',
+    query: {
+      tahun: filter.value.tahun,
+      bulan: filter.value.bulan,
+    },
+  })
 }
 
 const handleCetakFormInput = () => {
-  const url = router.resolve({ name: 'Cetak Input' }).href
+  const url = router.resolve({
+    name: 'Cetak Input',
+    query: {
+      tahun: filter.value.tahun,
+      bulan: filter.value.bulan,
+    },
+  }).href
   window.open(url, '_blank')
 }
 

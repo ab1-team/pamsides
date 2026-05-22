@@ -339,10 +339,10 @@ const statsSummary = computed(() => {
   const data = statsData.value
   const tickets = data?.tickets_by_status || {}
   const bills = data?.bills_this_month || {}
-  
+
   const totalTickets = Object.values(tickets).reduce((a, b) => a + Number(b), 0)
   const totalBills = (Number(bills.paid) || 0) + (Number(bills.unpaid) || 0)
-  
+
   return {
     instalasi: totalTickets.toString(),
     pemakaian: (data?.total_customers || 0).toString(),
@@ -374,7 +374,7 @@ const loadData = async () => {
     const response = await dashboardService.getStatistics()
     if (response?.success && response?.data) {
       statsData.value = response.data
-      
+
       const revenue = Number(response.data.revenue_this_month) || 0
       financialData.value = {
         pendapatan: revenue,

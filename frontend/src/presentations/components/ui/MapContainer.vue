@@ -4,8 +4,8 @@
 
     <!-- Map Type Toggle -->
     <div class="map-controls">
-      <button 
-        @click="toggleMapType" 
+      <button
+        @click="toggleMapType"
         class="map-control-btn shadow-lg"
         :title="isSatellite ? 'Switch to Roadmap' : 'Switch to Satellite'"
       >
@@ -72,16 +72,19 @@ const fixLeafletIcon = () => {
 const toggleMapType = () => {
   if (map.value && tileLayer.value) {
     map.value.removeLayer(tileLayer.value)
-    
+
     isSatellite.value = !isSatellite.value
     const layerType = isSatellite.value ? 's' : 'm'
-    
-    tileLayer.value = L.tileLayer('https://{s}.google.com/vt/lyrs=' + layerType + '&x={x}&y={y}&z={z}', {
-      maxZoom: 20,
-      subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
-      attribution: '&copy; Google Maps',
-    })
-    
+
+    tileLayer.value = L.tileLayer(
+      'https://{s}.google.com/vt/lyrs=' + layerType + '&x={x}&y={y}&z={z}',
+      {
+        maxZoom: 20,
+        subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
+        attribution: '&copy; Google Maps',
+      },
+    )
+
     tileLayer.value.addTo(map.value)
   }
 }
@@ -199,15 +202,22 @@ watch(
 }
 
 @keyframes marker-pulse {
-  0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0.8; }
-  100% { transform: translate(-50%, -50%) scale(2); opacity: 0; }
+  0% {
+    transform: translate(-50%, -50%) scale(0.5);
+    opacity: 0.8;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(2);
+    opacity: 0;
+  }
 }
 
 .leaflet-container {
   background: #f8fafc !important;
 }
 
-.leaflet-fade-anim .leaflet-tile,.leaflet-zoom-anim .leaflet-tile {
+.leaflet-fade-anim .leaflet-tile,
+.leaflet-zoom-anim .leaflet-tile {
   transition-duration: 500ms;
 }
 </style>

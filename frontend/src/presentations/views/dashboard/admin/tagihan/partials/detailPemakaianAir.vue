@@ -19,6 +19,18 @@
           </p>
         </div>
       </div>
+
+      <div class="shrink-0!">
+        <BaseButton
+          variant="info-gradient"
+          size="md"
+          @click="handleGenerateBills"
+          class="w-full! sm:w-auto! rounded-xl! shadow-lg! text-xs md:text-sm font-bold! flex! items-center! gap-1.5!"
+          icon="file-invoice-dollar"
+        >
+          Generate Tagihan
+        </BaseButton>
+      </div>
     </div>
 
     <div class="hidden! md:block!">
@@ -63,17 +75,28 @@
       class="md:hidden! bg-white! rounded-[2.25rem]! border! border-slate-100! shadow-[0_20px_50px_rgba(0,0,0,0.04)]! overflow-hidden!"
     >
       <div class="p-6! border-b! border-slate-50!">
-        <div class="flex! items-center! gap-3! mb-5!">
-          <BaseButton
-            variant="ghost"
-            icon="chevron-left"
-            class="w-8! h-8! p-0! rounded-full! bg-slate-100! text-slate-500!"
-            @click="handleBack"
-          />
-          <div>
-            <h1 class="text-lg! font-black! text-slate-800! leading-tight!">Input Pemakaian</h1>
-            <p class="text-[10px]! uppercase! tracking-[0.2em]! text-slate-400!">Pamsides V2</p>
+        <div class="flex! items-center! justify-between! gap-3! mb-5!">
+          <div class="flex! items-center! gap-3!">
+            <BaseButton
+              variant="ghost"
+              icon="chevron-left"
+              class="w-8! h-8! p-0! rounded-full! bg-slate-100! text-slate-500!"
+              @click="handleBack"
+            />
+            <div>
+              <h1 class="text-lg! font-black! text-slate-800! leading-tight!">Input Pemakaian</h1>
+              <p class="text-[10px]! uppercase! tracking-[0.2em]! text-slate-400!">Pamsides V2</p>
+            </div>
           </div>
+          <BaseButton
+            variant="info-gradient"
+            size="sm"
+            @click="handleGenerateBills"
+            class="rounded-xl! shadow-sm! text-xs font-bold! flex! items-center! gap-1!"
+            icon="file-invoice-dollar"
+          >
+            Generate
+          </BaseButton>
         </div>
 
         <div class="space-y-4!">
@@ -102,51 +125,57 @@
         <p class="text-slate-400! text-sm!">Data tidak ditemukan</p>
       </div>
 
-      <div v-else class="divide-y! divide-slate-50!">
+      <div v-else class="p-4! space-y-3.5!">
         <div
           v-for="row in paginatedData"
           :key="row.noInduk"
           @click="handleRowClick(row)"
-          class="p-2! active:bg-slate-50! transition-all! cursor-pointer!"
+          class="p-4! bg-white! rounded-2xl! border! border-slate-100! shadow-[0_4px_20px_rgba(0,0,0,0.02)]! active:scale-[0.98]! active:bg-slate-50! transition-all! cursor-pointer! flex! flex-col! gap-3!"
         >
-          <div class="flex! items-center! justify-between! mb-1.5!">
+          <div class="flex! items-start! justify-between! gap-3!">
             <div class="flex! items-center! gap-3! min-w-0!">
               <div
-                class="w-8! h-8! rounded-full! bg-gradient-to-br from-cyan-500 to-blue-600! flex! items-center! justify-center! text-white! font-bold! text-xs! shadow-sm! shrink-0!"
+                class="w-10! h-10! rounded-xl! bg-gradient-to-br! from-cyan-500! to-blue-600! flex! items-center! justify-center! text-white! font-bold! text-sm! shadow-sm! shrink-0!"
               >
                 {{ row.nama.charAt(0) }}
               </div>
               <div class="truncate!">
-                <p class="text-xs! font-bold! text-slate-800! truncate! mb-0!">
+                <p class="text-sm! font-black! text-slate-800! truncate! mb-0.5!">
                   {{ row.nama }}
                 </p>
-                <p class="text-[9px]! font-medium! text-slate-400! tracking-wide!">
-                  {{ row.dusun }} Pelanggan
-                </p>
+                <div class="flex! items-center! gap-1.5!">
+                  <span class="text-[9px]! font-bold! text-slate-400! font-mono!">
+                    ID: {{ row.noInduk }}
+                  </span>
+                  <span class="text-slate-300! text-[9px]! font-bold!">|</span>
+                  <span class="text-[9px]! font-bold! text-slate-400! truncate!">
+                    {{ row.dusun }}
+                  </span>
+                </div>
               </div>
             </div>
-            <div class="text-right! shrink-0!">
-              <p class="text-[9px]! font-bold! text-slate-700! mb-0.5!">#{{ row.noInduk }}</p>
-              <span
-                class="text-[8px]! font-black! px-1.5! py-0.5! rounded-full! border! border-cyan-100! bg-cyan-50! text-cyan-600! uppercase!"
-              >
-                Meter Air
-              </span>
+
+            <div
+              class="w-8! h-8! rounded-full! bg-cyan-50! flex! items-center! justify-center! text-cyan-600! shrink-0!"
+            >
+              <font-awesome-icon icon="chevron-right" class="text-xs!" />
             </div>
           </div>
 
           <div
-            class="grid! grid-cols-2! gap-2! bg-slate-50! p-2! rounded-xl! border! border-slate-100/50!"
+            class="grid! grid-cols-2! gap-2! bg-slate-50! p-2.5! rounded-xl! border! border-slate-100/50!"
           >
-            <div class="text-center!">
-              <p class="text-[8px]! font-black! text-slate-400! uppercase! mb-0!">ID PELANGGAN</p>
-              <p class="text-xs! font-bold! text-slate-600!">#{{ row.noInduk }}</p>
-            </div>
-            <div class="text-center! border-l! border-slate-200!">
-              <p class="text-[8px]! font-black! text-slate-400! uppercase! mb-0!">PAKAI LALU</p>
-              <p class="text-xs! font-bold! text-cyan-600!">
-                {{ row.usageLalu }} m³
+            <div class="pl-2!">
+              <p class="text-[8px]! font-black! text-slate-400! uppercase! tracking-wider! mb-0.5!">
+                METER AWAL
               </p>
+              <p class="text-xs! font-bold! text-slate-700!">{{ row.meterAwal }} m³</p>
+            </div>
+            <div class="pl-3! border-l! border-slate-200!">
+              <p class="text-[8px]! font-black! text-slate-400! uppercase! tracking-wider! mb-0.5!">
+                PAKAI LALU
+              </p>
+              <p class="text-xs! font-bold! text-cyan-600!">{{ row.usageLalu }} m³</p>
             </div>
           </div>
         </div>
@@ -195,6 +224,8 @@ import { ref, computed, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUiStore } from '@/stores/uiStore'
 import { meterService } from '@/services/meter.service'
+import { billingService } from '@/services/billing.service.js'
+import { MySwal } from '@/utils/swal.js'
 import BaseButton from '@/presentations/components/ui/BaseButton.vue'
 import DataTable from '@/presentations/components/ui/DataTable.vue'
 import ContentCard from '@/presentations/components/ui/ContentCard.vue'
@@ -206,33 +237,65 @@ const uiStore = useUiStore()
 const isLoading = ref(false)
 const customers = ref([])
 
+const getMonthNumber = (m) => {
+  if (!m) return new Date().getMonth() + 1
+  if (!isNaN(m)) return parseInt(m)
+  
+  const monthNamesId = [
+    'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+    'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+  ]
+  const idxId = monthNamesId.indexOf(m)
+  if (idxId !== -1) return idxId + 1
+
+  const monthNamesEn = [
+    'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Ags', 'Sep', 'Okt', 'Nov', 'Des'
+  ]
+  const idxEn = monthNamesEn.indexOf(m)
+  if (idxEn !== -1) return idxEn + 1
+
+  return new Date().getMonth() + 1
+}
+
 const fetchData = async () => {
   try {
     isLoading.value = true
-    const { month, year } = router.currentRoute.value.query
-    const res = await meterService.getPendingReadings({ month, year })
+    const { month, year, bulan, tahun } = router.currentRoute.value.query
+    
+    const monthVal = getMonthNumber(month || bulan)
+    const yearVal = parseInt(year || tahun) || new Date().getFullYear()
+
+    const res = await meterService.getPendingReadings({ month: monthVal, year: yearVal })
     if (res.data) {
       // Map data backend ke format tabel jika perlu
-      customers.value = res.data.map(item => {
+      customers.value = res.data.map((item) => {
         // Meter Awal diambil dari pencatatan bulan lalu
-        const awal = item.meter_readings && item.meter_readings.length > 0 
-          ? item.meter_readings[0].meter_value 
-          : item.initial_meter_reading
-        
+        const awal =
+          item.meter_readings && item.meter_readings.length > 0
+            ? item.meter_readings[0].meter_value
+            : item.initial_meter_reading
+
         // Pemakaian bulan lalu dari MonthlyBill
-        const usageLalu = item.monthly_bills && item.monthly_bills.length > 0
-          ? item.monthly_bills[0].usage_m3
-          : 0
-          
+        const usageLalu =
+          item.monthly_bills && item.monthly_bills.length > 0 ? item.monthly_bills[0].usage_m3 : 0
+
+        const address = item.ticket?.address || ''
+        let rtVal = '-'
+        const rtMatch = address.match(/rt\s*[:\.]?\s*(\d+)/i)
+        if (rtMatch) {
+          rtVal = 'RT ' + rtMatch[1]
+        }
+        const dusunVal = address ? address.split(',')[0] : '-'
+
         return {
           nama: item.user?.name || item.ticket?.applicant_name || 'Tanpa Nama',
           noInduk: item.customer_code || '-',
-          dusun: item.ticket?.address || '-',
-          rt: '-',
+          dusun: dusunVal,
+          rt: rtVal,
           meterAwal: awal || 0,
           meterAkhir: awal || 0,
           usageLalu: usageLalu,
-          id: item.id
+          id: item.id,
         }
       })
     }
@@ -252,6 +315,55 @@ const handleBack = () => {
     router.push('/instalasi/teknisiPemakaianAir')
   } else {
     router.push('/instalasi/pemakaian-air')
+  }
+}
+
+const handleGenerateBills = async () => {
+  const confirm = await MySwal.fire({
+    title: 'Generate Tagihan?',
+    text: 'Sistem akan memproses generate tagihan untuk pelanggan yang sudah diinput meteran airnya pada periode terpilih.',
+    icon: 'question',
+    showCancelButton: true,
+    confirmButtonText: 'Mulai Generate',
+    cancelButtonText: 'Batal',
+    confirmButtonColor: '#0891b2',
+    cancelButtonColor: '#64748b',
+    background: '#ffffff',
+    customClass: {
+      popup: 'rounded-2xl!',
+      confirmButton: 'rounded-xl! px-4! py-2! font-bold!',
+      cancelButton: 'rounded-xl! px-4! py-2! font-medium!',
+    },
+  })
+
+  if (!confirm.isConfirmed) return
+
+  try {
+    uiStore.setLoading(true)
+
+    const { month, year, bulan, tahun } = router.currentRoute.value.query
+    const monthVal = getMonthNumber(month || bulan)
+    const yearVal = parseInt(year || tahun) || new Date().getFullYear()
+
+    const res = await billingService.generateMonthlyBills({ month: monthVal, year: yearVal })
+
+    await MySwal.fire({
+      title: 'Generate Berhasil!',
+      text: res.data?.message || 'Tagihan pelanggan berhasil di-generate!',
+      icon: 'success',
+      confirmButtonText: 'Lihat Daftar Tagihan',
+      confirmButtonColor: '#0891b2',
+      customClass: {
+        popup: 'rounded-2xl!',
+        confirmButton: 'rounded-xl! px-5! py-2.5! font-bold!',
+      },
+    })
+
+    router.push('/instalasi/daftar-tagihan')
+  } catch (error) {
+    uiStore.error(error.response?.data?.data?.message || error.response?.data?.message || 'Gagal generate tagihan')
+  } finally {
+    uiStore.setLoading(false)
   }
 }
 
@@ -275,20 +387,26 @@ const handleSaveMeter = async (payload) => {
   try {
     uiStore.setLoading(true)
 
+    const { month, year, bulan, tahun } = router.currentRoute.value.query
+    const monthVal = getMonthNumber(month || bulan)
+    const yearVal = parseInt(year || tahun) || new Date().getFullYear()
+
     const formData = new FormData()
     formData.append('customer_id', selectedCustomer.value.id)
     formData.append('meter_value', payload.meterValue)
     formData.append('photo', payload.photo)
+    formData.append('month', monthVal)
+    formData.append('year', yearVal)
 
     await meterService.submitReading(formData)
 
     uiStore.success('Data pemakaian dan foto berhasil disimpan!')
-    
+
     const index = customers.value.findIndex((c) => c.noInduk === selectedCustomer.value.noInduk)
     if (index !== -1) {
       customers.value.splice(index, 1)
     }
-    
+
     isModalOpen.value = false
   } catch (error) {
     uiStore.error(error.response?.data?.message || 'Gagal menyimpan data')
@@ -306,7 +424,11 @@ const tableColumns = [
     tdClass: 'text-slate-500! hidden! sm:table-cell!',
     thClass: 'hidden! sm:table-cell!',
   },
-  { key: 'usageLalu', title: 'PAKAI BULAN LALU', tdClass: 'text-right! w-40! text-blue-600! font-bold!' },
+  {
+    key: 'usageLalu',
+    title: 'PAKAI BULAN LALU',
+    tdClass: 'text-right! w-40! text-blue-600! font-bold!',
+  },
 ]
 
 const hitungPemakaian = (row) => {

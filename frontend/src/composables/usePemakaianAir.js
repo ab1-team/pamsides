@@ -1,27 +1,9 @@
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed } from 'vue'
 import { STATUS_TYPES, STATUS_COLORS } from '@/types/pemakaianAir'
+import { billingService } from '@/services/billing.service'
 import Swal from 'sweetalert2'
-import billingService from '@/services/billing.service'
 
 export function usePemakaianAir() {
-  // State untuk filter pencarian
-  const filter = ref({ tahun: '', bulan: '', cater: '' })
-  const searchQuery = ref('')
-  const currentPage = ref(1)
-  const perPage = ref(10)
-  const isLoading = ref(false)
-
-  // Pilihan opsi
-  // Edit Modal state
-  const showEditModal = ref(false)
-  const selectedRow = ref(null)
-
-  // Options
-  const tahunOptions = computed(() => {
-    const y = new Date().getFullYear()
-    return Array.from({ length: 5 }, (_, i) => y - i)
-  })
-
   const bulanOptions = [
     'Januari',
     'Februari',
@@ -37,52 +19,55 @@ export function usePemakaianAir() {
     'Desember',
   ]
 
-  // Data dinamis dari database
+  // State untuk filter pencarian
+  const filter = ref({
+    tahun: new Date().getFullYear(),
+    bulan: bulanOptions[new Date().getMonth()],
+  })
+  const searchQuery = ref('')
+  const currentPage = ref(1)
+  const perPage = ref(10)
+
+  // State untuk edit modal
+  const showEditModal = ref(false)
+  const selectedRow = ref(null)
+
+  // Options
+  const tahunOptions = computed(() => {
+    const y = new Date().getFullYear()
+    return Array.from({ length: 5 }, (_, i) => y - i)
+  })
+
   const tableData = ref([])
 
-  const fetchConsumptionHistory = async () => {
+  // Data dinamis dari API
+  const loadTableData = async () => {
     try {
-      isLoading.value = true
-      const response = await billingService.getBills()
-      if (response?.success && response?.data?.bills) {
-        tableData.value = response.data.bills.map((bill) => {
-          const ticket = bill.customer?.ticket
-          return {
-            id: bill.customer?.customer_code || `BILL-${bill.id}`,
-            realBillId: bill.id,
-            nama: ticket?.applicant_name || '-',
-            initials: ticket?.applicant_name
-              ? ticket.applicant_name
-                  .split(' ')
-                  .map((n) => n[0])
-                  .join('')
-                  .toUpperCase()
-                  .substring(0, 2)
-              : '?',
-            avatarColor: ['#0ea5e9', '#06b6d4', '#14b8a6', '#f59e0b', '#ef4444'][bill.id % 5],
-            desa: '-',
-            dusun: '-',
-            rt: '',
-            meterAwal: Number(bill.meter_reading_start) || 0,
-            meterAkhir: Number(bill.meter_reading_end) || 0,
-            pemakaian: Number(bill.usage_m3) || 0,
-            tagihan: Number(bill.total_amount) || 0,
-            tanggalAkhir: bill.due_date || '-',
-            jatuhTempo: bill.due_date ? new Date(bill.due_date).toLocaleDateString('id-ID') : '-',
-            status: bill.status === 'paid' ? STATUS_TYPES.PAID : STATUS_TYPES.PENDING,
-          }
-        })
+      const monthIndex = filter.value.bulan
+        ? bulanOptions.indexOf(filter.value.bulan) + 1
+        : new Date().getMonth() + 1
+      const yearVal = filter.value.tahun || new Date().getFullYear()
+
+      const res = await billingService.getUsageList({ month: monthIndex, year: yearVal })
+      if (res.success && res.data) {
+        tableData.value = res.data.map((item) => ({
+          ...item,
+          status:
+            item.status === 'PAID'
+              ? STATUS_TYPES.PAID
+              : item.status === 'UNPAID'
+                ? STATUS_TYPES.PENDING
+                : STATUS_TYPES.PENDING, // Pending for unpaid or no bill yet
+        }))
       }
-    } catch (error) {
-      console.error('Failed to fetch consumption data:', error)
-    } finally {
-      isLoading.value = false
+    } catch (err) {
+      console.error('Gagal memuat data pemakaian air:', err)
     }
   }
 
-  onMounted(() => {
-    fetchConsumptionHistory()
-  })
+  const refreshData = () => {
+    return loadTableData()
+  }
 
   // Properti komputasi
   const filteredData = computed(() => {
@@ -97,7 +82,7 @@ export function usePemakaianAir() {
 
   const groupedData = computed(() => {
     const groups = {}
-    filteredData.value.forEach((item) => {
+    tableData.value.forEach((item) => {
       const dusun = item.dusun || 'Lainnya'
       if (!groups[dusun]) {
         groups[dusun] = []
@@ -116,7 +101,9 @@ export function usePemakaianAir() {
   })
 
   // Fungsi-fungsi penanganan aksi
-  const handleApplyFilter = () => console.log('Apply filter:', filter.value)
+  const handleApplyFilter = () => {
+    loadTableData()
+  }
   const handleCetakFormInput = () => console.log('Cetak Form Input')
   const handleHasilInput = () => console.log('Hasil Input')
   const handleInputPemakaian = () => console.log('Input Pemakaian')
@@ -186,6 +173,7 @@ export function usePemakaianAir() {
     STATUS_COLORS,
 
     // Penanganan Aksi
+    refreshData,
     handleApplyFilter,
     handleCetakFormInput,
     handleHasilInput,

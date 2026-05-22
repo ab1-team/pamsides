@@ -81,57 +81,50 @@
                 </tr>
               </thead>
               <tbody class="divide-y divide-slate-200">
-                <tr class="hover:bg-slate-50 transition-colors">
-                  <td class="py-4! px-4! text-center text-slate-600">1</td>
-                  <td class="py-4! px-4! text-slate-700">01/01/2026</td>
-                  <td class="py-4! px-4! font-mono text-xs text-slate-500"></td>
-                  <td class="py-4! px-4! text-slate-700">Komulatif Transaksi Awal Tahun 2026</td>
-                  <td class="py-4! px-4! font-mono text-xs text-slate-500"></td>
-                  <td class="py-4! px-4! text-right font-mono text-slate-700">0.00</td>
-                  <td class="py-4! px-4! text-right font-mono text-slate-700">0.00</td>
-                  <td class="py-4! px-4! text-center font-mono text-slate-700">0.00</td>
-                  <td class="py-4! px-4! text-center">
-                    <div class="flex items-center justify-center gap-2!">
-                      <button
-                        class="w-8! h-8! rounded-lg! bg-blue-50! text-blue-600! hover:bg-blue-100! transition-all active:scale-90"
-                        title="Cetak"
-                      >
-                        <font-awesome-icon icon="print" />
-                      </button>
-                      <button
-                        class="w-8! h-8! rounded-lg! bg-red-50! text-red-600! hover:bg-red-100! transition-all active:scale-90"
-                        title="Hapus"
-                      >
-                        <font-awesome-icon icon="trash" />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-
-                <tr class="hover:bg-slate-50 transition-colors">
-                  <td class="py-4! px-4! text-center text-slate-600">2</td>
-                  <td class="py-4! px-4! text-slate-700">01/04/2026</td>
-                  <td class="py-4! px-4! font-mono text-xs text-slate-500"></td>
-                  <td class="py-4! px-4! text-slate-700">Komulatif Transaksi s/d Bulan Lalu</td>
-                  <td class="py-4! px-4! font-mono text-xs text-slate-500"></td>
-                  <td class="py-4! px-4! text-right font-mono text-slate-700">0.00</td>
-                  <td class="py-4! px-4! text-right font-mono text-slate-700">0.00</td>
-                  <td class="py-4! px-4! text-center font-mono text-slate-700"></td>
-                  <td class="py-4! px-4! text-center">
-                    <div class="flex items-center justify-center gap-2!">
-                      <button
-                        class="w-8! h-8! rounded-lg! bg-blue-50! text-blue-600! hover:bg-blue-100! transition-all active:scale-90"
-                        title="Cetak"
-                      >
-                        <font-awesome-icon icon="print" />
-                      </button>
-                      <button
-                        class="w-8! h-8! rounded-lg! bg-red-50! text-red-600! hover:bg-red-100! transition-all active:scale-90"
-                        title="Hapus"
-                      >
-                        <font-awesome-icon icon="trash" />
-                      </button>
-                    </div>
+                <template v-if="paidBills.length > 0">
+                  <tr 
+                    v-for="(bill, index) in paidBills" 
+                    :key="bill.id" 
+                    class="hover:bg-slate-50 transition-colors"
+                  >
+                    <td class="py-4! px-4! text-center text-slate-600">{{ index + 1 }}</td>
+                    <td class="py-4! px-4! text-slate-700">
+                      {{ bill.payments && bill.payments[0] ? bill.payments[0].paidAt : bill.statusDate || '-' }}
+                    </td>
+                    <td class="py-4! px-4! font-mono text-xs text-slate-500">1101</td>
+                    <td class="py-4! px-4! text-slate-700">
+                      Pembayaran Air Periode {{ bill.period }} ({{ bill.customerName }})
+                    </td>
+                    <td class="py-4! px-4! font-mono text-xs text-slate-500">
+                      BP-{{ bill.payments && bill.payments[0] ? bill.payments[0].id : bill.id }}
+                    </td>
+                    <td class="py-4! px-4! text-right font-mono text-slate-700">0,00</td>
+                    <td class="py-4! px-4! text-right font-mono text-emerald-600 font-semibold">
+                      {{ formatRupiah(bill.amount) }}
+                    </td>
+                    <td class="py-4! px-4! text-center font-mono text-slate-700">-</td>
+                    <td class="py-4! px-4! text-center">
+                      <div class="flex items-center justify-center gap-2!">
+                        <button
+                          class="w-8! h-8! rounded-lg! bg-blue-50! text-blue-600! hover:bg-blue-100! transition-all active:scale-90"
+                          title="Cetak"
+                        >
+                          <font-awesome-icon icon="print" />
+                        </button>
+                        <button
+                          class="w-8! h-8! rounded-lg! bg-red-50! text-red-600! hover:bg-red-100! transition-all active:scale-90"
+                          title="Hapus"
+                          disabled
+                        >
+                          <font-awesome-icon icon="trash" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                </template>
+                <tr v-else>
+                  <td colspan="9" class="py-8! text-center text-slate-400 italic">
+                    Belum ada riwayat transaksi pembayaran lunas untuk pelanggan ini.
                   </td>
                 </tr>
               </tbody>
@@ -154,13 +147,23 @@
 </template>
 
 <script setup>
-import { onMounted, onUnmounted, watch } from 'vue'
+import { onMounted, onUnmounted, watch, computed } from 'vue'
+import { useBillingStore } from '@/stores/billingStore'
+import { formatRupiah } from '@/composables/useFormatCurrency'
 
 const props = defineProps({
   show: {
     type: Boolean,
     default: false,
   },
+})
+
+const billingStore = useBillingStore()
+
+const paidBills = computed(() => {
+  return billingStore.billingPeriods.filter(
+    (p) => (p.type === 'paid' || p.status === 'LUNAS') && p.payments && p.payments.length > 0
+  )
 })
 
 const emit = defineEmits(['close'])

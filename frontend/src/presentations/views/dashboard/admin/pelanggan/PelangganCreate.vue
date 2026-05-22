@@ -1,188 +1,224 @@
 <template>
-    <div class="pelanggan-create-view w-full! pb-20!">
-        <div class="mb-8!">
-            <h1 class="text-3xl font-extrabold text-slate-900! tracking-tight mb-2!">
-                Tambah Pelanggan Baru
-            </h1>
-            <p class="text-sm font-medium text-slate-500! leading-relaxed">
-                Silakan isi data pelanggan di bawah ini dengan lengkap.
-            </p>
+  <div class="pelanggan-create-view w-full! pb-20!">
+    <div class="mb-8!">
+      <h1 class="text-3xl font-extrabold text-slate-900! tracking-tight mb-2!">
+        Tambah Pelanggan Baru
+      </h1>
+      <p class="text-sm font-medium text-slate-500! leading-relaxed">
+        Silakan isi data pelanggan di bawah ini dengan lengkap.
+      </p>
+    </div>
+
+    <ContentCard
+      variant="elevated"
+      padding="none"
+      hoverable
+      class="border-0! shadow-lg! hover:shadow-2xl! transition-all! duration-300! overflow-visible! bg-white! rounded-3xl!"
+    >
+      <div class="p-6! sm:p-10!">
+        <div class="flex items-center gap-3! mb-8!">
+          <div class="w-1.5! h-6! bg-blue-600! rounded-full!"></div>
+          <h2 class="text-xl! font-bold! text-slate-800!">Informasi Pribadi</h2>
         </div>
 
-        <ContentCard variant="elevated" padding="none" hoverable
-            class="border-0! shadow-lg! hover:shadow-2xl! transition-all! duration-300! overflow-visible! bg-white! rounded-3xl!">
-            <div class="p-6! sm:p-10!">
-                <div class="flex items-center gap-3! mb-8!">
-                    <div class="w-1.5! h-6! bg-blue-600! rounded-full!"></div>
-                    <h2 class="text-xl! font-bold! text-slate-800!">Informasi Pribadi</h2>
-                </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8! mb-8!">
+          <BaseInput
+            v-model="form.nik"
+            label="NIK"
+            placeholder="Masukkan 16 digit NIK"
+            icon="id-card"
+            maxlength="16"
+          />
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-8! mb-8!">
-                    <BaseInput v-model="form.nik" label="NIK" placeholder="Masukkan 16 digit NIK" icon="id-card"
-                        maxlength="16" />
+          <BaseInput
+            v-model="form.nama_lengkap"
+            label="Nama Lengkap"
+            placeholder="Nama Lengkap"
+            icon="user"
+          />
+        </div>
 
-                    <BaseInput v-model="form.nama_lengkap" label="Nama Lengkap" placeholder="Nama Lengkap"
-                        icon="user" />
-                </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8! mb-8!">
+          <BaseInput
+            v-model="form.tempat_lahir"
+            label="Tempat Lahir"
+            placeholder="Tempat Lahir"
+            icon="map-marker-alt"
+          />
 
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-8! mb-8!">
-                    <BaseInput v-model="form.tempat_lahir" label="Tempat Lahir" placeholder="Tempat Lahir"
-                        icon="map-marker-alt" />
+          <AppDatePicker
+            v-model="form.tgl_lahir"
+            label="Tgl Lahir"
+            placeholder="Pilih Tanggal"
+            @date-select="(date) => (form.tgl_lahir = date)"
+          />
 
-                    <AppDatePicker v-model="form.tgl_lahir" label="Tgl Lahir" placeholder="Pilih Tanggal"
-                        @date-select="(date) => (form.tgl_lahir = date)" />
+          <BaseInput
+            v-model="form.no_telp"
+            label="No. Telepon"
+            placeholder="No. Telepon"
+            icon="phone"
+          />
+        </div>
 
-
-                    <BaseInput v-model="form.no_telp" label="No. Telepon" placeholder="No. Telepon" icon="phone" />
-                </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-8! mb-8!">
-                    <SelectSearch v-model="form.jenis_kelamin" :options="[
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8! mb-8!">
+          <SelectSearch
+            v-model="form.jenis_kelamin"
+            :options="[
               { id: 'Laki-laki', text: 'Laki-laki' },
               { id: 'Perempuan', text: 'Perempuan' },
-            ]" label="Jenis Kelamin" placeholder="Pilih Jenis Kelamin" icon="users" />
-                    <BaseInput v-model="form.email" label="Ussername" placeholder="Masukkan Email" icon="envelope" />
+            ]"
+            label="Jenis Kelamin"
+            placeholder="Pilih Jenis Kelamin"
+            icon="users"
+          />
+          <BaseInput
+            v-model="form.email"
+            label="Ussername"
+            placeholder="Masukkan Email"
+            icon="envelope"
+          />
 
-                    <BaseInput v-model="form.password" type="password" label="Password" placeholder="Masukkan Password"
-                        icon="lock" />
-                </div>
-
-                <div class="grid grid-cols-1 gap-8! mb-4!">
-                    <BaseInput v-model="form.alamat_lengkap" type="textarea" label="Alamat Lengkap"
-                        placeholder="Masukkan alamat lengkap domisili" :rows="2" />
-                </div>
-            </div>
-        </ContentCard>
-
-        <div class="mt-10! flex items-center justify-between! gap-4!">
-            <div class="text-sm! font-medium! text-slate-400! italic!">
-                <font-awesome-icon icon="info-circle" class="mr-2!" />
-                Catatan : ( Jika Ada data atau inputan yang kosong bisa di isi ( 0 ) atau ( - ) )
-            </div>
-            <BaseButton variant="secondary" size="md" @click="handleSave" :loading="isLoading"
-                class="px-12! py-4! font-bold! rounded-2xl! shadow-xl! shadow-slate-200! transform! transition-all! hover:translate-y-[-2px]! active:scale-95!"
-                icon="save">
-                Simpan Pelanggan Baru
-            </BaseButton>
+          <BaseInput
+            v-model="form.password"
+            type="password"
+            label="Password"
+            placeholder="Masukkan Password"
+            icon="lock"
+          />
         </div>
+
+        <div class="grid grid-cols-1 gap-8! mb-4!">
+          <BaseInput
+            v-model="form.alamat_lengkap"
+            type="textarea"
+            label="Alamat Lengkap"
+            placeholder="Masukkan alamat lengkap domisili"
+            :rows="2"
+          />
+        </div>
+      </div>
+    </ContentCard>
+
+    <div class="mt-10! flex items-center justify-between! gap-4!">
+      <div class="text-sm! font-medium! text-slate-400! italic!">
+        <font-awesome-icon icon="info-circle" class="mr-2!" />
+        Catatan : ( Jika Ada data atau inputan yang kosong bisa di isi ( 0 ) atau ( - ) )
+      </div>
+      <BaseButton
+        variant="secondary"
+        size="md"
+        @click="handleSave"
+        :loading="isLoading"
+        class="px-12! py-4! font-bold! rounded-2xl! shadow-xl! shadow-slate-200! transform! transition-all! hover:translate-y-[-2px]! active:scale-95!"
+        icon="save"
+      >
+        Simpan Pelanggan Baru
+      </BaseButton>
     </div>
+  </div>
 </template>
 
 <script setup>
-    import {
-        ref
-    } from 'vue'
-    import {
-        useRouter
-    } from 'vue-router'
-    import ContentCard from '@/presentations/components/ui/ContentCard.vue'
-    import BaseInput from '@/presentations/components/ui/BaseInput.vue'
-    import BaseButton from '@/presentations/components/ui/BaseButton.vue'
-    import AppDatePicker from '@/presentations/components/AppDatePicker.vue'
-    import SelectSearch from '@/presentations/components/SelectSearch.vue'
-    import Swal from 'sweetalert2'
-    import {
-        useUiStore
-    } from '@/stores/uiStore'
-    import customerService from '@/services/customer.service'
+import { ref } from 'vue'
+import { useRouter } from 'vue-router'
+import ContentCard from '@/presentations/components/ui/ContentCard.vue'
+import BaseInput from '@/presentations/components/ui/BaseInput.vue'
+import BaseButton from '@/presentations/components/ui/BaseButton.vue'
+import AppDatePicker from '@/presentations/components/AppDatePicker.vue'
+import SelectSearch from '@/presentations/components/SelectSearch.vue'
+import Swal from 'sweetalert2'
+import { useUiStore } from '@/stores/uiStore'
+import customerService from '@/services/customer.service'
 
-    const router = useRouter()
-    const uiStore = useUiStore()
-    const isLoading = ref(false)
+const router = useRouter()
+const uiStore = useUiStore()
+const isLoading = ref(false)
 
-    const form = ref({
-        nik: '',
-        nama_lengkap: '',
-        email: '',
-        password: '',
+const form = ref({
+  nik: '',
+  nama_lengkap: '',
+  email: '',
+  password: '',
 
-        tempat_lahir: '',
-        tgl_lahir: new Date(),
+  tempat_lahir: '',
+  tgl_lahir: new Date(),
 
-        jenis_kelamin: '',
-        no_telp: '',
-        alamat_lengkap: '',
+  jenis_kelamin: '',
+  no_telp: '',
+  alamat_lengkap: '',
+})
+
+const handleSave = async () => {
+  const finalData = {
+    ...form.value,
+  }
+
+  // Validasi wajib
+  if (!finalData.nik || !finalData.nama_lengkap || !finalData.email || !finalData.password) {
+    Swal.fire({
+      title: 'Peringatan!',
+      text: 'NIK, Nama Lengkap, Email, dan Password wajib diisi.',
+      icon: 'warning',
     })
+    return
+  }
 
-    const handleSave = async () => {
-        const finalData = {
-            ...form.value
-        }
-
-        // Validasi wajib
-        if (
-            !finalData.nik ||
-            !finalData.nama_lengkap ||
-            !finalData.email ||
-            !finalData.password
-        ) {
-            Swal.fire({
-                title: 'Peringatan!',
-                text: 'NIK, Nama Lengkap, Email, dan Password wajib diisi.',
-                icon: 'warning',
-            })
-            return
-        }
-
-        // Isi default jika kosong
-        Object.keys(finalData).forEach((key) => {
-            if (
-                finalData[key] === null ||
-                finalData[key] === undefined ||
-                finalData[key].toString().trim() === ''
-            ) {
-                if (['nik', 'no_telp'].includes(key)) {
-                    finalData[key] = '0'
-                } else {
-                    finalData[key] = '-'
-                }
-            }
-        })
-
-        try {
-            isLoading.value = true
-
-            console.log('DATA DIKIRIM : ', finalData)
-
-            await customerService.createCustomer(finalData)
-
-            uiStore.success('Data pelanggan berhasil disimpan')
-
-            router.push('/data-pelanggan')
-
-        } catch (error) {
-
-            console.error('Error saving customer:', error)
-
-            console.log(error.response?.data)
-
-            Swal.fire({
-                title: 'Gagal!',
-                text: error.response ?.data ?.message ||
-                    'Terjadi kesalahan saat menyimpan data',
-                icon: 'error',
-            })
-
-        } finally {
-            isLoading.value = false
-        }
+  // Isi default jika kosong
+  Object.keys(finalData).forEach((key) => {
+    if (
+      finalData[key] === null ||
+      finalData[key] === undefined ||
+      finalData[key].toString().trim() === ''
+    ) {
+      if (['nik', 'no_telp'].includes(key)) {
+        finalData[key] = '0'
+      } else {
+        finalData[key] = '-'
+      }
     }
+  })
+
+  try {
+    isLoading.value = true
+
+    console.log('DATA DIKIRIM : ', finalData)
+
+    await customerService.createCustomer(finalData)
+
+    uiStore.success('Data pelanggan berhasil disimpan')
+
+    router.push('/data-pelanggan')
+  } catch (error) {
+    console.error('Error saving customer:', error)
+
+    console.log(error.response?.data)
+
+    Swal.fire({
+      title: 'Gagal!',
+      text: error.response?.data?.message || 'Terjadi kesalahan saat menyimpan data',
+      icon: 'error',
+    })
+  } finally {
+    isLoading.value = false
+  }
+}
 </script>
 
 <style scoped>
-    .pelanggan-create-view {
-        animation: fadeIn 0.5s ease-out;
-    }
+.pelanggan-create-view {
+  animation: fadeIn 0.5s ease-out;
+}
 
-    @keyframes fadeIn {
-        from {
-            opacity: 0;
-            transform: translateY(10px);
-        }
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
 
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
 </style>

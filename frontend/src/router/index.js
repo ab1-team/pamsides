@@ -1,10 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import LoginView from '@/presentations/views/auth/LoginView.vue'
 import MainView from '@/presentations/layouts/dashboard/MainView.vue'
-import AdminDashbord from '@/presentations/views/dashboard/admin/DashboardMain.vue'
-import SurveyorDashboard from '@/presentations/views/dashboard/surveyor/DashboardMain.vue'
-import TeknisiDashboard from '@/presentations/views/dashboard/teknisi/DashboardMain.vue'
-import PelangganDashboard from '@/presentations/views/dashboard/pelanggan/DashboardMain.vue'
 import DashboardHome from '@/presentations/views/dashboard/DashboardHome.vue'
 
 import { useUiStore } from '@/stores/uiStore'
@@ -20,8 +16,7 @@ import datainstalasiView from '@/presentations/views/dashboard/admin/instalasi/d
 import registerInstalasi from '@/presentations/views/dashboard/admin/instalasi/registrasi.vue'
 import statusInstalasi from '@/presentations/views/dashboard/admin/instalasi/InstalasiStatus.vue'
 import TeknisiPemakaianAir from '@/presentations/views/dashboard/teknisi/PemakaianAir.vue'
-import pemakaianair from '@/presentations/views/dashboard/admin/instalasi/pemakaianAir.vue'
-
+import pemakaianair from '@/presentations/views/dashboard/admin/tagihan/pemakaianAir.vue'
 import DetailPermohonan from '@/presentations/views/dashboard/admin/instalasi/partials/permohonan.vue'
 import DetailPasangBaru from '@/presentations/views/dashboard/admin/instalasi/partials/pasangBaru.vue'
 import DetailAktif from '@/presentations/views/dashboard/admin/instalasi/partials/aktif.vue'
@@ -36,7 +31,7 @@ import tutupBuku from '@/presentations/views/dashboard/admin/transaksi/tutupBuku
 import komisiSPS from '@/presentations/views/dashboard/admin/transaksi/komisiSPS.vue'
 import laporan from '@/presentations/views/dashboard/admin/pelaporan/PelaporanIndex.vue'
 import profil from '@/presentations/views/dashboard/admin/profil/ProfilIndex.vue'
-import detailPemakaianAir from '@/presentations/views/dashboard/admin/instalasi/partials/detailPemakaianAir.vue'
+import detailPemakaianAir from '@/presentations/views/dashboard/admin/tagihan/partials/detailPemakaianAir.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -157,6 +152,12 @@ const router = createRouter({
           component: detailPemakaianAir,
         },
         {
+          path: '/instalasi/daftar-tagihan',
+          name: 'Daftar Tagihan',
+          component: () =>
+            import('@/presentations/views/dashboard/admin/tagihan/daftarTagihan.vue'),
+        },
+        {
           path: '/survey/create',
           name: 'Create Survey',
           component: () => import('@/presentations/views/dashboard/surveyor/createSurvey.vue'),
@@ -174,7 +175,7 @@ const router = createRouter({
         {
           path: '/pelanggan/riwayat-tagihan',
           name: 'Riwayat Tagihan',
-          component: () => import('@/presentations/views/dashboard/pelanggan/RiwayatTagihan.vue'),
+          component: () => import('@/presentations/views/dashboard/pelanggan/riwayatTagihan.vue'),
         },
         {
           path: '/pelanggan/lapor-gangguan',
@@ -249,7 +250,7 @@ router.beforeEach((to, from, next) => {
     localStorage.removeItem('user_data')
     localStorage.removeItem('user_role')
     localStorage.removeItem('auth_expires_at')
-    
+
     const uiStore = useUiStore()
     uiStore.error('Sesi Anda telah berakhir. Silakan login kembali.')
     next({ name: 'login' })

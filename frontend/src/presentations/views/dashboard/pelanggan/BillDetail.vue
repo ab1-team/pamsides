@@ -3,8 +3,12 @@
     <div class="max-w-6xl! mx-auto! p-4! lg:p-10!">
       <div v-if="loading" class="flex! items-center! justify-center! min-h-[60vh]!">
         <div class="flex! flex-col! items-center! gap-4!">
-          <div class="w-12! h-12! border-4! border-indigo-600! border-t-transparent! rounded-full! animate-spin!"></div>
-          <p class="text-slate-400! font-black! text-xs! uppercase! tracking-widest!">Memuat Detail Tagihan...</p>
+          <div
+            class="w-12! h-12! border-4! border-indigo-600! border-t-transparent! rounded-full! animate-spin!"
+          ></div>
+          <p class="text-slate-400! font-black! text-xs! uppercase! tracking-widest!">
+            Memuat Detail Tagihan...
+          </p>
         </div>
       </div>
 
@@ -91,7 +95,8 @@
                       Rp. {{ formatNumber(bill.total_amount) }}
                     </h1>
                     <p class="text-[10px]! lg:text-sm! font-medium! opacity-60! mt-1!">
-                      Tagihan {{ getMonthName(bill.billing_period_month) }} {{ bill.billing_period_year }}
+                      Tagihan {{ getMonthName(bill.billing_period_month) }}
+                      {{ bill.billing_period_year }}
                     </p>
                   </div>
                 </div>
@@ -108,7 +113,11 @@
                       >
                         Invoice Number
                       </p>
-                      <p class="text-xs! lg:text-sm! font-black!">#INV/{{ bill.billing_period_year }}/{{ bill.billing_period_month }}/{{ bill.id }}</p>
+                      <p class="text-xs! lg:text-sm! font-black!">
+                        #INV/{{ bill.billing_period_year }}/{{ bill.billing_period_month }}/{{
+                          bill.id
+                        }}
+                      </p>
                     </div>
                     <div
                       class="w-12! h-12! lg:w-16! lg:h-16! bg-white! p-1! rounded-xl! shadow-lg! flex! items-center! justify-center! flex-shrink-0!"
@@ -136,7 +145,7 @@
                         >
                           Customer
                         </p>
-                        <p class="text-xs! lg:text-sm! font-black!"> {{ customer.name }} </p>
+                        <p class="text-xs! lg:text-sm! font-black!">{{ customer.name }}</p>
                       </div>
                     </div>
                     <p class="text-[9px]! lg:text-[11px]! text-left! opacity-60! leading-relaxed!">
@@ -179,10 +188,13 @@
                       >
                         <font-awesome-icon icon="history" class="!m-auto!" />
                       </div>
-                      <span class="text-[10px]! lg:text-sm! font-bold! text-slate-500!">Meteran Lalu</span>
+                      <span class="text-[10px]! lg:text-sm! font-bold! text-slate-500!"
+                        >Meteran Lalu</span
+                      >
                     </div>
                     <span class="text-sm! lg:text-lg! font-black! text-slate-700!"
-                      >{{ bill.previous_meter_reading || 0 }} <span class="text-[9px]! opacity-30!">m³</span></span
+                      >{{ bill.previous_meter_reading || 0 }}
+                      <span class="text-[9px]! opacity-30!">m³</span></span
                     >
                   </div>
                   <div
@@ -194,10 +206,13 @@
                       >
                         <font-awesome-icon icon="camera" class="!m-auto!" />
                       </div>
-                      <span class="text-[10px]! lg:text-sm! font-bold! text-slate-500!">Meteran Kini</span>
+                      <span class="text-[10px]! lg:text-sm! font-bold! text-slate-500!"
+                        >Meteran Kini</span
+                      >
                     </div>
                     <span class="text-sm! lg:text-lg! font-black! text-slate-900!"
-                      >{{ bill.current_meter_reading || 0 }} <span class="text-[9px]! opacity-30!">m³</span></span
+                      >{{ bill.current_meter_reading || 0 }}
+                      <span class="text-[9px]! opacity-30!">m³</span></span
                     >
                   </div>
                 </div>
@@ -254,7 +269,9 @@
                   >
                     Total Bayar
                   </p>
-                  <div class="text-2xl! lg:text-4xl! font-black! tracking-tighter!">Rp. {{ formatNumber(bill.total_amount) }}</div>
+                  <div class="text-2xl! lg:text-4xl! font-black! tracking-tighter!">
+                    Rp. {{ formatNumber(bill.total_amount) }}
+                  </div>
                 </div>
                 <div v-if="bill.status === 'unpaid'" class="relative! z-10! flex-shrink-0!">
                   <BaseButton
@@ -275,9 +292,12 @@
                     <font-awesome-icon icon="chevron-right" class="ml-3! text-xs!" />
                   </BaseButton>
                 </div>
-                <div v-else class="relative! z-10! text-emerald-400! font-black! text-xs! lg:text-sm! uppercase! tracking-widest! flex! items-center! gap-2!">
-                   <font-awesome-icon icon="check-circle" />
-                   SUDAH LUNAS
+                <div
+                  v-else
+                  class="relative! z-10! text-emerald-400! font-black! text-xs! lg:text-sm! uppercase! tracking-widest! flex! items-center! gap-2!"
+                >
+                  <font-awesome-icon icon="check-circle" />
+                  SUDAH LUNAS
                 </div>
               </div>
             </div>
@@ -288,9 +308,9 @@
           ></div>
         </div>
       </template>
-      
+
       <div v-else class="flex! items-center! justify-center! min-h-[60vh]!">
-         <p class="text-slate-400! font-black!">Tagihan tidak ditemukan.</p>
+        <p class="text-slate-400! font-black!">Tagihan tidak ditemukan.</p>
       </div>
     </div>
   </div>
@@ -321,7 +341,7 @@ const showMaintenanceAlert = () => {
     customClass: {
       popup: 'rounded-[2rem]!',
       confirmButton: 'rounded-full! font-black! px-8!',
-    }
+    },
   })
 }
 
@@ -329,13 +349,14 @@ const shareInvoice = async () => {
   const period = `${getMonthName(bill.value.billing_period_month)} ${bill.value.billing_period_year}`
   const amount = `Rp. ${formatNumber(bill.value.total_amount)}`
   const customerName = customer.value.name
-  
-  const textMessage = `*PAMSIDES DIGITAL - INVOICE OFFICIAL*\n\n` +
-                      `Tagihan an. *${customerName}*\n` +
-                      `Periode: ${period}\n` +
-                      `Total: *${amount}*\n` +
-                      `Status: *${bill.value.status === 'unpaid' ? 'BELUM LUNAS' : 'SUDAH LUNAS'}*\n\n` +
-                      `Silakan klik link di bawah ini untuk melihat detail tagihan lengkap:`
+
+  const textMessage =
+    `*PAMSIDES DIGITAL - INVOICE OFFICIAL*\n\n` +
+    `Tagihan an. *${customerName}*\n` +
+    `Periode: ${period}\n` +
+    `Total: *${amount}*\n` +
+    `Status: *${bill.value.status === 'unpaid' ? 'BELUM LUNAS' : 'SUDAH LUNAS'}*\n\n` +
+    `Silakan klik link di bawah ini untuk melihat detail tagihan lengkap:`
 
   const shareData = {
     title: `Tagihan Pamsides - ${customerName}`,
@@ -357,7 +378,7 @@ const shareInvoice = async () => {
         showConfirmButton: false,
         customClass: {
           popup: 'rounded-[2rem]!',
-        }
+        },
       })
     }
   } catch (err) {
@@ -370,7 +391,20 @@ const checkMobile = () => {
 }
 
 const getMonthName = (monthNum) => {
-  const months = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember']
+  const months = [
+    'Januari',
+    'Februari',
+    'Maret',
+    'April',
+    'Mei',
+    'Juni',
+    'Juli',
+    'Agustus',
+    'September',
+    'Oktober',
+    'November',
+    'Desember',
+  ]
   return months[monthNum - 1] || '-'
 }
 
@@ -381,23 +415,23 @@ const formatNumber = (num) => {
 const breakdownItems = computed(() => {
   if (!bill.value || !customer.value) return []
   return [
-    { 
-      name: 'Biaya Air', 
-      sub: `${bill.value.usage_m3} m³ x Pemakaian`, 
-      price: bill.value.usage_charge || 0, 
-      icon: 'tint' 
+    {
+      name: 'Biaya Air',
+      sub: `${bill.value.usage_m3} m³ x Pemakaian`,
+      price: bill.value.usage_charge || 0,
+      icon: 'tint',
     },
-    { 
-      name: 'Biaya Beban', 
-      sub: `Abodemen Paket (${customer.value.package_name})`, 
-      price: customer.value.monthly_abodemen || 0, 
-      icon: 'wrench' 
+    {
+      name: 'Biaya Beban',
+      sub: `Abodemen Paket (${customer.value.package_name})`,
+      price: customer.value.monthly_abodemen || 0,
+      icon: 'wrench',
     },
-    { 
-      name: 'Biaya Admin', 
-      sub: 'Aplikasi Pamsides', 
-      price: 0, 
-      icon: 'receipt' 
+    {
+      name: 'Biaya Admin',
+      sub: 'Aplikasi Pamsides',
+      price: 0,
+      icon: 'receipt',
     },
   ]
 })
@@ -449,4 +483,3 @@ const printInvoice = () => {
   }
 }
 </style>
-

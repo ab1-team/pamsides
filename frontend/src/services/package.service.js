@@ -56,7 +56,10 @@ export const packageService = {
    * Tambah blok tarif baru
    */
   async createTariffBlock(packageId, blockData) {
-    const response = await api.post(`/installation-packages/${packageId}/water-tariff-blocks`, blockData)
+    const response = await api.post(
+      `/installation-packages/${packageId}/water-tariff-blocks`,
+      blockData,
+    )
     return response.data
   },
 
@@ -64,7 +67,10 @@ export const packageService = {
    * Update blok tarif
    */
   async updateTariffBlock(packageId, blockId, blockData) {
-    const response = await api.put(`/installation-packages/${packageId}/water-tariff-blocks/${blockId}`, blockData)
+    const response = await api.put(
+      `/installation-packages/${packageId}/water-tariff-blocks/${blockId}`,
+      blockData,
+    )
     return response.data
   },
 
@@ -72,7 +78,9 @@ export const packageService = {
    * Hapus blok tarif
    */
   async deleteTariffBlock(packageId, blockId) {
-    const response = await api.delete(`/installation-packages/${packageId}/water-tariff-blocks/${blockId}`)
+    const response = await api.delete(
+      `/installation-packages/${packageId}/water-tariff-blocks/${blockId}`,
+    )
     return response.data
   },
 }

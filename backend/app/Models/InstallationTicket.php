@@ -19,9 +19,9 @@ class InstallationTicket extends Model
         'lat',
         'lng',
         'status',
-        'created_by'
+        'created_by',
     ];
-    
+
     public function user()
     {
         return $this->belongsTo(User::class);
@@ -46,6 +46,7 @@ class InstallationTicket extends Model
     {
         return $this->hasMany(Customer::class, 'ticket_id');
     }
+
     public function village()
     {
         return $this->belongsTo(Village::class);

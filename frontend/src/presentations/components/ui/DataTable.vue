@@ -93,7 +93,11 @@
               @click="props.rowClickable ? emit('row-click', row) : null"
             >
               <!-- Expand Toggle Cell -->
-              <td v-if="expandable" class="px-2! sm:px-4! py-2! w-8! sm:w-10! text-center!" @click.stop>
+              <td
+                v-if="expandable"
+                class="px-2! sm:px-4! py-2! w-8! sm:w-10! text-center!"
+                @click.stop
+              >
                 <button
                   @click="toggleExpand(row)"
                   class="w-7! h-7! sm:w-9! sm:h-9! flex! items-center! justify-center! rounded-full! transition-all! duration-300!"

@@ -141,7 +141,7 @@
                     </td>
                     <td class="py-3! px-4! text-center! text-slate-600!">{{ item.pemakaian }}</td>
                     <td class="py-3! px-4! text-right font-mono font-semibold text-slate-900!">
-                      {{ item.tagihan.toLocaleString('id-ID', { minimumFractionDigits: 2 }) }}
+                      Rp. {{ Number(item.tagihan || 0).toLocaleString('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}
                     </td>
                     <td class="py-3! px-4! text-center!">
                       <span

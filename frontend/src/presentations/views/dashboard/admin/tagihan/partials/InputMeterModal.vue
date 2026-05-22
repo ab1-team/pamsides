@@ -1,10 +1,19 @@
 <template>
   <Teleport to="body">
-    <div v-if="show" class="fixed! inset-0! z-[100]! flex! items-end! md:items-center! justify-center! bg-slate-900/80! backdrop-blur-sm! p-0! md:p-4! transition-all!" @click="closeModal">
-      <div class="bg-white! w-full! h-full! md:h-auto! md:max-w-2xl! rounded-none! md:rounded-[2.5rem]! shadow-2xl! relative! flex! flex-col! overflow-hidden! animate-in! slide-in-from-bottom-full! md:fade-in! md:zoom-in-95! duration-300!" @click.stop>
+    <div
+      v-if="show"
+      class="fixed! inset-0! z-[100]! flex! items-end! md:items-center! justify-center! bg-slate-900/80! backdrop-blur-sm! p-0! md:p-4! transition-all!"
+      @click="closeModal"
+    >
+      <div
+        class="bg-white! w-full! h-full! md:h-auto! md:max-w-2xl! rounded-none! md:rounded-[2.5rem]! shadow-2xl! relative! flex! flex-col! overflow-hidden! animate-in! slide-in-from-bottom-full! md:fade-in! md:zoom-in-95! duration-300!"
+        @click.stop
+      >
         <div class="h-2! bg-gradient-to-r! from-cyan-500! to-blue-600! w-full! shrink-0!"></div>
 
-        <div class="px-5! md:px-6! py-4! md:py-5! border-b! border-slate-50! flex! items-center! justify-between! shrink-0!">
+        <div
+          class="px-5! md:px-6! py-4! md:py-5! border-b! border-slate-50! flex! items-center! justify-between! shrink-0!"
+        >
           <div class="flex! items-center! gap-3!">
             <div
               class="w-10! h-10! rounded-xl! bg-cyan-50! flex! items-center! justify-center! text-cyan-600!"
@@ -18,7 +27,10 @@
               </p>
             </div>
           </div>
-          <button @click="closeModal" class="w-10! h-10! rounded-full! bg-slate-50! text-slate-400! flex! items-center! justify-center! hover:bg-red-50! hover:text-red-500! transition-all!">
+          <button
+            @click="closeModal"
+            class="w-10! h-10! rounded-full! bg-slate-50! text-slate-400! flex! items-center! justify-center! hover:bg-red-50! hover:text-red-500! transition-all!"
+          >
             <font-awesome-icon icon="times" />
           </button>
         </div>
@@ -26,30 +38,51 @@
         <div class="p-4! md:p-5! overflow-y-auto! flex-1! md:max-h-[75vh]!">
           <div class="bg-white/50! rounded-3xl! mb-6!">
             <div class="grid! grid-cols-1! md:grid-cols-3! gap-3!">
-              <div class="flex! items-center! gap-3! p-3! rounded-2xl! bg-slate-50! border! border-slate-100!">
-                <div class="w-8! h-8! rounded-lg! bg-slate-100! flex! items-center! justify-center! text-slate-400!">
+              <div
+                class="flex! items-center! gap-3! p-3! rounded-2xl! bg-slate-50! border! border-slate-100!"
+              >
+                <div
+                  class="w-8! h-8! rounded-lg! bg-slate-100! flex! items-center! justify-center! text-slate-400!"
+                >
                   <font-awesome-icon icon="id-card" />
                 </div>
                 <div>
-                  <label class="block! text-[9px]! font-black! text-slate-400! uppercase! tracking-widest! leading-none! mb-1!">No. Induk</label>
+                  <label
+                    class="block! text-[9px]! font-black! text-slate-400! uppercase! tracking-widest! leading-none! mb-1!"
+                    >No. Induk</label
+                  >
                   <span class="text-xs! font-bold! text-slate-600!">{{ customer.noInduk }}</span>
                 </div>
               </div>
-              <div class="flex! items-center! gap-3! p-3! rounded-2xl! bg-white! border! border-blue-100! shadow-sm! md:col-span-1!">
-                <div class="w-8! h-8! rounded-lg! bg-blue-50! flex! items-center! justify-center! text-blue-500!">
+              <div
+                class="flex! items-center! gap-3! p-3! rounded-2xl! bg-white! border! border-blue-100! shadow-sm! md:col-span-1!"
+              >
+                <div
+                  class="w-8! h-8! rounded-lg! bg-blue-50! flex! items-center! justify-center! text-blue-500!"
+                >
                   <font-awesome-icon icon="user" />
                 </div>
                 <div>
-                  <label class="block! text-[9px]! font-black! text-slate-400! uppercase! tracking-widest! leading-none! mb-1!">Nama Pelanggan</label>
+                  <label
+                    class="block! text-[9px]! font-black! text-slate-400! uppercase! tracking-widest! leading-none! mb-1!"
+                    >Nama Pelanggan</label
+                  >
                   <span class="text-xs! font-black! text-slate-900!">{{ customer.nama }}</span>
                 </div>
               </div>
-              <div class="flex! items-center! gap-3! p-3! rounded-2xl! bg-slate-50! border! border-slate-100!">
-                <div class="w-8! h-8! rounded-lg! bg-slate-100! flex! items-center! justify-center! text-slate-400!">
+              <div
+                class="flex! items-center! gap-3! p-3! rounded-2xl! bg-slate-50! border! border-slate-100!"
+              >
+                <div
+                  class="w-8! h-8! rounded-lg! bg-slate-100! flex! items-center! justify-center! text-slate-400!"
+                >
                   <font-awesome-icon icon="map-marker-alt" />
                 </div>
                 <div>
-                  <label class="block! text-[9px]! font-black! text-slate-400! uppercase! tracking-widest! leading-none! mb-1!">Dusun / Lokasi</label>
+                  <label
+                    class="block! text-[9px]! font-black! text-slate-400! uppercase! tracking-widest! leading-none! mb-1!"
+                    >Dusun / Lokasi</label
+                  >
                   <span class="text-xs! font-bold! text-slate-600!">{{ customer.dusun }}</span>
                 </div>
               </div>
@@ -61,22 +94,38 @@
               <div>
                 <div class="flex! items-center! gap-2! mb-2!">
                   <div class="w-1.5! h-4! bg-slate-200! rounded-full!"></div>
-                  <label class="block! text-[10px]! font-black! text-slate-400! uppercase! tracking-widest! mb-0!">Meter Awal (Bulan Lalu)</label>
+                  <label
+                    class="block! text-[10px]! font-black! text-slate-400! uppercase! tracking-widest! mb-0!"
+                    >Meter Awal (Bulan Lalu)</label
+                  >
                 </div>
-                <div class="flex! items-center! bg-slate-100/50! border-2! border-transparent! rounded-2xl! px-4! py-3! opacity-60! cursor-not-allowed!">
-                  <input type="text" inputmode="numeric" :value="customer.meterAwal" disabled class="w-full! bg-transparent! border-none! outline-none! text-sm! font-bold! text-slate-800! placeholder-slate-200! text-slate-400!" />
+                <div
+                  class="flex! items-center! bg-slate-100/50! border-2! border-transparent! rounded-2xl! px-4! py-3! opacity-60! cursor-not-allowed!"
+                >
+                  <input
+                    type="text"
+                    inputmode="numeric"
+                    :value="customer.meterAwal"
+                    disabled
+                    class="w-full! bg-transparent! border-none! outline-none! text-sm! font-bold! text-slate-800! placeholder-slate-200! text-slate-400!"
+                  />
                   <div class="flex! items-center! gap-1! bg-slate-200/50! px-2! py-1! rounded-lg!">
                     <span class="text-[9px]! font-black! text-slate-500!">M³</span>
                   </div>
                 </div>
               </div>
-              
+
               <div>
                 <div class="flex! items-center! gap-2! mb-2!">
                   <div class="w-1.5! h-4! bg-cyan-500! rounded-full!"></div>
-                  <label class="block! text-[10px]! font-black! text-slate-700! uppercase! tracking-widest! mb-0!">Meter Akhir (Bulan Ini)</label>
+                  <label
+                    class="block! text-[10px]! font-black! text-slate-700! uppercase! tracking-widest! mb-0!"
+                    >Meter Akhir (Bulan Ini)</label
+                  >
                 </div>
-                <div class="flex! items-center! bg-white! border-2! border-slate-200! rounded-2xl! px-4! py-3! shadow-sm! focus-within:border-cyan-500! focus-within:ring-4! focus-within:ring-cyan-500/10! transition-all! group!">
+                <div
+                  class="flex! items-center! bg-white! border-2! border-slate-200! rounded-2xl! px-4! py-3! shadow-sm! focus-within:border-cyan-500! focus-within:ring-4! focus-within:ring-cyan-500/10! transition-all! group!"
+                >
                   <input
                     type="text"
                     inputmode="numeric"
@@ -94,21 +143,30 @@
                   * Masukkan angka meteran yang tertera pada alat saat ini
                 </p>
               </div>
-
-
             </div>
 
             <div class="md:col-span-6!">
               <div class="flex! items-center! gap-3! mb-4!">
                 <div class="w-1.5! h-4! bg-emerald-500! rounded-full!"></div>
-                <label class="mb-0! text-[10px]! font-black! text-slate-400! uppercase! tracking-widest!">Bukti Foto Meteran</label>
+                <label
+                  class="mb-0! text-[10px]! font-black! text-slate-400! uppercase! tracking-widest!"
+                  >Bukti Foto Meteran</label
+                >
               </div>
 
               <div>
                 <!-- LIVE CAMERA VIEW -->
-                <div v-if="isCameraOpen" class="relative! overflow-hidden! rounded-2xl! border-4! border-slate-800! bg-black! shadow-2xl! h-64! w-full!">
-                  <video ref="videoRef" class="w-full! h-full! object-cover!" autoplay playsinline></video>
-                  
+                <div
+                  v-if="isCameraOpen"
+                  class="relative! overflow-hidden! rounded-2xl! border-4! border-slate-800! bg-black! shadow-2xl! h-64! w-full!"
+                >
+                  <video
+                    ref="videoRef"
+                    class="w-full! h-full! object-cover!"
+                    autoplay
+                    playsinline
+                  ></video>
+
                   <!-- Switch Camera Button -->
                   <button
                     @click="toggleCamera"
@@ -130,9 +188,9 @@
 
                   <!-- Snapshot Button -->
                   <div class="absolute! bottom-4! inset-x-0! flex! justify-center! z-20!">
-                    <button 
-                      @click="takeSnapshot" 
-                      type="button" 
+                    <button
+                      @click="takeSnapshot"
+                      type="button"
                       class="w-16! h-16! rounded-full! bg-white/30! backdrop-blur-sm! border-4! border-white! flex! items-center! justify-center! hover:scale-105! active:scale-95! transition-all! shadow-lg!"
                     >
                       <div class="w-12! h-12! rounded-full! bg-white!"></div>
@@ -141,14 +199,21 @@
                 </div>
 
                 <!-- IMAGE PREVIEW VIEW -->
-                <div v-else-if="photoPreview" class="relative! group! overflow-hidden! rounded-2xl! border-4! border-white! shadow-2xl!">
+                <div
+                  v-else-if="photoPreview"
+                  class="relative! group! overflow-hidden! rounded-2xl! border-4! border-white! shadow-2xl!"
+                >
                   <img
                     :src="photoPreview"
                     class="w-full! h-64! object-cover! group-hover:scale-105! transition-transform! duration-700!"
                   />
-                  <div class="absolute! inset-0! bg-gradient-to-t! from-slate-900/60! via-transparent! to-transparent!"></div>
-                  
-                  <div class="absolute! top-0! left-0! w-full! h-1! bg-cyan-500/50! shadow-[0_0_15px_rgba(6,182,212,0.8)]! animate-[scan_2s_infinite]!"></div>
+                  <div
+                    class="absolute! inset-0! bg-gradient-to-t! from-slate-900/60! via-transparent! to-transparent!"
+                  ></div>
+
+                  <div
+                    class="absolute! top-0! left-0! w-full! h-1! bg-cyan-500/50! shadow-[0_0_15px_rgba(6,182,212,0.8)]! animate-[scan_2s_infinite]!"
+                  ></div>
 
                   <button
                     @click="removePhoto"
@@ -157,14 +222,20 @@
                   >
                     <font-awesome-icon icon="times" />
                   </button>
-                  
+
                   <div class="absolute! bottom-4! left-4! right-4!">
-                    <div class="flex! items-center! gap-2! bg-white/20! backdrop-blur-md! p-2! rounded-xl! border! border-white/20!">
-                      <div class="w-8! h-8! rounded-lg! bg-emerald-500! flex! items-center! justify-center! text-white!">
+                    <div
+                      class="flex! items-center! gap-2! bg-white/20! backdrop-blur-md! p-2! rounded-xl! border! border-white/20!"
+                    >
+                      <div
+                        class="w-8! h-8! rounded-lg! bg-emerald-500! flex! items-center! justify-center! text-white!"
+                      >
                         <font-awesome-icon icon="check" />
                       </div>
                       <div class="flex-1!">
-                        <div class="text-[10px]! font-black! text-white! uppercase!">Foto Terlampir</div>
+                        <div class="text-[10px]! font-black! text-white! uppercase!">
+                          Foto Terlampir
+                        </div>
                         <div class="text-[8px]! font-bold! text-white/70!">SIAP DISIMPAN</div>
                       </div>
                     </div>
@@ -181,10 +252,12 @@
                   >
                     <font-awesome-icon icon="camera" class="text-2xl!" />
                   </div>
-                  <p class="text-[10px]! font-black! text-slate-400! uppercase! tracking-widest! mb-4!">
+                  <p
+                    class="text-[10px]! font-black! text-slate-400! uppercase! tracking-widest! mb-4!"
+                  >
                     Pilih Metode Input
                   </p>
-                  
+
                   <div class="grid! grid-cols-2! gap-2!">
                     <button
                       type="button"
@@ -287,7 +360,7 @@ const openLiveCamera = async () => {
     isCameraOpen.value = true
     await nextTick() // wait for video element to render
     const stream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: facingMode.value }
+      video: { facingMode: facingMode.value },
     })
     videoStream = stream
     if (videoRef.value) {
@@ -306,13 +379,13 @@ const openLiveCamera = async () => {
 
 const toggleCamera = async () => {
   if (videoStream) {
-    videoStream.getTracks().forEach(track => track.stop())
+    videoStream.getTracks().forEach((track) => track.stop())
   }
   facingMode.value = facingMode.value === 'environment' ? 'user' : 'environment'
-  
+
   try {
     const stream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: facingMode.value }
+      video: { facingMode: facingMode.value },
     })
     videoStream = stream
     if (videoRef.value) {
@@ -330,7 +403,7 @@ const toggleCamera = async () => {
 
 const stopLiveCamera = () => {
   if (videoStream) {
-    videoStream.getTracks().forEach(track => track.stop())
+    videoStream.getTracks().forEach((track) => track.stop())
     videoStream = null
   }
   isCameraOpen.value = false
@@ -340,23 +413,27 @@ const takeSnapshot = () => {
   if (videoRef.value && canvasRef.value) {
     const video = videoRef.value
     const canvas = canvasRef.value
-    
+
     // Set canvas size to match video resolution
     canvas.width = video.videoWidth
     canvas.height = video.videoHeight
-    
+
     const ctx = canvas.getContext('2d')
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
-    
+
     // Get image data
     photoPreview.value = canvas.toDataURL('image/jpeg', 0.8)
-    
+
     // Convert to File object for upload
-    canvas.toBlob((blob) => {
-      if(blob) {
-         selectedFile.value = new File([blob], `meter_${Date.now()}.jpg`, { type: 'image/jpeg' })
-      }
-    }, 'image/jpeg', 0.8)
+    canvas.toBlob(
+      (blob) => {
+        if (blob) {
+          selectedFile.value = new File([blob], `meter_${Date.now()}.jpg`, { type: 'image/jpeg' })
+        }
+      },
+      'image/jpeg',
+      0.8,
+    )
 
     // Stop camera feed
     stopLiveCamera()
@@ -435,8 +512,17 @@ onUnmounted(() => {
 
 <style scoped>
 @keyframes scan {
-  0% { top: 0%; opacity: 1; }
-  50% { top: 100%; opacity: 0.5; }
-  100% { top: 0%; opacity: 1; }
+  0% {
+    top: 0%;
+    opacity: 1;
+  }
+  50% {
+    top: 100%;
+    opacity: 0.5;
+  }
+  100% {
+    top: 0%;
+    opacity: 1;
+  }
 }
 </style>

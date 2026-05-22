@@ -51,7 +51,9 @@ export function useInstalasiStatus() {
           }
 
           freshMap[category].push({
-            id: ticket.customer?.[0]?.customer_code || `#INS-${ticket.id.toString().padStart(4, '0')}`,
+            id:
+              ticket.customer?.[0]?.customer_code ||
+              `#INS-${ticket.id.toString().padStart(4, '0')}`,
             name: ticket.applicant_name || '-',
             initials: ticket.applicant_name
               ? ticket.applicant_name

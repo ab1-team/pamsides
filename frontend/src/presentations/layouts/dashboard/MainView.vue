@@ -73,8 +73,6 @@ const handleSearch = (event) => {
   searchQuery.value = event.target.value
 }
 
-import authService from '@/services/auth.service'
-
 const handleLogout = async () => {
   const result = await MySwal.fire({
     title: 'Konfirmasi Logout',
