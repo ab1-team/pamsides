@@ -1,11 +1,13 @@
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { INSTALASI_STATUS_COLORS, INSTALASI_MENU_LIST } from '@/types/instalasiStatus'
+import ticketService from '@/services/ticket.service'
 
 export function useInstalasiStatus() {
   const activeStatus = ref('permohonan')
   const currentPage = ref(1)
   const perPage = ref(10)
   const searchQuery = ref('')
+  const isLoading = ref(false)
 
   const menuList = INSTALASI_MENU_LIST
 
@@ -13,171 +15,69 @@ export function useInstalasiStatus() {
     return menuList.find((m) => m.key === activeStatus.value)?.label || ''
   })
 
-  // Peta data dummy
+  // Peta data dinamis dari database
   const dataMap = ref({
-    permohonan: [
-      {
-        id: '#MA-2023-001',
-        name: 'Adi Saputra',
-        initials: 'AS',
-        color: '#3B82F6',
-        type: 'Residential Type A',
-        address: 'Jl. Merdeka No. 45, Kebon Jeruk, Jakarta',
-        status: 'Permohonan',
-      },
-      {
-        id: '#MA-2023-084',
-        name: 'Rina Maharani',
-        initials: 'RM',
-        color: '#8B5CF6',
-        type: 'Commercial Type B',
-        address: 'Blok C5 No. 12, Citra Indah, Bekasi',
-        status: 'Permohonan',
-      },
-      {
-        id: '#MA-2023-112',
-        name: 'Bambang Wijaya',
-        initials: 'BW',
-        color: '#10B981',
-        type: 'Residential Type A',
-        address: 'Jl. Sudirman Gg. 3, Sukajadi, Bandung',
-        status: 'Permohonan',
-      },
-      {
-        id: '#MA-2023-156',
-        name: 'Siti Khadijah',
-        initials: 'SK',
-        color: '#F59E0B',
-        type: 'Social Institution',
-        address: 'Komp. Permata, Jatiasih, Bekasi',
-        status: 'Permohonan',
-      },
-      {
-        id: '#MA-2023-178',
-        name: 'Dedi Kurniawan',
-        initials: 'DK',
-        color: '#EF4444',
-        type: 'Residential Type B',
-        address: 'Jl. Pahlawan No. 7, Depok',
-        status: 'Permohonan',
-      },
-      {
-        id: '#MA-2023-190',
-        name: 'Lestari Putri',
-        initials: 'LP',
-        color: '#6366F1',
-        type: 'Commercial Type A',
-        address: 'Ruko Niaga Blok B2, Tangerang',
-        status: 'Permohonan',
-      },
-      {
-        id: '#MA-2023-204',
-        name: 'Agus Santoso',
-        initials: 'AG',
-        color: '#14B8A6',
-        type: 'Residential Type A',
-        address: 'Jl. Kebon Raya No. 3, Bogor',
-        status: 'Permohonan',
-      },
-      {
-        id: '#MA-2023-215',
-        name: 'Fitriani',
-        initials: 'FT',
-        color: '#EC4899',
-        type: 'Social Institution',
-        address: 'Jl. Mawar Raya No. 11, Tangerang Selatan',
-        status: 'Permohonan',
-      },
-      {
-        id: '#MA-2023-230',
-        name: 'Hendra Gunawan',
-        initials: 'HG',
-        color: '#F97316',
-        type: 'Commercial Type B',
-        address: 'Jl. Gatot Subroto No. 88, Jakarta',
-        status: 'Permohonan',
-      },
-      {
-        id: '#MA-2023-245',
-        name: 'Wulandari',
-        initials: 'WL',
-        color: '#0EA5E9',
-        type: 'Residential Type C',
-        address: 'Perum Griya Asri Blok D5, Bekasi',
-        status: 'Permohonan',
-      },
-      {
-        id: '#MA-2023-260',
-        name: 'Rudi Hartono',
-        initials: 'RH',
-        color: '#84CC16',
-        type: 'Residential Type A',
-        address: 'Jl. Anggrek No. 22, Cibinong',
-        status: 'Permohonan',
-      },
-      {
-        id: '#MA-2023-271',
-        name: 'Novi Rahayu',
-        initials: 'NR',
-        color: '#A855F7',
-        type: 'Commercial Type A',
-        address: 'Jl. Raya Bogor KM 32, Depok',
-        status: 'Permohonan',
-      },
-    ],
-    pasang_baru: [
-      {
-        id: '#MA-2023-050',
-        name: 'Hendra Pratama',
-        initials: 'HP',
-        color: '#0EA5E9',
-        type: 'Residential Type B',
-        address: 'Jl. Anggrek No. 12, Menteng, Jakarta',
-        status: 'Pasang Baru',
-      },
-      {
-        id: '#MA-2023-063',
-        name: 'Yulia Sari',
-        initials: 'YS',
-        color: '#6366F1',
-        type: 'Commercial Type A',
-        address: 'Jl. Pemuda No. 88, Surabaya',
-        status: 'Pasang Baru',
-      },
-    ],
-    aktif: [
-      {
-        id: '#MA-2022-010',
-        name: 'Santoso Wibowo',
-        initials: 'SW',
-        color: '#10B981',
-        type: 'Residential Type A',
-        address: 'Jl. Kebon Raya No. 3, Bogor',
-        status: 'Aktif',
-      },
-    ],
-    blokir: [
-      {
-        id: '#MA-2021-033',
-        name: 'Rahmat Hidayat',
-        initials: 'RH',
-        color: '#F97316',
-        type: 'Residential Type B',
-        address: 'Jl. Cempaka No. 8, Medan',
-        status: 'Blokir',
-      },
-    ],
-    cabut: [
-      {
-        id: '#MA-2020-011',
-        name: 'Rudi Hartono',
-        initials: 'RH',
-        color: '#EF4444',
-        type: 'Residential Type A',
-        address: 'Jl. Sudirman No. 12, Makassar',
-        status: 'Cabut',
-      },
-    ],
+    permohonan: [],
+    pasang_baru: [],
+    aktif: [],
+    blokir: [],
+    cabut: [],
+  })
+
+  const fetchData = async () => {
+    try {
+      isLoading.value = true
+      const response = await ticketService.getTickets({ per_page: 150 })
+      if (response?.success && response?.data?.data) {
+        const freshMap = {
+          permohonan: [],
+          pasang_baru: [],
+          aktif: [],
+          blokir: [],
+          cabut: [],
+        }
+
+        response.data.data.forEach((ticket) => {
+          const status = ticket.status
+          let category = 'permohonan'
+          let mappedStatusLabel = 'Permohonan'
+
+          if (['surveyed', 'unpaid', 'processing'].includes(status)) {
+            category = 'pasang_baru'
+            mappedStatusLabel = 'Pasang Baru'
+          } else if (status === 'completed') {
+            category = 'aktif'
+            mappedStatusLabel = 'Aktif'
+          }
+
+          freshMap[category].push({
+            id: ticket.customer?.[0]?.customer_code || `#INS-${ticket.id.toString().padStart(4, '0')}`,
+            name: ticket.applicant_name || '-',
+            initials: ticket.applicant_name
+              ? ticket.applicant_name
+                  .split(' ')
+                  .map((n) => n[0])
+                  .join('')
+                  .toUpperCase()
+                  .substring(0, 2)
+              : '?',
+            color: ['#3B82F6', '#8B5CF6', '#10B981', '#F59E0B', '#EF4444'][ticket.id % 5],
+            type: ticket.package?.name || '-',
+            address: ticket.address || '-',
+            status: mappedStatusLabel,
+          })
+        })
+        dataMap.value = freshMap
+      }
+    } catch (error) {
+      console.error('Failed to fetch installation statuses:', error)
+    } finally {
+      isLoading.value = false
+    }
+  }
+
+  onMounted(() => {
+    fetchData()
   })
 
   const currentData = computed(() => dataMap.value[activeStatus.value] || [])

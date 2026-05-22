@@ -1,6 +1,7 @@
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { STATUS_TYPES, STATUS_COLORS } from '@/types/pemakaianAir'
 import Swal from 'sweetalert2'
+import billingService from '@/services/billing.service'
 
 export function usePemakaianAir() {
   // State untuk filter pencarian
@@ -8,6 +9,7 @@ export function usePemakaianAir() {
   const searchQuery = ref('')
   const currentPage = ref(1)
   const perPage = ref(10)
+  const isLoading = ref(false)
 
   // Pilihan opsi
   // Edit Modal state
@@ -35,57 +37,52 @@ export function usePemakaianAir() {
     'Desember',
   ]
 
-  // Data dummy
-  const tableData = ref([
-    {
-      id: '1..08.561 P',
-      nama: 'Tarsim',
-      initials: 'T',
-      avatarColor: '#0ea5e9',
-      desa: 'Karangasem',
-      dusun: 'Karangasem',
-      rt: '',
-      meterAwal: 0,
-      meterAkhir: 10,
-      pemakaian: 10,
-      tagihan: 45000,
-      tanggalAkhir: '2024-04-20',
-      jatuhTempo: '20 Mei 2024',
-      status: STATUS_TYPES.PENDING,
-    },
-    {
-      id: '1.0002.02.568 P',
-      nama: 'Fuji Riyanta',
-      initials: 'FR',
-      avatarColor: '#06b6d4',
-      desa: 'Mulo',
-      dusun: 'Mulo',
-      rt: '02',
-      meterAwal: 0,
-      meterAkhir: 0,
-      pemakaian: 0,
-      tagihan: 10000,
-      tanggalAkhir: '2024-04-20',
-      jatuhTempo: '20 Mei 2024',
-      status: STATUS_TYPES.PENDING,
-    },
-    {
-      id: '102808473',
-      nama: 'Hadi Supriyanto',
-      initials: 'HS',
-      avatarColor: '#14b8a6',
-      desa: 'Mulo',
-      dusun: 'Mulo',
-      rt: '01',
-      meterAwal: 1140,
-      meterAkhir: 1165,
-      pemakaian: 25,
-      tagihan: 125000,
-      tanggalAkhir: '2024-04-20',
-      jatuhTempo: '20 Mei 2024',
-      status: STATUS_TYPES.PAID,
-    },
-  ])
+  // Data dinamis dari database
+  const tableData = ref([])
+
+  const fetchConsumptionHistory = async () => {
+    try {
+      isLoading.value = true
+      const response = await billingService.getBills()
+      if (response?.success && response?.data?.bills) {
+        tableData.value = response.data.bills.map((bill) => {
+          const ticket = bill.customer?.ticket
+          return {
+            id: bill.customer?.customer_code || `BILL-${bill.id}`,
+            realBillId: bill.id,
+            nama: ticket?.applicant_name || '-',
+            initials: ticket?.applicant_name
+              ? ticket.applicant_name
+                  .split(' ')
+                  .map((n) => n[0])
+                  .join('')
+                  .toUpperCase()
+                  .substring(0, 2)
+              : '?',
+            avatarColor: ['#0ea5e9', '#06b6d4', '#14b8a6', '#f59e0b', '#ef4444'][bill.id % 5],
+            desa: '-',
+            dusun: '-',
+            rt: '',
+            meterAwal: Number(bill.meter_reading_start) || 0,
+            meterAkhir: Number(bill.meter_reading_end) || 0,
+            pemakaian: Number(bill.usage_m3) || 0,
+            tagihan: Number(bill.total_amount) || 0,
+            tanggalAkhir: bill.due_date || '-',
+            jatuhTempo: bill.due_date ? new Date(bill.due_date).toLocaleDateString('id-ID') : '-',
+            status: bill.status === 'paid' ? STATUS_TYPES.PAID : STATUS_TYPES.PENDING,
+          }
+        })
+      }
+    } catch (error) {
+      console.error('Failed to fetch consumption data:', error)
+    } finally {
+      isLoading.value = false
+    }
+  }
+
+  onMounted(() => {
+    fetchConsumptionHistory()
+  })
 
   // Properti komputasi
   const filteredData = computed(() => {
