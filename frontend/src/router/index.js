@@ -1,12 +1,8 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import LoginView from '@/presentations/views/auth/LoginView.vue'
 import MainView from '@/presentations/layouts/dashboard/MainView.vue'
-import AdminDashbord from '@/presentations/views/dashboard/admin/DashboardMain.vue'
-import SurveyorDashboard from '@/presentations/views/dashboard/surveyor/DashboardMain.vue'
-import TeknisiDashboard from '@/presentations/views/dashboard/teknisi/DashboardMain.vue'
-import PelangganDashboard from '@/presentations/views/dashboard/pelanggan/DashboardMain.vue'
 import DashboardHome from '@/presentations/views/dashboard/DashboardHome.vue'
-import RetribusiSampahHome from '@/presentations/views/dashboard/RetribusiSampahHome.vue'
+
 import { useUiStore } from '@/stores/uiStore'
 import SopIndex from '@/presentations/views/dashboard/admin/sop/SopIndex.vue'
 import KelasBiayaView from '@/presentations/views/dashboard/admin/kelas/KelasIndex.vue'
@@ -15,19 +11,12 @@ import EditKelasView from '@/presentations/views/dashboard/admin/kelas/KelasEdit
 import pelangganView from '@/presentations/views/dashboard/admin/pelanggan/PelangganIndex.vue'
 import PelangganCreate from '@/presentations/views/dashboard/admin/pelanggan/PelangganCreate.vue'
 import PelangganEdit from '@/presentations/views/dashboard/admin/pelanggan/PelangganEdit.vue'
-import caterView from '@/presentations/views/dashboard/admin/cater/CaterIndex.vue'
-import CaterCreate from '@/presentations/views/dashboard/admin/cater/CaterCreate.vue'
-import CaterEdit from '@/presentations/views/dashboard/admin/cater/CaterEdit.vue'
-import desaView from '@/presentations/views/dashboard/admin/desa/DesaIndex.vue'
-import DesaCreate from '@/presentations/views/dashboard/admin/desa/DesaCreate.vue'
-import DesaEdit from '@/presentations/views/dashboard/admin/desa/DesaEdit.vue'
+
 import datainstalasiView from '@/presentations/views/dashboard/admin/instalasi/dataInstalasi.vue'
 import registerInstalasi from '@/presentations/views/dashboard/admin/instalasi/registrasi.vue'
 import statusInstalasi from '@/presentations/views/dashboard/admin/instalasi/InstalasiStatus.vue'
 import TeknisiPemakaianAir from '@/presentations/views/dashboard/teknisi/PemakaianAir.vue'
 import pemakaianair from '@/presentations/views/dashboard/admin/tagihan/pemakaianAir.vue'
-import adminRetribusiSampah from '@/presentations/views/dashboard/admin/instalasi/retribusiSampah.vue'
-import teknisiRetribusiSampah from '@/presentations/views/dashboard/teknisi/retribusiSampah.vue'
 import DetailPermohonan from '@/presentations/views/dashboard/admin/instalasi/partials/permohonan.vue'
 import DetailPasangBaru from '@/presentations/views/dashboard/admin/instalasi/partials/pasangBaru.vue'
 import DetailAktif from '@/presentations/views/dashboard/admin/instalasi/partials/aktif.vue'
@@ -111,36 +100,7 @@ const router = createRouter({
           name: 'Edit Pelanggan',
           component: PelangganEdit,
         },
-        {
-          path: '/data-cater',
-          name: 'Data Cater',
-          component: caterView,
-        },
-        {
-          path: '/data-cater/tambah',
-          name: 'Tambah Cater',
-          component: CaterCreate,
-        },
-        {
-          path: '/data-cater/edit/:id',
-          name: 'Edit Cater',
-          component: CaterEdit,
-        },
-        {
-          path: '/data-desa',
-          name: 'Data Desa',
-          component: desaView,
-        },
-        {
-          path: '/data-desa/tambah',
-          name: 'Tambah Desa',
-          component: DesaCreate,
-        },
-        {
-          path: '/data-desa/edit/:id',
-          name: 'Edit Desa',
-          component: DesaEdit,
-        },
+
         {
           path: '/dataInstalasi',
           name: 'Data Instalasi',
@@ -215,7 +175,7 @@ const router = createRouter({
         {
           path: '/pelanggan/riwayat-tagihan',
           name: 'Riwayat Tagihan',
-          component: () => import('@/presentations/views/dashboard/pelanggan/RiwayatTagihan.vue'),
+          component: () => import('@/presentations/views/dashboard/pelanggan/riwayatTagihan.vue'),
         },
         {
           path: '/pelanggan/lapor-gangguan',
@@ -227,11 +187,7 @@ const router = createRouter({
           name: 'Input Pemakaian Air Teknisi',
           component: TeknisiPemakaianAir,
         },
-        {
-          path: '/instalasi/retribusi-sampah',
-          name: 'Retribusi Sampah',
-          component: RetribusiSampahHome,
-        },
+
         {
           path: '/transaksi/jurnal-umum',
           name: 'transaksi jurnal umum',

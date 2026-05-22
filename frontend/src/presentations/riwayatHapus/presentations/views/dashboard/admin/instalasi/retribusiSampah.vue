@@ -271,8 +271,6 @@ const {
   showEditModal,
   selectedRow,
   handleApplyFilter,
-  handleCetakFormInput,
-  handleInputPemakaian,
   handleEdit,
   handleSaveEdit,
   handleDelete,
