@@ -3,7 +3,7 @@
     <div class="grid! items-start! grid-cols-1! sm:grid-cols-2! lg:grid-cols-4! gap-4! mb-8!">
       <statCard
         label="INSTALASI"
-        value="100"
+        :value="statsSummary.instalasi"
         :link="null"
         @detail-click="openDetailModal('instalasi')"
       >
@@ -12,7 +12,7 @@
 
       <statCard
         label="PEMAKAIAN"
-        value="100"
+        :value="statsSummary.pemakaian"
         :link="null"
         @detail-click="openDetailModal('pemakaian')"
       >
@@ -21,14 +21,19 @@
 
       <statCard
         label="TUNGGAKAN"
-        value="100"
+        :value="statsSummary.tunggakan"
         :link="null"
         @detail-click="openDetailModal('tunggakan')"
       >
         <font-awesome-icon icon="balance-scale" />
       </statCard>
 
-      <statCard label="TAGIHAN" value="100" :link="null" @detail-click="openDetailModal('tagihan')">
+      <statCard
+        label="TAGIHAN"
+        :value="statsSummary.tagihan"
+        :link="null"
+        @detail-click="openDetailModal('tagihan')"
+      >
         <font-awesome-icon icon="file-invoice" />
       </statCard>
     </div>
@@ -261,6 +266,7 @@
 import { ref, computed, onMounted } from 'vue'
 import statCard from '@/presentations/components/stat-card.vue'
 import ContentCard from '@/presentations/components/ui/ContentCard.vue'
+import dashboardService from '@/services/dashboard.service'
 
 import InstalasiDetail from './arsipDashbord/ArsipInstalasi.vue'
 import PemakaianDetail from './arsipDashbord/ArsipPemakaian.vue'
@@ -327,10 +333,28 @@ const modalIcon = computed(() => {
   }
 })
 
+const statsData = ref(null)
+
+const statsSummary = computed(() => {
+  const data = statsData.value
+  const tickets = data?.tickets_by_status || {}
+  const bills = data?.bills_this_month || {}
+  
+  const totalTickets = Object.values(tickets).reduce((a, b) => a + Number(b), 0)
+  const totalBills = (Number(bills.paid) || 0) + (Number(bills.unpaid) || 0)
+  
+  return {
+    instalasi: totalTickets.toString(),
+    pemakaian: (data?.total_customers || 0).toString(),
+    tunggakan: (bills.unpaid || 0).toString(),
+    tagihan: totalBills.toString(),
+  }
+})
+
 const financialData = ref({
-  pendapatan: 2300000,
+  pendapatan: 0,
   beban: 0,
-  surplus: 2300000,
+  surplus: 0,
 })
 
 const formattedPendapatan = ref('')
@@ -346,10 +370,25 @@ const formatCurrency = (amount) => {
 }
 
 const loadData = async () => {
-  await new Promise((resolve) => setTimeout(resolve, 1000))
-  formattedPendapatan.value = formatCurrency(financialData.value.pendapatan)
-  formattedBeban.value = formatCurrency(financialData.value.beban)
-  formattedSurplus.value = formatCurrency(financialData.value.surplus)
+  try {
+    const response = await dashboardService.getStatistics()
+    if (response?.success && response?.data) {
+      statsData.value = response.data
+      
+      const revenue = Number(response.data.revenue_this_month) || 0
+      financialData.value = {
+        pendapatan: revenue,
+        beban: 0,
+        surplus: revenue,
+      }
+    }
+  } catch (error) {
+    console.error('Failed to load dashboard statistics', error)
+  } finally {
+    formattedPendapatan.value = formatCurrency(financialData.value.pendapatan)
+    formattedBeban.value = formatCurrency(financialData.value.beban)
+    formattedSurplus.value = formatCurrency(financialData.value.surplus)
+  }
 }
 
 onMounted(() => {
