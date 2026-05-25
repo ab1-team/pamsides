@@ -2,7 +2,7 @@
   <div class="flex flex-col gap-6! py-2!">
     <div class="relative! p-1! bg-slate-50/50! border! border-slate-100! rounded-3xl! shadow-sm!">
       <div
-        class="grid grid-cols-1 md:grid-cols-3! divide-y! md:divide-y-0! md:divide-x! divide-slate-100!"
+        class="grid grid-cols-1 md:grid-cols-2! divide-y! md:divide-y-0! md:divide-x! divide-slate-100!"
       >
         <div
           class="p-5! hover:bg-white! transition-colors! first:rounded-t-3xl! md:first:rounded-tr-none! md:first:rounded-l-3xl!"
@@ -27,28 +27,6 @@
               type="number"
               size="md"
               prefix-icon="calendar"
-              :no-margin="true"
-              class="w-full!"
-            />
-          </div>
-        </div>
-
-        <div class="p-5! hover:bg-white! transition-colors!">
-          <div class="flex! flex-col! gap-3!">
-            <div class="flex! items-center! gap-2.5!">
-              <div
-                class="w-8! h-8! rounded-lg! bg-indigo-500! text-white! flex! items-center! justify-center! text-xs! shadow-lg! shadow-indigo-100!"
-              >
-                <font-awesome-icon icon="file-invoice-dollar" />
-              </div>
-              <div class="flex-1!">
-                <h4 class="text-xs! font-black! text-slate-800! leading-tight!">Biaya Aktivasi</h4>
-                <p class="text-[10px]! text-slate-400!">Biaya per aktif kembali.</p>
-              </div>
-            </div>
-            <MaksMoneyInput
-              v-model="form.biayaAktivasi"
-              placeholder="0"
               :no-margin="true"
               class="w-full!"
             />
@@ -132,7 +110,6 @@
 <script setup>
 import BaseInput from '@/presentations/components/ui/BaseInput.vue'
 import BaseButton from '@/presentations/components/ui/BaseButton.vue'
-import MaksMoneyInput from '@/presentations/components/MaksMoneyInput.vue'
 
 const form = defineModel({ required: true })
 
