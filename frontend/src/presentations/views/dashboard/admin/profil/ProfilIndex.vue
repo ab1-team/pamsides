@@ -3,42 +3,52 @@
     <ContentCard variant="bordered" padding="normal" rounded="xl" hoverable>
       <div class="flex! flex-row! items-center! gap-6!">
         <div class="relative! group!">
-          <div
-            class="w-24! h-24! rounded-full! overflow-hidden! border-4! border-slate-50! shadow-md! transition-all! duration-300! group-hover:shadow-lg! group-hover:border-blue-100!"
+          <button
+            type="button"
+            @click="triggerAvatarUpload"
+            :disabled="isUploadingAvatar"
+            class="block! w-24! h-24! rounded-full! overflow-hidden! border-4! border-slate-50! shadow-md! transition-all! duration-300! hover:border-blue-100! hover:shadow-lg! disabled:opacity-60! disabled:cursor-not-allowed! cursor-pointer!"
+            title="Klik untuk ubah foto profil"
           >
             <img
               :src="
-                profilePhoto ||
+                avatarPreview ||
                 'https://ui-avatars.com/api/?name=' +
-                  form.nama_depan +
-                  '+' +
-                  form.nama_belakang +
+                  encodeURIComponent(form.name || 'User') +
                   '&background=0D8ABC&color=fff'
               "
               alt="Profile"
               class="w-full! h-full! object-cover!"
             />
-          </div>
-          <button
-            @click="triggerPhotoUpload"
-            class="absolute! bottom-0! right-0! w-8! h-8! bg-blue-600! text-white! rounded-full! flex! items-center! justify-center! border-2! border-white! shadow-lg! transition-all! duration-300! hover:bg-blue-700! hover:scale-110!"
-            title="Ubah Foto"
-          >
-            <font-awesome-icon icon="camera" class="text-xs!" />
+            <span
+              class="absolute! inset-0! flex! items-center! justify-center! bg-slate-900/50! text-white! opacity-0! group-hover:opacity-100! transition-opacity! duration-300! rounded-full!"
+            >
+              <font-awesome-icon
+                :icon="isUploadingAvatar ? 'spinner' : 'camera'"
+                :spin="isUploadingAvatar"
+                class="text-lg!"
+              />
+            </span>
           </button>
           <input
+            ref="avatarInput"
             type="file"
-            ref="photoInput"
-            @change="handlePhotoUpload"
-            accept="image/*"
+            accept="image/png,image/jpeg,image/webp"
             class="hidden!"
+            @change="handleAvatarChange"
           />
         </div>
         <div class="text-left!">
           <h1 class="text-2xl! font-bold! text-slate-800!">
-            {{ form.nama_depan }} {{ form.nama_belakang }}
+            {{ form.name || '-' }}
           </h1>
-          <p class="text-slate-500! font-medium!">{{ form.peran || 'Kepala Pabrik' }}</p>
+          <p class="text-slate-500! font-medium!">{{ form.email || '-' }}</p>
+          <span
+            v-if="role"
+            class="inline-block! mt-2! px-3! py-1! bg-blue-50! text-blue-600! text-[10px]! font-bold! uppercase! tracking-widest! rounded-full!"
+          >
+            {{ role }}
+          </span>
         </div>
       </div>
     </ContentCard>
@@ -46,87 +56,122 @@
     <ContentCard variant="bordered" padding="large" rounded="xl" hoverable>
       <template #header>
         <div class="flex! items-center! justify-between! mb-4!">
-          <h2 class="text-xl! font-bold! text-slate-800!">Data Diri</h2>
+          <h2 class="text-xl! font-bold! text-slate-800!">Data Akun</h2>
         </div>
       </template>
 
       <div class="space-y-6!">
-        <div class="grid! grid-cols-2! gap-6!">
-          <BaseInput label="NIK" v-model="form.nik" placeholder="3308128492740001" />
-          <BaseInput label="Nama Depan" v-model="form.nama_depan" placeholder="Santoso" />
-        </div>
-
-        <div class="grid! grid-cols-2! gap-6!">
-          <BaseInput label="Nama Belakang" v-model="form.nama_belakang" placeholder="SIDBM" />
-          <BaseInput label="Inisial" v-model="form.inisial" placeholder="SS" />
-        </div>
-
-        <div class="grid! grid-cols-2! gap-6!">
-          <BaseInput label="Tempat Lahir" v-model="form.tempat_lahir" placeholder="Magelang" />
-          <AppDatePicker label="Tanggal Lahir" v-model="form.tanggal_lahir" yearRange="1950:2026" />
-        </div>
-
-        <div class="grid! grid-cols-1! gap-6!">
+        <div class="grid! grid-cols-1! md:grid-cols-2! gap-6!">
           <BaseInput
-            type="textarea"
-            label="Alamat"
-            v-model="form.alamat"
-            placeholder="Jl. Daranindra No. 1 Borobudur 5655"
-            :rows="3"
+            label="Nama Lengkap"
+            v-model="form.name"
+            placeholder="Masukkan nama lengkap"
+            prefix-icon="user"
           />
-        </div>
-
-        <div class="grid! grid-cols-2! gap-6!">
-          <BaseInput label="Telpon" v-model="form.telpon" placeholder="6281234567890" />
-          <SelectSearch
-            label="Pendidikan"
-            v-model="form.pendidikan"
-            :options="pendidikanOptions"
-            placeholder="Pilih pendidikan"
-          />
-        </div>
-
-        <div class="grid! grid-cols-2! gap-6!">
-          <AppDatePicker
-            label="Menjabat Sejak"
-            v-model="form.menjabat_sejak"
-            yearRange="2000:2030"
+          <BaseInput
+            label="Email"
+            type="email"
+            v-model="form.email"
+            placeholder="email@domain.com"
+            prefix-icon="envelope"
           />
         </div>
 
         <div
-          class="flex! justify-end! items-center! gap-4! mt-8! pt-6! border-t! border-slate-100!"
+          class="flex! flex-col! sm:flex-row! justify-end! items-stretch! sm:items-center! gap-3! mt-8! pt-6! border-t! border-slate-100!"
         >
-          <BaseButton variant="info" @click="showModal = true" class="shadow-sm!">
-            EDIT USER
-          </BaseButton>
-          <button
-            @click="saveChanges"
-            :disabled="isSaving"
-            class="px-6! py-2! bg-[#1A202C]! hover:bg-black! text-white! text-sm! font-bold! rounded-lg! transition-all! duration-300! flex! items-center! gap-2! disabled:opacity-50!"
+          <BaseButton
+            variant="info"
+            @click="showModal = true"
+            class="shadow-sm!"
+            icon="key"
           >
-            <font-awesome-icon v-if="isSaving" icon="spinner" spin />
-            SIMPAN PERUBAHAN
-          </button>
+            Ubah Password
+          </BaseButton>
+          <BaseButton
+            variant="secondary"
+            @click="saveProfile"
+            :loading="isSaving"
+            icon="save"
+          >
+            Simpan Perubahan
+          </BaseButton>
+        </div>
+      </div>
+    </ContentCard>
+
+    <ContentCard
+      v-if="hasIdentity"
+      variant="bordered"
+      padding="large"
+      rounded="xl"
+      hoverable
+    >
+      <template #header>
+        <div class="flex! items-center! justify-between! mb-1!">
+          <div>
+            <h2 class="text-xl! font-bold! text-slate-800!">Data Diri</h2>
+            <p class="text-xs! text-slate-400! font-medium!">
+              Diambil dari data pendaftaran instalasi. Tidak dapat diedit dari halaman ini.
+            </p>
+          </div>
+          <span
+            class="px-3! py-1! bg-slate-100! text-slate-500! text-[10px]! font-bold! uppercase! tracking-widest! rounded-full!"
+          >
+            Read Only
+          </span>
+        </div>
+      </template>
+
+      <div class="grid! grid-cols-1! md:grid-cols-2! gap-x-6! gap-y-4! mt-4!">
+        <ProfileField label="NIK" :value="identity.nik" icon="id-card" />
+        <ProfileField
+          label="Kode Pelanggan"
+          :value="identity.customer_code"
+          icon="hashtag"
+        />
+        <ProfileField label="No. Telepon" :value="identity.phone" icon="phone" />
+        <ProfileField
+          label="Jenis Kelamin"
+          :value="genderLabel"
+          icon="venus-mars"
+        />
+        <ProfileField
+          label="Tempat Lahir"
+          :value="identity.birth_place"
+          icon="map-marker-alt"
+        />
+        <ProfileField
+          label="Tanggal Lahir"
+          :value="formattedBirthDate"
+          icon="calendar"
+        />
+        <div class="md:col-span-2!">
+          <ProfileField
+            label="Alamat"
+            :value="identity.address"
+            icon="home"
+            multiline
+          />
         </div>
       </div>
     </ContentCard>
 
     <Teleport to="body">
-      <div v-if="showModal" class="modal-overlay" @click="showModal = false">
+      <div v-if="showModal" class="modal-overlay" @click="closeModal">
         <div class="modal-content" @click.stop>
           <div class="modal-header">
             <div class="flex! items-center! gap-3!">
               <div class="w-10! h-10! rounded-lg! bg-blue-50! flex! items-center! justify-center!">
-                <font-awesome-icon icon="user-edit" class="text-blue-600!" />
+                <font-awesome-icon icon="key" class="text-blue-600!" />
               </div>
               <div>
-                <h3 class="text-lg! font-bold! text-slate-800!">Edit Akun</h3>
-                <p class="text-xs! text-slate-500!">Update username dan password Anda</p>
+                <h3 class="text-lg! font-bold! text-slate-800!">Ubah Password</h3>
+                <p class="text-xs! text-slate-500!">Pastikan password baru Anda aman</p>
               </div>
             </div>
             <button
-              @click="showModal = false"
+              @click="closeModal"
               class="text-slate-400! hover:text-slate-600! transition-colors!"
             >
               <font-awesome-icon icon="times" />
@@ -135,28 +180,37 @@
 
           <div class="modal-body p-6! space-y-4!">
             <BaseInput
-              label="Username"
-              v-model="userForm.username"
-              placeholder="Masukkan username"
-              prefixIcon="user"
+              label="Password Saat Ini"
+              type="password"
+              v-model="passwordForm.current_password"
+              placeholder="Masukkan password saat ini"
+              prefix-icon="lock"
             />
             <BaseInput
-              label="Password"
+              label="Password Baru"
               type="password"
-              v-model="userForm.password"
+              v-model="passwordForm.new_password"
               placeholder="Masukkan password baru"
-              prefixIcon="key"
+              prefix-icon="key"
             />
-            <p class="text-[10px]! text-slate-400! italic!">
-              * Kosongkan password jika tidak ingin mengganti
-            </p>
+            <BaseInput
+              label="Konfirmasi Password Baru"
+              type="password"
+              v-model="passwordForm.new_password_confirmation"
+              placeholder="Ulangi password baru"
+              prefix-icon="key"
+            />
           </div>
 
           <div class="modal-footer">
-            <BaseButton variant="secondary" @click="showModal = false">Batal</BaseButton>
-            <BaseButton variant="primary" @click="updateUser" :loading="isUpdatingUser"
-              >Update</BaseButton
+            <BaseButton variant="secondary" @click="closeModal">Batal</BaseButton>
+            <BaseButton
+              variant="primary"
+              @click="changePassword"
+              :loading="isUpdatingPassword"
             >
+              Simpan Password
+            </BaseButton>
           </div>
         </div>
       </div>
@@ -165,107 +219,252 @@
 </template>
 
 <script setup>
-import { ref, reactive, watch } from 'vue'
+import { reactive, ref, watch, onMounted, computed, h } from 'vue'
 import ContentCard from '@/presentations/components/ui/ContentCard.vue'
 import BaseInput from '@/presentations/components/ui/BaseInput.vue'
-import AppDatePicker from '@/presentations/components/AppDatePicker.vue'
-import SelectSearch from '@/presentations/components/SelectSearch.vue'
 import BaseButton from '@/presentations/components/ui/BaseButton.vue'
-import Swal from 'sweetalert2'
+import profileService from '@/services/profile.service'
+import { MySwal } from '@/utils/swal'
+
+const ProfileField = {
+  name: 'ProfileField',
+  props: {
+    label: { type: String, required: true },
+    value: { type: [String, Number], default: '' },
+    icon: { type: String, default: 'circle-info' },
+    multiline: { type: Boolean, default: false },
+  },
+  setup(props) {
+    return () =>
+      h(
+        'div',
+        {
+          class:
+            'flex flex-col gap-1.5! p-3! bg-slate-50/60! border! border-slate-100! rounded-xl!',
+        },
+        [
+          h(
+            'div',
+            {
+              class:
+                'flex items-center gap-2! text-[10px]! font-bold! text-slate-400! uppercase! tracking-widest!',
+            },
+            [
+              h('font-awesome-icon', { icon: props.icon, class: 'text-slate-400!' }),
+              h('span', null, props.label),
+            ],
+          ),
+          h(
+            'p',
+            {
+              class: [
+                'text-sm! font-bold! text-slate-700! leading-relaxed! break-words!',
+                props.multiline ? 'whitespace-pre-line!' : '',
+              ],
+            },
+            props.value || '-',
+          ),
+        ],
+      )
+  },
+}
 
 const showModal = ref(false)
 const isSaving = ref(false)
-const isUpdatingUser = ref(false)
-const photoInput = ref(null)
-const profilePhoto = ref(null)
-
-watch(showModal, (val) => {
-  if (val) {
-    document.body.style.overflow = 'hidden'
-  } else {
-    document.body.style.overflow = ''
-  }
-})
+const isUpdatingPassword = ref(false)
+const isUploadingAvatar = ref(false)
+const role = ref('')
+const avatarInput = ref(null)
+const avatarPreview = ref('')
 
 const form = reactive({
-  nik: '3308128492740001',
-  nama_depan: 'Santoso',
-  nama_belakang: 'SIDBM',
-  peran: 'Kepala Pabrik',
-  inisial: 'SS',
-  tempat_lahir: 'Magelang',
-  tanggal_lahir: '1994-10-06',
-  alamat: 'Jl. Daranindra No. 1 Borobudur 5655',
-  telpon: '6281234567890',
-  pendidikan: 'Doktor (S3)',
-  menjabat_sejak: '2023-10-03',
+  name: '',
+  email: '',
 })
 
-const userForm = reactive({
-  username: 'santoso_sidbm',
-  password: '',
+const identity = reactive({
+  nik: '',
+  customer_code: '',
+  phone: '',
+  gender: '',
+  birth_place: '',
+  birth_date: '',
+  address: '',
 })
 
-const pendidikanOptions = [
-  { label: 'SD', value: 'SD' },
-  { label: 'SMP', value: 'SMP' },
-  { label: 'SMA/SMK', value: 'SMA/SMK' },
-  { label: 'Diploma (D1-D4)', value: 'Diploma (D1-D4)' },
-  { label: 'Sarjana (S1)', value: 'Sarjana (S1)' },
-  { label: 'Magister (S2)', value: 'Magister (S2)' },
-  { label: 'Doktor (S3)', value: 'Doktor (S3)' },
-]
+const passwordForm = reactive({
+  current_password: '',
+  new_password: '',
+  new_password_confirmation: '',
+})
 
-const triggerPhotoUpload = () => {
-  photoInput.value.click()
+const hasIdentity = computed(() =>
+  Object.values(identity).some((v) => v !== '' && v !== null && v !== undefined),
+)
+
+const genderLabel = computed(() => {
+  if (identity.gender === 'male') return 'Laki-laki'
+  if (identity.gender === 'female') return 'Perempuan'
+  return identity.gender || ''
+})
+
+const formattedBirthDate = computed(() => {
+  if (!identity.birth_date) return ''
+  const d = new Date(identity.birth_date)
+  if (Number.isNaN(d.getTime())) return identity.birth_date
+  return d.toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })
+})
+
+watch(showModal, (val) => {
+  document.body.style.overflow = val ? 'hidden' : ''
+})
+
+const showSuccessToast = (title) => {
+  MySwal.fire({
+    toast: true,
+    position: 'top-end',
+    icon: 'success',
+    title,
+    showConfirmButton: false,
+    timer: 3000,
+    timerProgressBar: true,
+    customClass: { popup: 'swal-toast-custom', title: 'swal-toast-title' },
+  })
 }
 
-const handlePhotoUpload = (event) => {
-  const file = event.target.files[0]
-  if (file) {
-    const reader = new FileReader()
-    reader.onload = (e) => {
-      profilePhoto.value = e.target.result
-      Swal.fire({
-        icon: 'success',
-        title: 'Foto Berhasil Diupload',
-        text: 'Foto profil Anda telah diperbarui secara lokal.',
-        timer: 2000,
-        showConfirmButton: false,
-      })
-    }
-    reader.readAsDataURL(file)
+const showErrorToast = (error) => {
+  const message =
+    error?.response?.data?.message || error?.message || 'Terjadi kesalahan pada server'
+  MySwal.fire({
+    toast: true,
+    position: 'top-end',
+    icon: 'error',
+    title: message,
+    showConfirmButton: false,
+    timer: 4000,
+    timerProgressBar: true,
+    customClass: { popup: 'swal-toast-custom', title: 'swal-toast-title' },
+  })
+}
+
+const loadProfile = async () => {
+  try {
+    const res = await profileService.getMe()
+    const data = res?.data || res
+    if (!data) return
+
+    form.name = data.name || ''
+    form.email = data.email || ''
+    role.value = data.role || ''
+    avatarPreview.value = data.avatar_url || ''
+
+    const id = data.identity || data.customer || {}
+    const ticket = id.ticket || data.ticket || {}
+
+    identity.nik = ticket.nik || id.nik || ''
+    identity.customer_code = id.customer_code || ''
+    identity.phone = ticket.phone || id.phone || ''
+    identity.gender = ticket.gender || id.gender || ''
+    identity.birth_place = ticket.birth_place || id.birth_place || ''
+    identity.birth_date = ticket.birth_date || id.birth_date || ''
+    identity.address = ticket.address || id.address || ''
+  } catch (error) {
+    showErrorToast(error)
   }
 }
 
-const saveChanges = async () => {
-  isSaving.value = true
-
-  await new Promise((resolve) => setTimeout(resolve, 1500))
-
-  isSaving.value = false
-  Swal.fire({
-    icon: 'success',
-    title: 'Perubahan Disimpan',
-    text: 'Data diri Anda berhasil diperbarui.',
-    confirmButtonColor: '#4f46e5',
-  })
+const saveProfile = async () => {
+  try {
+    isSaving.value = true
+    await profileService.updateProfile({ name: form.name, email: form.email })
+    showSuccessToast('Profil berhasil diperbarui')
+  } catch (error) {
+    showErrorToast(error)
+  } finally {
+    isSaving.value = false
+  }
 }
 
-const updateUser = async () => {
-  isUpdatingUser.value = true
+const triggerAvatarUpload = () => {
+  if (isUploadingAvatar.value) return
+  avatarInput.value?.click()
+}
 
-  await new Promise((resolve) => setTimeout(resolve, 1500))
+const handleAvatarChange = async (event) => {
+  const file = event.target.files?.[0]
+  if (!file) return
 
-  isUpdatingUser.value = false
+  if (!file.type.startsWith('image/')) {
+    showErrorToast({ message: 'File harus berupa gambar' })
+    event.target.value = ''
+    return
+  }
+  if (file.size > 2 * 1024 * 1024) {
+    showErrorToast({ message: 'Ukuran gambar maksimal 2 MB' })
+    event.target.value = ''
+    return
+  }
+
+  const previousPreview = avatarPreview.value
+  const reader = new FileReader()
+  reader.onload = (e) => {
+    avatarPreview.value = e.target.result
+  }
+  reader.readAsDataURL(file)
+
+  try {
+    isUploadingAvatar.value = true
+    const res = await profileService.uploadAvatar(file)
+    const data = res?.data || res
+    if (data?.avatar_url) {
+      avatarPreview.value = data.avatar_url
+    }
+    showSuccessToast('Foto profil berhasil diperbarui')
+  } catch (error) {
+    avatarPreview.value = previousPreview
+    showErrorToast(error)
+  } finally {
+    isUploadingAvatar.value = false
+    event.target.value = ''
+  }
+}
+
+const resetPasswordForm = () => {
+  passwordForm.current_password = ''
+  passwordForm.new_password = ''
+  passwordForm.new_password_confirmation = ''
+}
+
+const closeModal = () => {
   showModal.value = false
-  Swal.fire({
-    icon: 'success',
-    title: 'Akun Diperbarui',
-    text: 'Username/Password berhasil diperbarui.',
-    confirmButtonColor: '#4f46e5',
-  })
+  resetPasswordForm()
 }
+
+const changePassword = async () => {
+  if (!passwordForm.current_password || !passwordForm.new_password) {
+    showErrorToast({ message: 'Mohon lengkapi semua kolom password' })
+    return
+  }
+  if (passwordForm.new_password !== passwordForm.new_password_confirmation) {
+    showErrorToast({ message: 'Konfirmasi password baru tidak cocok' })
+    return
+  }
+
+  try {
+    isUpdatingPassword.value = true
+    await profileService.updatePassword({ ...passwordForm })
+    showSuccessToast('Password berhasil diperbarui')
+    closeModal()
+  } catch (error) {
+    showErrorToast(error)
+  } finally {
+    isUpdatingPassword.value = false
+  }
+}
+
+onMounted(() => {
+  loadProfile()
+})
 </script>
 
 <style scoped>
