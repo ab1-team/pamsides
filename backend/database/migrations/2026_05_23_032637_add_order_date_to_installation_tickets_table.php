@@ -11,9 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('settings', function (Blueprint $table) {
-            $table->string('key')->unique();
-            $table->text('value')->nullable();
+        Schema::table('installation_tickets', function (Blueprint $table) {
+            $table->date('order_date')->nullable()->after('applicant_name');
         });
     }
 
@@ -22,6 +21,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('settings');
+        Schema::table('installation_tickets', function (Blueprint $table) {
+            $table->dropColumn('order_date');
+        });
     }
 };

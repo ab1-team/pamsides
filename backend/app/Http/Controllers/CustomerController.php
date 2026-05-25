@@ -120,7 +120,7 @@ class CustomerController extends Controller
                     'lng' => 0,
 
                     // status awal
-                    'status' => 'pending',
+                    'status' => 'draft',
 
                     'created_by' => auth()->id() ?? 1,
                 ]);
