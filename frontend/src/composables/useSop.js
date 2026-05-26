@@ -1,8 +1,12 @@
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { MySwal } from '@/utils/swal'
+import sopService from '@/services/sop.service'
 
 export function useSop() {
   const activeSection = ref('wellcome')
+  const isSaving = ref(false)
+  const isLoading = ref(false)
+
   const menuList = [
     {
       key: 'wellcome',
@@ -48,12 +52,12 @@ export function useSop() {
   })
 
   const lembagaForm = ref({
-    nama: 'PAMSIDES Digital Solution',
-    alamat: 'Jl. Merdeka No. 123, Jakarta Selatan',
-    email: 'info@pamsides.id',
-    telepon: '021-12345678',
-    website: 'https://pamsides.id',
-    deskripsi: 'Sistem Pengelolaan Air Minum dan Sanitasi Desa.',
+    nama: '',
+    alamat: '',
+    email: '',
+    telepon: '',
+    website: '',
+    deskripsi: '',
   })
 
   const logoForm = ref({
@@ -61,31 +65,30 @@ export function useSop() {
     dashboardLogo: null,
     favicon: null,
     previews: {
-      mainLogo: 'https://via.placeholder.com/150?text=Main+Logo',
-      dashboardLogo: 'https://via.placeholder.com/150?text=Dashboard+Logo',
-      favicon: 'https://via.placeholder.com/32?text=F',
+      mainLogo: '',
+      dashboardLogo: '',
+      favicon: '',
     },
   })
 
   const whatsappForm = ref({
-    templateTagihan: `Yth. {customer} {desa}.
-
-Diinformasikan bahwa anda memiliki tagihan bulanan dengan rincian:
-Kode Instalasi : {kode_instalasi}
-Jatuh Tempo : {jatuh_tempo}
-Jumlah : Rp. {jumlah_tagihan}
-
-Dimohon untuk segera melakukan pembayaran.`,
-    templatePembayaran: `Yth. {customer} {desa}.
-
-Terima kasih atas pembayaran tagihan bulanan anda.
-Rincian pembayaran:
-Kode Instalasi : {kode_instalasi}
-Jatuh Tempo : {jatuh_tempo}
-Jumlah : Rp. {tagihan}
-
-Pembayaran telah kami terima pada`,
+    templateTagihan: '',
+    templatePembayaran: '',
   })
+
+  const pasangBaruForm = ref({
+    biayaPasang: 0,
+    statusPembayaran: '',
+    enableAir: false,
+    enableSampah: false,
+  })
+
+  const sistemTagihanForm = ref({
+    toleransiTunggakan: 0,
+    jatuhTempo: 0,
+  })
+
+  const wellcomeForm = ref({})
 
   const handleLogoUpload = (event, type) => {
     const file = event.target.files[0]
@@ -99,24 +102,90 @@ Pembayaran telah kami terima pada`,
     }
   }
 
-  const pasangBaruForm = ref({
-    biayaPasang: 750000,
-    statusPembayaran: 'wajib',
-    enableAir: true,
-    enableSampah: false,
-  })
+  const showSuccessToast = (title = 'Pengaturan Berhasil Disimpan') => {
+    MySwal.fire({
+      toast: true,
+      position: 'top-end',
+      icon: 'success',
+      title,
+      showConfirmButton: false,
+      timer: 3000,
+      timerProgressBar: true,
+      customClass: {
+        popup: 'swal-toast-custom',
+        title: 'swal-toast-title',
+      },
+    })
+  }
 
-  const sistemTagihanForm = ref({
-    toleransiTunggakan: 3,
-    jatuhTempo: 6,
-    biayaAktivasi: 5000,
-  })
+  const showErrorToast = (error) => {
+    const message = error?.response?.data?.message || error?.message || 'Gagal menyimpan pengaturan'
+    MySwal.fire({
+      toast: true,
+      position: 'top-end',
+      icon: 'error',
+      title: message,
+      showConfirmButton: false,
+      timer: 4000,
+      timerProgressBar: true,
+      customClass: {
+        popup: 'swal-toast-custom',
+        title: 'swal-toast-title',
+      },
+    })
+  }
 
-  const wellcomeForm = ref({})
+  /**
+   * Memuat seluruh pengaturan SOP dari backend.
+   * Backend diharapkan mengembalikan struktur:
+   * {
+   *   lembaga: { nama, alamat, email, telepon, website, deskripsi },
+   *   pasangBaru: { biayaPasang, statusPembayaran, enableAir, enableSampah },
+   *   sistemTagihan: { toleransiTunggakan, jatuhTempo, biayaAktivasi },
+   *   logo: { mainLogo, dashboardLogo, favicon }, // berupa URL string
+   *   whatsapp: { templateTagihan, templatePembayaran }
+   * }
+   */
+  const loadSettings = async () => {
+    try {
+      isLoading.value = true
+      const data = await sopService.getAll()
+      if (!data) return
 
-  const saveSettings = () => {
-    if (activeSection.value === 'pasangBaru' && pasangBaruForm.value.enableSampah) {
-      MySwal.fire({
+      if (data.lembaga) lembagaForm.value = { ...lembagaForm.value, ...data.lembaga }
+      if (data.pasangBaru) pasangBaruForm.value = { ...pasangBaruForm.value, ...data.pasangBaru }
+      if (data.sistemTagihan)
+        sistemTagihanForm.value = { ...sistemTagihanForm.value, ...data.sistemTagihan }
+      if (data.whatsapp) whatsappForm.value = { ...whatsappForm.value, ...data.whatsapp }
+      if (data.logo) {
+        logoForm.value.previews = {
+          mainLogo: data.logo.mainLogo || '',
+          dashboardLogo: data.logo.dashboardLogo || '',
+          favicon: data.logo.favicon || '',
+        }
+      }
+    } catch (error) {
+      showErrorToast(error)
+    } finally {
+      isLoading.value = false
+    }
+  }
+
+  const saveLembaga = async () => {
+    try {
+      isSaving.value = true
+      await sopService.saveLembaga({ ...lembagaForm.value })
+      showSuccessToast('Profil Lembaga berhasil disimpan')
+    } catch (error) {
+      showErrorToast(error)
+    } finally {
+      isSaving.value = false
+    }
+  }
+
+  const savePasangBaru = async () => {
+    if (pasangBaruForm.value.enableSampah) {
+      const result = await MySwal.fire({
         title: 'Konfirmasi Aktivasi Fitur',
         text: 'Aktivasi fitur Retribusi Sampah memerlukan login ulang untuk sinkronisasi data sistem. Apakah Anda ingin melanjutkan?',
         icon: 'warning',
@@ -125,32 +194,98 @@ Pembayaran telah kami terima pada`,
         cancelButtonColor: '#64748b',
         confirmButtonText: 'Ya, Login Ulang',
         cancelButtonText: 'Batal',
-      }).then((result) => {
-        if (result.isConfirmed) {
-          window.location.href = '/login?logout=success'
-        }
       })
-    } else {
-      MySwal.fire({
-        toast: true,
-        position: 'top-end',
-        icon: 'success',
-        title: 'Pengaturan Berhasil Disimpan',
-        showConfirmButton: false,
-        timer: 3000,
-        timerProgressBar: true,
-        customClass: {
-          popup: 'swal-toast-custom',
-          title: 'swal-toast-title',
-        },
-      })
+      if (!result.isConfirmed) return
+    }
+
+    try {
+      isSaving.value = true
+      await sopService.savePasangBaru({ ...pasangBaruForm.value })
+
+      if (pasangBaruForm.value.enableSampah) {
+        window.location.href = '/login?logout=success'
+        return
+      }
+
+      showSuccessToast('Pengaturan Pasang Baru berhasil disimpan')
+    } catch (error) {
+      showErrorToast(error)
+    } finally {
+      isSaving.value = false
     }
   }
+
+  const saveSistemTagihan = async () => {
+    try {
+      isSaving.value = true
+      await sopService.saveSistemTagihan({ ...sistemTagihanForm.value })
+      showSuccessToast('Sistem Tagihan berhasil disimpan')
+    } catch (error) {
+      showErrorToast(error)
+    } finally {
+      isSaving.value = false
+    }
+  }
+
+  const saveLogo = async () => {
+    try {
+      isSaving.value = true
+      await sopService.saveLogo({
+        mainLogo: logoForm.value.mainLogo,
+        dashboardLogo: logoForm.value.dashboardLogo,
+        favicon: logoForm.value.favicon,
+      })
+      showSuccessToast('Logo & Branding berhasil disimpan')
+    } catch (error) {
+      showErrorToast(error)
+    } finally {
+      isSaving.value = false
+    }
+  }
+
+  const saveWhatsapp = async () => {
+    try {
+      isSaving.value = true
+      await sopService.saveWhatsapp({ ...whatsappForm.value })
+      showSuccessToast('Template WhatsApp berhasil disimpan')
+    } catch (error) {
+      showErrorToast(error)
+    } finally {
+      isSaving.value = false
+    }
+  }
+
+  /**
+   * Dispatcher untuk dipanggil dari tombol simpan masing-masing form.
+   * Memilih handler berdasarkan section yang sedang aktif.
+   */
+  const saveSettings = () => {
+    switch (activeSection.value) {
+      case 'lembaga':
+        return saveLembaga()
+      case 'pasangBaru':
+        return savePasangBaru()
+      case 'sistemTagihan':
+        return saveSistemTagihan()
+      case 'logo':
+        return saveLogo()
+      case 'whatsapp':
+        return saveWhatsapp()
+      default:
+        return Promise.resolve()
+    }
+  }
+
+  onMounted(() => {
+    loadSettings()
+  })
 
   return {
     activeSection,
     activeLabel,
     menuList,
+    isLoading,
+    isSaving,
     lembagaForm,
     logoForm,
     whatsappForm,
@@ -158,6 +293,12 @@ Pembayaran telah kami terima pada`,
     sistemTagihanForm,
     wellcomeForm,
     handleLogoUpload,
+    loadSettings,
     saveSettings,
+    saveLembaga,
+    savePasangBaru,
+    saveSistemTagihan,
+    saveLogo,
+    saveWhatsapp,
   }
 }
