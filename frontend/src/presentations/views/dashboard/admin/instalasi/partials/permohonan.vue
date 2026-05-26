@@ -65,26 +65,6 @@
           </div>
         </ContentCard>
       </div>
-
-      <ContentCard variant="bordered" padding="normal" rounded="2xl">
-        <div class="flex! items-center! justify-between!">
-          <div>
-            <p class="text-xs! text-slate-400! mb-2!">Status Pembayaran</p>
-            <span
-              class="px-3! py-1! rounded-full! text-xs! font-bold!"
-              :class="
-                customer.isPaid ? 'bg-green-100! text-green-700!' : 'bg-red-100! text-red-600!'
-              "
-            >
-              {{ customer.isPaid ? 'PAID' : 'UNPAID' }}
-            </span>
-          </div>
-          <div class="text-right!">
-            <p class="text-xs! text-slate-400!">Last checked</p>
-            <p class="text-xs! font-semibold! text-slate-500!">Just now</p>
-          </div>
-        </div>
-      </ContentCard>
     </div>
 
     <div class="flex! flex-col! gap-6!">
@@ -136,20 +116,23 @@
 
         <div class="mt-5! space-y-2!">
           <button
-            class="w-full! flex! items-center! justify-center! gap-2! bg-gradient-to-r! from-indigo-500! to-blue-600! hover:from-indigo-600! hover:to-blue-700! text-white! font-bold! py-3! rounded-xl! shadow-lg! shadow-indigo-200/50! transition-all! active:scale-95!"
+            @click="handleProsesPasangBaru"
+            :disabled="!customer.ticketId"
+            class="w-full! flex! items-center! justify-center! gap-2! bg-gradient-to-r! from-indigo-500! to-blue-600! hover:from-indigo-600! hover:to-blue-700! text-white! font-bold! py-3! rounded-xl! shadow-lg! shadow-indigo-200/50! transition-all! active:scale-95! disabled:opacity-50! disabled:cursor-not-allowed!"
           >
             <font-awesome-icon icon="check-circle" />
             Proses ke Pasang Baru
           </button>
           <div class="grid! grid-cols-2! gap-2!">
             <button
+              @click="handlePrint"
               class="flex! items-center! justify-center! gap-2! border! border-slate-200! hover:bg-slate-50! text-slate-600! font-semibold! py-2.5! rounded-xl! text-sm! transition-all!"
             >
               <font-awesome-icon icon="print" />
               Cetak
             </button>
             <button
-              @click="$router.back()"
+              @click="$router.push({ path: '/instalasi/status', query: { filter: 'permohonan' } })"
               class="flex! items-center! justify-center! gap-2! border! border-slate-200! hover:bg-slate-50! text-slate-600! font-semibold! py-2.5! rounded-xl! text-sm! transition-all!"
             >
               <font-awesome-icon icon="arrow-left" />
@@ -165,12 +148,15 @@
 <script setup>
 defineOptions({ name: 'PermohonanDetail' })
 import { computed } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useInstalasiStatus } from '@/composables/useInstalasiStatus'
+import { useInstalasiActions } from '@/composables/useInstalasiActions'
 import ContentCard from '@/presentations/components/ui/ContentCard.vue'
 
 const route = useRoute()
-const { dataMap } = useInstalasiStatus()
+const router = useRouter()
+const { dataMap, fetchData } = useInstalasiStatus()
+const { transitionStatus, printDetail } = useInstalasiActions()
 const id = decodeURIComponent(route.params.id)
 
 const customer = computed(() => {
@@ -181,22 +167,54 @@ const customer = computed(() => {
       address: '-',
       region: '-',
       noInduk: '-',
+      nik: '-',
+      phone: '-',
       abodemen: '0',
       tglOrder: '-',
       paket: '-',
       kodeInstalasi: '-',
       isPaid: false,
+      ticketId: null,
+      rawStatus: null,
     }
   return {
     name: found.name,
     address: found.address,
-    region: 'Kabupaten / DI Yogyakarta',
+    region: found.village || '-',
     noInduk: found.id,
-    abodemen: '10,000.00',
-    tglOrder: '2024-11-11',
+    nik: found.nik,
+    phone: found.phone,
+    abodemen: found.rawData?.package?.installation_fee || '0',
+    tglOrder: found.orderDate || found.createdAt,
     paket: found.type,
-    kodeInstalasi: found.id.replace('#MA-', '5..12.'),
-    isPaid: false,
+    kodeInstalasi: found.id,
+    isPaid: found.rawStatus === 'unpaid' || found.rawStatus === 'processing' || found.rawStatus === 'completed',
+    ticketId: found.ticketId,
+    rawStatus: found.rawStatus,
+    rawData: found.rawData,
   }
 })
+
+const handleProsesPasangBaru = async () => {
+  if (!customer.value.ticketId) return
+
+  const kodeInstalasi = customer.value.kodeInstalasi
+
+  const result = await transitionStatus(
+    customer.value.ticketId,
+    'surveyed',
+    'Lanjutkan tiket ke tahap Pasang Baru (Survey)?'
+  )
+
+  if (result.success) {
+    await fetchData()
+    router.push({
+      path: `/instalasi/status/pasang-baru/${encodeURIComponent(kodeInstalasi)}`,
+    })
+  }
+}
+
+const handlePrint = () => {
+  printDetail(customer.value, 'Permohonan')
+}
 </script>

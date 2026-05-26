@@ -83,19 +83,21 @@
       <div class="grid! grid-cols-1! sm:grid-cols-3! gap-3! mt-3!">
         <button
           @click="handleDelete"
-          class="flex! items-center! justify-center! gap-2! bg-red-500! hover:bg-red-600! text-white! font-bold! py-3! rounded-xl! text-sm! transition-all! shadow-lg! shadow-red-200/50! border-red-500!"
+          :disabled="!customer.ticketId"
+          class="flex! items-center! justify-center! gap-2! bg-red-500! hover:bg-red-600! text-white! font-bold! py-3! rounded-xl! text-sm! transition-all! shadow-lg! shadow-red-200/50! border-red-500! disabled:opacity-50! disabled:cursor-not-allowed!"
         >
           <font-awesome-icon icon="trash-alt" />
           Hapus Pelanggan
         </button>
         <button
+          @click="handlePrint"
           class="flex! items-center! justify-center! gap-2! border! border-slate-200! hover:bg-slate-50! text-slate-600! font-semibold! py-3! rounded-xl! text-sm! transition-all! bg-white!"
         >
           <font-awesome-icon icon="print" />
           Cetak
         </button>
         <button
-          @click="$router.back()"
+          @click="$router.push({ path: '/instalasi/status', query: { filter: 'cabut' } })"
           class="flex! items-center! justify-center! gap-2! border! border-slate-200! hover:bg-slate-50! text-slate-600! font-semibold! py-3! rounded-xl! text-sm! transition-all! bg-white!"
         >
           <font-awesome-icon icon="arrow-left" />
@@ -104,9 +106,7 @@
       </div>
     </div>
 
-    <!-- RIGHT COLUMN -->
     <div class="flex! flex-col! gap-6!">
-      <!-- History Timeline -->
       <ContentCard variant="bordered" padding="normal" rounded="2xl">
         <h3 class="text-sm! font-bold! text-slate-700! mb-4!">Riwayat Status</h3>
         <div class="space-y-3!">
@@ -171,38 +171,26 @@ defineOptions({ name: 'CabutDetail' })
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useInstalasiStatus } from '@/composables/useInstalasiStatus'
+import { useInstalasiActions } from '@/composables/useInstalasiActions'
 import ContentCard from '@/presentations/components/ui/ContentCard.vue'
-import Swal from 'sweetalert2'
 
 const route = useRoute()
 const router = useRouter()
-const { dataMap } = useInstalasiStatus()
+const { dataMap, fetchData } = useInstalasiStatus()
+const { deleteTicket, printDetail } = useInstalasiActions()
 const id = decodeURIComponent(route.params.id)
 
 const handleDelete = async () => {
-  const result = await Swal.fire({
-    title: 'Hapus Pelanggan?',
-    text: 'Data pelanggan ini akan dihapus secara permanen dari aplikasi!',
-    icon: 'warning',
-    showCancelButton: true,
-    confirmButtonColor: '#ef4444',
-    cancelButtonColor: '#64748b',
-    confirmButtonText: 'Ya, Hapus Permanen',
-    cancelButtonText: 'Batal',
-    reverseButtons: true,
-  })
-
-  if (result.isConfirmed) {
-    // Logic delete here
-    await Swal.fire({
-      title: 'Terhapus!',
-      text: 'Data pelanggan telah dihapus secara permanen.',
-      icon: 'success',
-      timer: 1500,
-      showConfirmButton: false,
-    })
-    router.push({ name: 'Status Instalasi' })
+  if (!customer.value.ticketId) return
+  const result = await deleteTicket(customer.value.ticketId, customer.value.name)
+  if (result.success) {
+    await fetchData()
+    router.push({ path: '/instalasi/status', query: { filter: 'cabut' } })
   }
+}
+
+const handlePrint = () => {
+  printDetail({ ...customer.value, tglOrder: customer.value.tglPasang }, 'Cabut')
 }
 
 const timeline = [
@@ -221,22 +209,31 @@ const customer = computed(() => {
       address: '-',
       region: '-',
       noInduk: '-',
+      nik: '-',
+      phone: '-',
       paket: '-',
       tglPasang: '-',
       tglCabut: '-',
       kodeInstalasi: '-',
       alasanCabut: '-',
+      ticketId: null,
+      rawStatus: null,
     }
   return {
     name: found.name,
     address: found.address,
-    region: 'Kabupaten / DI Yogyakarta',
+    region: found.village || '-',
     noInduk: found.id,
+    nik: found.nik,
+    phone: found.phone,
     paket: found.type,
-    tglPasang: '2020-01-15',
-    tglCabut: '2020-09-01',
-    kodeInstalasi: found.id.replace('#MA-', '5..12.'),
-    alasanCabut: 'Pindah Domisili',
+    tglPasang: found.orderDate || found.createdAt,
+    tglCabut: found.updatedAt || '-',
+    kodeInstalasi: found.id,
+    alasanCabut: 'Pencabutan Instalasi',
+    ticketId: found.ticketId,
+    rawStatus: found.rawStatus,
+    rawData: found.rawData,
   }
 })
 </script>

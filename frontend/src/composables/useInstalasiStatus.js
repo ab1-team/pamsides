@@ -1,9 +1,17 @@
 import { ref, computed, watch, onMounted } from 'vue'
-import { INSTALASI_STATUS_COLORS, INSTALASI_MENU_LIST } from '@/types/instalasiStatus'
+import { useRoute, useRouter } from 'vue-router'
+import {
+  INSTALASI_STATUS_COLORS,
+  INSTALASI_MENU_LIST,
+  INSTALASI_RAW_STATUS_LABELS,
+} from '@/types/instalasiStatus'
 import ticketService from '@/services/ticket.service'
 
 export function useInstalasiStatus() {
-  const activeStatus = ref('permohonan')
+  const route = useRoute()
+  const router = useRouter()
+
+  const activeStatus = ref(route.query.filter || 'permohonan')
   const currentPage = ref(1)
   const perPage = ref(10)
   const searchQuery = ref('')
@@ -15,7 +23,6 @@ export function useInstalasiStatus() {
     return menuList.find((m) => m.key === activeStatus.value)?.label || ''
   })
 
-  // Peta data dinamis dari database
   const dataMap = ref({
     permohonan: [],
     pasang_baru: [],
@@ -39,22 +46,36 @@ export function useInstalasiStatus() {
 
         response.data.data.forEach((ticket) => {
           const status = ticket.status
-          let category = 'permohonan'
-          let mappedStatusLabel = 'Permohonan'
+          let category = null
+          let mappedStatusLabel = ''
 
-          if (['surveyed', 'unpaid', 'processing'].includes(status)) {
+          if (status === 'pending') {
+            category = 'permohonan'
+            mappedStatusLabel = 'Permohonan'
+          } else if (['surveyed', 'unpaid', 'processing'].includes(status)) {
             category = 'pasang_baru'
             mappedStatusLabel = 'Pasang Baru'
           } else if (status === 'completed') {
             category = 'aktif'
             mappedStatusLabel = 'Aktif'
+          } else if (status === 'suspended') {
+            category = 'blokir'
+            mappedStatusLabel = 'Blokir'
+          } else if (status === 'terminated') {
+            category = 'cabut'
+            mappedStatusLabel = 'Cabut'
           }
+
+          if (!category) return
 
           freshMap[category].push({
             id:
               ticket.customer?.[0]?.customer_code ||
               `#INS-${ticket.id.toString().padStart(4, '0')}`,
+            ticketId: ticket.id,
             name: ticket.applicant_name || '-',
+            nik: ticket.nik || '-',
+            phone: ticket.phone || '-',
             initials: ticket.applicant_name
               ? ticket.applicant_name
                   .split(' ')
@@ -65,8 +86,19 @@ export function useInstalasiStatus() {
               : '?',
             color: ['#3B82F6', '#8B5CF6', '#10B981', '#F59E0B', '#EF4444'][ticket.id % 5],
             type: ticket.package?.name || '-',
+            packageId: ticket.package_id || null,
             address: ticket.address || '-',
-            status: mappedStatusLabel,
+            village: ticket.village?.name || '-',
+            villageId: ticket.village_id || null,
+            lat: ticket.lat || null,
+            lng: ticket.lng || null,
+            orderDate: ticket.order_date || '-',
+            category: mappedStatusLabel,
+            status: INSTALASI_RAW_STATUS_LABELS[status] || status,
+            rawStatus: status,
+            createdAt: ticket.created_at || '-',
+            updatedAt: ticket.updated_at || '-',
+            rawData: ticket,
           })
         })
         dataMap.value = freshMap
@@ -122,13 +154,27 @@ export function useInstalasiStatus() {
     currentPage.value = page
   }
 
-  // Reset halaman saat status atau pencarian berubah
   watch([activeStatus, searchQuery], () => {
     currentPage.value = 1
   })
 
+  watch(activeStatus, (val) => {
+    if (route.path === '/instalasi/status' && route.query.filter !== val) {
+      router.replace({ path: '/instalasi/status', query: { filter: val } })
+    }
+  })
+
   const exportData = () => console.log('Export Excel for', activeLabel.value)
   const printData = () => console.log('Print Table for', activeLabel.value)
+
+  const getCategoryByStatus = (rawStatus) => {
+    if (rawStatus === 'pending') return 'permohonan'
+    if (['surveyed', 'unpaid', 'processing'].includes(rawStatus)) return 'pasang_baru'
+    if (rawStatus === 'completed') return 'aktif'
+    if (rawStatus === 'suspended') return 'blokir'
+    if (rawStatus === 'terminated') return 'cabut'
+    return null
+  }
 
   return {
     activeStatus,
@@ -148,5 +194,8 @@ export function useInstalasiStatus() {
     goToPage,
     exportData,
     printData,
+    fetchData,
+    isLoading,
+    getCategoryByStatus,
   }
 }
