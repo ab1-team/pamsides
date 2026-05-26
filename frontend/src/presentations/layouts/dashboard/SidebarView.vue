@@ -230,15 +230,6 @@ const menuItems = [
     children: [
       { label: 'Register Instalasi', to: '/instalasi/register', roles: ['admin'] },
       { label: 'Status Instalasi', to: '/instalasi/status', roles: ['admin'] },
-      {
-        label: 'Pemasangan',
-        icon: 'tools',
-        roles: ['admin', 'teknisi'],
-        children: [
-          { label: 'Pemasangan Baru', to: '/instalasi/pemasangan' },
-          { label: 'Daftar Pemasangan', to: '/instalasi/pemasangan/daftar' },
-        ],
-      },
     ],
   },
   {

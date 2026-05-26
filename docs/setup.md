@@ -8,11 +8,12 @@ Selamat datang di panduan instalasi resmi **Pamsides**. Ikuti langkah-langkah di
 
 Sebelum memulai, pastikan mesin Anda telah terinstal perangkat lunak berikut:
 
-*   **Node.js**: Versi LTS (v22 ke atas direkomendasikan)
+*   **Node.js**: Versi LTS (v22 ke atas direkomendasikan, minimum v20.19)
 *   **pnpm**: Versi 10+ (`npm install -g pnpm`)
-*   **PHP**: Versi 8.3 ke atas (dengan ekstensi yang diperlukan oleh Laravel)
+*   **PHP**: Versi 8.3 ke atas (dengan ekstensi standar Laravel: `pdo_mysql`, `mbstring`, `openssl`, `tokenizer`, `xml`, `ctype`, `json`, `bcmath`, `gd`, `fileinfo`, `zip`)
 *   **Composer**: Versi 2.x
-*   **Database**: MySQL atau MariaDB (direkomendasikan melalui **Laragon** untuk pengguna Windows)
+*   **Database**: MySQL 8.0 atau MariaDB (direkomendasikan melalui **Laragon** untuk pengguna Windows)
+*   **Docker** *(opsional)*: Jika ingin menjalankan stack lewat `docker-compose`
 
 ---
 
@@ -56,16 +57,19 @@ Buka file `.env` di folder `backend` dan sesuaikan pengaturan database Anda:
 DB_CONNECTION=mysql
 DB_HOST=127.0.0.1
 DB_PORT=3306
-DB_DATABASE=pamsides_db
+DB_DATABASE=pamsides
 DB_USERNAME=root
 DB_PASSWORD=
 ```
 
-Setelah konfigurasi selesai, jalankan migrasi untuk membuat tabel:
+Buat database `pamsides` di MySQL (atau melalui Laragon → Database) sebelum menjalankan migrasi. Setelah konfigurasi selesai, jalankan migrasi beserta seeder:
 
 ```bash
 php artisan migrate --seed
 ```
+
+> [!NOTE]
+> Seeder akan membuat user admin awal dan contoh paket instalasi sesuai roadmap Phase 1.
 
 ### 4. Konfigurasi Frontend (Vue.js + Vite)
 
@@ -89,12 +93,41 @@ php artisan serve
 ```
 Aplikasi backend biasanya akan berjalan di `http://127.0.0.1:8000`.
 
+> [!TIP]
+> Sebagai alternatif, gunakan `composer dev` di folder `backend` untuk menjalankan `php artisan serve`, `queue:listen`, dan `vite` secara paralel dalam satu terminal.
+
 ### Terminal 2: Frontend
 ```bash
 cd frontend
 pnpm run dev
 ```
 Aplikasi frontend akan berjalan di `http://localhost:5173` (atau port lain yang muncul di terminal).
+
+---
+
+## 🐳 Menjalankan via Docker (Opsional)
+
+Proyek ini menyediakan `docker-compose.yml` untuk menjalankan service `app` (PHP-FPM), `web` (Nginx), `db` (MySQL 8), dan `redis`.
+
+```bash
+docker compose up -d --build
+docker compose exec app composer install
+docker compose exec app php artisan key:generate
+docker compose exec app php artisan migrate --seed
+```
+
+Backend dapat diakses di `http://localhost:8000`. MySQL container terekspos di port `3307` host.
+
+---
+
+## 🧪 Testing
+
+Backend menggunakan **Pest** untuk pengujian:
+
+```bash
+cd backend
+composer test
+```
 
 ---
 
