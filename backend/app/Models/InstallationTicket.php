@@ -11,6 +11,7 @@ class InstallationTicket extends Model
         'user_id',
         'applicant_name',
         'nik',
+        'order_date',
         'address',
         'phone',
         'gender',
@@ -19,6 +20,7 @@ class InstallationTicket extends Model
         'lat',
         'lng',
         'status',
+        'village_id',
         'created_by',
     ];
 
@@ -49,6 +51,6 @@ class InstallationTicket extends Model
 
     public function village()
     {
-        return $this->belongsTo(Village::class);
+        return $this->belongsTo(Village::class, 'village_id');
     }
 }

@@ -1,24 +1,27 @@
 <?php
 
-use App\Http\Controllers\ActivationController;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Route;
+
 // Import Semua Controller
 use App\Http\Controllers\AuthController;
-use App\Http\Controllers\BillingController;
-use App\Http\Controllers\CustomerController;
+use App\Http\Controllers\ActivationController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\BillingController;
 use App\Http\Controllers\InstallationPackageController;
 use App\Http\Controllers\InstallationResultController;
 use App\Http\Controllers\InstallationTicketController;
+use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\CustomerController;
+use App\Http\Controllers\ReportController;
+use App\Http\Controllers\SurveyResultController;
+use App\Http\Controllers\WaterTariffBlockController;
 use App\Http\Controllers\MeterReadingController;
 use App\Http\Controllers\MonthlyBillController;
-use App\Http\Controllers\PaymentController;
-use App\Http\Controllers\PelangganPortalController;
-use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SettingController;
-use App\Http\Controllers\SurveyResultController;
+use App\Http\Controllers\PelangganPortalController;
 use App\Http\Controllers\VillageController;
-use App\Http\Controllers\WaterTariffBlockController;
-use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\UserController;
 
 /*
 |--------------------------------------------------------------------------
@@ -26,6 +29,9 @@ use Illuminate\Support\Facades\Route;
 |--------------------------------------------------------------------------
 */
 Route::post('/login', [AuthController::class, 'login']);
+Route::get('/health', function() {
+    return response()->json(['status' => 'OK']);
+});
 
 /*
 |--------------------------------------------------------------------------
@@ -33,9 +39,9 @@ Route::post('/login', [AuthController::class, 'login']);
 |--------------------------------------------------------------------------
 */
 Route::middleware('auth:sanctum')->group(function () {
-    Route::post('/logout', [AuthController::class, 'logout']);
+    Route::post('/logout',  [AuthController::class, 'logout']);
     Route::post('/refresh', [AuthController::class, 'refresh']);
-    Route::get('/me', [AuthController::class, 'me']);
+    Route::get('/me',       [AuthController::class, 'me']);
 
     // Route Settings (Bisa diakses semua role untuk dropdown form)
     Route::get('settings/kecamatan', [SettingController::class, 'getKecamatan']);
@@ -44,18 +50,32 @@ Route::middleware('auth:sanctum')->group(function () {
 
 /*
 |--------------------------------------------------------------------------
+| Shared Routes (Bisa diakses Admin & Surveyor)
+|--------------------------------------------------------------------------
+*/
+Route::middleware(['auth:sanctum', 'role:admin,surveyor'])->group(function () {
+    // Dipindahkan ke sini agar admin bisa membaca draft & surveyor bisa membaca pending
+    Route::get('installation-tickets', [InstallationTicketController::class, 'index']);
+    Route::get('installation-tickets/{installationTicket}', [InstallationTicketController::class, 'show']);
+});
+
+/*
+|--------------------------------------------------------------------------
 | Admin Routes
 |--------------------------------------------------------------------------
 */
 Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
-    Route::get('/test-admin', fn () => response()->json(['message' => 'Kamu admin!']));
-
+    Route::get('/test-admin', fn() => response()->json(['message' => 'Kamu admin!']));
+    
+    // User
+    Route::apiResource('users', UserController::class);
+    
     // Master Villages
     Route::apiResource('villages', VillageController::class);
 
     // Master Customers
     Route::get('/customers', [CustomerController::class, 'index']);
-    Route::post('/customers', [CustomerController::class, 'store']);
+    Route::post('/customers', [CustomerController::class, 'store']); 
     Route::put('/customers/{id}', [CustomerController::class, 'update']);
     Route::delete('/customers/{id}', [CustomerController::class, 'destroy']);
     Route::get('/customers/{id}', [CustomerController::class, 'show']);
@@ -64,17 +84,15 @@ Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
     Route::apiResource('installation-packages', InstallationPackageController::class);
     Route::apiResource('installation-packages.water-tariff-blocks', WaterTariffBlockController::class);
 
-    // Installation Tickets Management
-    Route::get('installation-tickets', [InstallationTicketController::class, 'index']);
+    // Installation Tickets Management (Route GET index & show sudah dipindahkan ke grup atas)
     Route::put('installation-tickets/{id}/register', [InstallationTicketController::class, 'registerInstallation']);
-    Route::get('installation-tickets/{installationTicket}', [InstallationTicketController::class, 'show']);
     Route::patch('installation-tickets/{installationTicket}/transition', [InstallationTicketController::class, 'transition']);
     Route::post('installation-tickets/{installationTicket}/payment', [PaymentController::class, 'store']);
     Route::post('installation-tickets/{installationTicket}/activate', [ActivationController::class, 'activate']);
-
+    
     // Billing & Invoices
-    Route::get('bills/recap', [BillingController::class, 'recap']);
-    Route::post('bills/generate', [BillingController::class, 'generate']);
+    Route::get('bills/recap',         [BillingController::class, 'recap']);
+    Route::post('bills/generate',     [BillingController::class, 'generate']);
     Route::get('bills/{monthlyBill}', [BillingController::class, 'show']);
 
     Route::get('monthly-bills', [MonthlyBillController::class, 'index']);
@@ -85,12 +103,12 @@ Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
     Route::get('dashboard/statistics', [DashboardController::class, 'statistics']);
 
     // Reports Management
-    Route::get('reports/installations', [InstallationTicketController::class, 'report']);
-    Route::get('reports/bills', [MonthlyBillController::class, 'report']);
-    Route::get('reports/billing', [ReportController::class, 'billing']);
-    Route::get('reports/installation', [ReportController::class, 'installation']);
-    Route::get('reports/billing/export-csv', [ReportController::class, 'exportBillingCsv']);
-    Route::get('reports/billing/export-pdf', [ReportController::class, 'exportBillingPdf']);
+    Route::get('reports/installations',           [InstallationTicketController::class, 'report']);
+    Route::get('reports/bills',                   [MonthlyBillController::class, 'report']);
+    Route::get('reports/billing',                 [ReportController::class, 'billing']);
+    Route::get('reports/installation',            [ReportController::class, 'installation']);
+    Route::get('reports/billing/export-csv',      [ReportController::class, 'exportBillingCsv']);
+    Route::get('reports/billing/export-pdf',      [ReportController::class, 'exportBillingPdf']);
     Route::get('reports/installation/export-csv', [ReportController::class, 'exportInstallationCsv']);
     Route::get('reports/installation/export-pdf', [ReportController::class, 'exportInstallationPdf']);
 });
@@ -101,12 +119,10 @@ Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
 |--------------------------------------------------------------------------
 */
 Route::middleware(['auth:sanctum', 'role:surveyor'])->group(function () {
-    Route::get('installation-tickets', [InstallationTicketController::class, 'index']);
-    Route::get('installation-tickets/{installationTicket}', [InstallationTicketController::class, 'show']);
+    // Route GET index & show yang menimpa admin sebelumnya sudah dihapus dari sini karena dipindah ke atas
     Route::post('installation-tickets/{installationTicket}/survey', [SurveyResultController::class, 'store']);
 
     // route surveyor lainnya...
-
 });
 
 /*
@@ -115,18 +131,24 @@ Route::middleware(['auth:sanctum', 'role:surveyor'])->group(function () {
 |--------------------------------------------------------------------------
 */
 Route::middleware(['auth:sanctum', 'role:teknisi'])->group(function () {
-    Route::get('/test-teknisi', fn () => response()->json(['message' => 'Kamu teknisi!']));
-
+    Route::get('/test-teknisi', fn() => response()->json(['message' => 'Kamu teknisi!']));
+    
     Route::post('installation-tickets/{installationTicket}/installation-result', [InstallationResultController::class, 'store']);
     Route::get('meter-readings/pending', [MeterReadingController::class, 'index']);
     Route::post('meter-readings', [MeterReadingController::class, 'store']);
 });
 
+/*
+|--------------------------------------------------------------------------
+| Pelanggan Routes
+|--------------------------------------------------------------------------
+*/
 Route::middleware(['auth:sanctum', 'role:pelanggan'])->group(function () {
-    Route::get('/test-pelanggan', fn () => response()->json(['message' => 'Kamu pelanggan!']));
+    Route::get('/test-pelanggan', fn() => response()->json(['message' => 'Kamu pelanggan!']));
 
+    // Portal pelanggan routes...
     Route::get('/pelanggan/dashboard', [PelangganPortalController::class, 'dashboard']);
     Route::get('/pelanggan/bill-detail/{id?}', [PelangganPortalController::class, 'billDetail']);
     Route::get('/pelanggan/bill-history', [PelangganPortalController::class, 'billHistory']);
-    Route::get('/pelanggan/profile', [PelangganPortalController::class, 'profile']);
+    Route::get('/pelanggan/profile',   [PelangganPortalController::class, 'profile']);
 });
