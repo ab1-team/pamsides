@@ -9,7 +9,9 @@ export const ticketService = {
    * @param {Object} params - { status, search, page }
    */
   async getTickets(params = {}) {
-    const response = await api.get('/installation-tickets', { params })
+    const response = await api.get('/installation-tickets', {
+      params
+    })
     return response.data
   },
 
@@ -33,7 +35,9 @@ export const ticketService = {
    * Transisi status tiket
    */
   async transitionStatus(id, status) {
-    const response = await api.patch(`/installation-tickets/${id}/transition`, { status })
+    const response = await api.patch(`/installation-tickets/${id}/transition`, {
+      status
+    })
     return response.data
   },
 
@@ -54,7 +58,9 @@ export const ticketService = {
    * Konfirmasi pembayaran instalasi
    */
   async confirmTicketPayment(id, amount) {
-    const response = await api.post(`/installation-tickets/${id}/payment`, { amount })
+    const response = await api.post(`/installation-tickets/${id}/payment`, {
+      amount
+    })
     return response.data
   },
 
@@ -62,11 +68,12 @@ export const ticketService = {
    * Input hasil instalasi (Teknisi)
    */
   async submitInstallationResult(id, formData) {
-    const response = await api.post(`/installation-tickets/${id}/installation-result`, formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    })
+    const response = await api.post(`/installation-tickets/${id}/installation-result`,
+      formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      })
     return response.data
   },
 
@@ -75,6 +82,11 @@ export const ticketService = {
    */
   async activateCustomer(id) {
     const response = await api.post(`/installation-tickets/${id}/activate`)
+    return response.data
+  },
+
+  async registerTicket(id, registrationData) {
+    const response = await api.put(`/installation-tickets/${id}/register`, registrationData)
     return response.data
   },
 }
