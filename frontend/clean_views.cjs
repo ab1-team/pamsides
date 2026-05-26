@@ -1,5 +1,4 @@
 const fs = require('fs');
-const path = require('path');
 
 const files = [
   "C:\\laragon\\www\\pamsides-v2\\frontend\\src\\views\\auth\\LoginView.vue",

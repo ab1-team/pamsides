@@ -328,7 +328,6 @@
   import BaseInput from '@/presentations/components/ui/BaseInput.vue'
   import BaseSelect from '@/presentations/components/ui/BaseSelect.vue'
   import AppDatePicker from '@/presentations/components/AppDatePicker.vue'
-  import MaksMoneyInput from '@/presentations/components/MaksMoneyInput.vue'
   import ticketService from '@/services/ticket.service.js'
 
   const isCustomerDropdownOpen = ref(false)

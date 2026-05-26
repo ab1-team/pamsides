@@ -224,7 +224,7 @@ import ContentCard from '@/presentations/components/ui/ContentCard.vue'
 import BaseInput from '@/presentations/components/ui/BaseInput.vue'
 import BaseButton from '@/presentations/components/ui/BaseButton.vue'
 import profileService from '@/services/profile.service'
-import { MySwal } from '@/utils/swal'
+import { showSuccessToast, showErrorToast } from '@/utils/swal'
 
 const ProfileField = {
   name: 'ProfileField',
@@ -318,34 +318,6 @@ const formattedBirthDate = computed(() => {
 watch(showModal, (val) => {
   document.body.style.overflow = val ? 'hidden' : ''
 })
-
-const showSuccessToast = (title) => {
-  MySwal.fire({
-    toast: true,
-    position: 'top-end',
-    icon: 'success',
-    title,
-    showConfirmButton: false,
-    timer: 3000,
-    timerProgressBar: true,
-    customClass: { popup: 'swal-toast-custom', title: 'swal-toast-title' },
-  })
-}
-
-const showErrorToast = (error) => {
-  const message =
-    error?.response?.data?.message || error?.message || 'Terjadi kesalahan pada server'
-  MySwal.fire({
-    toast: true,
-    position: 'top-end',
-    icon: 'error',
-    title: message,
-    showConfirmButton: false,
-    timer: 4000,
-    timerProgressBar: true,
-    customClass: { popup: 'swal-toast-custom', title: 'swal-toast-title' },
-  })
-}
 
 const loadProfile = async () => {
   try {
