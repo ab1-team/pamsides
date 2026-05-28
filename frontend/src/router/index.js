@@ -187,6 +187,11 @@ const router = createRouter({
           name: 'Input Pemakaian Air Teknisi',
           component: TeknisiPemakaianAir,
         },
+        {
+          path: '/teknisi/daftar-tagihan',
+          name: 'Daftar Tagihan Teknisi',
+          component: () => import('@/presentations/views/dashboard/teknisi/DaftarTagihan.vue'),
+        },
 
         {
           path: '/transaksi/jurnal-umum',

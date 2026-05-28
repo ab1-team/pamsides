@@ -13,27 +13,38 @@
       <!-- Header Section -->
       <div class="flex! flex-col! lg:flex-row! lg:items-center! justify-between! mb-8! gap-6!">
         <div>
-          <h1 class="text-3xl! font-extrabold! text-slate-800! tracking-tight!">
-            Technical <span class="text-cyan-500!">Operations</span>
+          <div
+            class="inline-flex! items-center! gap-2! bg-cyan-500/10! border! border-cyan-500/20! px-4! py-1.5! rounded-full! mb-3!"
+          >
+            <span class="w-2! h-2! bg-cyan-500! rounded-full! animate-pulse!"></span>
+            <span class="text-xs! font-black! text-cyan-600! uppercase! tracking-widest!"
+              >Teknisi Lapangan</span
+            >
+          </div>
+          <h1 class="text-2xl! lg:text-3xl! font-black! text-slate-800! tracking-tight!">
+            Selamat Datang,
+            <span class="text-transparent! bg-clip-text! bg-gradient-to-r! from-cyan-500! to-blue-500!"
+              >{{ teknisiName }}</span
+            >
           </h1>
-          <p class="text-slate-500! mt-1! font-medium!">
-            Ringkasan tugas lapangan, pencatatan meter, dan pemeliharaan jaringan.
+          <p class="text-slate-500! mt-2! text-sm! font-medium!">
+            Ringkasan pencatatan meter bulanan dan tugas instalasi Anda.
           </p>
         </div>
         <div class="flex! items-center! gap-4!">
           <div
-            class="bg-white! px-5! py-3! rounded-2xl! shadow-sm! border! border-slate-100! flex! items-center! gap-4!"
+            class="bg-white! px-4! py-3! rounded-2xl! shadow-sm! border! border-slate-100! flex! items-center! gap-3!"
           >
             <div
-              class="w-10! h-10! rounded-xl! bg-cyan-50! text-cyan-600! flex! items-center! justify-center!"
+              class="w-9! h-9! rounded-lg! bg-cyan-50! text-cyan-600! flex! items-center! justify-center!"
             >
-              <font-awesome-icon icon="calendar-day" />
+              <font-awesome-icon icon="calendar-day" class="text-sm!" />
             </div>
             <div>
-              <div class="text-[10px]! font-black! text-slate-400! uppercase! tracking-widest!">
+              <div class="text-[9px]! font-black! text-slate-400! uppercase! tracking-widest!">
                 Periode Aktif
               </div>
-              <div class="text-sm! font-bold! text-slate-700!">Bulan Ini</div>
+              <div class="text-xs! font-bold! text-slate-700!">{{ currentMonth }}</div>
             </div>
           </div>
         </div>
@@ -54,8 +65,8 @@
           >
             <font-awesome-icon icon="tachometer-alt" />
           </div>
-          <h3 class="text-xl! font-black! text-white! mb-1!">Catat Meter</h3>
-          <p class="text-xs! text-cyan-100! font-medium!">Input pemakaian pelanggan bulan ini</p>
+          <h3 class="text-lg! font-black! text-white! mb-1!">Catat Meter Bulanan</h3>
+          <p class="text-xs! text-cyan-100! font-medium!">Pencatatan pemakaian air per bulan</p>
           <div
             class="mt-4! flex! items-center! gap-2! text-white! text-[10px]! font-bold! uppercase! tracking-widest!"
           >
@@ -67,52 +78,53 @@
           </div>
         </div>
 
-        <!-- Secondary Action: Laporan Gangguan -->
+        <!-- Secondary Action: Daftar Tagihan -->
         <div
-          class="group! cursor-pointer! bg-white! border! border-slate-100! p-6! rounded-3xl! shadow-sm! relative! overflow-hidden! transition-all! hover:-translate-y-1! hover:border-amber-200! hover:shadow-xl! hover:shadow-amber-500/10!"
+          @click="$router.push('/teknisi/daftar-tagihan')"
+          class="group! cursor-pointer! bg-white! border! border-slate-100! p-6! rounded-3xl! shadow-sm! relative! overflow-hidden! transition-all! hover:-translate-y-1! hover:border-rose-200! hover:shadow-xl! hover:shadow-rose-500/10!"
         >
           <div
-            class="w-12! h-12! bg-amber-50! rounded-xl! flex! items-center! justify-center! text-amber-500! text-xl! mb-4! group-hover:scale-110! transition-transform!"
+            class="w-12! h-12! bg-rose-50! rounded-xl! flex! items-center! justify-center! text-rose-500! text-xl! mb-4! group-hover:scale-110! transition-transform!"
           >
-            <font-awesome-icon icon="exclamation-triangle" />
+            <font-awesome-icon icon="file-invoice-dollar" />
           </div>
-          <h3 class="text-xl! font-black! text-slate-800! mb-1!">Gangguan</h3>
-          <p class="text-xs! text-slate-500! font-medium!">Tinjau laporan kebocoran / macet</p>
+          <h3 class="text-lg! font-black! text-slate-800! mb-1!">Daftar Tagihan</h3>
+          <p class="text-xs! text-slate-500! font-medium!">Lihat tagihan tertunggak pelanggan</p>
         </div>
 
         <!-- Stats: Target Pencatatan -->
         <div
-          class="bg-white! border! border-slate-100! p-6! rounded-3xl! shadow-sm! lg:col-span-2! flex! flex-col! justify-center!"
+          class="bg-white! border! border-slate-100! p-4! rounded-3xl! shadow-sm! lg:col-span-2! flex! flex-col! justify-center!"
         >
-          <div class="flex! items-center! justify-between! mb-4!">
-            <div class="flex! items-center! gap-3!">
+          <div class="flex! items-center! justify-between! mb-3!">
+            <div class="flex! items-center! gap-2!">
               <div
-                class="w-10! h-10! rounded-xl! bg-emerald-50! text-emerald-500! flex! items-center! justify-center!"
+                class="w-8! h-8! rounded-lg! bg-emerald-50! text-emerald-500! flex! items-center! justify-center!"
               >
-                <font-awesome-icon icon="tasks" />
+                <font-awesome-icon icon="tasks" class="text-sm!" />
               </div>
               <div>
-                <h3 class="text-sm! font-bold! text-slate-800!">Progres Catat Meter</h3>
-                <p class="text-[10px]! font-black! text-slate-400! uppercase! tracking-widest!">
-                  Bulan Ini
+                <h3 class="text-xs! font-bold! text-slate-800!">Pencatatan Meter Bulanan</h3>
+                <p class="text-[9px]! font-black! text-slate-400! uppercase! tracking-widest!">
+                  {{ currentMonth }}
                 </p>
               </div>
             </div>
             <div class="text-right!">
-              <div class="text-2xl! font-black! text-slate-800!">
+              <div class="text-xl! font-black! text-slate-800!">
                 {{ readCustomers }}
-                <span class="text-sm! font-bold! text-slate-400!">/ {{ totalCustomers }}</span>
+                <span class="text-xs! font-bold! text-slate-400!">/ {{ totalCustomers }}</span>
               </div>
             </div>
           </div>
 
-          <div class="relative! w-full! h-3! bg-slate-100! rounded-full! overflow-hidden!">
+          <div class="relative! w-full! h-2.5! bg-slate-100! rounded-full! overflow-hidden!">
             <div
               class="absolute! top-0! left-0! h-full! bg-gradient-to-r! from-emerald-400! to-emerald-500! rounded-full! transition-all! duration-1000!"
               :style="{ width: meterProgressPercentage + '%' }"
             ></div>
           </div>
-          <div class="flex! justify-between! mt-2! text-[10px]! font-bold! text-slate-400!">
+          <div class="flex! justify-between! mt-1.5! text-[9px]! font-bold! text-slate-400!">
             <span>{{ meterProgressPercentage }}% Selesai</span>
             <span>{{ unreadCustomers }} Belum Dicatat</span>
           </div>
@@ -124,9 +136,8 @@
         <!-- Priority Tasks (Left, takes 2 cols) -->
         <div class="lg:col-span-2! space-y-6!">
           <div class="flex! items-center! justify-between!">
-            <h2 class="text-lg! font-black! text-slate-800! flex! items-center! gap-2!">
-              <font-awesome-icon icon="clipboard-list" class="text-cyan-500!" /> Tugas Pemasangan /
-              Survei
+            <h2 class="text-base! font-black! text-slate-800! flex! items-center! gap-2!">
+              <font-awesome-icon icon="clipboard-list" class="text-cyan-500! text-sm!" /> Tugas Instalasi & Pemasangan
             </h2>
             <button
               v-if="priorityTasks.length > 3"
@@ -182,6 +193,15 @@
               </div>
               <div class="sm:text-right! shrink-0!">
                 <BaseButton
+                  v-if="task.type === 'Instalasi'"
+                  variant="primary"
+                  size="sm"
+                  class="w-full! sm:w-auto! text-[10px]! font-black! uppercase!"
+                  @click="$router.push(`/teknisi/hasil-instalasi/${task.ticketId}`)"
+                  >Upload Hasil</BaseButton
+                >
+                <BaseButton
+                  v-else
                   variant="secondary"
                   size="sm"
                   class="w-full! sm:w-auto! text-[10px]! font-black! uppercase!"
@@ -194,8 +214,8 @@
 
         <!-- Quick Stats & Tools (Right Col) -->
         <div class="space-y-6!">
-          <h2 class="text-lg! font-black! text-slate-800! flex! items-center! gap-2!">
-            <font-awesome-icon icon="chart-pie" class="text-cyan-500!" /> Ikhtisar Kinerja
+          <h2 class="text-base! font-black! text-slate-800! flex! items-center! gap-2!">
+            <font-awesome-icon icon="chart-pie" class="text-cyan-500! text-sm!" /> Statistik Pekerjaan
           </h2>
 
           <ContentCard
@@ -203,24 +223,24 @@
             padding="none"
             class="border-0! shadow-xl! shadow-slate-200/40!"
           >
-            <div class="p-6! border-b! border-slate-50!">
-              <h3 class="text-sm! font-bold! text-slate-800!">Statistik Sistem</h3>
+            <div class="p-4! border-b! border-slate-50!">
+              <h3 class="text-xs! font-bold! text-slate-800!">Ringkasan Tugas</h3>
             </div>
-            <div class="p-6!">
-              <div class="grid! grid-cols-2! gap-4!">
+            <div class="p-4!">
+              <div class="grid! grid-cols-2! gap-3!">
                 <div
                   v-for="(stat, idx) in techStats"
                   :key="idx"
-                  class="bg-slate-50! p-4! rounded-2xl! text-center!"
+                  class="bg-slate-50! p-3! rounded-xl! text-center!"
                 >
                   <div
-                    :class="`w-8! h-8! rounded-lg! mx-auto! mb-2! flex! items-center! justify-center! ${stat.bg} ${stat.color}`"
+                    :class="`w-7! h-7! rounded-lg! mx-auto! mb-1.5! flex! items-center! justify-center! ${stat.bg} ${stat.color}`"
                   >
-                    <font-awesome-icon :icon="stat.icon" class="text-sm!" />
+                    <font-awesome-icon :icon="stat.icon" class="text-xs!" />
                   </div>
-                  <div class="text-lg! font-black! text-slate-800!">{{ stat.value }}</div>
+                  <div class="text-base! font-black! text-slate-800!">{{ stat.value }}</div>
                   <div
-                    class="text-[9px]! font-black! text-slate-400! uppercase! tracking-widest! mt-1!"
+                    class="text-[8px]! font-black! text-slate-400! uppercase! tracking-widest! mt-0.5!"
                   >
                     {{ stat.label }}
                   </div>
@@ -246,18 +266,39 @@ const dashboardData = ref(null)
 const pendingReadingsCount = ref(0)
 const isExpanded = ref(false)
 
+const userData = JSON.parse(localStorage.getItem('user_data') || '{}')
+const teknisiName = ref(userData.name || 'Teknisi')
+
+const currentMonth = computed(() => {
+  const months = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember']
+  const now = new Date()
+  return `${months[now.getMonth()]} ${now.getFullYear()}`
+})
+
 const fetchDashboardData = async () => {
   try {
     isLoading.value = true
 
+    const now = new Date()
+    const currentMonthNum = now.getMonth() + 1
+    const currentYear = now.getFullYear()
+
     // Gunakan Promise.all agar request berjalan paralel secara efisien
     const [statsRes, pendingRes] = await Promise.all([
       api.get('/dashboard/statistics'),
-      meterService.getPendingReadings(),
+      meterService.getPendingReadings({ month: currentMonthNum, year: currentYear }),
     ])
 
-    dashboardData.value = statsRes.data.data
-    pendingReadingsCount.value = pendingRes.data?.data?.length || pendingRes.data?.length || 0
+    dashboardData.value = statsRes.data.data || {}
+    
+    // Ambil total_customers dari response pending (ini adalah total customer aktif)
+    const totalActive = pendingRes.total_customers || 0
+    const belumDicatat = pendingRes.data?.length || 0
+    
+    // Set ke dashboardData
+    dashboardData.value.total_customers = totalActive
+    pendingReadingsCount.value = belumDicatat
+    
   } catch (error) {
     console.error('Error fetching dashboard data:', error)
   } finally {
@@ -280,23 +321,26 @@ const meterProgressPercentage = computed(() => {
   return Math.round((readCustomers.value / totalCustomers.value) * 100)
 })
 
-// Priority Tasks (Diambil dari tiket pemasangan terbaru)
+// Priority Tasks (Diambil dari tiket pemasangan yang perlu instalasi)
 const priorityTasks = computed(() => {
   if (!dashboardData.value?.latest_tickets) return []
-  return dashboardData.value.latest_tickets.map((ticket) => {
-    return {
-      type: ticket.status === 'pending' ? 'Perlu Survei' : 'Instalasi',
-      time: new Date(ticket.created_at).toLocaleDateString('id-ID', {
-        day: 'numeric',
-        month: 'short',
-      }),
-      title: ticket.applicant_name + ' - ' + (ticket.package?.name || 'Pemasangan Baru'),
-      location: ticket.address,
-      icon: ticket.status === 'pending' ? 'search' : 'wrench',
-      bgClass: ticket.status === 'pending' ? 'bg-amber-50' : 'bg-emerald-50',
-      textClass: ticket.status === 'pending' ? 'text-amber-500' : 'text-emerald-500',
-    }
-  })
+  return dashboardData.value.latest_tickets
+    .filter(ticket => ticket.status === 'processing' || ticket.status === 'paid')
+    .map((ticket) => {
+      return {
+        ticketId: ticket.id,
+        type: 'Instalasi',
+        time: new Date(ticket.created_at).toLocaleDateString('id-ID', {
+          day: 'numeric',
+          month: 'short',
+        }),
+        title: ticket.applicant_name + ' - ' + (ticket.package?.name || 'Pemasangan Baru'),
+        location: ticket.address,
+        icon: 'wrench',
+        bgClass: 'bg-cyan-50',
+        textClass: 'text-cyan-600',
+      }
+    })
 })
 
 const displayedTasks = computed(() => {
@@ -304,41 +348,40 @@ const displayedTasks = computed(() => {
   return priorityTasks.value.slice(0, 3)
 })
 
-// Kinerja (Diambil dari tiket by status)
+// Statistik Pekerjaan Teknisi
 const techStats = computed(() => {
   const statuses = dashboardData.value?.tickets_by_status || {}
   const completed = statuses['completed'] || 0
   const processing = statuses['processing'] || 0
-  const pending = statuses['pending'] || 0
 
   return [
     {
-      label: 'Tiket Selesai',
-      value: completed.toString(),
-      icon: 'check',
+      label: 'Meter Dicatat',
+      value: readCustomers.value.toString(),
+      icon: 'check-circle',
       color: 'text-emerald-600',
       bg: 'bg-emerald-100',
     },
     {
-      label: 'Proses Instalasi',
-      value: processing.toString(),
+      label: 'Belum Dicatat',
+      value: unreadCustomers.value.toString(),
+      icon: 'clock',
+      color: 'text-orange-600',
+      bg: 'bg-orange-100',
+    },
+    {
+      label: 'Instalasi Selesai',
+      value: completed.toString(),
       icon: 'wrench',
       color: 'text-blue-600',
       bg: 'bg-blue-100',
     },
     {
-      label: 'Antrean Survei',
-      value: pending.toString(),
+      label: 'Proses Instalasi',
+      value: processing.toString(),
       icon: 'tools',
-      color: 'text-amber-600',
-      bg: 'bg-amber-100',
-    },
-    {
-      label: 'Total Pelanggan',
-      value: totalCustomers.value.toString(),
-      icon: 'users',
-      color: 'text-indigo-600',
-      bg: 'bg-indigo-100',
+      color: 'text-cyan-600',
+      bg: 'bg-cyan-100',
     },
   ]
 })
