@@ -230,6 +230,7 @@ const menuItems = [
     children: [
       { label: 'Register Instalasi', to: '/instalasi/register', roles: ['admin'] },
       { label: 'Status Instalasi', to: '/instalasi/status', roles: ['admin'] },
+      { label: 'Hasil Survey', to: '/instalasi/hasil-survey', roles: ['admin'] },
     ],
   },
   {

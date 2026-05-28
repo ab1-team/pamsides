@@ -117,6 +117,11 @@ const router = createRouter({
           component: statusInstalasi,
         },
         {
+          path: '/instalasi/hasil-survey',
+          name: 'Hasil Survey',
+          component: () => import('@/presentations/views/dashboard/admin/instalasi/hasilSurvey.vue'),
+        },
+        {
           path: '/instalasi/status/permohonan/:id',
           name: 'Detail Permohonan',
           component: DetailPermohonan,
@@ -168,6 +173,11 @@ const router = createRouter({
           component: () => import('@/presentations/views/dashboard/teknisi/MeterReading.vue'),
         },
         {
+          path: '/teknisi/hasil-instalasi/:id',
+          name: 'Hasil Instalasi',
+          component: () => import('@/presentations/views/dashboard/teknisi/InstallationResult.vue'),
+        },
+        {
           path: '/pelanggan/tagihan-detail',
           name: 'Detail Tagihan',
           component: () => import('@/presentations/views/dashboard/pelanggan/BillDetail.vue'),
@@ -183,9 +193,24 @@ const router = createRouter({
           component: () => import('@/presentations/views/dashboard/pelanggan/LaporGangguan.vue'),
         },
         {
+          path: '/pelanggan/lapor-gangguan/form',
+          name: 'Form Lapor Gangguan',
+          component: () => import('@/presentations/views/dashboard/pelanggan/LaporGangguanForm.vue'),
+        },
+        {
           path: '/instalasi/teknisiPemakaianAir',
           name: 'Input Pemakaian Air Teknisi',
           component: TeknisiPemakaianAir,
+        },
+        {
+          path: '/teknisi/input-meter',
+          name: 'Input Meter Teknisi',
+          component: () => import('@/presentations/views/dashboard/teknisi/InputMeterTeknisi.vue'),
+        },
+        {
+          path: '/teknisi/daftar-tagihan',
+          name: 'Daftar Tagihan Teknisi',
+          component: () => import('@/presentations/views/dashboard/teknisi/DaftarTagihan.vue'),
         },
 
         {
@@ -251,8 +276,6 @@ router.beforeEach((to, from, next) => {
     localStorage.removeItem('user_role')
     localStorage.removeItem('auth_expires_at')
 
-    const uiStore = useUiStore()
-    uiStore.error('Sesi Anda telah berakhir. Silakan login kembali.')
     next({ name: 'login' })
     return
   }

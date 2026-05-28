@@ -39,11 +39,11 @@
             <div class="flex flex-row! flex-wrap! items-center! gap-x-8! gap-y-1!">
               <div class="flex items-center! gap-2! text-sm!">
                 <span class="text-slate-500! whitespace-nowrap!">Cater</span>
-                <span class="font-semibold! text-slate-700!">: {{ filter.cater || 'Fandi' }}</span>
+                <span class="font-semibold! text-slate-700!">: {{ filter.cater || 'Admin' }}</span>
               </div>
               <div class="flex items-center! gap-2! text-sm!">
                 <span class="text-slate-500! whitespace-nowrap!">Maksimal Bayar</span>
-                <span class="font-semibold! text-slate-700!">: 5/04/2026</span>
+                <span class="font-semibold! text-slate-700!">: 5/06/2026</span>
               </div>
             </div>
 

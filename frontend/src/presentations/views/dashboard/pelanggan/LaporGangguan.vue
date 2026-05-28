@@ -19,7 +19,66 @@
         </div>
       </div>
 
-      <div class="grid! grid-cols-1! lg:grid-cols-2! gap-8! mb-12!">
+      <div class="grid! grid-cols-1! lg:grid-cols-3! gap-8! mb-12!">
+        <ContentCard
+          variant="elevated"
+          padding="none"
+          class="border-0! shadow-[0_20px_50px_-12px_rgba(0,0,0,0.12)]! group! transition-all! cursor-pointer! rounded-3xl! overflow-hidden! relative! hover:-translate-y-2! hover:shadow-[0_30px_60px_-15px_rgba(0,0,0,0.2)]!"
+          @click="$router.push('/pelanggan/lapor-gangguan/form')"
+        >
+          <div class="absolute! top-0! right-0! p-6!">
+            <div class="flex! items-center! gap-2! bg-indigo-500/10! px-3! py-1! rounded-full!">
+              <div class="w-2! h-2! bg-indigo-500! rounded-full! animate-pulse!"></div>
+              <span class="text-[10px]! font-black! text-indigo-600! uppercase! tracking-widest!"
+                >Rekomendasi</span
+              >
+            </div>
+          </div>
+
+          <div class="p-6! lg:p-10! flex! flex-col! h-full!">
+            <div class="flex! items-center! gap-4! lg:gap-6! mb-8! lg:mb-10!">
+              <div
+                class="w-16! lg:w-20! h-16! lg:h-20! bg-gradient-to-br! from-indigo-400! to-indigo-600! text-white! rounded-2xl! lg:rounded-[2rem]! flex! items-center! justify-center! shadow-xl! shadow-indigo-200! group-hover:rotate-6! transition-transform!"
+              >
+                <font-awesome-icon icon="file-alt" class="text-2xl! lg:text-4xl!" />
+              </div>
+              <div>
+                <h3 class="text-lg! lg:text-xl! font-black! text-slate-800! tracking-tight!">
+                  Form Laporan
+                </h3>
+                <p
+                  class="text-[9px]! lg:text-[10px]! text-slate-400! font-black! uppercase! tracking-widest! mt-1!"
+                >
+                  Dengan Upload Foto
+                </p>
+              </div>
+            </div>
+
+            <p class="text-slate-500! leading-relaxed! mb-10! font-medium!">
+              Laporkan gangguan dengan detail lengkap dan foto. Tim teknisi akan lebih siap dengan
+              peralatan yang tepat.
+            </p>
+
+            <div
+              class="mt-auto! flex! items-center! justify-between! bg-slate-50! -mx-6! lg:-mx-10! -mb-6! lg:-mb-10! p-6! lg:p-8! border-t! border-slate-100! group-hover:bg-indigo-50! transition-colors!"
+            >
+              <div>
+                <div
+                  class="text-[9px]! lg:text-[10px]! font-black! text-slate-400! uppercase! tracking-widest! mb-1!"
+                >
+                  Respon Maksimal
+                </div>
+                <div class="text-lg! lg:text-xl! font-black! text-slate-800!">1x24 Jam</div>
+              </div>
+              <div
+                class="w-10! h-10! lg:w-12! lg:h-12! bg-slate-900! text-white! rounded-xl! lg:rounded-2xl! flex! items-center! justify-center! shadow-lg! group-hover:bg-indigo-600! transition-all!"
+              >
+                <font-awesome-icon icon="arrow-right" size="sm" />
+              </div>
+            </div>
+          </div>
+        </ContentCard>
+
         <ContentCard
           variant="elevated"
           padding="none"

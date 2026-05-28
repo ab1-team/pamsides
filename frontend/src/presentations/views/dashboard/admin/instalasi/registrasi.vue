@@ -420,10 +420,7 @@
       caterUsers.value = res.data?.data || res.data || []
     } catch (err) {
       console.error('Gagal memuat pengguna cater:', err)
-      caterUsers.value = [
-        { id: 2, name: 'Budi Surveyor', role: 'surveyor' },
-        { id: 3, name: 'Ini Teknisi', role: 'teknisi' }
-      ]
+      caterUsers.value = []
     }
   }
 

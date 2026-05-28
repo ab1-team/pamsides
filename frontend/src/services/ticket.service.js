@@ -32,6 +32,13 @@ export const ticketService = {
   },
 
   /**
+   * Alias untuk getTicketDetail
+   */
+  async getTicket(id) {
+    return this.getTicketDetail(id)
+  },
+
+  /**
    * Transisi status tiket
    */
   async transitionStatus(id, status) {
@@ -51,6 +58,26 @@ export const ticketService = {
         'Content-Type': 'multipart/form-data',
       },
     })
+    return response.data
+  },
+
+  /**
+   * Update hasil survey (Admin)
+   */
+  async updateSurvey(surveyId, formData) {
+    const response = await api.post(`/survey-results/${surveyId}`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    })
+    return response.data
+  },
+
+  /**
+   * Delete hasil survey (Admin)
+   */
+  async deleteSurvey(surveyId) {
+    const response = await api.delete(`/survey-results/${surveyId}`)
     return response.data
   },
 
@@ -75,6 +102,13 @@ export const ticketService = {
         },
       })
     return response.data
+  },
+
+  /**
+   * Alias untuk submitInstallationResult
+   */
+  async submitInstallation(id, formData) {
+    return this.submitInstallationResult(id, formData)
   },
 
   /**
