@@ -8,6 +8,7 @@ use App\Models\Customer;
 use App\Models\MeterReading;
 use App\Services\MonthlyBillService;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
@@ -32,8 +33,7 @@ class MonthlyBillController extends Controller
                 ->where('billing_period_year', $request->year);
         }
 
-        $bills = $query->latest()->get();
-
+        $bills = $query->with('customer.user')->latest()->get();
         return response()->json([
             'success' => true,
             'data' => [
@@ -45,38 +45,46 @@ class MonthlyBillController extends Controller
     //konfirmasi pembayaran
     public function pay($id)
     {
+        return DB::transaction(function () use ($id) {
 
-        $bill = MonthlyBill::findOrFail($id);
+            $bill = MonthlyBill::findOrFail($id);
 
-        if ($bill->status == 'paid') {
+            if ($bill->status == 'paid') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Tagihan sudah dibayar'
+                ], 400);
+            }
+
+            $bill->update([
+                'status' => 'paid'
+            ]);
+
+            BillPayment::create([
+                'bill_id' => $bill->id,
+                'amount_paid' => $bill->total_amount,
+                'confirmed_by' => Auth::id(),
+                'paid_at' => now()
+            ]);
+
             return response()->json([
-                'success' => false,
-                'message' => 'Tagihan sudah dibayar'
-            ], 400);
-        }
-
-        // update status
-        $bill->update([
-            'status' => 'paid'
-        ]);
-
-        // simpan pembayaran
-        BillPayment::create([
-            'bill_id' => $bill->id,
-            'amount_paid' => $bill->total_amount,
-            'confirmed_by' => Auth::id(),
-            'paid_at' => now()
-        ]);
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Pembayaran berhasil dikonfirmasi'
-        ]);
+                'success' => true,
+                'message' => 'Pembayaran berhasil dikonfirmasi'
+            ]);
+        });
     }
     
-    public function generate()
+    public function generate(Request $request)
     {
-        $result = $this->monthlyBillService->generate();
+        $request->validate([
+            'month' => 'required|integer',
+            'year' => 'required|integer',
+        ]);
+
+        $result = $this->monthlyBillService->generate(
+            $request->month,
+            $request->year
+        );
 
         if (!$result['status']) {
             return response()->json([
@@ -112,6 +120,34 @@ class MonthlyBillController extends Controller
             'success' => true,
             'data' => [
                 'summary' => $summary,
+                'bills' => $bills
+            ]
+        ]);
+    }
+    public function checkByCustomerCode($code)
+    {
+        $customer = Customer::where('customer_code', $code)->first();
+
+        if (!$customer) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Customer tidak ditemukan'
+            ], 404);
+        }
+
+        $bills = MonthlyBill::where('customer_id', $customer->id)
+            ->where('status', 'unpaid')
+            ->orderBy('billing_period_year')
+            ->orderBy('billing_period_month')
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'customer' => [
+                    'id' => $customer->id,
+                    'customer_code' => $customer->customer_code
+                ],
                 'bills' => $bills
             ]
         ]);

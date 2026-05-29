@@ -7,111 +7,137 @@ use App\Models\MeterReading;
 use App\Models\Customer;
 use App\Models\WaterTariffBlock;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class MonthlyBillService
 {
-    public function generate()
+    public function generate($bulan, $tahun)
     {
-        $now = now();
-        $bulan = $now->month;
-        $tahun = $now->year;
+        DB::beginTransaction();
 
-        // CEGAH GENERATE DOBEL
-        $exists = MonthlyBill::where('billing_period_month', $bulan)
-            ->where('billing_period_year', $tahun)
-            ->exists();
+        try {
 
-        if ($exists) {
-            return [
-                'status' => false,
-                'message' => 'Tagihan bulan ini sudah pernah digenerate'
-            ];
-        }
+            // CEGAH GENERATE DOBEL
+            $exists = MonthlyBill::where('billing_period_month', $bulan)
+                ->where('billing_period_year', $tahun)
+                ->exists();
 
-        // VALIDASI METER
-        $totalCustomer = Customer::count();
-
-        $totalReading = MeterReading::where('reading_month', $bulan)
-            ->where('reading_year', $tahun)
-            ->count();
-
-        if ($totalReading < $totalCustomer) {
-            return [
-                'status' => false,
-                'message' => 'Masih ada pelanggan yang belum dicatat meternya'
-            ];
-        }
-
-        $readings = MeterReading::where('reading_month', $bulan)
-            ->where('reading_year', $tahun)
-            ->get();
-
-        $count = 0;
-
-        foreach ($readings as $reading) {
-
-            $last = MeterReading::where('customer_id', $reading->customer_id)
-                ->where(function ($q) use ($bulan, $tahun) {
-                    $q->where('reading_year', '<', $tahun)
-                        ->orWhere(function ($q2) use ($bulan, $tahun) {
-                            $q2->where('reading_year', $tahun)
-                                ->where('reading_month', '<', $bulan);
-                        });
-                })
-                ->orderByDesc('reading_year')
-                ->orderByDesc('reading_month')
-                ->first();
-
-            if (!$last) continue;
-
-            $usage = $reading->meter_value - $last->meter_value;
-
-            if ($usage < 0) continue;
-
-            $customer = Customer::with('ticket.package')->find($reading->customer_id);
-
-            if (!$customer || !$customer->ticket || !$customer->ticket->package) {
-                continue;
+            if ($exists) {
+                return [
+                    'status' => false,
+                    'message' => 'Tagihan bulan ini sudah pernah digenerate'
+                ];
             }
 
-            $package = $customer->ticket->package;
+            // VALIDASI METER
+            $totalCustomer = Customer::count();
 
-            $usage_charge = $this->calculateTariff($usage, $package->id);
+            $totalReading = MeterReading::where('reading_month', $bulan)
+                ->where('reading_year', $tahun)
+                ->count();
 
-            $abodemen = $package->monthly_abodemen;
+            if ($totalReading < $totalCustomer) {
+                return [
+                    'status' => false,
+                    'message' => 'Masih ada pelanggan yang belum dicatat meternya'
+                ];
+            }
 
-            $penalty = $this->calculatePenalty(
-                $reading->customer_id,
-                $bulan,
-                $tahun,
-                $package
-            );
+            // AMBIL SEMUA CUSTOMER (hindari N+1)
+            $customers = Customer::with('ticket.package')
+                ->get()
+                ->keyBy('id');
 
-            $total = $usage_charge + $abodemen + $penalty;
+            // AMBIL SEMUA METER BULAN INI
+            $readings = MeterReading::where('reading_month', $bulan)
+                ->where('reading_year', $tahun)
+                ->get();
 
-            MonthlyBill::create([
-                'customer_id' => $reading->customer_id,
-                'billing_period_month' => $bulan,
-                'billing_period_year' => $tahun,
-                'meter_reading_start' => $last->meter_value,
-                'meter_reading_end' => $reading->meter_value,
-                'usage_m3' => $usage,
-                'usage_charge' => $usage_charge,
-                'abodemen' => $abodemen,
-                'penalty_amount' => $penalty,
-                'total_amount' => $total,
-                'status' => 'unpaid',
-                'due_date' => now()->addDays(20)
-            ]);
+            $count = 0;
 
-            $count++;
+            foreach ($readings as $reading) {
+
+                $customer = $customers[$reading->customer_id] ?? null;
+
+                if (!$customer || !$customer->ticket || !$customer->ticket->package) {
+                    continue;
+                }
+
+                // AMBIL METER SEBELUMNYA (FIX ORDER)
+                $last = MeterReading::where('customer_id', $reading->customer_id)
+                    ->where(function ($q) use ($bulan, $tahun) {
+                        $q->where('reading_year', '<', $tahun)
+                          ->orWhere(function ($q2) use ($bulan, $tahun) {
+                              $q2->where('reading_year', $tahun)
+                                 ->where('reading_month', '<', $bulan);
+                          });
+                    })
+                    ->orderByDesc(DB::raw('reading_year * 100 + reading_month'))
+                    ->first();
+
+                // HANDLE CUSTOMER BARU
+                $start = $last
+                    ? $last->meter_value
+                    : $customer->initial_meter_reading;
+
+                $end = $reading->meter_value;
+
+                $usage = $end - $start;
+
+                if ($usage < 0) continue;
+
+                $package = $customer->ticket->package;
+
+                // TARIF PROGRESIF
+                $usage_charge = $this->calculateTariff($usage, $package->id);
+
+                $abodemen = $package->monthly_abodemen ?? 0;
+
+                // DENDA
+                $penalty = $this->calculatePenalty(
+                    $reading->customer_id,
+                    $bulan,
+                    $tahun,
+                    $package
+                );
+
+                $total = $usage_charge + $abodemen + $penalty;
+
+                MonthlyBill::create([
+                    'customer_id' => $reading->customer_id,
+                    'billing_period_month' => $bulan,
+                    'billing_period_year' => $tahun,
+                    'meter_reading_start' => $start,
+                    'meter_reading_end' => $end,
+                    'usage_m3' => $usage,
+                    'usage_charge' => $usage_charge,
+                    'abodemen' => $abodemen,
+                    'penalty_amount' => $penalty,
+                    'total_amount' => $total,
+                    'status' => 'unpaid',
+                    'due_date' => now()->addDays(20)
+                ]);
+
+                $count++;
+            }
+
+            DB::commit();
+
+            return [
+                'status' => true,
+                'message' => 'Tagihan berhasil digenerate',
+                'total_generated' => $count
+            ];
+
+        } catch (\Exception $e) {
+
+            DB::rollBack();
+
+            return [
+                'status' => false,
+                'message' => $e->getMessage()
+            ];
         }
-
-        return [
-            'status' => true,
-            'message' => 'Tagihan berhasil digenerate',
-            'total_generated' => $count
-        ];
     }
 
     private function calculateTariff($usage, $package_id)
@@ -127,12 +153,14 @@ class MonthlyBillService
             if ($remaining <= 0) break;
 
             $min = $block->usage_min_m3;
-            $max = $block->usage_max_m3 ?? $remaining;
+            $max = $block->usage_max_m3 ?? $usage;
 
-            $range = $max - $min + 1;
-            $used = min($remaining, $range);
+            $blockVolume = $max - $min + 1;
+
+            $used = min($remaining, $blockVolume);
 
             $total += $used * $block->price_per_m3;
+
             $remaining -= $used;
         }
 
@@ -149,7 +177,7 @@ class MonthlyBillService
             ->first();
 
         if ($bill && $bill->status == 'unpaid') {
-            return $package->late_penalty;
+            return $package->late_penalty ?? 0;
         }
 
         return 0;

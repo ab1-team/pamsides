@@ -7,11 +7,12 @@ use Illuminate\Http\Request;
 use App\Models\MeterReading;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class MeterReadingController extends Controller
 {
     /**
-     * Display a listing of the resource.
+     * Display a listing of customers yang belum dicatat bulan ini.
      */
     public function index()
     {
@@ -19,11 +20,12 @@ class MeterReadingController extends Controller
         $bulan = $now->month;
         $tahun = $now->year;
 
-        // ambil customer yang belum ada meter bulan ini
-        $customers = Customer::whereDoesntHave('meterReadings', function ($query) use ($bulan, $tahun) {
-            $query->where('reading_month', $bulan)
-                ->where('reading_year', $tahun);
-        })->get();
+        $customers = Customer::with('user') // 🔥 penting untuk tampil nama
+            ->whereDoesntHave('meterReadings', function ($query) use ($bulan, $tahun) {
+                $query->where('reading_month', $bulan)
+                      ->where('reading_year', $tahun);
+            })
+            ->get();
 
         return response()->json([
             'message' => 'Daftar pelanggan yang belum dicatat meter bulan ini',
@@ -32,7 +34,7 @@ class MeterReadingController extends Controller
     }
 
     /**
-     * Store a newly created resource in storage.
+     * Store meter reading
      */
     public function store(Request $request)
     {
@@ -46,7 +48,7 @@ class MeterReadingController extends Controller
         $bulan = $now->month;
         $tahun = $now->year;
 
-        //CEK apakah sudah input bulan ini
+        // CEK DUPLIKAT BULAN INI
         $exists = MeterReading::where('customer_id', $request->customer_id)
             ->where('reading_month', $bulan)
             ->where('reading_year', $tahun)
@@ -58,23 +60,30 @@ class MeterReadingController extends Controller
             ], 400);
         }
 
-        //Ambil meter terakhir
+        // AMBIL DATA CUSTOMER
+        $customer = Customer::findOrFail($request->customer_id);
+
+        // FIX BUG URUTAN BULAN (WAJIB)
         $last = MeterReading::where('customer_id', $request->customer_id)
-            ->orderByDesc('reading_year')
-            ->orderByDesc('reading_month')
+            ->orderByDesc(DB::raw('reading_year * 100 + reading_month'))
             ->first();
-            
-        //validasi meter tidak boleh lebih kecil
-        if ($last && $request->meter_value < $last->meter_value) {
+
+        // TENTUKAN METER AWAL
+        $startMeter = $last 
+            ? $last->meter_value 
+            : $customer->initial_meter_reading;
+
+        // VALIDASI METER
+        if ($request->meter_value < $startMeter) {
             return response()->json([
-                'message' => 'Meter tidak boleh lebih kecil dari bulan sebelumnya'
+                'message' => 'Meter tidak boleh lebih kecil dari meter sebelumnya'
             ], 400);
         }
 
-        //Upload foto
+        // UPLOAD FOTO
         $path = $request->file('photo')->store('meter-readings', 'public');
 
-        // Simpan data
+        // SIMPAN DATA
         $reading = MeterReading::create([
             'customer_id' => $request->customer_id,
             'recorded_by' => Auth::id(),
@@ -92,26 +101,16 @@ class MeterReadingController extends Controller
     }
 
     /**
-     * Display the specified resource.
+     * OPTIONAL: Riwayat meter per customer (nanti kepakai di tagihan)
      */
-    public function show(string $id)
+    public function history($customerId)
     {
-        //
-    }
+        $data = MeterReading::where('customer_id', $customerId)
+            ->orderByDesc(DB::raw('reading_year * 100 + reading_month'))
+            ->get();
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
-    {
-        //
+        return response()->json([
+            'data' => $data
+        ]);
     }
 }
