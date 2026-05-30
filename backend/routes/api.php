@@ -61,6 +61,26 @@ Route::middleware(['auth:sanctum', 'role:admin,surveyor'])->group(function () {
 
 /*
 |--------------------------------------------------------------------------
+| Shared Routes (Bisa diakses Admin & Teknisi)
+|--------------------------------------------------------------------------
+*/
+Route::middleware(['auth:sanctum', 'role:admin,teknisi'])->group(function () {
+    // 1. Data meteran yang SUDAH sukses di-input (Completed) berdasarkan filter bulan/tahun
+    Route::get('meter-readings/completed', [MeterReadingController::class, 'completed']);
+
+    // 2. Dipindahkan ke sini agar Dashboard & Statistik bisa diakses bersama oleh Admin & Teknisi
+    Route::get('dashboard/statistics', [DashboardController::class, 'statistics']);
+
+    // 3. Akses Pencatatan Meter (Pending, Simpan, Edit, Detail, Hapus) bersama oleh Admin & Teknisi
+    Route::get('meter-readings/pending', [MeterReadingController::class, 'index']);
+    Route::post('meter-readings', [MeterReadingController::class, 'store']);
+    Route::get('meter-readings/{id}', [MeterReadingController::class, 'show']);
+    Route::put('meter-readings/{id}', [MeterReadingController::class, 'update']); // Untuk Aksi Edit Meteran
+    Route::delete('meter-readings/{id}', [MeterReadingController::class, 'destroy']); // Untuk Aksi Hapus Meteran
+});
+
+/*
+|--------------------------------------------------------------------------
 | Admin Routes
 |--------------------------------------------------------------------------
 */
@@ -72,6 +92,9 @@ Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
     
     // Master Villages
     Route::apiResource('villages', VillageController::class);
+
+    // BARU ✨: Autocomplete pencarian pelanggan aktif (Diletakkan sebelum route ID agar tidak bentrok)
+    Route::get('/customers/search', [CustomerController::class, 'search']);
 
     // Master Customers
     Route::get('/customers', [CustomerController::class, 'index']);
@@ -95,12 +118,12 @@ Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
     Route::post('bills/generate',     [BillingController::class, 'generate']);
     Route::get('bills/{monthlyBill}', [BillingController::class, 'show']);
 
+    // BARU ✨: Rekap riwayat pemakaian air bulanan pelanggan
+    Route::get('monthly-bills/usage', [MonthlyBillController::class, 'usage']);
+
     Route::get('monthly-bills', [MonthlyBillController::class, 'index']);
     Route::post('monthly-bills/{id}/pay', [MonthlyBillController::class, 'pay']);
     Route::post('monthly-bills/generate', [MonthlyBillController::class, 'generate']);
-
-    // Dashboard & Statistics
-    Route::get('dashboard/statistics', [DashboardController::class, 'statistics']);
 
     // Reports Management
     Route::get('reports/installations',           [InstallationTicketController::class, 'report']);
@@ -134,8 +157,8 @@ Route::middleware(['auth:sanctum', 'role:teknisi'])->group(function () {
     Route::get('/test-teknisi', fn() => response()->json(['message' => 'Kamu teknisi!']));
     
     Route::post('installation-tickets/{installationTicket}/installation-result', [InstallationResultController::class, 'store']);
-    Route::get('meter-readings/pending', [MeterReadingController::class, 'index']);
-    Route::post('meter-readings', [MeterReadingController::class, 'store']);
+    
+    // Note: Route meter-readings/pending, completed, store, update, destroy sudah dipindahkan ke grup Shared (Admin & Teknisi) di atas agar bisa diakses bersama.
 });
 
 /*
