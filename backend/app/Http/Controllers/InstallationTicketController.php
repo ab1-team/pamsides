@@ -3,8 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\InstallationTicket;
+use App\Models\Customer;
 use App\StateMachines\TicketStateMachine;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+
 
 class InstallationTicketController extends Controller
 {
@@ -186,19 +189,87 @@ class InstallationTicketController extends Controller
     {
         $request->validate([
             'status' => 'required|string|in:draft,pending,surveyed,unpaid,processing,completed,suspended,terminated',
+            'initial_meter_reading' => 'nullable|numeric|min:0',
+            'meter_photo_url' => 'nullable|string',
         ], [
             'status.required' => 'Status wajib diisi.',
             'status.in'       => 'Status tidak valid.',
         ]);
 
+        // Validasi state machine
         TicketStateMachine::validate($installationTicket->status, $request->status);
 
-        $installationTicket->update(['status' => $request->status]);
+        DB::beginTransaction();
 
-        return response()->json([
-            'success' => true,
-            'data'    => $installationTicket,
-        ]);
+        try {
+
+            // JIKA STATUS AKAN MENJADI COMPLETED (AKTIVASI)
+            if ($request->status === 'completed') {
+
+                // ❗ CEK: jangan sampai sudah pernah jadi customer
+                if ($installationTicket->customer) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Tiket ini sudah diaktivasi menjadi pelanggan.',
+                    ], 422);
+                }
+
+                // VALIDASI tambahan saat aktivasi
+                if (!$request->initial_meter_reading && $request->initial_meter_reading !== 0) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Meter awal wajib diisi saat aktivasi.',
+                    ], 422);
+                }
+
+                // GENERATE CUSTOMER CODE (PAM-YYYYMM-0001)
+                $yearMonth = now()->format('Ym');
+
+                $latestCustomer = Customer::where('customer_code', 'like', 'PAM-' . $yearMonth . '-%')
+                    ->orderBy('customer_code', 'desc')
+                    ->first();
+
+                $nextNumber = $latestCustomer
+                    ? str_pad((int) substr($latestCustomer->customer_code, -4) + 1, 4, '0', STR_PAD_LEFT)
+                    : '0001';
+
+                $customerCode = 'PAM-' . $yearMonth . '-' . $nextNumber;
+
+                // INSERT KE TABEL CUSTOMERS
+                Customer::create([
+                    'ticket_id'             => $installationTicket->id,
+                    'user_id'               => $installationTicket->user_id,
+                    'customer_code'         => $customerCode,
+                    'initial_meter_reading' => $request->initial_meter_reading,
+                    'meter_photo_url'       => $request->meter_photo_url ?? null,
+                    'activated_at'          => now(),
+                ]);
+            }
+
+            // UPDATE STATUS TIKET
+            $installationTicket->update([
+                'status' => $request->status
+            ]);
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => $request->status === 'completed'
+                    ? 'Tiket berhasil diaktivasi menjadi pelanggan.'
+                    : 'Status tiket berhasil diperbarui.',
+                'data'    => $installationTicket->load('customer'),
+            ]);
+
+        } catch (\Exception $e) {
+
+            DB::rollBack();
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal update status: ' . $e->getMessage(),
+            ], 500);
+        }
     }
 
  
