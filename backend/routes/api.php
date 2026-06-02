@@ -22,6 +22,7 @@ use App\Http\Controllers\SettingController;
 use App\Http\Controllers\PelangganPortalController;
 use App\Http\Controllers\VillageController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\SopController;
 
 /*
 |--------------------------------------------------------------------------
@@ -42,6 +43,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout',  [AuthController::class, 'logout']);
     Route::post('/refresh', [AuthController::class, 'refresh']);
     Route::get('/me',       [AuthController::class, 'me']);
+    Route::put('/me', [AuthController::class, 'updateProfile']);
+    Route::put('/me/password', [AuthController::class, 'updatePassword']);
+    Route::post('/me/avatar', [AuthController::class, 'uploadAvatar']);
 
     // Route Settings (Bisa diakses semua role untuk dropdown form)
     Route::get('settings/kecamatan', [SettingController::class, 'getKecamatan']);
@@ -66,6 +70,16 @@ Route::middleware(['auth:sanctum', 'role:admin,surveyor'])->group(function () {
 */
 Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
     Route::get('/test-admin', fn() => response()->json(['message' => 'Kamu admin!']));
+
+
+     Route::prefix('settings/sop')->group(function () {
+        Route::get('/', [SopController::class, 'index']);
+        Route::post('/lembaga', [SopController::class, 'updateLembaga']);
+        Route::post('/pasang-baru', [SopController::class, 'updatePasangBaru']);
+        Route::post('/sistem-tagihan', [SopController::class, 'updateSistemTagihan']);
+        Route::post('/logo', [SopController::class, 'updateLogo']);
+        Route::post('/whatsapp', [SopController::class, 'updateWhatsapp']);
+    });
     
     // User
     Route::apiResource('users', UserController::class);
