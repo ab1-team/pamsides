@@ -32,6 +32,13 @@ export const ticketService = {
   },
 
   /**
+   * Alias untuk getTicketDetail
+   */
+  async getTicket(id) {
+    return this.getTicketDetail(id)
+  },
+
+  /**
    * Transisi status tiket
    */
   async transitionStatus(id, status) {
@@ -95,6 +102,13 @@ export const ticketService = {
         },
       })
     return response.data
+  },
+
+  /**
+   * Alias untuk submitInstallationResult
+   */
+  async submitInstallation(id, formData) {
+    return this.submitInstallationResult(id, formData)
   },
 
   /**
