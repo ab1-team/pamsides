@@ -32,6 +32,9 @@ import komisiSPS from '@/presentations/views/dashboard/admin/transaksi/komisiSPS
 import laporan from '@/presentations/views/dashboard/admin/pelaporan/PelaporanIndex.vue'
 import profil from '@/presentations/views/dashboard/admin/profil/ProfilIndex.vue'
 import detailPemakaianAir from '@/presentations/views/dashboard/admin/tagihan/partials/detailPemakaianAir.vue'
+import DesaIndex from '@/presentations/views/dashboard/admin/desa/DesaIndex.vue'
+import DesaCreate from '@/presentations/views/dashboard/admin/desa/DesaCreate.vue'
+import DesaEdit from '@/presentations/views/dashboard/admin/desa/DesaEdit.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -99,6 +102,21 @@ const router = createRouter({
           path: '/data-pelanggan/edit/:id',
           name: 'Edit Pelanggan',
           component: PelangganEdit,
+        },
+        {
+          path: '/data-desa',
+          name: 'Data Desa',
+          component: DesaIndex,
+        },
+        {
+          path: '/data-desa/tambah',
+          name: 'Tambah Desa',
+          component: DesaCreate,
+        },
+        {
+          path: '/data-desa/edit/:id',
+          name: 'Edit Desa',
+          component: DesaEdit,
         },
 
         {

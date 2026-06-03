@@ -133,19 +133,21 @@
 
           <div class="space-y-4!">
             <div class="grid! grid-cols-2! gap-3!">
-              <BaseSelect v-model="form.user_id" label="Nama Cater">
-                <option value="">Pilih Petugas Cater</option>
-                <option v-for="user in caterUsers" :key="user.id" :value="user.id">
-                  {{ user.name }} ({{ user.role }})
-                </option>
-              </BaseSelect>
+              <SelectSearch
+                v-model="form.user_id"
+                :options="caterUsersOptionsFormatted"
+                label="Nama Cater"
+                placeholder="Pilih Petugas Cater"
+                searchable
+              />
 
-              <BaseSelect v-model="form.package_id" label="Paket/Kelas">
-                <option value="" disabled>Pilih Paket</option>
-                <option v-for="pkg in packages" :key="pkg.id" :value="pkg.id">
-                  {{ pkg.name }}
-                </option>
-              </BaseSelect>
+              <SelectSearch
+                v-model="form.package_id"
+                :options="packagesOptionsFormatted"
+                label="Paket/Kelas"
+                placeholder="Pilih Paket"
+                searchable
+              />
             </div>
 
             <Transition enter-active-class="transition! duration-200! ease-out!"
@@ -186,42 +188,38 @@
                     <div class="text-right! text-xs! font-extrabold! text-blue-600!">
                       Rp {{ formatRupiah(block.price_per_m3) }}
                     </div>
-
                   </div>
+
                 </div>
 
                 <div class="space-y-3!">
                   <div class="grid! grid-cols-2! gap-3!">
-                    <div class="bg-slate-50! border! border-slate-200! rounded-xl! px-4! py-2.5! flex! justify-between! items-center! h-[46px]!">
-                      <div class="text-[11px]! font-semibold! text-slate-500! uppercase! tracking-wider!">Pasang Baru</div>
-                      <div class="text-sm! font-extrabold! text-blue-600!">
-                        Rp {{ formatRupiah(form.nominal) }}
-                      </div>
-                    </div>
-
                     <div class="bg-slate-50! border! border-slate-200! rounded-xl! px-4! py-2.5! flex! justify-between! items-center! h-[46px]!">
                       <div class="text-[11px]! font-semibold! text-slate-500! uppercase! tracking-wider!">Abodemen</div>
                       <div class="text-sm! font-extrabold! text-emerald-600!">
                         Rp {{ formatRupiah(selectedPackageDetails.monthly_abodemen) }}
                       </div>
                     </div>
-                  </div>
 
-                  <div class="grid! grid-cols-2! gap-3! items-center!">
-                      <div class="bg-slate-50! border! border-slate-200! rounded-xl! px-4! py-2.5! flex! justify-between! items-center! h-[46px]!">
-                        <div class="text-[11px]! font-semibold! text-slate-500! uppercase! tracking-wider!">Denda</div>
-                        <div class="text-sm! font-extrabold! text-rose-600!">
-                          Rp {{ formatRupiah(selectedPackageDetails.late_penalty) }}
-                        </div>
-                      </div>
-
-                      <div class="bg-slate-50! border! border-slate-200! rounded-xl! px-4! py-2.5! flex! justify-between! items-center! h-[46px]!">
-                        <div class="text-[11px]! font-semibold! text-slate-500! uppercase! tracking-wider!">Nominal</div>
-                        <div class="text-sm! font-extrabold! text-blue-600!">
-                          Rp {{ formatRupiah(form.nominal) }}
-                        </div>
+                    <div class="bg-slate-50! border! border-slate-200! rounded-xl! px-4! py-2.5! flex! justify-between! items-center! h-[46px]!">
+                      <div class="text-[11px]! font-semibold! text-slate-500! uppercase! tracking-wider!">Denda</div>
+                      <div class="text-sm! font-extrabold! text-rose-600!">
+                        Rp {{ formatRupiah(selectedPackageDetails.late_penalty) }}
                       </div>
                     </div>
+                  </div>
+
+                  <div class="grid! grid-cols-1! gap-3!">
+                    <div class="bg-white! border! border-slate-300! rounded-xl! px-4! py-2.5! flex! justify-between! items-center! h-[46px]!">
+                      <div class="text-[11px]! font-semibold! text-slate-500! uppercase! tracking-wider!">Nominal Pasang Baru</div>
+                      <input
+                        v-model="form.nominal"
+                        type="number"
+                        placeholder="0"
+                        class="text-sm! font-extrabold! text-blue-600! text-right! border-none! focus:outline-none! bg-transparent! w-32!"
+                      />
+                    </div>
+                  </div>
                 </div>
 
               </div>
@@ -237,12 +235,14 @@
             <h2 class="text-base! font-bold! text-slate-800!">Lokasi Penyebaran</h2>
           </div>
 
-          <BaseSelect v-model="form.village_id" label="Nama Desa" @change="handleVillageChange">
-            <option value="" disabled>Pilih Desa</option>
-            <option v-for="village in villageOptions" :key="village.id" :value="village.id">
-              {{ village.village_name }}
-            </option>
-          </BaseSelect>
+          <SelectSearch
+            v-model="form.village_id"
+            :options="villageOptionsFormatted"
+            label="Nama Desa"
+            placeholder="Pilih Desa"
+            searchable
+            @change="handleVillageChange"
+          />
 
           <BaseInput v-model="form.jalan" label="Jalan" disabled placeholder="Alamat Penyebaran" class="bg-slate-50!" />
 
@@ -303,18 +303,6 @@
       </div>
     </div>
 
-    <Transition enter-active-class="transition! duration-300! ease-out!" enter-from-class="opacity-0! translate-y-4!" enter-to-class="opacity-100! translate-y-0!">
-      <div v-if="showSuccessToast" class="fixed! bottom-6! right-6! z-50! bg-emerald-600! text-white! px-5! py-3.5! rounded-2xl! shadow-xl! flex! items-center! gap-3!">
-        <div class="w-6! h-6! rounded-full! bg-white/20! flex! items-center! justify-center! shrink-0!">
-          <font-awesome-icon icon="check" class="w-3.5! h-3.5!" />
-        </div>
-        <div>
-          <p class="text-sm! font-bold!">Instalasi berhasil didaftarkan!</p>
-          <p class="text-xs! text-emerald-100!">Status berubah menjadi pending</p>
-        </div>
-      </div>
-    </Transition>
-
     <div v-if="isCustomerDropdownOpen" class="fixed! inset-0! z-40!" @click="isCustomerDropdownOpen = false"></div>
   </div>
 </template>
@@ -327,8 +315,10 @@
   import BaseButton from '@/presentations/components/ui/BaseButton.vue'
   import BaseInput from '@/presentations/components/ui/BaseInput.vue'
   import BaseSelect from '@/presentations/components/ui/BaseSelect.vue'
+  import SelectSearch from '@/presentations/components/SelectSearch.vue'
   import AppDatePicker from '@/presentations/components/AppDatePicker.vue'
   import ticketService from '@/services/ticket.service.js'
+  import Swal from 'sweetalert2'
 
   const isCustomerDropdownOpen = ref(false)
   const customerSearch = ref('')
@@ -427,6 +417,27 @@
   }
 
   // 4. FETCH VILLAGES
+  const villageOptionsFormatted = computed(() => {
+    return villageOptions.value.map(village => ({
+      id: village.id,
+      text: village.village_name
+    }))
+  })
+
+  const packagesOptionsFormatted = computed(() => {
+    return packages.value.map(pkg => ({
+      id: pkg.id,
+      text: pkg.name
+    }))
+  })
+
+  const caterUsersOptionsFormatted = computed(() => {
+    return caterUsers.value.map(user => ({
+      id: user.id,
+      text: user.name
+    }))
+  })
+
   const fetchVillages = async () => {
     try {
       const res = await api.get('/villages')
@@ -606,15 +617,35 @@
       }
 
       const lastTicket = selectedCustomer.value.tickets[selectedCustomer.value.tickets.length - 1]
-      await api.put(`/installation-tickets/${lastTicket.id}/register`, payload)
+      const response = await api.put(`/installation-tickets/${lastTicket.id}/register`, payload)
 
-      showSuccessToast.value = true
-      setTimeout(() => {
-        showSuccessToast.value = false
-        clearCustomer()
-      }, 2000)
+      await Swal.fire({
+        title: 'Berhasil!',
+        text: 'Instalasi berhasil didaftarkan. Status berubah menjadi pending.',
+        icon: 'success',
+        confirmButtonColor: '#3b82f6',
+        confirmButtonText: 'Lihat Detail'
+      })
+
+      const ticketId = response.data?.data?.id || lastTicket.id
+      const customerCode = response.data?.data?.customer?.[0]?.customer_code || `#INS-${ticketId.toString().padStart(4, '0')}`
+      
+      router.push({
+        name: 'Detail Permohonan',
+        params: { id: encodeURIComponent(customerCode) }
+      })
     } catch (err) {
       console.error('Gagal mengirim registrasi instalasi:', err.response?.data || err)
+      
+      const errorMessage = err.response?.data?.message || 'Gagal mendaftarkan instalasi. Silakan coba lagi.'
+      
+      await Swal.fire({
+        title: 'Gagal!',
+        text: errorMessage,
+        icon: 'error',
+        confirmButtonColor: '#ef4444',
+        confirmButtonText: 'OK'
+      })
     }
   }
 

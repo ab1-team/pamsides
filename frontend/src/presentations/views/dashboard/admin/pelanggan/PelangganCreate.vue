@@ -21,7 +21,7 @@
           <h2 class="text-xl! font-bold! text-slate-800!">Informasi Pribadi</h2>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-8! mb-8!">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4! mb-4!">
           <BaseInput
             v-model="form.nik"
             label="NIK"
@@ -38,7 +38,7 @@
           />
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-8! mb-8!">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4! mb-4!">
           <BaseInput
             v-model="form.tempat_lahir"
             label="Tempat Lahir"
@@ -61,7 +61,7 @@
           />
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-8! mb-8!">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4! mb-4!">
           <SelectSearch
             v-model="form.jenis_kelamin"
             :options="[
@@ -74,7 +74,7 @@
           />
           <BaseInput
             v-model="form.email"
-            label="Username"
+            label="Email"
             placeholder="Masukkan Email"
             icon="envelope"
           />
@@ -88,7 +88,7 @@
           />
         </div>
 
-        <div class="grid grid-cols-1 gap-8! mb-4!">
+        <div class="grid grid-cols-1 gap-4! mb-4!">
           <BaseInput
             v-model="form.alamat_lengkap"
             type="textarea"
