@@ -229,9 +229,9 @@ const filteredSurveys = computed(() => {
   const query = searchQuery.value.toLowerCase()
   return surveys.value.filter((s) => {
     const name = (s.ticket?.applicant_name || '').toLowerCase()
-    const textNik = (s.ticket?.nik || '').toLowerCase()
+    const nik = (s.ticket?.nik || '').toLowerCase()
     const address = (s.ticket?.address || '').toLowerCase()
-    return name.includes(query) || textNik.includes(query) || address.includes(query)
+    return name.includes(query) || nik.includes(query) || address.includes(query)
   })
 })
 

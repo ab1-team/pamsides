@@ -139,19 +139,7 @@ import ContentCard from '@/presentations/components/ui/ContentCard.vue'
 import BaseButton from '@/presentations/components/ui/BaseButton.vue'
 import cameraUtils from '@/utils/camera'
 import ticketService from '@/services/ticket.service'
-import Swal from 'sweetalert2'
-
-const Toast = Swal.mixin({
-  toast: true,
-  position: 'top-end',
-  showConfirmButton: false,
-  timer: 3000,
-  timerProgressBar: true,
-  didOpen: (toast) => {
-    toast.addEventListener('mouseenter', Swal.stopTimer)
-    toast.addEventListener('mouseleave', Swal.resumeTimer)
-  },
-})
+import { showSuccessToast, showErrorToast, showWarningToast } from '@/utils/swal'
 
 const router = useRouter()
 const uiStore = useUiStore()
@@ -180,9 +168,9 @@ const handlePhotoUpload = async (e) => {
     photoPreview.value = URL.createObjectURL(file)
     const compressedBlob = await cameraUtils.compressImage(file)
     formData.photo = compressedBlob
-    Toast.fire({ icon: 'success', title: 'Foto meteran berhasil diproses.' })
+    showSuccessToast('Foto meteran berhasil diproses.')
   } catch {
-    Toast.fire({ icon: 'error', title: 'Gagal memproses foto.' })
+    showErrorToast({ message: 'Gagal memproses foto.' })
   } finally {
     uiStore.setLoading(false)
   }
@@ -190,23 +178,22 @@ const handlePhotoUpload = async (e) => {
 
 const submitReading = async () => {
   if (!formData.currentReading)
-    return Toast.fire({ icon: 'warning', title: 'Angka meteran wajib diisi!' })
+    return showWarningToast('Angka meteran wajib diisi!')
   if (formData.currentReading < lastReading)
-    return Toast.fire({
-      icon: 'error',
-      title: 'Angka meteran tidak boleh lebih kecil dari bulan lalu!',
+    return showErrorToast({
+      message: 'Angka meteran tidak boleh lebih kecil dari bulan lalu!',
     })
   if (!formData.photo)
-    return Toast.fire({ icon: 'warning', title: 'Foto meteran wajib dilampirkan!' })
+    return showWarningToast('Foto meteran wajib dilampirkan!')
 
   try {
     isSubmitting.value = true
     uiStore.setLoading(true)
     await ticketService.submitInstallation('METER-MOCK', formData)
-    Toast.fire({ icon: 'success', title: 'Pencatatan meteran berhasil disimpan.' })
+    showSuccessToast('Pencatatan meteran berhasil disimpan.')
     router.push('/dashboard')
   } catch {
-    Toast.fire({ icon: 'error', title: 'Gagal menyimpan pencatatan.' })
+    showErrorToast({ message: 'Gagal menyimpan pencatatan.' })
   } finally {
     isSubmitting.value = false
     uiStore.setLoading(false)
