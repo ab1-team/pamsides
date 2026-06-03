@@ -135,6 +135,11 @@ const router = createRouter({
           component: statusInstalasi,
         },
         {
+          path: '/instalasi/hasil-survey',
+          name: 'Hasil Survey',
+          component: () => import('@/presentations/views/dashboard/admin/instalasi/hasilSurvey.vue'),
+        },
+        {
           path: '/instalasi/status/permohonan/:id',
           name: 'Detail Permohonan',
           component: DetailPermohonan,

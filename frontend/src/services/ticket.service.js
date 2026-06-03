@@ -55,6 +55,26 @@ export const ticketService = {
   },
 
   /**
+   * Update hasil survey (Admin)
+   */
+  async updateSurvey(surveyId, formData) {
+    const response = await api.post(`/survey-results/${surveyId}`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    })
+    return response.data
+  },
+
+  /**
+   * Delete hasil survey (Admin)
+   */
+  async deleteSurvey(surveyId) {
+    const response = await api.delete(`/survey-results/${surveyId}`)
+    return response.data
+  },
+
+  /**
    * Konfirmasi pembayaran instalasi
    */
   async confirmTicketPayment(id, amount) {
