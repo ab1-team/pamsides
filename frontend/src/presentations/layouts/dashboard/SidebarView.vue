@@ -220,7 +220,14 @@ const menuItems = [
           { label: 'Data Pelanggan', to: '/data-pelanggan' },
         ],
       },
-      { label: 'Data Desa', icon: 'map-marker-alt', to: '/data-desa' },
+      {
+        label: 'Desa',
+        icon: 'map-marker-alt',
+        children: [
+          { label: 'Create Desa', to: '/data-desa/tambah' },
+          { label: 'Data Desa', to: '/data-desa' },
+        ],
+      },
       { label: 'Daftar Instalasi', icon: 'building', to: '/dataInstalasi' },
     ],
   },
@@ -243,6 +250,12 @@ const menuItems = [
       { label: 'Daftar Tagihan', to: '/instalasi/daftar-tagihan' },
       { label: 'Pembayaran Tagihan', to: '/transaksi/tagihan-bulanan' },
     ],
+  },
+  {
+    label: 'Pelaporan',
+    icon: 'file-alt',
+    roles: ['admin'],
+    to: '/Pelaporan',
   },
 ]
 

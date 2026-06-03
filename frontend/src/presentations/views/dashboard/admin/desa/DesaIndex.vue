@@ -7,15 +7,6 @@
           Daftar wilayah desa dan padukuhan terdaftar.
         </p>
       </div>
-      <BaseButton
-        variant="primary"
-        size="md"
-        @click="$router.push('/data-desa/tambah')"
-        class="rounded-xl! shadow-lg!"
-        icon="plus"
-      >
-        Tambah Desa
-      </BaseButton>
     </div>
     <DataTable
       :data="filteredData"
