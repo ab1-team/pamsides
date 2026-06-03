@@ -4,8 +4,12 @@ import './assets/css/stat-card.css'
 import './assets/css/ui-base.css'
 import './assets/css/ui-modals.css'
 
-import { createApp } from 'vue'
-import { createPinia } from 'pinia'
+import {
+  createApp
+} from 'vue'
+import {
+  createPinia
+} from 'pinia'
 import App from './App.vue'
 import router from './router'
 
@@ -23,8 +27,12 @@ import ToastService from 'primevue/toastservice'
 import ProgressBar from 'primevue/progressbar'
 import Chart from 'primevue/chart'
 
-import { library } from '@fortawesome/fontawesome-svg-core'
-import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
+import {
+  library
+} from '@fortawesome/fontawesome-svg-core'
+import {
+  FontAwesomeIcon
+} from '@fortawesome/vue-fontawesome'
 import {
   faFilter,
   faCalendar,
@@ -145,9 +153,12 @@ import {
   faBox,
   faClipboardCheck,
   faMoneyBillWave,
+
 } from '@fortawesome/free-solid-svg-icons'
 
-import { faWhatsapp } from '@fortawesome/free-brands-svg-icons'
+import {
+  faWhatsapp
+} from '@fortawesome/free-brands-svg-icons'
 
 library.add(
   faFilter,
@@ -272,7 +283,10 @@ library.add(
   faMoneyBillWave,
 )
 
-export { MySwal } from './utils/swal'
+export {
+  MySwal
+}
+from './utils/swal'
 
 const app = createApp(App)
 const pinia = createPinia()
