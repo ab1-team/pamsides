@@ -78,17 +78,23 @@
         <div class="grid! grid-cols-1! sm:grid-cols-3! gap-4!">
           <div class="text-center!">
             <p class="text-xs! text-slate-400! mb-1!">Meter Awal</p>
-            <p class="text-2xl! font-black! text-emerald-600!">{{ customer.meterAwal }}</p>
+            <p class="text-2xl! font-black! text-emerald-600!">
+              {{ formatMeter(customer.meterAwal) }}
+            </p>
             <p class="text-xs! text-slate-400!">m³</p>
           </div>
           <div class="text-center!">
             <p class="text-xs! text-slate-400! mb-1!">Pemakaian Terakhir</p>
-            <p class="text-2xl! font-black! text-slate-800!">{{ customer.meterAkhir }}</p>
+            <p class="text-2xl! font-black! text-slate-800!">
+              {{ formatMeter(customer.meterAkhir) }}
+            </p>
             <p class="text-xs! text-slate-400!">m³</p>
           </div>
           <div class="text-center!">
             <p class="text-xs! text-slate-400! mb-1!">Total Pemakaian</p>
-            <p class="text-2xl! font-black! text-blue-600!">{{ customer.totalPemakaian }}</p>
+            <p class="text-2xl! font-black! text-blue-600!">
+              {{ formatMeter(customer.totalPemakaian) }}
+            </p>
             <p class="text-xs! text-slate-400!">m³</p>
           </div>
         </div>
@@ -105,26 +111,31 @@
         </div>
         <div class="space-y-2! mt-5!">
           <button
-            class="w-full! flex! items-center! justify-center! gap-2! bg-gradient-to-r! from-orange-500! to-amber-500! hover:from-orange-600! hover:to-amber-600! text-white! font-bold! py-3! rounded-xl! shadow-lg! shadow-orange-200/50! transition-all! active:scale-95!"
+            @click="handleBlokir"
+            :disabled="!customer.ticketId"
+            class="w-full! flex! items-center! justify-center! gap-2! bg-gradient-to-r! from-orange-500! to-amber-500! hover:from-orange-600! hover:to-amber-600! text-white! font-bold! py-3! rounded-xl! shadow-lg! shadow-orange-200/50! transition-all! active:scale-95! disabled:opacity-50! disabled:cursor-not-allowed!"
           >
             <font-awesome-icon icon="ban" />
             Blokir Pelanggan
           </button>
           <button
-            class="w-full! flex! items-center! justify-center! gap-2! bg-gradient-to-r! from-red-500! to-rose-600! hover:from-red-600! hover:to-rose-700! text-white! font-bold! py-3! rounded-xl! shadow-lg! shadow-red-200/50! transition-all! active:scale-95!"
+            @click="handleCabut"
+            :disabled="!customer.ticketId"
+            class="w-full! flex! items-center! justify-center! gap-2! bg-gradient-to-r! from-red-500! to-rose-600! hover:from-red-600! hover:to-rose-700! text-white! font-bold! py-3! rounded-xl! shadow-lg! shadow-red-200/50! transition-all! active:scale-95! disabled:opacity-50! disabled:cursor-not-allowed!"
           >
             <font-awesome-icon icon="times-circle" />
             Cabut Instalasi
           </button>
           <div class="grid! grid-cols-2! gap-2! pt-1!">
             <button
+              @click="handlePrint"
               class="flex! items-center! justify-center! gap-2! border! border-slate-200! hover:bg-slate-50! text-slate-600! font-semibold! py-2.5! rounded-xl! text-sm! transition-all!"
             >
               <font-awesome-icon icon="print" />
               Cetak
             </button>
             <button
-              @click="$router.back()"
+              @click="$router.push({ path: '/instalasi/status', query: { filter: 'aktif' } })"
               class="flex! items-center! justify-center! gap-2! border! border-slate-200! hover:bg-slate-50! text-slate-600! font-semibold! py-2.5! rounded-xl! text-sm! transition-all!"
             >
               <font-awesome-icon icon="arrow-left" />
@@ -140,13 +151,21 @@
 <script setup>
 defineOptions({ name: 'AktifDetail' })
 import { computed } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useInstalasiStatus } from '@/composables/useInstalasiStatus'
+import { useInstalasiActions } from '@/composables/useInstalasiActions'
 import ContentCard from '@/presentations/components/ui/ContentCard.vue'
 
 const route = useRoute()
-const { dataMap } = useInstalasiStatus()
+const router = useRouter()
+const { dataMap, fetchData } = useInstalasiStatus()
+const { transitionStatus, printDetail } = useInstalasiActions()
 const id = decodeURIComponent(route.params.id)
+
+const formatMeter = (val) => {
+  const n = Number(val || 0)
+  return n.toLocaleString('id-ID', { minimumFractionDigits: 0, maximumFractionDigits: 2 })
+}
 
 const customer = computed(() => {
   const found = dataMap.value.aktif?.find((r) => r.id === id)
@@ -156,6 +175,8 @@ const customer = computed(() => {
       address: '-',
       region: '-',
       noInduk: '-',
+      nik: '-',
+      phone: '-',
       abodemen: '0',
       tglPasang: '-',
       paket: '-',
@@ -163,19 +184,82 @@ const customer = computed(() => {
       meterAwal: 0,
       meterAkhir: 0,
       totalPemakaian: 0,
+      ticketId: null,
+      rawStatus: null,
     }
+
+  const customerRecord = Array.isArray(found.rawData?.customer)
+    ? found.rawData.customer[0]
+    : found.rawData?.customer
+
+  const meterAwal = Number(customerRecord?.initial_meter_reading || 0)
+
+  const readings = Array.isArray(customerRecord?.meter_readings)
+    ? customerRecord.meter_readings
+    : []
+  const lastReading = readings.length
+    ? readings.reduce((latest, r) => {
+        const latestDate = new Date(latest.recorded_at || 0).getTime()
+        const rDate = new Date(r.recorded_at || 0).getTime()
+        return rDate > latestDate ? r : latest
+      }, readings[0])
+    : null
+  const meterAkhir = Number(lastReading?.meter_value || meterAwal)
+  const totalPemakaian = Math.max(0, meterAkhir - meterAwal)
+
   return {
     name: found.name,
     address: found.address,
-    region: 'Kabupaten / DI Yogyakarta',
+    region: found.village || '-',
     noInduk: found.id,
-    abodemen: '10,000.00',
-    tglPasang: '2023-01-15',
+    nik: found.nik,
+    phone: found.phone,
+    abodemen: found.rawData?.package?.installation_fee || '0',
+    tglPasang: customerRecord?.activated_at || found.orderDate || found.createdAt,
     paket: found.type,
-    kodeInstalasi: found.id.replace('#MA-', '5..12.'),
-    meterAwal: 0,
-    meterAkhir: 245,
-    totalPemakaian: 245,
+    kodeInstalasi: found.id,
+    meterAwal,
+    meterAkhir,
+    totalPemakaian,
+    ticketId: found.ticketId,
+    rawStatus: found.rawStatus,
+    rawData: found.rawData,
   }
 })
+
+const handleBlokir = async () => {
+  if (!customer.value.ticketId) return
+  const kodeInstalasi = customer.value.kodeInstalasi
+  const result = await transitionStatus(
+    customer.value.ticketId,
+    'suspended',
+    `Blokir layanan untuk pelanggan "${customer.value.name}"?`,
+  )
+  if (result.success) {
+    await fetchData()
+    router.push({
+      path: `/instalasi/status/blokir/${encodeURIComponent(kodeInstalasi)}`,
+    })
+  }
+}
+
+const handleCabut = async () => {
+  if (!customer.value.ticketId) return
+  const kodeInstalasi = customer.value.kodeInstalasi
+  const result = await transitionStatus(
+    customer.value.ticketId,
+    'terminated',
+    `Cabut instalasi untuk pelanggan "${customer.value.name}"? Tindakan ini tidak dapat dikembalikan.`,
+  )
+  if (result.success) {
+    await fetchData()
+    router.push({
+      path: `/instalasi/status/cabut/${encodeURIComponent(kodeInstalasi)}`,
+    })
+  }
+}
+
+const handlePrint = () => {
+  printDetail({ ...customer.value, tglOrder: customer.value.tglPasang }, 'Aktif')
+}
 </script>

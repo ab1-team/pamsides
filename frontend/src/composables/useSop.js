@@ -1,5 +1,5 @@
 import { ref, computed, onMounted } from 'vue'
-import { MySwal } from '@/utils/swal'
+import { MySwal, showSuccessToast, showErrorToast } from '@/utils/swal'
 import sopService from '@/services/sop.service'
 
 export function useSop() {
@@ -100,39 +100,6 @@ export function useSop() {
       }
       reader.readAsDataURL(file)
     }
-  }
-
-  const showSuccessToast = (title = 'Pengaturan Berhasil Disimpan') => {
-    MySwal.fire({
-      toast: true,
-      position: 'top-end',
-      icon: 'success',
-      title,
-      showConfirmButton: false,
-      timer: 3000,
-      timerProgressBar: true,
-      customClass: {
-        popup: 'swal-toast-custom',
-        title: 'swal-toast-title',
-      },
-    })
-  }
-
-  const showErrorToast = (error) => {
-    const message = error?.response?.data?.message || error?.message || 'Gagal menyimpan pengaturan'
-    MySwal.fire({
-      toast: true,
-      position: 'top-end',
-      icon: 'error',
-      title: message,
-      showConfirmButton: false,
-      timer: 4000,
-      timerProgressBar: true,
-      customClass: {
-        popup: 'swal-toast-custom',
-        title: 'swal-toast-title',
-      },
-    })
   }
 
   /**

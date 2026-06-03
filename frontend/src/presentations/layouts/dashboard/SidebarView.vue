@@ -220,6 +220,7 @@ const menuItems = [
           { label: 'Data Pelanggan', to: '/data-pelanggan' },
         ],
       },
+      { label: 'Data Desa', icon: 'map-marker-alt', to: '/data-desa' },
       { label: 'Daftar Instalasi', icon: 'building', to: '/dataInstalasi' },
     ],
   },
@@ -230,6 +231,7 @@ const menuItems = [
     children: [
       { label: 'Register Instalasi', to: '/instalasi/register', roles: ['admin'] },
       { label: 'Status Instalasi', to: '/instalasi/status', roles: ['admin'] },
+      { label: 'Hasil Survey', to: '/instalasi/hasil-survey', roles: ['admin'] },
     ],
   },
   {

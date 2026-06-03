@@ -3,7 +3,6 @@ import LoginView from '@/presentations/views/auth/LoginView.vue'
 import MainView from '@/presentations/layouts/dashboard/MainView.vue'
 import DashboardHome from '@/presentations/views/dashboard/DashboardHome.vue'
 
-import { useUiStore } from '@/stores/uiStore'
 import SopIndex from '@/presentations/views/dashboard/admin/sop/SopIndex.vue'
 import KelasBiayaView from '@/presentations/views/dashboard/admin/kelas/KelasIndex.vue'
 import CreateKelasView from '@/presentations/views/dashboard/admin/kelas/KelasCreate.vue'
@@ -32,6 +31,9 @@ import komisiSPS from '@/presentations/views/dashboard/admin/transaksi/komisiSPS
 import laporan from '@/presentations/views/dashboard/admin/pelaporan/PelaporanIndex.vue'
 import profil from '@/presentations/views/dashboard/admin/profil/ProfilIndex.vue'
 import detailPemakaianAir from '@/presentations/views/dashboard/admin/tagihan/partials/detailPemakaianAir.vue'
+import DesaIndex from '@/presentations/views/dashboard/admin/desa/DesaIndex.vue'
+import DesaCreate from '@/presentations/views/dashboard/admin/desa/DesaCreate.vue'
+import DesaEdit from '@/presentations/views/dashboard/admin/desa/DesaEdit.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -100,6 +102,21 @@ const router = createRouter({
           name: 'Edit Pelanggan',
           component: PelangganEdit,
         },
+        {
+          path: '/data-desa',
+          name: 'Data Desa',
+          component: DesaIndex,
+        },
+        {
+          path: '/data-desa/tambah',
+          name: 'Tambah Desa',
+          component: DesaCreate,
+        },
+        {
+          path: '/data-desa/edit/:id',
+          name: 'Edit Desa',
+          component: DesaEdit,
+        },
 
         {
           path: '/dataInstalasi',
@@ -115,6 +132,12 @@ const router = createRouter({
           path: '/instalasi/status',
           name: 'Status Instalasi',
           component: statusInstalasi,
+        },
+        {
+          path: '/instalasi/hasil-survey',
+          name: 'Hasil Survey',
+          component: () =>
+            import('@/presentations/views/dashboard/admin/instalasi/hasilSurvey.vue'),
         },
         {
           path: '/instalasi/status/permohonan/:id',
@@ -168,6 +191,11 @@ const router = createRouter({
           component: () => import('@/presentations/views/dashboard/teknisi/MeterReading.vue'),
         },
         {
+          path: '/teknisi/hasil-instalasi/:id',
+          name: 'Hasil Instalasi',
+          component: () => import('@/presentations/views/dashboard/teknisi/InstallationResult.vue'),
+        },
+        {
           path: '/pelanggan/tagihan-detail',
           name: 'Detail Tagihan',
           component: () => import('@/presentations/views/dashboard/pelanggan/BillDetail.vue'),
@@ -183,9 +211,20 @@ const router = createRouter({
           component: () => import('@/presentations/views/dashboard/pelanggan/LaporGangguan.vue'),
         },
         {
+          path: '/pelanggan/lapor-gangguan/form',
+          name: 'Form Lapor Gangguan',
+          component: () =>
+            import('@/presentations/views/dashboard/pelanggan/LaporGangguanForm.vue'),
+        },
+        {
           path: '/instalasi/teknisiPemakaianAir',
           name: 'Input Pemakaian Air Teknisi',
           component: TeknisiPemakaianAir,
+        },
+        {
+          path: '/teknisi/daftar-tagihan',
+          name: 'Daftar Tagihan Teknisi',
+          component: () => import('@/presentations/views/dashboard/teknisi/DaftarTagihan.vue'),
         },
 
         {
@@ -251,8 +290,6 @@ router.beforeEach((to, from, next) => {
     localStorage.removeItem('user_role')
     localStorage.removeItem('auth_expires_at')
 
-    const uiStore = useUiStore()
-    uiStore.error('Sesi Anda telah berakhir. Silakan login kembali.')
     next({ name: 'login' })
     return
   }

@@ -13,14 +13,18 @@
         </div>
         <div class="flex! gap-4!">
           <BaseButton
-            @click="openResultsModal"
-            variant="ghost"
-            icon="history"
-            class="text-slate-600! font-bold!"
-            >Hasil Input</BaseButton
+            @click="handleCetakFormInput"
+            variant="warning-gradient"
+            icon="print"
+            class="shadow-lg! shadow-amber-200/50!"
+            >Cetak Form</BaseButton
           >
-          <BaseButton variant="primary-gradient" icon="print" class="shadow-lg! shadow-blue-200!"
-            >Cetak Laporan</BaseButton
+          <BaseButton
+            @click="openResultsModal"
+            variant="success-gradient"
+            icon="file-alt"
+            class="shadow-lg! shadow-emerald-200/50!"
+            >Hasil Input</BaseButton
           >
         </div>
       </div>
@@ -92,7 +96,7 @@
 
             <BaseButton
               :to="{
-                path: '/instalasi/pemakaian-air/input',
+                path: '/teknisi/input-meter',
                 query: { month: monthToNumber(form.bulan), year: form.tahun },
               }"
               variant="primary-gradient"
@@ -311,7 +315,7 @@
 
         <BaseButton
           :to="{
-            path: '/instalasi/pemakaian-air/input',
+            path: '/teknisi/input-meter',
             query: { month: monthToNumber(form.bulan), year: form.tahun },
           }"
           variant="primary-gradient"
@@ -325,11 +329,11 @@
 
         <BaseButton
           @click="openResultsModal"
-          variant="secondary"
+          variant="success-gradient"
           size="lg"
           block
-          icon="history"
-          class="rounded-2xl! py-5! font-black! text-base! mt-3!"
+          icon="file-alt"
+          class="rounded-2xl! py-5! font-black! text-base! mt-3! shadow-lg! shadow-emerald-200/50!"
         >
           HASIL INPUT
         </BaseButton>
@@ -355,135 +359,240 @@
       </div>
     </div>
 
-    <!-- Hasil Input Modal (Full Screen on Mobile, Elegant Modal on Desktop) -->
+    <!-- Hasil Input Modal -->
     <Teleport to="body">
-      <div
-        v-if="showResultsModal"
-        class="fixed! inset-0! bg-slate-950/60! backdrop-blur-sm! flex! items-center! justify-center! z-[9999]! p-0 md:p-6! transition-all!"
-      >
+      <Transition name="modal-fade">
         <div
-          class="bg-white! w-full! h-full! md:h-[85vh]! md:max-w-[92vw]! md:rounded-3xl! shadow-2xl! flex! flex-col! overflow-hidden! relative! animate-modal-in!"
+          v-if="showResultsModal"
+          class="fixed inset-0! z-50 flex items-center justify-center p-4! md:p-8!"
         >
-          <!-- Modal Header -->
           <div
-            class="px-6! py-5! border-b! border-slate-100! flex! justify-between! items-center! bg-slate-50!"
+            class="absolute inset-0! bg-slate-900/60! backdrop-blur-sm!"
+            @click="closeResultsModal"
+          ></div>
+
+          <div
+            class="relative w-full! h-full! max-w-7xl! bg-white rounded-2xl! shadow-xl! border border-slate-200 flex flex-col overflow-hidden animate-slide-up"
           >
-            <div class="flex! items-center! gap-3!">
-              <div
-                class="w-10! h-10! rounded-xl! bg-blue-50! text-blue-600! flex! items-center! justify-center!"
-              >
-                <font-awesome-icon icon="history" />
-              </div>
-              <div>
-                <h3 class="text-lg! font-black! text-slate-800!">Hasil Input Meteran</h3>
-                <p class="text-xs! font-bold! text-slate-400! uppercase! tracking-wider!">
-                  Periode {{ form.bulan }} {{ form.tahun }}
-                </p>
-              </div>
-            </div>
-            <button
-              @click="closeResultsModal"
-              class="w-10! h-10! rounded-full! hover:bg-slate-200! text-slate-400! hover:text-slate-600! flex! items-center! justify-center! transition-all!"
-            >
-              <font-awesome-icon icon="times" class="text-lg!" />
-            </button>
-          </div>
-
-          <!-- Modal Body (Scrollable table) -->
-          <div class="flex-1! overflow-y-auto! p-6!">
             <div
-              v-if="loadingResults"
-              class="flex! flex-col! items-center! justify-center! h-64! opacity-50!"
+              class="flex items-center! justify-between! px-6! py-4! border-b! border-slate-200! bg-white!"
             >
-              <font-awesome-icon icon="spinner" spin class="text-3xl! text-blue-500! mb-3!" />
-              <p class="text-sm! font-bold! text-slate-500!">Memuat data hasil pencatatan...</p>
+              <div class="flex items-center gap-3!">
+                <div
+                  class="w-10! h-10! rounded-full! bg-cyan-600! text-white! flex items-center! justify-center!"
+                >
+                  <font-awesome-icon icon="file-alt" />
+                </div>
+                <div>
+                  <h2 class="text-lg! font-semibold! text-slate-800 leading-tight">
+                    Hasil Input Pemakaian Air
+                  </h2>
+                  <p class="text-xs! text-slate-500! font-medium!">
+                    Periode: {{ form.bulan }} {{ form.tahun }}
+                  </p>
+                </div>
+              </div>
+              <button
+                @click="closeResultsModal"
+                class="w-9! h-9! hover:bg-slate-100! flex items-center! justify-center! text-slate-400! hover:text-slate-600! transition-all active:scale-95 rounded-md!"
+              >
+                <font-awesome-icon icon="times" />
+              </button>
             </div>
 
             <div
-              v-else-if="resultsData.length === 0"
-              class="text-center! py-16! bg-slate-50! rounded-2xl! border! border-dashed! border-slate-200!"
+              class="px-6! py-4! bg-slate-50/50! border-b! border-slate-100! flex flex-col! md:flex-row! md:items-center! justify-between! gap-4!"
             >
-              <div
-                class="w-16! h-16! bg-slate-100! text-slate-400! rounded-full! flex! items-center! justify-center! mx-auto! mb-4! text-2xl!"
-              >
-                <font-awesome-icon icon="frown" />
+              <div class="flex flex-row! flex-wrap! items-center! gap-x-8! gap-y-1!">
+                <div class="flex items-center! gap-2! text-sm!">
+                  <span class="text-slate-500! whitespace-nowrap!">Cater</span>
+                  <span class="font-semibold! text-slate-700!">: {{ staffName }}</span>
+                </div>
+                <div class="flex items-center! gap-2! text-sm!">
+                  <span class="text-slate-500! whitespace-nowrap!">Maksimal Bayar</span>
+                  <span class="font-semibold! text-slate-700!">: {{ maksimalBayar }}</span>
+                </div>
               </div>
-              <h4 class="text-base! font-black! text-slate-700! mb-1!">Belum Ada Data</h4>
-              <p class="text-xs! text-slate-400! font-bold!">
-                Tidak ada data meteran yang tercatat untuk periode ini.
-              </p>
+
+              <div class="relative! w-full! md:w-72!">
+                <div
+                  class="absolute! inset-y-0! left-0! pl-3! flex! items-center! pointer-events-none!"
+                >
+                  <font-awesome-icon icon="search" class="text-slate-400! text-xs!" />
+                </div>
+                <input
+                  type="text"
+                  v-model="searchQuery"
+                  placeholder="Search ..."
+                  class="block w-full pl-9! pr-4! py-2! bg-white border border-slate-200 rounded-lg! text-sm! focus:outline-none focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 transition-all shadow-sm!"
+                />
+              </div>
             </div>
 
-            <div v-else class="overflow-x-auto!">
-              <table class="w-full! text-left! border-collapse!">
+            <div class="flex-1 overflow-auto px-0! py-0! scrollbar-custom">
+              <table class="w-full border-collapse text-xs md:text-sm!">
                 <thead>
-                  <tr class="border-b! border-slate-100!">
-                    <th
-                      class="py-3! px-4! text-xs! font-black! text-slate-400! uppercase! tracking-widest!"
-                    >
-                      Nama Pelanggan
+                  <tr class="bg-slate-700! text-white! sticky! top-0! z-20!">
+                    <th class="py-3! px-4! text-center! w-12!">
+                      <input
+                        type="checkbox"
+                        v-model="isAllSelected"
+                        class="w-4! h-4! rounded! border-slate-300! text-cyan-600! focus:ring-cyan-500! cursor-pointer! transition-all! active:scale-90!"
+                      />
+                    </th>
+                    <th class="py-3! px-4! text-left! font-semibold! uppercase! tracking-wider!">
+                      Nama
+                    </th>
+                    <th class="py-3! px-4! text-left! font-semibold! uppercase! tracking-wider!">
+                      Desa
+                    </th>
+                    <th class="py-3! px-4! text-center! font-semibold! uppercase! tracking-wider!">
+                      RT
                     </th>
                     <th
-                      class="py-3! px-4! text-xs! font-black! text-slate-400! uppercase! tracking-widest!"
+                      class="py-3! px-4! text-left! font-semibold! uppercase! tracking-wider! whitespace-nowrap!"
                     >
-                      Alamat
+                      No. Induk
                     </th>
                     <th
-                      class="py-3! px-4! text-xs! font-black! text-slate-400! uppercase! tracking-widest! text-center!"
+                      class="py-3! px-4! text-center! font-semibold! uppercase! tracking-wider! whitespace-nowrap!"
                     >
-                      Angka Meter
+                      Meter Awal
                     </th>
-
                     <th
-                      class="py-3! px-4! text-xs! font-black! text-slate-400! uppercase! tracking-widest! text-center!"
+                      class="py-3! px-4! text-center! font-semibold! uppercase! tracking-wider! whitespace-nowrap!"
                     >
-                      Foto
+                      Meter Akhir
+                    </th>
+                    <th class="py-3! px-4! text-center! font-semibold! uppercase! tracking-wider!">
+                      Pemakaian
+                    </th>
+                    <th
+                      class="py-3! px-4! text-right! font-semibold! uppercase! tracking-wider! whitespace-nowrap!"
+                    >
+                      Tagihan Air
+                    </th>
+                    <th class="py-3! px-4! text-center! font-semibold! uppercase! tracking-wider!">
+                      Status
                     </th>
                   </tr>
                 </thead>
-                <tbody class="divide-y! divide-slate-50!">
-                  <tr
-                    v-for="item in resultsData"
-                    :key="item.id"
-                    class="hover:bg-slate-50/50! transition-colors!"
-                  >
-                    <td class="py-4! px-4!">
-                      <p class="text-sm! font-bold! text-slate-800!">
-                        {{ item.customer?.user?.name }}
-                      </p>
-                      <p
-                        class="text-[10px]! font-black! text-slate-400! uppercase! tracking-wider!"
-                      >
-                        ID: {{ item.customer?.id }}
-                      </p>
-                    </td>
-                    <td
-                      class="py-4! px-4! text-sm! text-slate-500! font-medium! max-w-[200px]! truncate!"
-                    >
-                      {{ item.customer?.ticket?.address || item.customer?.address }}
-                    </td>
-                    <td class="py-4! px-4! text-sm! font-black! text-blue-600! text-center!">
-                      {{ item.meter_value }} m³
-                    </td>
+                <tbody>
+                  <template v-if="loadingResults">
+                    <tr>
+                      <td colspan="10" class="py-16! text-center!">
+                        <font-awesome-icon
+                          icon="spinner"
+                          spin
+                          class="text-3xl! text-blue-500! mb-3!"
+                        />
+                        <p class="text-sm! font-bold! text-slate-500!">
+                          Memuat data hasil pencatatan...
+                        </p>
+                      </td>
+                    </tr>
+                  </template>
+                  <template v-else-if="filteredResultsData.length === 0">
+                    <tr>
+                      <td colspan="10" class="py-16! text-center!">
+                        <div
+                          class="w-16! h-16! bg-slate-100! text-slate-400! rounded-full! flex! items-center! justify-center! mx-auto! mb-4! text-2xl!"
+                        >
+                          <font-awesome-icon icon="frown" />
+                        </div>
+                        <h4 class="text-base! font-black! text-slate-700! mb-1!">Belum Ada Data</h4>
+                        <p class="text-xs! text-slate-400! font-bold!">
+                          Tidak ada data meteran yang tercatat untuk periode ini.
+                        </p>
+                      </td>
+                    </tr>
+                  </template>
+                  <template v-else v-for="(members, dusun) in groupedResultsData" :key="dusun">
+                    <tr class="bg-slate-100/80! border-y! border-slate-200!">
+                      <td colspan="10" class="py-2.5! px-4! font-bold text-slate-700!">
+                        Dusun : {{ dusun }}
+                      </td>
+                    </tr>
 
-                    <td class="py-4! px-4! text-center!">
-                      <a
-                        v-if="item.photo_url"
-                        :href="`/storage/${item.photo_url}`"
-                        target="_blank"
-                        class="text-xs! font-bold! text-blue-500! hover:underline! flex! items-center! justify-center! gap-1!"
-                      >
-                        <font-awesome-icon icon="image" /> Lihat Foto
-                      </a>
-                      <span v-else class="text-xs! text-slate-400! font-bold!">Tidak Ada</span>
-                    </td>
-                  </tr>
+                    <tr
+                      v-for="item in members"
+                      :key="item.id"
+                      class="hover:bg-slate-50! transition-colors border-b! border-slate-100!"
+                    >
+                      <td class="py-3! px-4! text-center!">
+                        <input
+                          type="checkbox"
+                          :value="item.id"
+                          v-model="selectedIds"
+                          class="w-4! h-4! rounded! border-slate-300! text-cyan-600! focus:ring-cyan-500! cursor-pointer! transition-all! active:scale-90!"
+                        />
+                      </td>
+                      <td class="py-3! px-4! font-medium text-slate-900!">{{ item.nama }}</td>
+                      <td class="py-3! px-4! text-slate-600!">{{ item.desa }}</td>
+                      <td class="py-3! px-4! text-center! text-slate-600!">{{ item.rt || '-' }}</td>
+                      <td class="py-3! px-4! font-mono! text-slate-500! text-xs!">{{ item.id }}</td>
+                      <td class="py-3! px-4! text-center! text-slate-600!">
+                        {{ item.meterAwal }}
+                      </td>
+                      <td class="py-3! px-4! text-center! text-slate-600! font-semibold!">
+                        {{ item.meterAkhir }}
+                      </td>
+                      <td class="py-3! px-4! text-center! text-slate-600!">
+                        {{ item.pemakaian }}
+                      </td>
+                      <td class="py-3! px-4! text-right font-mono font-semibold text-slate-900!">
+                        Rp.
+                        {{
+                          Number(item.tagihan || 0).toLocaleString('id-ID', {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          })
+                        }}
+                      </td>
+                      <td class="py-3! px-4! text-center!">
+                        <span
+                          class="inline-flex! items-center! px-2! py-0.5! rounded text-[10px]! font-bold! uppercase! tracking-wider!"
+                          :class="
+                            item.status === 'PAID'
+                              ? 'bg-emerald-100! text-emerald-700!'
+                              : 'bg-slate-100! text-slate-600!'
+                          "
+                        >
+                          {{ item.status }}
+                        </span>
+                      </td>
+                    </tr>
+                  </template>
                 </tbody>
               </table>
             </div>
+
+            <div
+              class="px-6! py-4! bg-slate-50! border-t! border-slate-200! flex justify-end items-center gap-3! min-h-[80px]!"
+            >
+              <button
+                @click="closeResultsModal"
+                class="flex items-center! gap-2! bg-white! border! border-slate-300! hover:bg-slate-100! text-slate-700! px-6! py-2.5! font-semibold! transition-all active:scale-95 rounded-lg! shadow-sm!"
+              >
+                <font-awesome-icon icon="times" />
+                Close
+              </button>
+              <button
+                class="flex items-center! gap-2! bg-amber-500! hover:bg-amber-600! text-white! px-6! py-2.5! font-semibold! transition-all active:scale-95 rounded-lg! shadow-md! shadow-amber-200!"
+              >
+                <font-awesome-icon icon="receipt" />
+                Cetak Struk
+              </button>
+              <button
+                class="flex items-center! gap-2! bg-cyan-600! hover:bg-cyan-700! text-white! px-6! py-2.5! font-semibold! transition-all active:scale-95 rounded-lg! shadow-md! shadow-cyan-200!"
+              >
+                <font-awesome-icon icon="print" />
+                Cetak Daftar Tagihan
+              </button>
+            </div>
           </div>
         </div>
-      </div>
+      </Transition>
     </Teleport>
   </div>
 </template>
@@ -491,6 +600,7 @@
 <script setup>
 import { reactive, computed, onMounted, watch, ref } from 'vue'
 import { useUiStore } from '@/stores/uiStore'
+import { useRouter } from 'vue-router'
 import api from '@/utils/axios'
 import { meterService } from '@/services/meter.service'
 import ContentCard from '@/presentations/components/ui/ContentCard.vue'
@@ -498,6 +608,7 @@ import BaseButton from '@/presentations/components/ui/BaseButton.vue'
 import SelectSearch from '@/presentations/components/SelectSearch.vue'
 
 const uiStore = useUiStore()
+const router = useRouter()
 
 const now = new Date()
 const currentYear = now.getFullYear().toString()
@@ -528,6 +639,8 @@ const stats = reactive({
 const showResultsModal = ref(false)
 const loadingResults = ref(false)
 const resultsData = ref([])
+const searchQuery = ref('')
+const selectedIds = ref([])
 
 const monthToNumber = (name) => {
   return monthNames.indexOf(name) + 1
@@ -546,9 +659,9 @@ const fetchStats = async () => {
       month: monthToNumber(form.bulan),
       year: form.tahun,
     })
-    // Backend mengembalikan { message: "...", data: [...], total_customers: 123 }
-    if (res.data) {
-      stats.pending = res.data.length
+
+    if (res && res.data) {
+      stats.pending = Array.isArray(res.data) ? res.data.length : 0
       stats.total = res.total_customers || 0
       stats.done = stats.total - stats.pending
       stats.percentage = stats.total > 0 ? Math.round((stats.done / stats.total) * 100) : 0
@@ -567,6 +680,17 @@ const openResultsModal = async () => {
 
 const closeResultsModal = () => {
   showResultsModal.value = false
+}
+
+const handleCetakFormInput = () => {
+  const url = router.resolve({
+    name: 'Cetak Input',
+    query: {
+      tahun: form.tahun,
+      bulan: form.bulan,
+    },
+  }).href
+  window.open(url, '_blank')
 }
 
 const fetchResults = async () => {
@@ -588,6 +712,57 @@ const fetchResults = async () => {
   }
 }
 
+const filteredResultsData = computed(() => {
+  if (!searchQuery.value) return resultsData.value
+
+  const query = searchQuery.value.toLowerCase()
+  return resultsData.value.filter(
+    (item) =>
+      item.customer?.user?.name?.toLowerCase().includes(query) ||
+      item.customer?.id?.toString().toLowerCase().includes(query),
+  )
+})
+
+const groupedResultsData = computed(() => {
+  const grouped = {}
+  filteredResultsData.value.forEach((item) => {
+    const dusun = item.customer?.ticket?.village?.name || 'Lainnya'
+    if (!grouped[dusun]) {
+      grouped[dusun] = []
+    }
+    grouped[dusun].push({
+      id: item.customer?.id || '-',
+      nama: item.customer?.user?.name || '-',
+      desa: item.customer?.ticket?.village?.name || '-',
+      rt: item.customer?.ticket?.rt || '-',
+      meterAwal: item.previous_reading || 0,
+      meterAkhir: item.meter_value || 0,
+      pemakaian: (item.meter_value || 0) - (item.previous_reading || 0),
+      tagihan: item.bill_amount || 0,
+      status: item.payment_status || 'UNPAID',
+    })
+  })
+  return grouped
+})
+
+const allVisibleIds = computed(() => {
+  return filteredResultsData.value.map((item) => item.customer?.id).filter(Boolean)
+})
+
+const isAllSelected = computed({
+  get: () =>
+    allVisibleIds.value.length > 0 &&
+    allVisibleIds.value.every((id) => selectedIds.value.includes(id)),
+  set: (val) => {
+    if (val) {
+      const newSelections = new Set([...selectedIds.value, ...allVisibleIds.value])
+      selectedIds.value = Array.from(newSelections)
+    } else {
+      selectedIds.value = selectedIds.value.filter((id) => !allVisibleIds.value.includes(id))
+    }
+  },
+})
+
 watch(
   () => [form.bulan, form.tahun],
   () => {
@@ -603,6 +778,22 @@ onMounted(() => {
 })
 
 const staffName = computed(() => uiStore.userData?.name || 'Petugas Lapangan')
+
+const maksimalBayar = computed(() => {
+  // Maksimal bayar adalah tanggal 5 bulan berikutnya dari periode pencatatan
+  const monthIndex = monthToNumber(form.bulan)
+  const year = parseInt(form.tahun)
+
+  // Jika bulan Desember, maka tahun depan Januari
+  let nextMonth = monthIndex + 1
+  let nextYear = year
+  if (nextMonth > 12) {
+    nextMonth = 1
+    nextYear = year + 1
+  }
+
+  return `5/${String(nextMonth).padStart(2, '0')}/${nextYear}`
+})
 
 const tahunOptions = [
   { id: '2024', text: '2024' },
@@ -689,18 +880,46 @@ input:read-only {
   }
 }
 
-@keyframes modalIn {
+.modal-fade-enter-active,
+.modal-fade-leave-active {
+  transition: opacity 0.4s ease;
+}
+
+.modal-fade-enter-from,
+.modal-fade-leave-to {
+  opacity: 0;
+}
+
+@keyframes slide-up {
   from {
+    transform: translateY(30px) scale(0.98);
     opacity: 0;
-    transform: scale(0.95) translateY(10px);
   }
   to {
+    transform: translateY(0) scale(1);
     opacity: 1;
-    transform: scale(1) translateY(0);
   }
 }
 
-.animate-modal-in {
-  animation: modalIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+.animate-slide-up {
+  animation: slide-up 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.scrollbar-custom::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.scrollbar-custom::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollbar-custom::-webkit-scrollbar-thumb {
+  background: #e2e8f0;
+  border-radius: 10px;
+}
+
+.scrollbar-custom::-webkit-scrollbar-thumb:hover {
+  background: #cbd5e1;
 }
 </style>

@@ -143,6 +143,8 @@ import {
   faExclamationCircle,
   faToolbox,
   faBox,
+  faClipboardCheck,
+  faMoneyBillWave,
 } from '@fortawesome/free-solid-svg-icons'
 
 import { faWhatsapp } from '@fortawesome/free-brands-svg-icons'
@@ -266,6 +268,8 @@ library.add(
   faExclamationCircle,
   faToolbox,
   faBox,
+  faClipboardCheck,
+  faMoneyBillWave,
 )
 
 export { MySwal } from './utils/swal'

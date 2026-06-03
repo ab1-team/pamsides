@@ -10,7 +10,7 @@ export const ticketService = {
    */
   async getTickets(params = {}) {
     const response = await api.get('/installation-tickets', {
-      params
+      params,
     })
     return response.data
   },
@@ -32,11 +32,18 @@ export const ticketService = {
   },
 
   /**
+   * Alias untuk getTicketDetail
+   */
+  async getTicket(id) {
+    return this.getTicketDetail(id)
+  },
+
+  /**
    * Transisi status tiket
    */
   async transitionStatus(id, status) {
     const response = await api.patch(`/installation-tickets/${id}/transition`, {
-      status
+      status,
     })
     return response.data
   },
@@ -55,11 +62,31 @@ export const ticketService = {
   },
 
   /**
+   * Update hasil survey (Admin)
+   */
+  async updateSurvey(surveyId, formData) {
+    const response = await api.post(`/survey-results/${surveyId}`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    })
+    return response.data
+  },
+
+  /**
+   * Delete hasil survey (Admin)
+   */
+  async deleteSurvey(surveyId) {
+    const response = await api.delete(`/survey-results/${surveyId}`)
+    return response.data
+  },
+
+  /**
    * Konfirmasi pembayaran instalasi
    */
   async confirmTicketPayment(id, amount) {
     const response = await api.post(`/installation-tickets/${id}/payment`, {
-      amount
+      amount,
     })
     return response.data
   },
@@ -68,13 +95,19 @@ export const ticketService = {
    * Input hasil instalasi (Teknisi)
    */
   async submitInstallationResult(id, formData) {
-    const response = await api.post(`/installation-tickets/${id}/installation-result`,
-      formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      })
+    const response = await api.post(`/installation-tickets/${id}/installation-result`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    })
     return response.data
+  },
+
+  /**
+   * Alias untuk submitInstallationResult
+   */
+  async submitInstallation(id, formData) {
+    return this.submitInstallationResult(id, formData)
   },
 
   /**

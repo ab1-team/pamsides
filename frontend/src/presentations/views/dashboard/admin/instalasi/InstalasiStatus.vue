@@ -132,7 +132,7 @@
             <template #column-status="{ row }">
               <span
                 class="inline-flex! items-center! gap-1! px-2! py-0.5! rounded-md! text-[10px]! font-bold! tracking-wider! uppercase! whitespace-nowrap!"
-                :class="statusStyle[row.status]"
+                :class="statusStyle[row.rawStatus]"
               >
                 • {{ row.status }}
               </span>
@@ -232,7 +232,7 @@
                 <p class="text-[11px]! text-slate-400! truncate!">ID: {{ row.id }}</p>
                 <span
                   class="text-[9px]! font-semibold! px-1.5! py-0.5! rounded-full! border! shrink-0! uppercase! tracking-wide!"
-                  :class="statusStyle[row.status]"
+                  :class="statusStyle[row.rawStatus]"
                 >
                   {{ row.status }}
                 </span>

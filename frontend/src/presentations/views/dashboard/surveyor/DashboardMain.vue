@@ -69,28 +69,30 @@
           <div
             v-for="(stat, idx) in stats"
             :key="idx"
-            class="group! relative! bg-white! p-5! rounded-2xl! border! border-slate-100! transition-all! duration-300! hover:shadow-lg! flex! items-center! gap-4!"
+            class="group! relative! bg-white! p-4! rounded-2xl! border! border-slate-100! transition-all! duration-300! hover:shadow-lg!"
             style="box-shadow: 0 4px 20px -10px rgba(0, 0, 0, 0.05)"
           >
-            <div
-              :class="`w-12! h-12! rounded-xl! ${stat.bg}! ${stat.color}! flex! items-center! justify-center! text-lg! shrink-0!`"
-            >
-              <font-awesome-icon :icon="stat.icon" />
-            </div>
-            <div class="min-w-0!">
+            <div class="flex! items-center! gap-2! mb-2!">
+              <div
+                :class="`w-8! h-8! rounded-lg! ${stat.bg}! ${stat.color}! flex! items-center! justify-center! text-sm! shrink-0!`"
+              >
+                <font-awesome-icon :icon="stat.icon" />
+              </div>
               <p
-                class="text-xs! font-bold! text-slate-400! uppercase! tracking-wider! leading-none! mb-1.5!"
+                class="text-[11px]! font-bold! text-slate-400! uppercase! tracking-wider! leading-none!"
               >
                 {{ stat.label }}
               </p>
-              <div class="flex! items-baseline! gap-2!">
-                <h3 class="text-2xl! font-black! text-slate-800! tracking-tight! leading-none!">
-                  {{ stat.value }}
-                </h3>
-                <span class="text-[11px]! font-bold! text-emerald-500! whitespace-nowrap!">
-                  {{ stat.trend }}
-                </span>
-              </div>
+            </div>
+            <div class="pl-10!">
+              <h3
+                class="text-2xl! font-black! text-slate-800! tracking-tight! leading-none! mb-0.5!"
+              >
+                {{ stat.value }}
+              </h3>
+              <span class="text-[9px]! font-bold! text-slate-500! uppercase! tracking-wider!">
+                {{ stat.trend }}
+              </span>
             </div>
           </div>
         </div>
@@ -232,7 +234,7 @@ const loading = ref(false)
 const userData = JSON.parse(localStorage.getItem('user_data') || '{}')
 const surveyorName = ref(userData.name || 'Surveyor')
 const completionRate = ref(0)
-const completionTrend = ref('+12')
+const completionTrend = ref(0)
 
 const stats = ref([
   {
@@ -249,7 +251,7 @@ const stats = ref([
     icon: 'clock',
     bg: 'bg-orange-50',
     color: 'text-orange-600',
-    trend: 'Butuh Segera',
+    trend: 'Perlu Dikerjakan',
   },
   {
     label: 'Selesai Verif',
@@ -257,7 +259,7 @@ const stats = ref([
     icon: 'check-double',
     bg: 'bg-emerald-50',
     color: 'text-emerald-600',
-    trend: 'Berhasil Survey',
+    trend: 'Sudah Terverifikasi',
   },
 ])
 
@@ -292,8 +294,15 @@ const fetchDashboardData = async () => {
 
     if (grandTotal > 0) {
       completionRate.value = Math.round((totalSurveyed / grandTotal) * 100)
+      // Trend dihitung berdasarkan persentase survey yang sudah selesai
+      // Jika completion rate >= 50%, tampilkan trend positif
+      completionTrend.value =
+        completionRate.value >= 50
+          ? `+${Math.round(completionRate.value / 10)}`
+          : `-${Math.round((100 - completionRate.value) / 10)}`
     } else {
       completionRate.value = 0
+      completionTrend.value = 0
     }
 
     const dist = [0, 0, 0, 0]

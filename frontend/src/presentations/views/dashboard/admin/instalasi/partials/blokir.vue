@@ -134,26 +134,31 @@
         </div>
         <div class="space-y-2!">
           <button
-            class="w-full! flex! items-center! justify-center! gap-2! bg-gradient-to-r! from-emerald-500! to-green-600! hover:from-emerald-600! hover:to-green-700! text-white! font-bold! py-3! rounded-xl! shadow-lg! shadow-emerald-200/50! transition-all! active:scale-95!"
+            @click="handleAktifkanKembali"
+            :disabled="!customer.ticketId"
+            class="w-full! flex! items-center! justify-center! gap-2! bg-gradient-to-r! from-emerald-500! to-green-600! hover:from-emerald-600! hover:to-green-700! text-white! font-bold! py-3! rounded-xl! shadow-lg! shadow-emerald-200/50! transition-all! active:scale-95! disabled:opacity-50! disabled:cursor-not-allowed!"
           >
             <font-awesome-icon icon="check-circle" />
             Aktifkan Kembali
           </button>
           <button
-            class="w-full! flex! items-center! justify-center! gap-2! bg-gradient-to-r! from-red-500! to-rose-600! hover:from-red-600! hover:to-rose-700! text-white! font-bold! py-3! rounded-xl! shadow-lg! shadow-red-200/50! transition-all! active:scale-95!"
+            @click="handleCabut"
+            :disabled="!customer.ticketId"
+            class="w-full! flex! items-center! justify-center! gap-2! bg-gradient-to-r! from-red-500! to-rose-600! hover:from-red-600! hover:to-rose-700! text-white! font-bold! py-3! rounded-xl! shadow-lg! shadow-red-200/50! transition-all! active:scale-95! disabled:opacity-50! disabled:cursor-not-allowed!"
           >
             <font-awesome-icon icon="times-circle" />
             Cabut Instalasi
           </button>
           <div class="grid! grid-cols-2! gap-2! pt-1!">
             <button
+              @click="handlePrint"
               class="flex! items-center! justify-center! gap-2! border! border-slate-200! hover:bg-slate-50! text-slate-600! font-semibold! py-2.5! rounded-xl! text-sm! transition-all!"
             >
               <font-awesome-icon icon="print" />
               Cetak
             </button>
             <button
-              @click="$router.back()"
+              @click="$router.push({ path: '/instalasi/status', query: { filter: 'blokir' } })"
               class="flex! items-center! justify-center! gap-2! border! border-slate-200! hover:bg-slate-50! text-slate-600! font-semibold! py-2.5! rounded-xl! text-sm! transition-all!"
             >
               <font-awesome-icon icon="arrow-left" />
@@ -169,12 +174,15 @@
 <script setup>
 defineOptions({ name: 'BlokirDetail' })
 import { ref, computed } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useInstalasiStatus } from '@/composables/useInstalasiStatus'
+import { useInstalasiActions } from '@/composables/useInstalasiActions'
 import ContentCard from '@/presentations/components/ui/ContentCard.vue'
 
 const route = useRoute()
-const { dataMap } = useInstalasiStatus()
+const router = useRouter()
+const { dataMap, fetchData } = useInstalasiStatus()
+const { transitionStatus, printDetail } = useInstalasiActions()
 const id = decodeURIComponent(route.params.id)
 const catatan = ref('')
 
@@ -186,24 +194,69 @@ const customer = computed(() => {
       address: '-',
       region: '-',
       noInduk: '-',
+      nik: '-',
+      phone: '-',
       abodemen: '0',
       tglBlokir: '-',
       alasanBlokir: '-',
       kodeInstalasi: '-',
       totalTagihan: '0',
       bulanTunggakan: '0 Bulan',
+      ticketId: null,
+      rawStatus: null,
     }
   return {
     name: found.name,
     address: found.address,
-    region: 'Kabupaten / DI Yogyakarta',
+    region: found.village || '-',
     noInduk: found.id,
-    abodemen: '10,000.00',
-    tglBlokir: '2024-03-01',
-    alasanBlokir: 'Tunggakan > 3 Bulan',
-    kodeInstalasi: found.id.replace('#MA-', '5..12.'),
-    totalTagihan: '150,000',
-    bulanTunggakan: '3 Bulan',
+    nik: found.nik,
+    phone: found.phone,
+    abodemen: found.rawData?.package?.installation_fee || '0',
+    tglBlokir: found.updatedAt || '-',
+    alasanBlokir: 'Tunggakan',
+    kodeInstalasi: found.id,
+    totalTagihan: '0',
+    bulanTunggakan: '0 Bulan',
+    ticketId: found.ticketId,
+    rawStatus: found.rawStatus,
+    rawData: found.rawData,
   }
 })
+
+const handleAktifkanKembali = async () => {
+  if (!customer.value.ticketId) return
+  const kodeInstalasi = customer.value.kodeInstalasi
+  const result = await transitionStatus(
+    customer.value.ticketId,
+    'completed',
+    `Aktifkan kembali layanan untuk pelanggan "${customer.value.name}"?`,
+  )
+  if (result.success) {
+    await fetchData()
+    router.push({
+      path: `/instalasi/status/aktif/${encodeURIComponent(kodeInstalasi)}`,
+    })
+  }
+}
+
+const handleCabut = async () => {
+  if (!customer.value.ticketId) return
+  const kodeInstalasi = customer.value.kodeInstalasi
+  const result = await transitionStatus(
+    customer.value.ticketId,
+    'terminated',
+    `Cabut instalasi untuk pelanggan "${customer.value.name}"? Tindakan ini tidak dapat dikembalikan.`,
+  )
+  if (result.success) {
+    await fetchData()
+    router.push({
+      path: `/instalasi/status/cabut/${encodeURIComponent(kodeInstalasi)}`,
+    })
+  }
+}
+
+const handlePrint = () => {
+  printDetail({ ...customer.value, tglOrder: customer.value.tglBlokir }, 'Blokir')
+}
 </script>
