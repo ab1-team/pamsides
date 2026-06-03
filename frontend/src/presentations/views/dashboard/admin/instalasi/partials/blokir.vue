@@ -230,7 +230,7 @@ const handleAktifkanKembali = async () => {
   const result = await transitionStatus(
     customer.value.ticketId,
     'completed',
-    `Aktifkan kembali layanan untuk pelanggan "${customer.value.name}"?`
+    `Aktifkan kembali layanan untuk pelanggan "${customer.value.name}"?`,
   )
   if (result.success) {
     await fetchData()
@@ -246,7 +246,7 @@ const handleCabut = async () => {
   const result = await transitionStatus(
     customer.value.ticketId,
     'terminated',
-    `Cabut instalasi untuk pelanggan "${customer.value.name}"? Tindakan ini tidak dapat dikembalikan.`
+    `Cabut instalasi untuk pelanggan "${customer.value.name}"? Tindakan ini tidak dapat dikembalikan.`,
   )
   if (result.success) {
     await fetchData()

@@ -3,7 +3,6 @@ import LoginView from '@/presentations/views/auth/LoginView.vue'
 import MainView from '@/presentations/layouts/dashboard/MainView.vue'
 import DashboardHome from '@/presentations/views/dashboard/DashboardHome.vue'
 
-import { useUiStore } from '@/stores/uiStore'
 import SopIndex from '@/presentations/views/dashboard/admin/sop/SopIndex.vue'
 import KelasBiayaView from '@/presentations/views/dashboard/admin/kelas/KelasIndex.vue'
 import CreateKelasView from '@/presentations/views/dashboard/admin/kelas/KelasCreate.vue'
@@ -137,7 +136,8 @@ const router = createRouter({
         {
           path: '/instalasi/hasil-survey',
           name: 'Hasil Survey',
-          component: () => import('@/presentations/views/dashboard/admin/instalasi/hasilSurvey.vue'),
+          component: () =>
+            import('@/presentations/views/dashboard/admin/instalasi/hasilSurvey.vue'),
         },
         {
           path: '/instalasi/status/permohonan/:id',
@@ -213,7 +213,8 @@ const router = createRouter({
         {
           path: '/pelanggan/lapor-gangguan/form',
           name: 'Form Lapor Gangguan',
-          component: () => import('@/presentations/views/dashboard/pelanggan/LaporGangguanForm.vue'),
+          component: () =>
+            import('@/presentations/views/dashboard/pelanggan/LaporGangguanForm.vue'),
         },
         {
           path: '/instalasi/teknisiPemakaianAir',

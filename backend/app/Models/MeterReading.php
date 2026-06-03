@@ -13,13 +13,14 @@ class MeterReading extends Model
         'reading_month',
         'meter_value',
         'photo_url',
-        'recorded_at'
+        'recorded_at',
     ];
 
     public function customer()
     {
         return $this->belongsTo(Customer::class, 'customer_id');
     }
+
     public function user()
     {
         return $this->belongsTo(User::class, 'recorded_by');

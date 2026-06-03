@@ -85,7 +85,9 @@
               </p>
             </div>
             <div class="pl-10!">
-              <h3 class="text-2xl! font-black! text-slate-800! tracking-tight! leading-none! mb-0.5!">
+              <h3
+                class="text-2xl! font-black! text-slate-800! tracking-tight! leading-none! mb-0.5!"
+              >
                 {{ stat.value }}
               </h3>
               <span class="text-[9px]! font-bold! text-slate-500! uppercase! tracking-wider!">
@@ -294,9 +296,10 @@ const fetchDashboardData = async () => {
       completionRate.value = Math.round((totalSurveyed / grandTotal) * 100)
       // Trend dihitung berdasarkan persentase survey yang sudah selesai
       // Jika completion rate >= 50%, tampilkan trend positif
-      completionTrend.value = completionRate.value >= 50 
-        ? `+${Math.round(completionRate.value / 10)}` 
-        : `-${Math.round((100 - completionRate.value) / 10)}`
+      completionTrend.value =
+        completionRate.value >= 50
+          ? `+${Math.round(completionRate.value / 10)}`
+          : `-${Math.round((100 - completionRate.value) / 10)}`
     } else {
       completionRate.value = 0
       completionTrend.value = 0

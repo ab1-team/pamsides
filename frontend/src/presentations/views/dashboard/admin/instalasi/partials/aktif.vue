@@ -78,17 +78,23 @@
         <div class="grid! grid-cols-1! sm:grid-cols-3! gap-4!">
           <div class="text-center!">
             <p class="text-xs! text-slate-400! mb-1!">Meter Awal</p>
-            <p class="text-2xl! font-black! text-emerald-600!">{{ formatMeter(customer.meterAwal) }}</p>
+            <p class="text-2xl! font-black! text-emerald-600!">
+              {{ formatMeter(customer.meterAwal) }}
+            </p>
             <p class="text-xs! text-slate-400!">m³</p>
           </div>
           <div class="text-center!">
             <p class="text-xs! text-slate-400! mb-1!">Pemakaian Terakhir</p>
-            <p class="text-2xl! font-black! text-slate-800!">{{ formatMeter(customer.meterAkhir) }}</p>
+            <p class="text-2xl! font-black! text-slate-800!">
+              {{ formatMeter(customer.meterAkhir) }}
+            </p>
             <p class="text-xs! text-slate-400!">m³</p>
           </div>
           <div class="text-center!">
             <p class="text-xs! text-slate-400! mb-1!">Total Pemakaian</p>
-            <p class="text-2xl! font-black! text-blue-600!">{{ formatMeter(customer.totalPemakaian) }}</p>
+            <p class="text-2xl! font-black! text-blue-600!">
+              {{ formatMeter(customer.totalPemakaian) }}
+            </p>
             <p class="text-xs! text-slate-400!">m³</p>
           </div>
         </div>
@@ -227,7 +233,7 @@ const handleBlokir = async () => {
   const result = await transitionStatus(
     customer.value.ticketId,
     'suspended',
-    `Blokir layanan untuk pelanggan "${customer.value.name}"?`
+    `Blokir layanan untuk pelanggan "${customer.value.name}"?`,
   )
   if (result.success) {
     await fetchData()
@@ -243,7 +249,7 @@ const handleCabut = async () => {
   const result = await transitionStatus(
     customer.value.ticketId,
     'terminated',
-    `Cabut instalasi untuk pelanggan "${customer.value.name}"? Tindakan ini tidak dapat dikembalikan.`
+    `Cabut instalasi untuk pelanggan "${customer.value.name}"? Tindakan ini tidak dapat dikembalikan.`,
   )
   if (result.success) {
     await fetchData()

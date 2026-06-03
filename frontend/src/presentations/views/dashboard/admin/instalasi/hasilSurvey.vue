@@ -155,20 +155,20 @@ const fetchSurveys = async () => {
     if (res.data && res.data.data) {
       // Data dari API adalah array of tickets yang sudah di-survey
       // Kita perlu mapping untuk menampilkan data survey
-      surveys.value = res.data.data.map(ticket => {
+      surveys.value = res.data.data.map((ticket) => {
         // Ambil survey result dari relasi ticket
         const survey = Array.isArray(ticket.survey) ? ticket.survey[0] : ticket.survey
-        
+
         // Perbaiki URL foto agar sesuai dengan backend
         let photoUrl = survey?.photo_url
         if (photoUrl) {
           // Ganti URL localhost yang salah dengan URL backend yang benar
           photoUrl = photoUrl.replace(
             'http://localhost/pamsides-v2/backend/public',
-            'http://localhost:8000'
+            'http://localhost:8000',
           )
         }
-        
+
         return {
           id: survey?.id || ticket.id,
           ticket_id: ticket.id,
@@ -220,6 +220,7 @@ const formatDate = (dateStr) => {
     ]
     return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`
   } catch (err) {
+    console.error('Gagal format tanggal:', err)
     return dateStr
   }
 }
@@ -260,18 +261,18 @@ const handleEdit = (row) => {
 const handleSaveEdit = async (updatedData) => {
   try {
     uiStore.setLoading(true)
-    
+
     // Buat FormData untuk upload foto
     const formData = new FormData()
     formData.append('distance_to_pipe_m', updatedData.distance_to_pipe_m)
     formData.append('material_notes', updatedData.material_notes)
     formData.append('_method', 'PUT')
-    
+
     // Tambahkan foto baru jika ada
     if (updatedData.photo) {
       formData.append('photo', updatedData.photo)
     }
-    
+
     await ticketService.updateSurvey(updatedData.id, formData)
     uiStore.success('Survey berhasil diupdate')
     showEditModal.value = false

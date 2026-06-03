@@ -1,10 +1,7 @@
 <template>
   <Teleport to="body">
     <Transition name="modal-fade">
-      <div
-        v-if="show"
-        class="fixed inset-0! z-50 flex items-center justify-center p-4! md:p-8!"
-      >
+      <div v-if="show" class="fixed inset-0! z-50 flex items-center justify-center p-4! md:p-8!">
         <div class="absolute inset-0! bg-slate-900/60! backdrop-blur-sm!" @click="close"></div>
 
         <div
@@ -41,11 +38,13 @@
               <!-- Kolom Kiri: Form Input -->
               <div class="lg:col-span-2 space-y-4!">
                 <div class="bg-slate-50! rounded-xl! p-5!">
-                  <h3 class="text-xs! font-bold! text-slate-800! uppercase! tracking-wider! mb-4! flex! items-center! gap-2!">
+                  <h3
+                    class="text-xs! font-bold! text-slate-800! uppercase! tracking-wider! mb-4! flex! items-center! gap-2!"
+                  >
                     <font-awesome-icon icon="edit" class="text-orange-500!" />
                     Data Survey
                   </h3>
-                  
+
                   <div class="space-y-4!">
                     <div>
                       <label class="text-xs! font-bold! text-slate-700! mb-2! block!">
@@ -85,7 +84,9 @@
               <div class="lg:col-span-1 space-y-4!">
                 <!-- Upload Foto -->
                 <div class="bg-slate-50! rounded-xl! p-5!">
-                  <h3 class="text-xs! font-bold! text-slate-800! uppercase! tracking-wider! mb-4! flex! items-center! gap-2!">
+                  <h3
+                    class="text-xs! font-bold! text-slate-800! uppercase! tracking-wider! mb-4! flex! items-center! gap-2!"
+                  >
                     <font-awesome-icon icon="camera" class="text-orange-500!" />
                     Foto Lokasi
                   </h3>
@@ -100,12 +101,14 @@
                       alt="Foto Survey"
                       class="w-full! h-full! object-cover!"
                     />
-                    
+
                     <div
                       v-if="!photoPreview"
                       class="absolute! inset-0! flex! flex-col! items-center! justify-center! gap-3! text-slate-600! group-hover:text-orange-600!"
                     >
-                      <div class="w-12! h-12! bg-slate-100! group-hover:bg-orange-100! rounded-full! flex! items-center! justify-center! transition-all!">
+                      <div
+                        class="w-12! h-12! bg-slate-100! group-hover:bg-orange-100! rounded-full! flex! items-center! justify-center! transition-all!"
+                      >
                         <font-awesome-icon icon="image" class="text-xl!" />
                       </div>
                       <div class="text-center! px-4!">
@@ -126,13 +129,15 @@
                       v-if="photoPreview"
                       class="absolute! inset-0! bg-black/0! hover:bg-black/40! transition-all! flex! items-center! justify-center!"
                     >
-                      <div class="opacity-0! group-hover:opacity-100! transition-opacity! text-white! text-sm! font-bold!">
+                      <div
+                        class="opacity-0! group-hover:opacity-100! transition-opacity! text-white! text-sm! font-bold!"
+                      >
                         <font-awesome-icon icon="camera" class="mr-2!" />
                         Ganti Foto
                       </div>
                     </div>
                   </div>
-                  
+
                   <input
                     ref="fileInput"
                     type="file"
@@ -144,7 +149,9 @@
 
                 <!-- Info Pemohon -->
                 <div class="bg-blue-50! border-2! border-blue-100! rounded-xl! p-3!">
-                  <p class="text-[10px]! font-bold! text-blue-600! uppercase! tracking-wider! mb-1!">
+                  <p
+                    class="text-[10px]! font-bold! text-blue-600! uppercase! tracking-wider! mb-1!"
+                  >
                     Informasi Pemohon
                   </p>
                   <p class="text-sm! font-semibold! text-blue-900! leading-tight!">

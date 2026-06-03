@@ -1,10 +1,7 @@
 <template>
   <Teleport to="body">
     <Transition name="modal-fade">
-      <div
-        v-if="show"
-        class="fixed inset-0! z-50 flex items-center justify-center p-4! md:p-8!"
-      >
+      <div v-if="show" class="fixed inset-0! z-50 flex items-center justify-center p-4! md:p-8!">
         <div class="absolute inset-0! bg-slate-900/60! backdrop-blur-sm!" @click="close"></div>
 
         <div
@@ -46,7 +43,9 @@
                   </h3>
                   <div class="grid grid-cols-2 gap-3!">
                     <div>
-                      <p class="text-[10px]! font-bold! text-slate-400! uppercase! tracking-wider! mb-1!">
+                      <p
+                        class="text-[10px]! font-bold! text-slate-400! uppercase! tracking-wider! mb-1!"
+                      >
                         Nama Lengkap
                       </p>
                       <p class="text-sm! font-semibold! text-slate-800!">
@@ -54,7 +53,9 @@
                       </p>
                     </div>
                     <div>
-                      <p class="text-[10px]! font-bold! text-slate-400! uppercase! tracking-wider! mb-1!">
+                      <p
+                        class="text-[10px]! font-bold! text-slate-400! uppercase! tracking-wider! mb-1!"
+                      >
                         NIK
                       </p>
                       <p class="text-sm! font-semibold! text-slate-800!">
@@ -62,7 +63,9 @@
                       </p>
                     </div>
                     <div class="col-span-2">
-                      <p class="text-[10px]! font-bold! text-slate-400! uppercase! tracking-wider! mb-1!">
+                      <p
+                        class="text-[10px]! font-bold! text-slate-400! uppercase! tracking-wider! mb-1!"
+                      >
                         Alamat
                       </p>
                       <p class="text-sm! font-semibold! text-slate-800!">
@@ -70,7 +73,9 @@
                       </p>
                     </div>
                     <div>
-                      <p class="text-[10px]! font-bold! text-slate-400! uppercase! tracking-wider! mb-1!">
+                      <p
+                        class="text-[10px]! font-bold! text-slate-400! uppercase! tracking-wider! mb-1!"
+                      >
                         No. Telepon
                       </p>
                       <p class="text-sm! font-semibold! text-slate-800!">
@@ -86,7 +91,9 @@
                   </h3>
                   <div class="grid grid-cols-2 gap-3!">
                     <div>
-                      <p class="text-[10px]! font-bold! text-slate-400! uppercase! tracking-wider! mb-1!">
+                      <p
+                        class="text-[10px]! font-bold! text-slate-400! uppercase! tracking-wider! mb-1!"
+                      >
                         Jarak ke Pipa Utama
                       </p>
                       <p class="text-2xl! font-black! text-cyan-600!">
@@ -95,7 +102,9 @@
                       </p>
                     </div>
                     <div>
-                      <p class="text-[10px]! font-bold! text-slate-400! uppercase! tracking-wider! mb-1!">
+                      <p
+                        class="text-[10px]! font-bold! text-slate-400! uppercase! tracking-wider! mb-1!"
+                      >
                         Surveyor
                       </p>
                       <p class="text-sm! font-semibold! text-slate-800!">
@@ -103,7 +112,9 @@
                       </p>
                     </div>
                     <div class="col-span-2">
-                      <p class="text-[10px]! font-bold! text-slate-400! uppercase! tracking-wider! mb-1!">
+                      <p
+                        class="text-[10px]! font-bold! text-slate-400! uppercase! tracking-wider! mb-1!"
+                      >
                         Tanggal Survey
                       </p>
                       <p class="text-sm! font-semibold! text-slate-800!">
@@ -114,7 +125,9 @@
                 </div>
 
                 <div class="bg-slate-50! rounded-xl! p-4!">
-                  <p class="text-[10px]! font-bold! text-slate-400! uppercase! tracking-wider! mb-2!">
+                  <p
+                    class="text-[10px]! font-bold! text-slate-400! uppercase! tracking-wider! mb-2!"
+                  >
                     Catatan Material & Teknis
                   </p>
                   <p class="text-sm! text-slate-700! font-medium! leading-relaxed!">
@@ -126,7 +139,9 @@
               <!-- Kolom Kanan: Foto -->
               <div class="lg:col-span-1">
                 <div class="bg-slate-50! rounded-xl! p-4!">
-                  <p class="text-[10px]! font-bold! text-slate-400! uppercase! tracking-wider! mb-2!">
+                  <p
+                    class="text-[10px]! font-bold! text-slate-400! uppercase! tracking-wider! mb-2!"
+                  >
                     Foto Lokasi Survey
                   </p>
                   <div
@@ -189,6 +204,7 @@ const formatDate = (dateStr) => {
       minute: '2-digit',
     }).format(d)
   } catch (err) {
+    console.error('Error formatting date:', err)
     return dateStr
   }
 }

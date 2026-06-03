@@ -374,7 +374,7 @@ const tableColumns = [
     title: 'PAKAI BULAN LALU',
     tdClass: 'text-right! w-40! text-blue-600! font-bold!',
   },
- ]
+]
 
 const hitungPemakaian = (row) => {
   return Math.max(0, row.meterAkhir - row.meterAwal)

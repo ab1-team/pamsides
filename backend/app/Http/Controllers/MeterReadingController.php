@@ -3,9 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\Customer;
-use Illuminate\Http\Request;
 use App\Models\MeterReading;
 use Carbon\Carbon;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class MeterReadingController extends Controller
@@ -18,18 +18,18 @@ class MeterReadingController extends Controller
         // Validasi input parameter query
         $request->validate([
             'month' => 'required|integer|between:1,12',
-            'year'  => 'required|integer|min:2000',
+            'year' => 'required|integer|min:2000',
         ], [
             'month.required' => 'Filter bulan wajib diisi.',
-            'month.between'  => 'Bulan harus bernilai antara 1 sampai 12.',
-            'year.required'  => 'Filter tahun wajib diisi.',
+            'month.between' => 'Bulan harus bernilai antara 1 sampai 12.',
+            'year.required' => 'Filter tahun wajib diisi.',
         ]);
 
         // Mengambil data meteran dengan eager loading customer.user dan customer.ticket
         $readings = MeterReading::with([
-                'customer.user',    // Untuk mengambil Nama Pelanggan
-                'customer.ticket'   // Untuk mengambil Alamat Pendaftaran tiket
-            ])
+            'customer.user',    // Untuk mengambil Nama Pelanggan
+            'customer.ticket',   // Untuk mengambil Alamat Pendaftaran tiket
+        ])
             ->where('reading_month', $request->month)
             ->where('reading_year', $request->year)
             ->latest()
@@ -38,7 +38,7 @@ class MeterReadingController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Daftar pencatatan meter.',
-            'data'    => $readings
+            'data' => $readings,
         ]);
     }
 
@@ -50,7 +50,7 @@ class MeterReadingController extends Controller
         // Ambil dari request filter frontend, jika kosong gunakan bulan & tahun saat ini
         $request->validate([
             'month' => 'nullable|integer|between:1,12',
-            'year'  => 'nullable|integer|min:2000',
+            'year' => 'nullable|integer|min:2000',
         ]);
 
         $bulan = $request->query('month', Carbon::now()->month);
@@ -65,8 +65,8 @@ class MeterReadingController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => "Daftar pelanggan yang belum dicatat meter periode bulan ini",
-            'data' => $customers
+            'message' => 'Daftar pelanggan yang belum dicatat meter periode bulan ini',
+            'data' => $customers,
         ]);
     }
 
@@ -76,11 +76,11 @@ class MeterReadingController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'customer_id'   => 'required|exists:customers,id',
-            'meter_value'   => 'required|integer|min:0',
-            'photo'         => 'required|image|max:2048', // Batasi max 2MB demi kapasitas server
+            'customer_id' => 'required|exists:customers,id',
+            'meter_value' => 'required|integer|min:0',
+            'photo' => 'required|image|max:2048', // Batasi max 2MB demi kapasitas server
             'reading_month' => 'required|integer|between:1,12', // Dikirim dinamis dari frontend Vue
-            'reading_year'  => 'required|integer|min:2000',  // Dikirim dinamis dari frontend Vue
+            'reading_year' => 'required|integer|min:2000',  // Dikirim dinamis dari frontend Vue
         ]);
 
         $bulan = $request->reading_month;
@@ -95,7 +95,7 @@ class MeterReadingController extends Controller
         if ($exists) {
             return response()->json([
                 'success' => false,
-                'message' => 'Meter pelanggan untuk periode bulan dan tahun ini sudah dicatat.'
+                'message' => 'Meter pelanggan untuk periode bulan dan tahun ini sudah dicatat.',
             ], 400);
         }
 
@@ -104,12 +104,12 @@ class MeterReadingController extends Controller
             ->orderByDesc('reading_year')
             ->orderByDesc('reading_month')
             ->first();
-            
+
         // Validasi meter tidak boleh lebih kecil dari bulan sebelumnya
         if ($last && $request->meter_value < $last->meter_value) {
             return response()->json([
                 'success' => false,
-                'message' => 'Angka meter tidak boleh lebih kecil dari bulan sebelumnya (Catatan terakhir: ' . $last->meter_value . ' m³)'
+                'message' => 'Angka meter tidak boleh lebih kecil dari bulan sebelumnya (Catatan terakhir: '.$last->meter_value.' m³)',
             ], 400);
         }
 
@@ -117,63 +117,65 @@ class MeterReadingController extends Controller
         $path = $request->file('photo')->store('meter-readings', 'public');
 
         $reading = MeterReading::create([
-            'customer_id'   => $request->customer_id,
-            'recorded_by'   => Auth::id(), // Menggunakan ID user yang sedang login
+            'customer_id' => $request->customer_id,
+            'recorded_by' => Auth::id(), // Menggunakan ID user yang sedang login
             'reading_month' => $bulan,
-            'reading_year'  => $tahun,
-            'meter_value'   => $request->meter_value,
-            'photo_url'     => $path,
-            'recorded_at'   => now(),
+            'reading_year' => $tahun,
+            'meter_value' => $request->meter_value,
+            'photo_url' => $path,
+            'recorded_at' => now(),
         ]);
 
         return response()->json([
             'success' => true,
             'message' => 'Meter berhasil dicatat',
-            'data' => $reading
+            'data' => $reading,
         ]);
     }
 
-    public function show(string $id) {
+    public function show(string $id)
+    {
         $reading = MeterReading::with(['customer.user', 'customer.ticket'])->find($id);
 
-        if (!$reading) {
+        if (! $reading) {
             return response()->json([
                 'success' => false,
-                'message' => 'Pencatatan meter tidak ditemukan'
+                'message' => 'Pencatatan meter tidak ditemukan',
             ], 404);
         }
 
         return response()->json([
             'success' => true,
             'message' => 'Detail pencatatan meter ditemukan',
-            'data' => $reading
+            'data' => $reading,
         ]);
     }
 
-    public function update(Request $request, string $id) {
+    public function update(Request $request, string $id)
+    {
         $reading = MeterReading::find($id);
 
-        if (!$reading) {
+        if (! $reading) {
             return response()->json([
                 'success' => false,
-                'message' => 'Pencatatan meter tidak ditemukan'
+                'message' => 'Pencatatan meter tidak ditemukan',
             ], 404);
         }
 
         // Validasi input
         $request->validate([
             'meter_value' => 'required|integer|min:0',
-            'photo'       => 'nullable|image|max:2048'
+            'photo' => 'nullable|image|max:2048',
         ]);
 
         // Cari record SEBELUM bulan dari record yang sedang diedit ini
         $previous = MeterReading::where('customer_id', $reading->customer_id)
-            ->where(function($query) use ($reading) {
+            ->where(function ($query) use ($reading) {
                 $query->where('reading_year', '<', $reading->reading_year)
-                      ->orWhere(function($q) use ($reading) {
-                          $q->where('reading_year', $reading->reading_year)
+                    ->orWhere(function ($q) use ($reading) {
+                        $q->where('reading_year', $reading->reading_year)
                             ->where('reading_month', '<', $reading->reading_month);
-                      });
+                    });
             })
             ->orderByDesc('reading_year')
             ->orderByDesc('reading_month')
@@ -183,7 +185,7 @@ class MeterReadingController extends Controller
         if ($previous && $request->meter_value < $previous->meter_value) {
             return response()->json([
                 'success' => false,
-                'message' => 'Meter tidak boleh lebih kecil dari bulan sebelumnya (' . $previous->meter_value . ' m³)'
+                'message' => 'Meter tidak boleh lebih kecil dari bulan sebelumnya ('.$previous->meter_value.' m³)',
             ], 400);
         }
 
@@ -201,17 +203,18 @@ class MeterReadingController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Pencatatan meter berhasil diperbarui',
-            'data' => $reading
+            'data' => $reading,
         ]);
     }
 
-    public function destroy(string $id) {   
+    public function destroy(string $id)
+    {
         $reading = MeterReading::find($id);
 
-        if (!$reading) {
+        if (! $reading) {
             return response()->json([
                 'success' => false,
-                'message' => 'Pencatatan meter tidak ditemukan'
+                'message' => 'Pencatatan meter tidak ditemukan',
             ], 404);
         }
 
@@ -219,7 +222,7 @@ class MeterReadingController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Pencatatan meter berhasil dihapus'
+            'message' => 'Pencatatan meter berhasil dihapus',
         ]);
     }
 }

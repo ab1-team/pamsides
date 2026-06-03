@@ -49,13 +49,25 @@
           >
             <div
               class="w-10! h-10! rounded-full! flex! items-center! justify-center! text-white! font-bold! shadow-md! z-10! transition-all!"
-              :class="step.state === 'done' ? 'bg-emerald-500!' : step.state === 'current' ? 'bg-sky-500! ring-4! ring-sky-100!' : 'bg-slate-300!'"
+              :class="
+                step.state === 'done'
+                  ? 'bg-emerald-500!'
+                  : step.state === 'current'
+                    ? 'bg-sky-500! ring-4! ring-sky-100!'
+                    : 'bg-slate-300!'
+              "
             >
               <font-awesome-icon :icon="step.state === 'done' ? 'check' : step.icon" />
             </div>
             <p
               class="text-[11px]! font-bold! mt-2! text-center!"
-              :class="step.state === 'done' ? 'text-emerald-600!' : step.state === 'current' ? 'text-sky-600!' : 'text-slate-400!'"
+              :class="
+                step.state === 'done'
+                  ? 'text-emerald-600!'
+                  : step.state === 'current'
+                    ? 'text-sky-600!'
+                    : 'text-slate-400!'
+              "
             >
               {{ step.label }}
             </p>
@@ -270,7 +282,10 @@ const customer = computed(() => {
     tglOrder: found.orderDate || found.createdAt,
     paket: found.type,
     kodeInstalasi: found.id,
-    isPaid: found.rawStatus === 'unpaid' || found.rawStatus === 'processing' || found.rawStatus === 'completed',
+    isPaid:
+      found.rawStatus === 'unpaid' ||
+      found.rawStatus === 'processing' ||
+      found.rawStatus === 'completed',
     ticketId: found.ticketId,
     rawStatus: found.rawStatus,
     rawData: found.rawData,
@@ -330,19 +345,19 @@ const handleFinalize = async () => {
     result = await confirmPayment(
       customer.value.ticketId,
       customer.value.installationFee,
-      customer.value.name
+      customer.value.name,
     )
   } else if (currentStatus === 'unpaid') {
     result = await transitionStatus(
       customer.value.ticketId,
       'processing',
-      'Lanjutkan ke tahap Processing pemasangan?'
+      'Lanjutkan ke tahap Processing pemasangan?',
     )
   } else if (currentStatus === 'processing') {
     result = await transitionStatus(
       customer.value.ticketId,
       'completed',
-      'Tandai instalasi sudah selesai dipasang?'
+      'Tandai instalasi sudah selesai dipasang?',
     )
   }
 

@@ -433,7 +433,7 @@
               <table class="w-full border-collapse text-xs md:text-sm!">
                 <thead>
                   <tr class="bg-slate-700! text-white! sticky! top-0! z-20!">
-                     <th class="py-3! px-4! text-center! w-12!">
+                    <th class="py-3! px-4! text-center! w-12!">
                       <input
                         type="checkbox"
                         v-model="isAllSelected"
@@ -482,7 +482,7 @@
                     <tr>
                       <td colspan="10" class="py-16! text-center!">
                         <font-awesome-icon
-                           icon="spinner"
+                          icon="spinner"
                           spin
                           class="text-3xl! text-blue-500! mb-3!"
                         />
@@ -659,7 +659,7 @@ const fetchStats = async () => {
       month: monthToNumber(form.bulan),
       year: form.tahun,
     })
-    
+
     if (res && res.data) {
       stats.pending = Array.isArray(res.data) ? res.data.length : 0
       stats.total = res.total_customers || 0
@@ -783,7 +783,7 @@ const maksimalBayar = computed(() => {
   // Maksimal bayar adalah tanggal 5 bulan berikutnya dari periode pencatatan
   const monthIndex = monthToNumber(form.bulan)
   const year = parseInt(form.tahun)
-  
+
   // Jika bulan Desember, maka tahun depan Januari
   let nextMonth = monthIndex + 1
   let nextYear = year
@@ -791,7 +791,7 @@ const maksimalBayar = computed(() => {
     nextMonth = 1
     nextYear = year + 1
   }
-  
+
   return `5/${String(nextMonth).padStart(2, '0')}/${nextYear}`
 })
 

@@ -12,7 +12,8 @@ class DatabaseSeeder extends Seeder
             UserSeeder::class,
             InstallationPackageSeeder::class,
             InstallationTicketSeeder::class, 
-            CustomerSeeder::class,           
+            CustomerSeeder::class,
+            SettingsSeeder::class,   
         ]);
     }
 }

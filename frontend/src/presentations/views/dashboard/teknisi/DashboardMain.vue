@@ -23,7 +23,8 @@
           </div>
           <h1 class="text-2xl! lg:text-3xl! font-black! text-slate-800! tracking-tight!">
             Selamat Datang,
-            <span class="text-transparent! bg-clip-text! bg-gradient-to-r! from-cyan-500! to-blue-500!"
+            <span
+              class="text-transparent! bg-clip-text! bg-gradient-to-r! from-cyan-500! to-blue-500!"
               >{{ teknisiName }}</span
             >
           </h1>
@@ -137,7 +138,8 @@
         <div class="lg:col-span-2! space-y-6!">
           <div class="flex! items-center! justify-between!">
             <h2 class="text-base! font-black! text-slate-800! flex! items-center! gap-2!">
-              <font-awesome-icon icon="clipboard-list" class="text-cyan-500! text-sm!" /> Tugas Instalasi & Pemasangan
+              <font-awesome-icon icon="clipboard-list" class="text-cyan-500! text-sm!" /> Tugas
+              Instalasi & Pemasangan
             </h2>
             <button
               v-if="priorityTasks.length > 3"
@@ -215,7 +217,8 @@
         <!-- Quick Stats & Tools (Right Col) -->
         <div class="space-y-6!">
           <h2 class="text-base! font-black! text-slate-800! flex! items-center! gap-2!">
-            <font-awesome-icon icon="chart-pie" class="text-cyan-500! text-sm!" /> Statistik Pekerjaan
+            <font-awesome-icon icon="chart-pie" class="text-cyan-500! text-sm!" /> Statistik
+            Pekerjaan
           </h2>
 
           <ContentCard
@@ -270,7 +273,20 @@ const userData = JSON.parse(localStorage.getItem('user_data') || '{}')
 const teknisiName = ref(userData.name || 'Teknisi')
 
 const currentMonth = computed(() => {
-  const months = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember']
+  const months = [
+    'Januari',
+    'Februari',
+    'Maret',
+    'April',
+    'Mei',
+    'Juni',
+    'Juli',
+    'Agustus',
+    'September',
+    'Oktober',
+    'November',
+    'Desember',
+  ]
   const now = new Date()
   return `${months[now.getMonth()]} ${now.getFullYear()}`
 })
@@ -290,15 +306,14 @@ const fetchDashboardData = async () => {
     ])
 
     dashboardData.value = statsRes.data.data || {}
-    
+
     // Ambil total_customers dari response pending (ini adalah total customer aktif)
     const totalActive = pendingRes.total_customers || 0
     const belumDicatat = pendingRes.data?.length || 0
-    
+
     // Set ke dashboardData
     dashboardData.value.total_customers = totalActive
     pendingReadingsCount.value = belumDicatat
-    
   } catch (error) {
     console.error('Error fetching dashboard data:', error)
   } finally {
@@ -325,7 +340,7 @@ const meterProgressPercentage = computed(() => {
 const priorityTasks = computed(() => {
   if (!dashboardData.value?.latest_tickets) return []
   return dashboardData.value.latest_tickets
-    .filter(ticket => ticket.status === 'processing' || ticket.status === 'paid')
+    .filter((ticket) => ticket.status === 'processing' || ticket.status === 'paid')
     .map((ticket) => {
       return {
         ticketId: ticket.id,

@@ -177,14 +177,12 @@ const handlePhotoUpload = async (e) => {
 }
 
 const submitReading = async () => {
-  if (!formData.currentReading)
-    return showWarningToast('Angka meteran wajib diisi!')
+  if (!formData.currentReading) return showWarningToast('Angka meteran wajib diisi!')
   if (formData.currentReading < lastReading)
     return showErrorToast({
       message: 'Angka meteran tidak boleh lebih kecil dari bulan lalu!',
     })
-  if (!formData.photo)
-    return showWarningToast('Foto meteran wajib dilampirkan!')
+  if (!formData.photo) return showWarningToast('Foto meteran wajib dilampirkan!')
 
   try {
     isSubmitting.value = true

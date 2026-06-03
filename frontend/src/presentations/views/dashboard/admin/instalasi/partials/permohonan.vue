@@ -188,7 +188,10 @@ const customer = computed(() => {
     tglOrder: found.orderDate || found.createdAt,
     paket: found.type,
     kodeInstalasi: found.id,
-    isPaid: found.rawStatus === 'unpaid' || found.rawStatus === 'processing' || found.rawStatus === 'completed',
+    isPaid:
+      found.rawStatus === 'unpaid' ||
+      found.rawStatus === 'processing' ||
+      found.rawStatus === 'completed',
     ticketId: found.ticketId,
     rawStatus: found.rawStatus,
     rawData: found.rawData,
@@ -203,7 +206,7 @@ const handleProsesPasangBaru = async () => {
   const result = await transitionStatus(
     customer.value.ticketId,
     'surveyed',
-    'Lanjutkan tiket ke tahap Pasang Baru (Survey)?'
+    'Lanjutkan tiket ke tahap Pasang Baru (Survey)?',
   )
 
   if (result.success) {

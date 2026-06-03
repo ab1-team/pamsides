@@ -80,33 +80,17 @@
         <div
           class="flex! flex-col! sm:flex-row! justify-end! items-stretch! sm:items-center! gap-3! mt-8! pt-6! border-t! border-slate-100!"
         >
-          <BaseButton
-            variant="info"
-            @click="showModal = true"
-            class="shadow-sm!"
-            icon="key"
-          >
+          <BaseButton variant="info" @click="showModal = true" class="shadow-sm!" icon="key">
             Ubah Password
           </BaseButton>
-          <BaseButton
-            variant="secondary"
-            @click="saveProfile"
-            :loading="isSaving"
-            icon="save"
-          >
+          <BaseButton variant="secondary" @click="saveProfile" :loading="isSaving" icon="save">
             Simpan Perubahan
           </BaseButton>
         </div>
       </div>
     </ContentCard>
 
-    <ContentCard
-      v-if="hasIdentity"
-      variant="bordered"
-      padding="large"
-      rounded="xl"
-      hoverable
-    >
+    <ContentCard v-if="hasIdentity" variant="bordered" padding="large" rounded="xl" hoverable>
       <template #header>
         <div class="flex! items-center! justify-between! mb-1!">
           <div>
@@ -125,34 +109,13 @@
 
       <div class="grid! grid-cols-1! md:grid-cols-2! gap-x-6! gap-y-4! mt-4!">
         <ProfileField label="NIK" :value="identity.nik" icon="id-card" />
-        <ProfileField
-          label="Kode Pelanggan"
-          :value="identity.customer_code"
-          icon="hashtag"
-        />
+        <ProfileField label="Kode Pelanggan" :value="identity.customer_code" icon="hashtag" />
         <ProfileField label="No. Telepon" :value="identity.phone" icon="phone" />
-        <ProfileField
-          label="Jenis Kelamin"
-          :value="genderLabel"
-          icon="venus-mars"
-        />
-        <ProfileField
-          label="Tempat Lahir"
-          :value="identity.birth_place"
-          icon="map-marker-alt"
-        />
-        <ProfileField
-          label="Tanggal Lahir"
-          :value="formattedBirthDate"
-          icon="calendar"
-        />
+        <ProfileField label="Jenis Kelamin" :value="genderLabel" icon="venus-mars" />
+        <ProfileField label="Tempat Lahir" :value="identity.birth_place" icon="map-marker-alt" />
+        <ProfileField label="Tanggal Lahir" :value="formattedBirthDate" icon="calendar" />
         <div class="md:col-span-2!">
-          <ProfileField
-            label="Alamat"
-            :value="identity.address"
-            icon="home"
-            multiline
-          />
+          <ProfileField label="Alamat" :value="identity.address" icon="home" multiline />
         </div>
       </div>
     </ContentCard>
@@ -204,11 +167,7 @@
 
           <div class="modal-footer">
             <BaseButton variant="secondary" @click="closeModal">Batal</BaseButton>
-            <BaseButton
-              variant="primary"
-              @click="changePassword"
-              :loading="isUpdatingPassword"
-            >
+            <BaseButton variant="primary" @click="changePassword" :loading="isUpdatingPassword">
               Simpan Password
             </BaseButton>
           </div>

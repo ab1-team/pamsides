@@ -109,9 +109,7 @@
                 >
                   <font-awesome-icon icon="camera" size="2x" />
                 </div>
-                <span class="text-sm! font-bold! text-slate-500! mb-2!"
-                  >Ambil Foto Pemasangan</span
-                >
+                <span class="text-sm! font-bold! text-slate-500! mb-2!">Ambil Foto Pemasangan</span>
                 <span class="text-xs! text-slate-400! font-medium!"
                   >Meteran & pipa harus terlihat jelas</span
                 >
@@ -151,9 +149,7 @@
                 <font-awesome-icon icon="info-circle" />
               </div>
               <div>
-                <h5 class="text-xs! font-black! text-amber-800! uppercase! mb-1!">
-                  Panduan Foto
-                </h5>
+                <h5 class="text-xs! font-black! text-amber-800! uppercase! mb-1!">Panduan Foto</h5>
                 <ul class="text-xs! text-amber-700! space-y-1! font-medium!">
                   <li>• Nomor meteran terlihat jelas</li>
                   <li>• Sambungan pipa tampak utuh</li>
