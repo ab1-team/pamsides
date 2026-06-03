@@ -109,7 +109,7 @@ class InstallationTicketController extends Controller
 
             // 2. KONDISI A: Jika data masih 'draft', berarti ini pelengkapan registrasi pertama kali.
             // Cukup UPDATE data tersebut, jangan buat data baru.
-            if ($oldTicket->status === 'draft') {
+if ($oldTicket->status === 'draft') {
                 $oldTicket->update([
                     'package_id' => $request->package_id,
                     'user_id' => $request->user_id,
@@ -117,8 +117,8 @@ class InstallationTicketController extends Controller
                     'village_id' => $request->village_id,
                     'lat' => $request->lat,
                     'lng' => $request->lng,
-                    'status' => 'pending', // Naikkan status menjadi pending
-                    'created_by' => auth()->id() ?: $oldTicket->created_by,
+                    'status' => 'pending',
+                    'created_by' => auth()->id(),
                 ]);
 
                 return response()->json([
@@ -147,7 +147,7 @@ class InstallationTicketController extends Controller
                 'lat' => $request->lat,
                 'lng' => $request->lng,
                 'status' => 'pending',
-                'created_by' => auth()->id() ?: $oldTicket->created_by,
+                'created_by' => auth()->id(),
             ]);
 
             return response()->json([
@@ -184,6 +184,7 @@ class InstallationTicketController extends Controller
             'status' => 'required|string|in:draft,pending,surveyed,unpaid,processing,completed,suspended,terminated',
             'initial_meter_reading' => 'nullable|numeric|min:0',
             'meter_photo_url' => 'nullable|string',
+            'installation_date' => 'nullable|date',
         ], [
             'status.required' => 'Status wajib diisi.',
             'status.in' => 'Status tidak valid.',
@@ -195,6 +196,18 @@ class InstallationTicketController extends Controller
         DB::beginTransaction();
 
         try {
+
+            // JIKA STATUS AKAN MENJADI PROCESSING - UPDATE activated_at customer
+            if ($request->status === 'processing') {
+                $customer = $installationTicket->customer()->first();
+                if ($customer) {
+                    $customer->update([
+                        'activated_at' => $request->installation_date 
+                            ? date('Y-m-d H:i:s', strtotime($request->installation_date))
+                            : now()
+                    ]);
+                }
+            }
 
             // JIKA STATUS AKAN MENJADI COMPLETED (AKTIVASI)
             if ($request->status === 'completed') {
@@ -235,7 +248,9 @@ class InstallationTicketController extends Controller
                     'customer_code' => $customerCode,
                     'initial_meter_reading' => $request->initial_meter_reading,
                     'meter_photo_url' => $request->meter_photo_url ?? null,
-                    'activated_at' => now(),
+                    'activated_at' => $request->installation_date 
+                        ? date('Y-m-d H:i:s', strtotime($request->installation_date))
+                        : now(),
                 ]);
             }
 

@@ -1,5 +1,5 @@
 <template>
-  <div class="sidebar-panel" :class="{ collapsed: !sidebarOpen, 'mobile-open': mobileSidebarOpen }">
+  <div class="sidebar-panel" :class="{ collapsed: !sidebarOpen, 'mobile-open': mobileSidebarOpen, 'blurred': uiStore.activeModalCount > 0 }">
     <div class="sidebar-header">
       <div class="sidebar-header-content">
         <div class="sidebar-header-title" v-show="sidebarOpen || mobileSidebarOpen">
@@ -284,4 +284,11 @@ watch(
 )
 </script>
 
-<style scoped></style>
+<style scoped>
+.sidebar-panel.blurred {
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  pointer-events: none;
+  user-select: none;
+}
+</style>

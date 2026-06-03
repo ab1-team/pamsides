@@ -6,6 +6,12 @@
       @click="closeMobileSidebar"
     ></div>
 
+    <div
+      class="modal-backdrop-overlay"
+      :class="{ active: uiStore.activeModalCount > 0 }"
+      @click="uiStore.activeModalCount = 0"
+    ></div>
+
     <SidebarView
       :sidebar-open="sidebarOpen"
       :mobile-sidebar-open="mobileSidebarOpen"

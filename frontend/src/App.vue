@@ -67,7 +67,7 @@ body {
 }
 
 .swal-toast-custom .swal2-html-container {
-  margin-top: 5px !important;
+  margin-top: 4px !important;
 }
 .global-loader {
   position: fixed;

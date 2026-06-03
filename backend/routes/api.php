@@ -149,14 +149,11 @@ Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
 
 /*
 |--------------------------------------------------------------------------
-| Surveyor Routes
+| Surveyor & Admin Routes (Survey Submission)
 |--------------------------------------------------------------------------
 */
-Route::middleware(['auth:sanctum', 'role:surveyor'])->group(function () {
-    // Route GET index & show yang menimpa admin sebelumnya sudah dihapus dari sini karena dipindah ke atas
+Route::middleware(['auth:sanctum', 'role:admin,surveyor'])->group(function () {
     Route::post('installation-tickets/{installationTicket}/survey', [SurveyResultController::class, 'store']);
-
-    // route surveyor lainnya...
 });
 
 /*
