@@ -89,6 +89,7 @@
                     :key="nestedIdx"
                     :to="nested.to"
                     class="sidebar-submenu-item nested-item"
+                    :class="{ active: isActive(nested.to) }"
                     @click="handleMenuClick"
                   >
                     <span class="sidebar-submenu-bullet"></span>
@@ -101,6 +102,7 @@
                 v-else
                 :to="sub.to"
                 class="sidebar-submenu-item"
+                :class="{ active: isActive(sub.to) }"
                 @click="handleMenuClick"
               >
                 <span v-if="!sub.icon" class="sidebar-submenu-bullet"></span>
@@ -133,6 +135,7 @@
 
 <script setup>
 import { watch, computed, reactive } from 'vue'
+import { useRoute } from 'vue-router'
 import { useUiStore } from '@/stores/uiStore'
 import BaseButton from '@/presentations/components/ui/BaseButton.vue'
 
@@ -149,6 +152,7 @@ const props = defineProps({
 
 const emit = defineEmits(['toggle-sidebar', 'close-mobile-sidebar'])
 const uiStore = useUiStore()
+const route = useRoute()
 
 const roleTitle = computed(() => {
   switch (uiStore.userRole) {
@@ -182,6 +186,37 @@ function toggleSubmenu(label) {
   if (props.sidebarOpen) {
     openSubmenus[label] = !openSubmenus[label]
   }
+}
+
+function isActive(to) {
+  if (!to) return false
+  return route.path === to
+}
+
+function isActiveOrChild(to) {
+  if (!to) return false
+  return route.path === to || route.path.startsWith(to + '/')
+}
+
+function syncOpenSubmenus() {
+  menuItems.forEach((item) => {
+    if (!item.children) return
+    const childActive = item.children.some((sub) => {
+      if (sub.children) {
+        return sub.children.some((n) => isActiveOrChild(n.to))
+      }
+      return isActiveOrChild(sub.to)
+    })
+    if (childActive) {
+      openSubmenus[item.label] = true
+    }
+    item.children.forEach((sub) => {
+      if (sub.children) {
+        const nestedActive = sub.children.some((n) => isActiveOrChild(n.to))
+        if (nestedActive) openSubmenus[sub.label] = true
+      }
+    })
+  })
 }
 
 const menuItems = [
@@ -266,6 +301,8 @@ const filteredMenuItems = computed(() => {
   })
 })
 
+syncOpenSubmenus()
+
 function handleMenuClick() {
   if (window.innerWidth < 1024) {
     emit('close-mobile-sidebar')
@@ -280,6 +317,13 @@ watch(
         openSubmenus[key] = false
       })
     }
+  },
+)
+
+watch(
+  () => route.path,
+  () => {
+    syncOpenSubmenus()
   },
 )
 </script>

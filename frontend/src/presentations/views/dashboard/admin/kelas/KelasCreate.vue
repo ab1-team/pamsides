@@ -1,5 +1,5 @@
 <template>
-  <div class="pricing-config-view w-full! max-w-5xl! mx-auto! pb-20! px-4! sm:px-0!">
+  <div class="pricing-config-view w-full! max-w-5xl! mx-auto! pb-20!">
     <div class="mb-6! sm:mb-8! flex! items-center! gap-3! sm:gap-4!">
       <BaseButton
         variant="ghost"

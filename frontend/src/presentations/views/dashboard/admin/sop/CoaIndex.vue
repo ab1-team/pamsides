@@ -1,5 +1,5 @@
 <template>
-  <div class="coa-page! p-2! md:p-4!">
+  <div class="coa-page!">
     <div class="page-header! mb-4! ml-2!">
       <div>
         <h1 class="text-xl! md:text-2xl! font-black! text-slate-800! leading-none! mb-1!">

@@ -1,5 +1,5 @@
 <template>
-  <div class="hasil-survey-root p-4 lg:p-6">
+  <div class="hasil-survey-root">
     <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4! mb-6!">
       <div class="flex-1!">
         <h1 class="text-xl md:text-2xl font-bold text-cyan-600! tracking-tight mb-1!">

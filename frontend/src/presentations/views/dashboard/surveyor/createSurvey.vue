@@ -1,5 +1,5 @@
 <template>
-  <div class="survey-create-view p-4! lg:p-8!">
+  <div class="survey-create-view">
     <div
       class="header-section flex! flex-col! md:flex-row! md:items-center! md:justify-between! gap-4! mb-8!"
     >
