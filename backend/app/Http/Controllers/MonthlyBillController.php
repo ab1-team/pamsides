@@ -116,4 +116,15 @@ class MonthlyBillController extends Controller
             ]
         ]);
     }
+    public function show($id)
+    {
+        $bill = MonthlyBill::with([
+            'customer'
+        ])->findOrFail($id);
+
+        return response()->json([
+            'success' => true,
+            'data' => $bill
+        ]);
+    }
 }
