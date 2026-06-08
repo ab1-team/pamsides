@@ -77,8 +77,14 @@ Route::middleware(['auth:sanctum', 'role:admin,teknisi'])->group(function () {
     Route::get('meter-readings/pending', [MeterReadingController::class, 'index']);
     Route::post('meter-readings', [MeterReadingController::class, 'store']);
     Route::get('meter-readings/{id}', [MeterReadingController::class, 'show']);
-    Route::put('meter-readings/{id}', [MeterReadingController::class, 'update']); // Untuk Aksi Edit Meteran
-    Route::delete('meter-readings/{id}', [MeterReadingController::class, 'destroy']); // Untuk Aksi Hapus Meteran
+    Route::put('meter-readings/{id}', [MeterReadingController::class, 'update']); 
+    Route::delete('meter-readings/{id}', [MeterReadingController::class, 'destroy']);  
+
+    Route::get('/customers', [CustomerController::class, 'index']);
+    Route::get('/customers/search', [CustomerController::class, 'search']);
+    Route::get('/customers/{id}', [CustomerController::class, 'show']);
+    Route::get('monthly-bills', [MonthlyBillController::class, 'index']);
+    Route::get('monthly-bills/usage', [MonthlyBillController::class, 'usage']);
 });
 
 /*
@@ -104,8 +110,7 @@ Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
     // Master Villages
     Route::apiResource('villages', VillageController::class);
 
-    // BARU ✨: Autocomplete pencarian pelanggan aktif (Diletakkan sebelum route ID agar tidak bentrok)
-    Route::get('/customers/search', [CustomerController::class, 'search']);
+     Route::get('/customers/search', [CustomerController::class, 'search']);
 
     // Master Customers
     Route::get('/customers', [CustomerController::class, 'index']);
@@ -129,10 +134,11 @@ Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
     Route::post('bills/generate', [BillingController::class, 'generate']);
     Route::get('bills/{monthlyBill}', [BillingController::class, 'show']);
 
-    // BARU ✨: Rekap riwayat pemakaian air bulanan pelanggan
+    // BARU : Rekap riwayat pemakaian air bulanan pelanggan
     Route::get('monthly-bills/usage', [MonthlyBillController::class, 'usage']);
 
     Route::get('monthly-bills', [MonthlyBillController::class, 'index']);
+    Route::get('monthly-bills/{id}', [MonthlyBillController::class, 'show']);
     Route::post('monthly-bills/{id}/pay', [MonthlyBillController::class, 'pay']);
     Route::post('monthly-bills/generate', [MonthlyBillController::class, 'generate']);
 
