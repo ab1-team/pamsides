@@ -94,7 +94,47 @@ export function useDesa(router) {
       } catch (err) {
         console.error('Gagal hapus:', err)
 
-        Swal.fire('Error', 'Gagal menghapus data', 'error')
+        const status = err.response?.status
+        const data = err.response?.data
+
+        if (status === 409 && data?.code === 'VILLAGE_IN_USE') {
+          await Swal.fire({
+            title: 'Tidak Dapat Menghapus!',
+            html: `
+              <div style="text-align:left; font-size:13px; color:#475569;">
+                <p style="margin-bottom:10px;">${
+                  data.message ||
+                  `Desa "${row.desa}" tidak dapat dihapus karena masih digunakan pada data lain.`
+                }</p>
+                <div style="background:#fef3c7; border-left:3px solid #f59e0b; padding:10px 12px; border-radius:6px; font-size:12px; color:#92400e;">
+                  <strong>Solusi:</strong> Hapus atau pindahkan data yang terkait dengan desa ini terlebih dahulu (misalnya tiket instalasi atau pelanggan) sebelum menghapus desa.
+                </div>
+              </div>
+            `,
+            icon: 'warning',
+            confirmButtonColor: '#f59e0b',
+            confirmButtonText: 'Saya Mengerti',
+            customClass: {
+              popup: 'desa-fk-popup',
+              icon: 'desa-fk-icon',
+            },
+          })
+        } else {
+          const message =
+            data?.message ||
+            (status === 404
+              ? 'Data desa tidak ditemukan.'
+              : status === 403
+                ? 'Anda tidak memiliki akses untuk menghapus data ini.'
+                : 'Gagal menghapus data desa.')
+
+          Swal.fire({
+            title: 'Gagal Menghapus!',
+            text: message,
+            icon: 'error',
+            confirmButtonColor: '#ef4444',
+          })
+        }
       }
     }
   }

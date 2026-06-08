@@ -1,13 +1,11 @@
 <template>
   <div class="pelanggan-root relative">
-    <!-- Loading Overlay -->
-    <div
-      v-if="isLoading"
-      class="absolute inset-0 z-50 flex items-center justify-center bg-white/60 backdrop-blur-sm rounded-3xl"
-    >
-      <div class="flex flex-col items-center gap-4">
-        <font-awesome-icon icon="spinner" class="text-blue-500 text-4xl animate-spin" />
-        <span class="text-slate-500 font-medium">Memuat data...</span>
+    <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4!">
+      <div class="flex-1!">
+        <h1 class="text-2xl font-bold text-cyan-600! tracking-tight mb-1!">Data Pelanggan</h1>
+        <p class="text-sm text-slate-500! leading-relaxed">
+          Daftar pelanggan PAMSIDES yang terdaftar.
+        </p>
       </div>
     </div>
     <DataTable

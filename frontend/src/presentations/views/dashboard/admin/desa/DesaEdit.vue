@@ -110,9 +110,11 @@ import BaseButton from '@/presentations/components/ui/BaseButton.vue'
 import SelectSearch from '@/presentations/components/SelectSearch.vue'
 import Swal from 'sweetalert2'
 import villageService from '@/services/village.service'
+import { useUiStore } from '@/stores/uiStore'
 
 const router = useRouter()
 const route = useRoute()
+const uiStore = useUiStore()
 
 const form = ref({
   id: '',
@@ -176,13 +178,8 @@ const handleSave = async () => {
       phone: form.value.no_hp,
     })
 
-    Swal.fire({
-      title: 'Berhasil!',
-      text: 'Data desa berhasil diperbarui.',
-      icon: 'success',
-    }).then(() => {
-      router.push('/data-desa')
-    })
+    uiStore.success('Data desa berhasil diperbarui')
+    router.push('/data-desa')
   } catch (err) {
     console.error(err)
 
