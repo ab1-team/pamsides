@@ -22,13 +22,26 @@
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4! mb-4!">
-          <BaseInput
-            v-model="form.nik"
-            label="NIK"
-            placeholder="Masukkan 16 digit NIK"
-            icon="id-card"
-            maxlength="16"
-          />
+          <div>
+            <BaseInput
+              v-model="form.nik"
+              label="NIK"
+              placeholder="Masukkan 16 digit NIK"
+              icon="id-card"
+              maxlength="16"
+            />
+            <div v-if="nikChecking" class="mt-1.5! flex! items-center! gap-1.5! text-xs! text-slate-500!">
+              <font-awesome-icon icon="spinner" spin class="text-[12px]!" />
+              <span>Memeriksa NIK...</span>
+            </div>
+            <div
+              v-else-if="nikExists"
+              class="mt-1.5! flex! items-center! gap-1.5! text-xs! font-medium! text-amber-600!"
+            >
+              <font-awesome-icon icon="exclamation-circle" class="text-[12px]!" />
+              <span>NIK sudah digunakan</span>
+            </div>
+          </div>
 
           <BaseInput
             v-model="form.nama_lengkap"
@@ -120,7 +133,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, watch, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import ContentCard from '@/presentations/components/ui/ContentCard.vue'
 import BaseInput from '@/presentations/components/ui/BaseInput.vue'
@@ -147,6 +160,66 @@ const form = ref({
   jenis_kelamin: '',
   no_telp: '',
   alamat_lengkap: '',
+})
+
+const nikExists = ref(null)
+const nikChecking = ref(false)
+let nikDebounceTimer = null
+
+const applyAutofill = (d) => {
+  if (d?.name) form.value.nama_lengkap = d.name
+  if (d?.email) form.value.email = d.email
+  if (d?.phone && d.phone !== '-' && d.phone !== '0') {
+    form.value.no_telp = d.phone
+  }
+  if (d?.address && d.address !== '-') {
+    form.value.alamat_lengkap = d.address
+  }
+  if (d?.birth_place && d.birth_place !== '-') {
+    form.value.tempat_lahir = d.birth_place
+  }
+  if (d?.gender) {
+    form.value.jenis_kelamin = d.gender === 'female' ? 'Perempuan' : 'Laki-laki'
+  }
+}
+
+watch(
+  () => form.value.nik,
+  (val) => {
+    if (nikDebounceTimer) clearTimeout(nikDebounceTimer)
+    const nik = (val || '').trim()
+    if (nik.length < 4) {
+      nikExists.value = null
+      nikChecking.value = false
+      return
+    }
+    nikChecking.value = true
+    nikDebounceTimer = setTimeout(async () => {
+      try {
+        const res = await customerService.getCustomers({ search: nik })
+        const list = Array.isArray(res?.data)
+          ? res.data
+          : Array.isArray(res?.data?.data)
+            ? res.data.data
+            : []
+        const match = list.find((r) => r.nik === nik)
+        nikExists.value = match || null
+        if (match?.id) {
+          const detailRes = await customerService.getCustomerDetail(match.id)
+          const detail = detailRes?.data
+          if (detail) applyAutofill(detail)
+        }
+      } catch (e) {
+        nikExists.value = null
+      } finally {
+        nikChecking.value = false
+      }
+    }, 500)
+  },
+)
+
+onUnmounted(() => {
+  if (nikDebounceTimer) clearTimeout(nikDebounceTimer)
 })
 
 const handleSave = async () => {
@@ -186,9 +259,39 @@ const handleSave = async () => {
 
     await customerService.createCustomer(finalData)
 
-    uiStore.success('Data pelanggan berhasil disimpan')
+    isLoading.value = false
 
-    router.push('/data-pelanggan')
+    const result = await Swal.fire({
+      title: 'Data berhasil disimpan!',
+      text: 'Apakah Anda ingin menambah data pelanggan lagi?',
+      icon: 'success',
+      showCloseButton: false,
+      showCancelButton: false,
+      showDenyButton: true,
+      allowOutsideClick: false,
+      confirmButtonText: 'Ya, Tambah Lagi',
+      denyButtonText: 'Tidak, Cek Data',
+      customClass: {
+        popup: 'pelanggan-success-popup',
+        confirmButton: 'pelanggan-success-confirm',
+        denyButton: 'pelanggan-success-deny',
+      },
+      didOpen: (popup) => {
+        const close = popup.querySelector('.swal2-close')
+        if (close) close.style.setProperty('display', 'none', 'important')
+        const cancel = popup.querySelector('.swal2-cancel')
+        if (cancel) cancel.style.setProperty('display', 'none', 'important')
+      },
+      reverseButtons: true,
+    })
+
+    if (result.isConfirmed) {
+      uiStore.success('Data pelanggan berhasil disimpan')
+      resetForm()
+    } else if (result.isDenied) {
+      uiStore.success('Data pelanggan berhasil disimpan')
+      router.push('/data-pelanggan')
+    }
   } catch (error) {
     console.error('Error saving customer:', error)
 
@@ -203,6 +306,20 @@ const handleSave = async () => {
     isLoading.value = false
   }
 }
+
+const resetForm = () => {
+  form.value = {
+    nik: '',
+    nama_lengkap: '',
+    email: '',
+    password: '',
+    tempat_lahir: '',
+    tgl_lahir: new Date(),
+    jenis_kelamin: '',
+    no_telp: '',
+    alamat_lengkap: '',
+  }
+}
 </script>
 
 <style scoped>
@@ -215,10 +332,34 @@ const handleSave = async () => {
     opacity: 0;
     transform: translateY(10px);
   }
-
   to {
     opacity: 1;
     transform: translateY(0);
   }
+}
+</style>
+
+<style>
+.pelanggan-success-popup .swal2-close,
+.pelanggan-success-popup .swal2-cancel {
+  display: none !important;
+}
+
+.swal2-confirm.pelanggan-success-confirm {
+  background-color: #60a5fa !important;
+  color: #ffffff !important;
+}
+
+.swal2-confirm.pelanggan-success-confirm:hover {
+  background-color: #3b82f6 !important;
+}
+
+.swal2-deny.pelanggan-success-deny {
+  background-color: #64748b !important;
+  color: #ffffff !important;
+}
+
+.swal2-deny.pelanggan-success-deny:hover {
+  background-color: #475569 !important;
 }
 </style>
