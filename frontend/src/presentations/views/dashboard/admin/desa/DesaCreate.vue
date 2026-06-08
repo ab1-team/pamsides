@@ -101,8 +101,10 @@ import BaseButton from '@/presentations/components/ui/BaseButton.vue'
 import SelectSearch from '@/presentations/components/SelectSearch.vue'
 import Swal from 'sweetalert2'
 import axios from 'axios'
+import { useUiStore } from '@/stores/uiStore'
 
 const router = useRouter()
+const uiStore = useUiStore()
 
 const form = ref({
   provinsi: '',
@@ -259,14 +261,37 @@ const handleSave = async () => {
       phone: form.value.no_hp,
     })
 
-    Swal.fire({
-      title: 'Berhasil!',
-      text: 'Data desa telah disimpan.',
+    const result = await Swal.fire({
+      title: 'Data berhasil disimpan!',
+      text: 'Apakah Anda ingin menambah data desa lagi?',
       icon: 'success',
-      confirmButtonColor: '#3b82f6',
-    }).then(() => {
-      router.push('/data-desa')
+      showCloseButton: false,
+      showCancelButton: false,
+      showDenyButton: true,
+      allowOutsideClick: false,
+      confirmButtonText: 'Ya, Tambah Lagi',
+      denyButtonText: 'Tidak, Cek Data',
+      customClass: {
+        popup: 'desa-success-popup',
+        confirmButton: 'desa-success-confirm',
+        denyButton: 'desa-success-deny',
+      },
+      didOpen: (popup) => {
+        const close = popup.querySelector('.swal2-close')
+        if (close) close.style.setProperty('display', 'none', 'important')
+        const cancel = popup.querySelector('.swal2-cancel')
+        if (cancel) cancel.style.setProperty('display', 'none', 'important')
+      },
+      reverseButtons: true,
     })
+
+    if (result.isConfirmed) {
+      uiStore.success('Data desa berhasil disimpan')
+      resetForm()
+    } else if (result.isDenied) {
+      uiStore.success('Data desa berhasil disimpan')
+      router.push('/data-desa')
+    }
   } catch (err) {
     console.error('Detail Error Server:', err.response?.data)
 
@@ -284,6 +309,20 @@ const handleSave = async () => {
     isLoading.value = false
   }
 }
+
+const resetForm = () => {
+  form.value = {
+    provinsi: '',
+    kabupaten: '',
+    kecamatan: '',
+    desa: '',
+    dusun: '',
+    no_hp: '',
+  }
+  kabupatenOptions.value = []
+  kecamatanOptions.value = []
+  desaOptions.value = []
+}
 </script>
 
 <style scoped>
@@ -300,5 +339,30 @@ const handleSave = async () => {
     opacity: 1;
     transform: translateY(0);
   }
+}
+</style>
+
+<style>
+.desa-success-popup .swal2-close,
+.desa-success-popup .swal2-cancel {
+  display: none !important;
+}
+
+.swal2-confirm.desa-success-confirm {
+  background-color: #60a5fa !important;
+  color: #ffffff !important;
+}
+
+.swal2-confirm.desa-success-confirm:hover {
+  background-color: #3b82f6 !important;
+}
+
+.swal2-deny.desa-success-deny {
+  background-color: #64748b !important;
+  color: #ffffff !important;
+}
+
+.swal2-deny.desa-success-deny:hover {
+  background-color: #475569 !important;
 }
 </style>
