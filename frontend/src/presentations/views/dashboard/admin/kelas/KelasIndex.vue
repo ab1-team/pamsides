@@ -33,17 +33,10 @@
         expandable
       >
         <template #column-nama="{ row }">
-          <div class="flex items-center gap-3!">
-            <div
-              class="w-10! h-10! rounded-xl! bg-blue-50! text-blue-600! flex! items-center! justify-center! font-bold! text-xs!"
-            >
-              {{ row.name.substring(0, 2).toUpperCase() }}
-            </div>
-            <div>
-              <div class="font-bold! text-slate-900!">{{ row.name }}</div>
-              <div class="text-[10px]! font-medium! text-slate-400! uppercase! tracking-tight!">
-                ID: #{{ row.id }}
-              </div>
+          <div>
+            <div class="font-bold! text-slate-900!">{{ row.name }}</div>
+            <div class="text-[10px]! font-medium! text-slate-400! uppercase! tracking-tight!">
+              ID: #{{ row.id }}
             </div>
           </div>
         </template>
@@ -93,7 +86,7 @@
               <div
                 v-for="(block, idx) in row.water_tariff_blocks"
                 :key="idx"
-                class="bg-white! p-5! rounded-2xl! border! border-slate-100! shadow-sm! hover:shadow-md! hover:border-blue-100! transition-all! relative! overflow-hidden!"
+                class="bg-white! p-3! rounded-2xl! border! border-slate-100! shadow-sm! hover:shadow-md! hover:border-blue-100! transition-all! relative! overflow-hidden!"
               >
                 <div
                   v-if="!block.usage_max_m3"
@@ -102,7 +95,7 @@
                   <span class="text-blue-500! font-black! text-lg!">∞</span>
                 </div>
 
-                <div class="flex items-center justify-between mb-4!">
+                <div class="flex items-center justify-between mb-2!">
                   <span class="text-[10px]! font-black! text-slate-300! uppercase! tracking-widest!"
                     >BLOCK {{ idx + 1 }}</span
                   >
@@ -113,25 +106,25 @@
                   </div>
                 </div>
 
-                <div class="grid grid-cols-2 gap-4!">
-                  <div class="space-y-1!">
+                <div class="grid grid-cols-2 gap-2!">
+                  <div class="space-y-0.5!">
                     <div
                       class="text-[9px]! font-bold! text-slate-400! uppercase! tracking-tighter!"
                     >
                       Volume
                     </div>
-                    <div class="text-sm! font-black! text-slate-800!">
+                    <div class="text-sm! font-black! text-slate-800! whitespace-nowrap!">
                       {{ block.usage_min_m3 }} - {{ block.usage_max_m3 || '∞' }}
                       <span class="text-[10px]! text-slate-400! font-bold! ml-0.5!">m³</span>
                     </div>
                   </div>
-                  <div class="space-y-1!">
+                  <div class="space-y-0.5!">
                     <div
                       class="text-[9px]! font-bold! text-slate-400! uppercase! tracking-tighter!"
                     >
                       Harga
                     </div>
-                    <div class="text-sm! font-black! text-blue-600!">
+                    <div class="text-sm! font-black! text-blue-600! whitespace-nowrap!">
                       {{ formatCurrency(block.price_per_m3) }}
                     </div>
                   </div>
