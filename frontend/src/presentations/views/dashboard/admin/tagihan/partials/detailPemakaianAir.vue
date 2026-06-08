@@ -1,5 +1,5 @@
 <template>
-  <div class="input-pemakaian-air-root p-4 lg:p-6 min-h-screen">
+  <div class="input-pemakaian-air-root min-h-screen">
     <div
       class="hidden! md:flex! flex-col! md:flex-row! md:items-center! justify-between! gap-4! mb-6!"
     >

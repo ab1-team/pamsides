@@ -1,5 +1,5 @@
 <template>
-  <div class="meter-reading-view p-4! lg:p-8!">
+  <div class="meter-reading-view">
     <div class="mb-8! flex! items-center! justify-between!">
       <div>
         <BaseButton variant="ghost" icon="arrow-left" @click="$router.back()" class="mb-4!"

@@ -1,5 +1,5 @@
 <template>
-  <div class="p-6! bg-slate-50/30! min-h-screen!">
+  <div class="bg-slate-50/30! min-h-screen!">
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4! mb-6!">
       <div class="flex-1!">
         <h1 class="text-xl! md:text-2xl! font-bold text-slate-900! tracking-tight mb-1!">
