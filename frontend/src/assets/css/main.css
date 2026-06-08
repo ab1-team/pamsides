@@ -1773,16 +1773,15 @@ utilities;
 
   .swal2-toast .swal2-icon {
     margin: 0 0.75rem 0 0 !important;
-    font-size: 1.5rem !important;
     width: 2rem !important;
     height: 2rem !important;
     min-width: 2rem !important;
     border-width: 0.125rem !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
     flex-shrink: 0 !important;
-    position: relative !important;
+  }
+
+  .swal2-toast .swal2-icon .swal2-icon-content {
+    display: none !important;
   }
   
   .swal2-toast .swal2-icon.swal2-error {
@@ -1819,6 +1818,12 @@ utilities;
   .swal2-toast .swal2-icon.swal2-success .swal2-success-ring {
     border-color: #10b981 !important;
   }
+
+  .swal2-toast .swal2-icon.swal2-success .swal2-success-circular-line-left,
+  .swal2-toast .swal2-icon.swal2-success .swal2-success-circular-line-right,
+  .swal2-toast .swal2-icon.swal2-success .swal2-success-fix {
+    display: none !important;
+  }
   
   .swal2-toast .swal2-icon.swal2-warning {
     border-color: #f59e0b !important;
@@ -1830,10 +1835,16 @@ utilities;
     color: #3b82f6 !important;
   }
   
-  .swal2-toast .swal2-icon .swal2-icon-content {
+  .swal2-toast .swal2-icon.swal2-warning .swal2-icon-content,
+  .swal2-toast .swal2-icon.swal2-info .swal2-icon-content,
+  .swal2-toast .swal2-icon.swal2-question .swal2-icon-content {
     font-size: 1rem !important;
     font-weight: 700 !important;
     line-height: 1 !important;
+  }
+
+  .swal2-toast .swal2-icon.swal2-success .swal2-icon-content {
+    display: none !important;
   }
 
   .swal2-toast .swal2-title {

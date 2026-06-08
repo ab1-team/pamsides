@@ -2,7 +2,8 @@ import { createRouter, createWebHistory } from 'vue-router'
 import LoginView from '@/presentations/views/auth/LoginView.vue'
 import MainView from '@/presentations/layouts/dashboard/MainView.vue'
 import DashboardHome from '@/presentations/views/dashboard/DashboardHome.vue'
-
+import SurveyorDashboard from '@/presentations/views/dashboard/surveyor/DashboardMain.vue'
+import TeknisiDashboard from '@/presentations/views/dashboard/teknisi/DashboardMain.vue'
 import SopIndex from '@/presentations/views/dashboard/admin/sop/SopIndex.vue'
 import KelasBiayaView from '@/presentations/views/dashboard/admin/kelas/KelasIndex.vue'
 import CreateKelasView from '@/presentations/views/dashboard/admin/kelas/KelasCreate.vue'
@@ -10,7 +11,6 @@ import EditKelasView from '@/presentations/views/dashboard/admin/kelas/KelasEdit
 import pelangganView from '@/presentations/views/dashboard/admin/pelanggan/PelangganIndex.vue'
 import PelangganCreate from '@/presentations/views/dashboard/admin/pelanggan/PelangganCreate.vue'
 import PelangganEdit from '@/presentations/views/dashboard/admin/pelanggan/PelangganEdit.vue'
-
 import datainstalasiView from '@/presentations/views/dashboard/admin/instalasi/dataInstalasi.vue'
 import registerInstalasi from '@/presentations/views/dashboard/admin/instalasi/registrasi.vue'
 import statusInstalasi from '@/presentations/views/dashboard/admin/instalasi/InstalasiStatus.vue'
@@ -35,6 +35,16 @@ import DesaIndex from '@/presentations/views/dashboard/admin/desa/DesaIndex.vue'
 import DesaCreate from '@/presentations/views/dashboard/admin/desa/DesaCreate.vue'
 import DesaEdit from '@/presentations/views/dashboard/admin/desa/DesaEdit.vue'
 
+const getDashboardRoute = (role) => {
+  const routes = {
+    surveyor: '/surveyor/dashboard',
+    teknisi: '/teknisi/dashboard',
+    pelanggan: '/pelanggan/dashboard',
+    admin: '/dashboard',
+  }
+  return routes[role] || '/dashboard'
+}
+
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
@@ -46,6 +56,16 @@ const router = createRouter({
       path: '/login',
       name: 'login',
       component: LoginView,
+    },
+    {
+      path: '/surveyor/dashboard',
+      name: 'surveyor-dashboard',
+      component: SurveyorDashboard,
+    },
+    {
+      path: '/teknisi/dashboard',
+      name: 'teknisi-dashboard',
+      component: TeknisiDashboard,
     },
     {
       path: '/dashboard',
@@ -281,6 +301,7 @@ const router = createRouter({
 router.beforeEach((to, from, next) => {
   const token = localStorage.getItem('auth_token')
   const expiresAt = localStorage.getItem('auth_expires_at')
+  const userRole = localStorage.getItem('user_role') || 'admin'
   const isAuthPage = to.name === 'login'
   const now = Date.now()
 
@@ -294,6 +315,33 @@ router.beforeEach((to, from, next) => {
     return
   }
 
+  const protectedRoutes = {
+    surveyor: ['/surveyor/dashboard', '/survey/create'],
+    teknisi: ['/teknisi/dashboard', '/teknisi/pencatatan-meter'],
+    admin: ['/dashboard', '/data-pelanggan', '/data-desa'],
+    pelanggan: ['/pelanggan/'],
+  }
+
+  const isSurveyorRoute = protectedRoutes.surveyor.some((r) => to.path.startsWith(r))
+  const isTeknisiRoute = protectedRoutes.teknisi.some((r) => to.path.startsWith(r))
+  const isAdminRoute = protectedRoutes.admin.some((r) => to.path.startsWith(r))
+  const isPelangganRoute = to.path.startsWith('/pelanggan/')
+
+  if (isSurveyorRoute && userRole !== 'surveyor') {
+    next({ name: 'login' })
+    return
+  }
+
+  if (isTeknisiRoute && userRole !== 'teknisi') {
+    next({ name: 'login' })
+    return
+  }
+
+  if (isAdminRoute && userRole !== 'admin') {
+    next({ name: 'login' })
+    return
+  }
+
   if (to.path.startsWith('/dashboard') || to.path === '/') {
     if (!token) {
       next({ name: 'login' })
@@ -301,7 +349,8 @@ router.beforeEach((to, from, next) => {
       next()
     }
   } else if (isAuthPage && token) {
-    next({ name: 'dashboard' })
+    const redirectRoute = getDashboardRoute(userRole)
+    next({ path: redirectRoute })
   } else {
     next()
   }

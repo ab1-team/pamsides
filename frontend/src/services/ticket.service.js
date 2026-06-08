@@ -41,10 +41,12 @@ export const ticketService = {
   /**
    * Transisi status tiket
    */
-  async transitionStatus(id, status) {
-    const response = await api.patch(`/installation-tickets/${id}/transition`, {
-      status,
-    })
+  async transitionStatus(id, status, installationDate = null) {
+    const payload = { status }
+    if (installationDate) {
+      payload.installation_date = installationDate
+    }
+    const response = await api.patch(`/installation-tickets/${id}/transition`, payload)
     return response.data
   },
 

@@ -11,8 +11,15 @@ export const useUiStore = defineStore('ui', () => {
   const userRole = ref(localStorage.getItem('user_role') || 'admin')
   const userData = ref(JSON.parse(localStorage.getItem('user_data')) || null)
 
+  // Modal State
+  const activeModalCount = ref(0)
+
   // Toast State
   const toastMessage = ref(null)
+
+  const openModal = () => activeModalCount.value++
+  const closeModal = () => activeModalCount.value = Math.max(0, activeModalCount.value - 1)
+  const hasActiveModal = () => activeModalCount.value > 0
 
   // Actions
   const setLoading = (status) => {
@@ -59,5 +66,9 @@ export const useUiStore = defineStore('ui', () => {
     setUserRole,
     userData,
     setUserData,
+    openModal,
+    closeModal,
+    hasActiveModal,
+    activeModalCount,
   }
 })

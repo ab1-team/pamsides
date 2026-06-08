@@ -134,6 +134,16 @@ const togglePassword = () => {
   showPassword.value = !showPassword.value
 }
 
+const getDashboardRoute = (role) => {
+  const routes = {
+    surveyor: '/surveyor/dashboard',
+    teknisi: '/teknisi/dashboard',
+    pelanggan: '/pelanggan/dashboard',
+    admin: '/dashboard',
+  }
+  return routes[role] || '/dashboard'
+}
+
 onMounted(() => {
   const urlParams = new URLSearchParams(window.location.search)
   if (urlParams.get('logout')) {
@@ -199,7 +209,9 @@ const handleLogin = async () => {
           container: 'swal-toast-container',
         },
       })
-      router.push('/dashboard')
+
+      const redirectRoute = getDashboardRoute(res.data.user.role)
+      router.push(redirectRoute)
     } else {
       throw new Error(res.message || 'Login Gagal')
     }

@@ -8,7 +8,7 @@ export function useInstalasiActions() {
     return Number(val).toLocaleString('id-ID')
   }
 
-  const transitionStatus = async (ticketId, newStatus, confirmText) => {
+  const transitionStatus = async (ticketId, newStatus, confirmText, installationDate = null) => {
     const result = await Swal.fire({
       title: 'Konfirmasi',
       text: confirmText,
@@ -24,7 +24,7 @@ export function useInstalasiActions() {
     if (!result.isConfirmed) return { success: false, cancelled: true }
 
     try {
-      await ticketService.transitionStatus(ticketId, newStatus)
+      await ticketService.transitionStatus(ticketId, newStatus, installationDate)
 
       await Swal.fire({
         title: 'Berhasil!',

@@ -2,143 +2,88 @@
   <div class="max-w-5xl! mx-auto grid! grid-cols-1! lg:grid-cols-3! gap-6!">
     <div class="lg:col-span-2! flex! flex-col! gap-6!">
       <ContentCard variant="bordered" padding="large" rounded="2xl">
-        <div class="flex! items-start! justify-between! gap-4!">
+        <div class="flex! items-start! gap-4!">
           <div class="flex-1!">
             <div class="flex! items-center! justify-between! mb-2!">
               <p class="text-xs! font-bold! text-sky-500! uppercase! tracking-widest!">
                 Customer Profile
               </p>
-              <span
-                class="px-3! py-1! rounded-full! text-xs! font-bold! uppercase! tracking-wider!"
-                :class="statusBadge.class"
-              >
+              <span class="px-3! py-1! rounded-full! text-xs! font-bold! uppercase! tracking-wider!" :class="statusBadge.class">
                 {{ statusBadge.label }}
               </span>
             </div>
-            <h1 class="text-3xl! font-extrabold! text-slate-800! mb-3!">{{ customer.name }}</h1>
-            <div class="flex! items-start! gap-2! text-slate-500!">
+            <h1 class="text-3xl! font-extrabold! text-slate-800! mb-2!">{{ customer.name }}</h1>
+            <div class="flex! items-start! gap-2! text-slate-500! mb-3!">
               <font-awesome-icon icon="map-marker-alt" class="text-sky-400! mt-0.5! shrink-0!" />
               <div>
                 <p class="text-sm! font-medium!">{{ customer.address }}</p>
                 <p class="text-xs! text-slate-400!">{{ customer.region }}</p>
               </div>
             </div>
-          </div>
-          <div class="shrink-0! flex! flex-col! items-center! gap-2!">
-            <div
-              class="w-24! h-24! bg-slate-800! rounded-xl! flex! items-center! justify-center! shadow-md!"
-            >
-              <font-awesome-icon icon="qrcode" class="text-white! text-5xl!" />
+
+            <div class="grid! grid-cols-2! sm:grid-cols-4! gap-3! mt-4!">
+              <div class="bg-sky-50! rounded-lg! px-3! py-2!">
+                <p class="text-[10px]! text-sky-400! font-medium!">No. Induk</p>
+                <p class="text-sm! font-bold! text-slate-800!">{{ customer.noInduk }}</p>
+              </div>
+              <div class="bg-violet-50! rounded-lg! px-3! py-2!">
+                <p class="text-[10px]! text-violet-400! font-medium!">Abodemen</p>
+                <p class="text-sm! font-bold! text-slate-800!">{{ customer.abodemen }}</p>
+              </div>
+              <div class="bg-emerald-50! rounded-lg! px-3! py-2!">
+                <p class="text-[10px]! text-emerald-400! font-medium!">Tgl Order</p>
+                <p class="text-sm! font-bold! text-slate-800!">{{ customer.tglOrder }}</p>
+              </div>
+              <div class="bg-amber-50! rounded-lg! px-3! py-2!">
+                <p class="text-[10px]! text-amber-500! font-medium!">Paket</p>
+                <p class="text-sm! font-bold! text-slate-800!">{{ customer.paket }}</p>
+              </div>
             </div>
-            <span class="text-[10px]! text-slate-400! font-medium! tracking-wide!"
-              >Work Order QR</span
-            >
           </div>
         </div>
       </ContentCard>
 
       <ContentCard variant="bordered" padding="normal" rounded="2xl">
-        <p class="text-xs! font-bold! text-slate-400! uppercase! tracking-widest! mb-4!">
-          Tahapan Proses
-        </p>
+        <p class="text-xs! font-bold! text-slate-400! uppercase! tracking-widest! mb-4!">Tahapan Proses</p>
         <div class="flex! items-center! justify-between! gap-2!">
-          <div
-            v-for="(step, idx) in steps"
-            :key="step.key"
-            class="flex-1! flex! flex-col! items-center! relative!"
-          >
+          <div v-for="(step, idx) in steps" :key="step.key" class="flex-1! flex! flex-col! items-center! relative!">
             <div
               class="w-10! h-10! rounded-full! flex! items-center! justify-center! text-white! font-bold! shadow-md! z-10! transition-all!"
-              :class="
-                step.state === 'done'
-                  ? 'bg-emerald-500!'
-                  : step.state === 'current'
-                    ? 'bg-sky-500! ring-4! ring-sky-100!'
-                    : 'bg-slate-300!'
-              "
+              :class="step.state === 'done' ? 'bg-emerald-500!' : step.state === 'current' ? 'bg-sky-500! ring-4! ring-sky-100!' : 'bg-slate-300!'"
             >
               <font-awesome-icon :icon="step.state === 'done' ? 'check' : step.icon" />
             </div>
-            <p
-              class="text-[11px]! font-bold! mt-2! text-center!"
-              :class="
-                step.state === 'done'
-                  ? 'text-emerald-600!'
-                  : step.state === 'current'
-                    ? 'text-sky-600!'
-                    : 'text-slate-400!'
-              "
-            >
+            <p class="text-[11px]! font-bold! mt-2! text-center!" :class="step.state === 'done' ? 'text-emerald-600!' : step.state === 'current' ? 'text-sky-600!' : 'text-slate-400!'">
               {{ step.label }}
             </p>
-            <div
-              v-if="idx < steps.length - 1"
-              class="absolute! top-5! left-1/2! w-full! h-0.5! -z-0!"
-              :class="step.state === 'done' ? 'bg-emerald-400!' : 'bg-slate-200!'"
-            ></div>
+            <div v-if="idx < steps.length - 1" class="absolute! top-5! left-1/2! w-full! h-0.5! -z-0!" :class="step.state === 'done' ? 'bg-emerald-400!' : 'bg-slate-200!'"></div>
           </div>
         </div>
       </ContentCard>
 
-      <div class="grid! grid-cols-1! sm:grid-cols-2! gap-3!">
-        <ContentCard variant="bordered" padding="none" rounded="xl" :hoverable="true">
-          <div
-            class="bg-gradient-to-br! from-sky-50! to-blue-100! rounded-xl! px-4! py-3! flex! items-center! justify-between! transition-all! duration-300! hover:-translate-y-1! hover:shadow-lg! cursor-pointer! h-full!"
-          >
-            <p class="text-xs! text-sky-400! font-medium!">No. Induk</p>
-            <p class="text-sm! font-bold! text-slate-800!">{{ customer.noInduk }}</p>
-          </div>
-        </ContentCard>
-        <ContentCard variant="bordered" padding="none" rounded="xl" :hoverable="true">
-          <div
-            class="bg-gradient-to-br! from-violet-50! to-purple-100! rounded-xl! px-4! py-3! flex! items-center! justify-between! transition-all! duration-300! hover:-translate-y-1! hover:shadow-lg! cursor-pointer! h-full!"
-          >
-            <p class="text-xs! text-violet-400! font-medium!">Abodemen</p>
-            <p class="text-sm! font-bold! text-slate-800!">{{ customer.abodemen }}</p>
-          </div>
-        </ContentCard>
-        <ContentCard variant="bordered" padding="none" rounded="xl" :hoverable="true">
-          <div
-            class="bg-gradient-to-br! from-emerald-50! to-teal-100! rounded-xl! px-4! py-3! flex! items-center! justify-between! transition-all! duration-300! hover:-translate-y-1! hover:shadow-lg! cursor-pointer! h-full!"
-          >
-            <p class="text-xs! text-emerald-400! font-medium!">Tgl Order</p>
-            <p class="text-sm! font-bold! text-slate-800!">{{ customer.tglOrder }}</p>
-          </div>
-        </ContentCard>
-        <ContentCard variant="bordered" padding="none" rounded="xl" :hoverable="true">
-          <div
-            class="bg-gradient-to-br! from-amber-50! to-yellow-100! rounded-xl! px-4! py-3! flex! items-center! justify-between! transition-all! duration-300! hover:-translate-y-1! hover:shadow-lg! cursor-pointer! h-full!"
-          >
-            <p class="text-xs! text-amber-500! font-medium!">Paket Instalasi</p>
-            <p class="text-sm! font-bold! text-slate-800!">{{ customer.paket }}</p>
-          </div>
-        </ContentCard>
-      </div>
-
-      <ContentCard
-        v-if="customer.rawStatus === 'unpaid' || customer.rawStatus === 'processing'"
-        variant="bordered"
-        padding="normal"
-        rounded="2xl"
-      >
+      <ContentCard variant="bordered" padding="normal" rounded="2xl">
         <div class="flex! items-center! justify-between!">
-          <div>
-            <p class="text-xs! text-slate-400! mb-2!">Status Pembayaran</p>
-            <span
-              class="px-3! py-1! rounded-full! text-xs! font-bold!"
-              :class="
-                customer.rawStatus === 'unpaid'
-                  ? 'bg-red-100! text-red-600!'
-                  : 'bg-green-100! text-green-700!'
-              "
-            >
-              {{ customer.rawStatus === 'unpaid' ? 'UNPAID' : 'PAID' }}
-            </span>
+          <div class="flex! items-center! gap-3!">
+            <div class="w-10! h-10! bg-orange-100! rounded-xl! flex! items-center! justify-center!">
+              <font-awesome-icon icon="user" class="text-orange-500!" />
+            </div>
+            <div>
+              <p class="text-xs! text-slate-400! mb-0.5!">Hasil Survey</p>
+              <p class="text-sm! font-bold! text-slate-800!">
+                {{ customer.surveyInfo ? `${customer.surveyInfo.distance_to_pipe_m}m dari pipa utama` : 'Belum ada survey' }}
+              </p>
+              <p v-if="customer.surveyInfo" class="text-[11px]! text-slate-400!">
+                {{ customer.surveyInfo.surveyor_name || '-' }}
+              </p>
+            </div>
           </div>
-          <div class="text-right!">
-            <p class="text-xs! text-slate-400!">Last checked</p>
-            <p class="text-xs! font-semibold! text-slate-500!">Just now</p>
-          </div>
+          <button
+            v-if="customer.surveyInfo"
+            @click="openSurveyDetail"
+            class="px-4! py-2! bg-orange-500! hover:bg-orange-600! text-white! text-xs! font-bold! rounded-lg! transition-all! active:scale-95!"
+          >
+            Detail Surveyor
+          </button>
         </div>
       </ContentCard>
     </div>
@@ -154,48 +99,19 @@
 
         <div class="space-y-4!">
           <div>
-            <label
-              class="text-xs! font-semibold! text-slate-500! uppercase! tracking-wide! block! mb-1!"
-              >Kode Instalasi</label
-            >
-            <input
-              type="text"
-              :value="customer.kodeInstalasi"
-              readonly
-              class="w-full! border! border-slate-200! rounded-xl! px-3! py-2.5! text-sm! text-slate-700! bg-slate-50! focus:outline-none!"
-            />
+            <label class="text-xs! font-semibold! text-slate-500! uppercase! tracking-wide! block! mb-1!">Kode Instalasi</label>
+            <input type="text" :value="customer.kodeInstalasi" readonly class="w-full! border! border-slate-200! rounded-xl! px-3! py-2.5! text-sm! text-slate-700! bg-slate-50! focus:outline-none!" />
           </div>
           <div>
-            <label
-              class="text-xs! font-semibold! text-slate-500! uppercase! tracking-wide! block! mb-1!"
-              >Tanggal Pasang</label
-            >
-            <input
-              type="date"
-              v-model="tanggalPasang"
-              class="w-full! border! border-slate-200! rounded-xl! px-3! py-2.5! text-sm! text-slate-700! focus:outline-none! focus:ring-2! focus:ring-sky-300! focus:border-sky-400! transition-all!"
-            />
+            <label class="text-xs! font-semibold! text-slate-500! uppercase! tracking-wide! block! mb-1!">Tanggal Pasang</label>
+            <AppDatePicker v-model="tanggalPasang" placeholder="Pilih tanggal pasang" />
           </div>
           <div>
-            <label
-              class="text-xs! font-semibold! text-slate-500! uppercase! tracking-wide! block! mb-1!"
-              >Jumlah Pembayaran (Otomatis)</label
-            >
+            <label class="text-xs! font-semibold! text-slate-500! uppercase! tracking-wide! block! mb-1!">Jumlah Pembayaran</label>
             <div class="relative!">
-              <span class="absolute! left-3! top-1/2! -translate-y-1/2! text-sm! text-slate-400!"
-                >Rp</span
-              >
-              <input
-                type="text"
-                :value="formatRupiah(customer.installationFee)"
-                readonly
-                class="w-full! border! border-slate-200! rounded-xl! pl-10! pr-3! py-2.5! text-sm! font-bold! text-sky-700! bg-sky-50! focus:outline-none!"
-              />
+              <span class="absolute! left-3! top-1/2! -translate-y-1/2! text-sm! text-slate-400!">Rp</span>
+              <input type="text" :value="formatRupiah(customer.installationFee)" readonly class="w-full! border! border-slate-200! rounded-xl! pl-10! pr-3! py-2.5! text-sm! font-bold! text-sky-700! bg-sky-50! focus:outline-none!" />
             </div>
-            <p class="text-[11px]! text-slate-400! mt-1!">
-              <font-awesome-icon icon="info-circle" class="mr-1!" />
-              Klik tombol di bawah untuk melangkah ke tahap selanjutnya
-            </p>
           </div>
         </div>
 
@@ -209,17 +125,11 @@
             {{ buttonLabel }}
           </button>
           <div class="grid! grid-cols-2! gap-2!">
-            <button
-              @click="handlePrint"
-              class="flex! items-center! justify-center! gap-2! border! border-slate-200! hover:bg-slate-50! text-slate-600! font-semibold! py-2.5! rounded-xl! text-sm! transition-all!"
-            >
+            <button @click="handlePrint" class="flex! items-center! justify-center! gap-2! border! border-slate-200! hover:bg-slate-50! text-slate-600! font-semibold! py-2.5! rounded-xl! text-sm! transition-all!">
               <font-awesome-icon icon="print" />
               Cetak
             </button>
-            <button
-              @click="$router.push({ path: '/instalasi/status', query: { filter: 'pasang_baru' } })"
-              class="flex! items-center! justify-center! gap-2! border! border-slate-200! hover:bg-slate-50! text-slate-600! font-semibold! py-2.5! rounded-xl! text-sm! transition-all!"
-            >
+            <button @click="$router.push({ path: '/instalasi/status', query: { filter: 'pasang_baru' } })" class="flex! items-center! justify-center! gap-2! border! border-slate-200! hover:bg-slate-50! text-slate-600! font-semibold! py-2.5! rounded-xl! text-sm! transition-all!">
               <font-awesome-icon icon="arrow-left" />
               Kembali
             </button>
@@ -227,6 +137,8 @@
         </div>
       </ContentCard>
     </div>
+
+    <DetailSurveyModal :show="showSurveyModal" :survey="currentSurvey" @close="closeSurveyModal" />
   </div>
 </template>
 
@@ -237,6 +149,23 @@ import { useRoute, useRouter } from 'vue-router'
 import { useInstalasiStatus } from '@/composables/useInstalasiStatus'
 import { useInstalasiActions } from '@/composables/useInstalasiActions'
 import ContentCard from '@/presentations/components/ui/ContentCard.vue'
+import DetailSurveyModal from './DetailSurveyModal.vue'
+import AppDatePicker from '@/presentations/components/AppDatePicker.vue'
+
+const showSurveyModal = ref(false)
+const currentSurvey = ref(null)
+
+const openSurveyDetail = () => {
+  if (customer.value.surveyInfo) {
+    currentSurvey.value = customer.value.surveyInfo
+    showSurveyModal.value = true
+  }
+}
+
+const closeSurveyModal = () => {
+  showSurveyModal.value = false
+  currentSurvey.value = null
+}
 
 const route = useRoute()
 const router = useRouter()
@@ -289,6 +218,7 @@ const customer = computed(() => {
     ticketId: found.ticketId,
     rawStatus: found.rawStatus,
     rawData: found.rawData,
+    surveyInfo: found.surveyInfo || null,
   }
 })
 
@@ -308,11 +238,11 @@ const buttonLabel = computed(() => {
 const statusBadge = computed(() => {
   switch (customer.value.rawStatus) {
     case 'surveyed':
-      return { label: 'Surveyed - Tunggu Pembayaran', class: 'bg-amber-100! text-amber-700!' }
+      return { label: 'Surveyed', class: 'bg-amber-100! text-amber-700!' }
     case 'unpaid':
-      return { label: 'Unpaid - Pembayaran Diterima', class: 'bg-orange-100! text-orange-700!' }
+      return { label: 'Unpaid', class: 'bg-orange-100! text-orange-700!' }
     case 'processing':
-      return { label: 'Processing - Sedang Dipasang', class: 'bg-blue-100! text-blue-700!' }
+      return { label: 'Processing', class: 'bg-blue-100! text-blue-700!' }
     default:
       return { label: 'Pasang Baru', class: 'bg-sky-100! text-sky-700!' }
   }
@@ -342,23 +272,16 @@ const handleFinalize = async () => {
   let result
 
   if (currentStatus === 'surveyed') {
-    result = await confirmPayment(
-      customer.value.ticketId,
-      customer.value.installationFee,
-      customer.value.name,
-    )
+    result = await confirmPayment(customer.value.ticketId, customer.value.installationFee, customer.value.name)
   } else if (currentStatus === 'unpaid') {
     result = await transitionStatus(
       customer.value.ticketId,
       'processing',
-      'Lanjutkan ke tahap Processing pemasangan?',
+      'Lanjutkan ke tahap Processing?',
+      tanggalPasang.value
     )
   } else if (currentStatus === 'processing') {
-    result = await transitionStatus(
-      customer.value.ticketId,
-      'completed',
-      'Tandai instalasi sudah selesai dipasang?',
-    )
+    result = await transitionStatus(customer.value.ticketId, 'completed', 'Tandai instalasi selesai?')
   }
 
   isProcessing.value = false
@@ -366,9 +289,7 @@ const handleFinalize = async () => {
   if (result?.success) {
     await fetchData()
     if (currentStatus === 'processing') {
-      router.push({
-        path: `/instalasi/status/aktif/${encodeURIComponent(kodeInstalasi)}`,
-      })
+      router.push({ path: `/instalasi/status/aktif/${encodeURIComponent(kodeInstalasi)}` })
     }
   }
 }
