@@ -10,6 +10,7 @@
       v-model:current-page="currentPage"
       v-model:per-page="perPage"
       :total-entries="filteredData.length"
+      :show-entries="false"
       :no-card="true"
     >
       <template #column-jumlahTunggakan="{ row }">
@@ -48,7 +49,7 @@ const formatCurrency = (amount) => {
 
 const searchQuery = ref('')
 const currentPage = ref(1)
-const perPage = ref(5)
+const perPage = ref(8)
 const loading = ref(false)
 
 const columns = [
