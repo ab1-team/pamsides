@@ -101,7 +101,7 @@ class MonthlyBillService
                 'penalty_amount' => $penalty,
                 'total_amount' => $total,
                 'status' => 'unpaid',
-                'due_date' => now()->addDays(20)
+                'due_date' => $this->computeDueDate($tahun, $bulan)
             ]);
 
             $count++;
@@ -153,5 +153,11 @@ class MonthlyBillService
         }
 
         return 0;
+    }
+
+    public function computeDueDate(int $year, int $month): string
+    {
+        $next = Carbon::create($year, $month, 1)->addMonth();
+        return $next->setDay(20)->toDateString();
     }
 }

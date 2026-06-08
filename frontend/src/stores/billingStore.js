@@ -63,6 +63,7 @@ export const useBillingStore = defineStore('billing', () => {
       }
 
       const res = await billingService.getBills({ customer_id: customerId })
+      console.log('[BillingStore] fetchBillingPeriods response:', res)
 
       const monthNames = [
         'Januari',
@@ -79,8 +80,9 @@ export const useBillingStore = defineStore('billing', () => {
         'Desember',
       ]
 
-      if (res.success && res.data) {
-        billingPeriods.value = res.data.bills.map((bill) => {
+      if (res?.success && res.data) {
+        const bills = Array.isArray(res.data.bills) ? res.data.bills : []
+        billingPeriods.value = bills.map((bill) => {
           let type = 'current'
           if (bill.status === 'unpaid') {
             type = new Date(bill.due_date) < new Date() ? 'overdue' : 'processing'
@@ -148,29 +150,67 @@ export const useBillingStore = defineStore('billing', () => {
     error.value = null
 
     try {
-      const periodId = paymentData.periodId
-      if (periodId) {
-        // Update local state
-        const periodIndex = billingPeriods.value.findIndex((p) => p.id === periodId)
-        if (periodIndex !== -1) {
-          billingPeriods.value[periodIndex] = {
-            ...billingPeriods.value[periodIndex],
-            status: 'LUNAS',
-            statusDate: getCurrentDate(),
-            amount: paymentData.pembayaran,
-            type: 'paid',
-          }
-        }
-
+      const periodId = paymentData?.periodId
+      if (!periodId) {
         return {
-          success: true,
-          message: 'Pembayaran berhasil dikonfirmasi',
-          data: paymentData,
+          success: false,
+          message: 'ID tagihan tidak ditemukan.',
         }
+      }
+
+      const payload = {
+        payment_method: 'cash',
+        amount_paid: Number(paymentData.pembayaran || paymentData.amount || 0),
+      }
+
+      const res = await billingService.confirmPayment(periodId, payload)
+      console.log('[BillingStore] confirmPayment response:', res)
+
+      if (!res?.success) {
+        return {
+          success: false,
+          message: res?.message || 'Gagal mengkonfirmasi pembayaran.',
+        }
+      }
+
+      const periodIndex = billingPeriods.value.findIndex((p) => p.id === periodId)
+      if (periodIndex !== -1) {
+        const existing = billingPeriods.value[periodIndex]
+        const backendPayment = res?.data?.payment
+        const newPayment = backendPayment
+          ? [
+              {
+                id: backendPayment.id,
+                amount: Number(backendPayment.amount_paid),
+                paidAt: backendPayment.paid_at
+                  ? new Date(backendPayment.paid_at).toLocaleDateString('id-ID')
+                  : getCurrentDate(),
+                confirmedBy: backendPayment.confirmed_by || '-',
+              },
+            ]
+          : existing.payments || []
+
+        billingPeriods.value[periodIndex] = {
+          ...existing,
+          status: 'LUNAS',
+          statusDate: getCurrentDate(),
+          amount: payload.amount_paid,
+          abodemen: Number(paymentData.abodemen ?? existing.abodemen),
+          denda: Number(paymentData.denda ?? existing.denda),
+          usage_charge: Number(paymentData.tagihan ?? existing.usage_charge),
+          type: 'paid',
+          payments: newPayment,
+        }
+      }
+
+      return {
+        success: true,
+        message: res.message || 'Pembayaran berhasil dikonfirmasi',
+        data: res.data,
       }
     } catch (err) {
       error.value = 'Gagal menyimpan pembayaran'
-      console.error('Error saving payment:', err)
+      console.error('[BillingStore] Error saving payment:', err)
       return {
         success: false,
         message: err.response?.data?.message || 'Gagal menyimpan pembayaran',
@@ -191,22 +231,29 @@ export const useBillingStore = defineStore('billing', () => {
 
     try {
       const res = await customerService.searchActive({ search: query })
-      if (res.success && res.data) {
+      console.log('[BillingStore] search response:', res)
+      if (res?.success && res.data) {
         searchResults.value = res.data
+      } else {
+        searchResults.value = []
       }
     } catch (err) {
-      console.error('Failed to search customers', err)
+      console.error('[BillingStore] Failed to search customers', err)
       searchResults.value = []
     }
   }
 
   const selectCustomer = async (customer) => {
+    const customerId = customer?.id ?? customer?.customer_id ?? null
+    if (!customerId) {
+      console.warn('[BillingStore] selectCustomer: customer.id missing', customer)
+      return
+    }
     selectedCustomer.value = customer
     searchResults.value = []
     searchQuery.value = customer.name
 
-    // Ambil periode tagihan untuk pelanggan yang dipilih
-    await fetchBillingPeriods(customer.customer_id)
+    await fetchBillingPeriods(customerId)
   }
 
   const clearSearch = () => {
