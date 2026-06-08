@@ -5,6 +5,7 @@
         label="INSTALASI"
         :value="statsSummary.instalasi"
         :link="null"
+        :progress="statsSummaryProgress.instalasi"
         @detail-click="openDetailModal('instalasi')"
       >
         <font-awesome-icon icon="home" />
@@ -14,6 +15,7 @@
         label="PEMAKAIAN"
         :value="statsSummary.pemakaian"
         :link="null"
+        :progress="statsSummaryProgress.pemakaian"
         @detail-click="openDetailModal('pemakaian')"
       >
         <font-awesome-icon icon="tint" />
@@ -23,6 +25,7 @@
         label="TUNGGAKAN"
         :value="statsSummary.tunggakan"
         :link="null"
+        :progress="statsSummaryProgress.tunggakan"
         @detail-click="openDetailModal('tunggakan')"
       >
         <font-awesome-icon icon="balance-scale" />
@@ -32,6 +35,7 @@
         label="TAGIHAN"
         :value="statsSummary.tagihan"
         :link="null"
+        :progress="statsSummaryProgress.tagihan"
         @detail-click="openDetailModal('tagihan')"
       >
         <font-awesome-icon icon="file-invoice" />
@@ -344,10 +348,25 @@ const statsSummary = computed(() => {
   const totalBills = (Number(bills.paid) || 0) + (Number(bills.unpaid) || 0)
 
   return {
-    instalasi: totalTickets.toString(),
-    pemakaian: (data?.total_customers || 0).toString(),
-    tunggakan: (bills.unpaid || 0).toString(),
-    tagihan: totalBills.toString(),
+    instalasi: totalTickets,
+    pemakaian: data?.total_customers || 0,
+    tunggakan: bills.unpaid || 0,
+    tagihan: totalBills,
+  }
+})
+
+const statsSummaryProgress = computed(() => {
+  const s = statsSummary.value
+  const base = Number(s.instalasi) || 0
+  if (base <= 0) {
+    return { instalasi: 0, pemakaian: 0, tunggakan: 0, tagihan: 0 }
+  }
+  const ratio = (v) => Math.min(100, Math.max(0, (Number(v) / base) * 100))
+  return {
+    instalasi: 100,
+    pemakaian: ratio(s.pemakaian),
+    tunggakan: ratio(s.tunggakan),
+    tagihan: ratio(s.tagihan),
   }
 })
 

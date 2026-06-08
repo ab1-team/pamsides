@@ -5,11 +5,18 @@
     0 4px 6px -1px rgb(166 161 161 / 19%),
     0 2px 4px -1px rgb(97 91 91 / 32%);
   transition: var(--transition-normal);
-  padding: 1rem 1.35rem;
+  padding: 0.7rem 1.35rem;
   text-align: center;
   position: relative;
   overflow: hidden;
   height: auto;
+  cursor: pointer;
+  user-select: none;
+}
+
+.stat-card:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.6);
+  outline-offset: 2px;
 }
 
 .stat-card:hover {
@@ -94,7 +101,7 @@
   display: flex;
   align-items: center;
   justify-content: flex-start;
-  margin-bottom: 0.3rem;
+  margin-bottom: 0.15rem;
 }
 
 .stat-card-title {
@@ -110,11 +117,11 @@
   display: flex;
   align-items: flex-end;
   justify-content: flex-start;
-  margin-bottom: 0.7rem;
+  margin-bottom: 0.25rem;
 }
 
 .stat-card-value {
-  font-size: var(--text-4xl);
+  font-size: 1.3rem;
   font-weight: 800;
   color: var(--color-text-main);
   line-height: 1;
@@ -145,7 +152,7 @@
   height: 5px;
   overflow: hidden;
   width: 100%;
-  margin-top: 0.4rem;
+  margin-top: 0.2rem;
   position: relative;
 }
 
@@ -173,6 +180,15 @@
   justify-content: space-between;
   width: 100%;
   padding-right: 0.5rem;
+}
+
+.stat-card-footer {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  margin-top: 0;
+  margin-bottom: 0.15rem;
+  padding-right: 0.25rem;
 }
 
 .stat-card-link {
