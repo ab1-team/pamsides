@@ -6,7 +6,6 @@ use App\Models\Customer;
 use App\Models\InstallationTicket;
 use App\StateMachines\TicketStateMachine;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
 
 class ActivationController extends Controller
 {
@@ -28,8 +27,17 @@ class ActivationController extends Controller
         // 3. Gunakan user yang sudah ada saat registrasi awal
         $user = $installationTicket->user; // Relasi ke User
 
-        // 4. Buat customer_code dengan format yang seragam
-        $customerCode = 'PAM-' . date('Ym') . '-' . Str::padLeft($user->id, 4, '0');
+        // 4. Buat customer_code sequence per bulan (PAM-YYYYMM-XXXX)
+        $yearMonth = now()->format('Ym');
+        $latestCustomer = Customer::where('customer_code', 'like', 'PAM-'.$yearMonth.'-%')
+            ->orderBy('customer_code', 'desc')
+            ->first();
+
+        $nextNumber = $latestCustomer
+            ? str_pad((int) substr($latestCustomer->customer_code, -4) + 1, 4, '0', STR_PAD_LEFT)
+            : '0001';
+
+        $customerCode = 'PAM-'.$yearMonth.'-'.$nextNumber;
 
         // 5. Buat record customer
         $customer = Customer::updateOrCreate(

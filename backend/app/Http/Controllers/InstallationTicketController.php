@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Customer;
 use App\Models\InstallationTicket;
 use App\StateMachines\TicketStateMachine;
 use Illuminate\Http\Request;
@@ -216,42 +215,9 @@ if ($oldTicket->status === 'draft') {
                 if ($installationTicket->customer) {
                     return response()->json([
                         'success' => false,
-                        'message' => 'Tiket ini sudah diaktivasi menjadi pelanggan.',
+                        'message' => 'Aktivasi awal harus melalui endpoint /installation-result dan /activate. Pastikan hasil instalasi sudah diinput oleh teknisi.',
                     ], 422);
                 }
-
-                // VALIDASI tambahan saat aktivasi
-                if (! $request->initial_meter_reading && $request->initial_meter_reading !== 0) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'Meter awal wajib diisi saat aktivasi.',
-                    ], 422);
-                }
-
-                // GENERATE CUSTOMER CODE (PAM-YYYYMM-0001)
-                $yearMonth = now()->format('Ym');
-
-                $latestCustomer = Customer::where('customer_code', 'like', 'PAM-'.$yearMonth.'-%')
-                    ->orderBy('customer_code', 'desc')
-                    ->first();
-
-                $nextNumber = $latestCustomer
-                    ? str_pad((int) substr($latestCustomer->customer_code, -4) + 1, 4, '0', STR_PAD_LEFT)
-                    : '0001';
-
-                $customerCode = 'PAM-'.$yearMonth.'-'.$nextNumber;
-
-                // INSERT KE TABEL CUSTOMERS
-                Customer::create([
-                    'ticket_id' => $installationTicket->id,
-                    'user_id' => $installationTicket->user_id,
-                    'customer_code' => $customerCode,
-                    'initial_meter_reading' => $request->initial_meter_reading,
-                    'meter_photo_url' => $request->meter_photo_url ?? null,
-                    'activated_at' => $request->installation_date 
-                        ? date('Y-m-d H:i:s', strtotime($request->installation_date))
-                        : now(),
-                ]);
             }
 
             // UPDATE STATUS TIKET

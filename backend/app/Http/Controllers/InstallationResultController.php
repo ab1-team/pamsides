@@ -12,13 +12,12 @@ class InstallationResultController extends Controller
     public function store(Request $request, InstallationTicket $installationTicket)
     {
         $request->validate([
-            'initial_meter_reading' => 'required|integer|min:0',
-            'photo'                 => 'required|image|mimes:jpg,jpeg,png|max:2048',
+            'initial_meter_reading' => 'required|numeric|min:0',
+            'photo'                 => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
         ], [
             'initial_meter_reading.required' => 'Angka meter awal wajib diisi.',
-            'initial_meter_reading.integer'  => 'Angka meter awal harus berupa angka.',
+            'initial_meter_reading.numeric'  => 'Angka meter awal harus berupa angka.',
             'initial_meter_reading.min'      => 'Angka meter awal tidak boleh negatif.',
-            'photo.required'                 => 'Foto meteran wajib diupload.',
             'photo.image'                    => 'File harus berupa gambar.',
             'photo.mimes'                    => 'Format foto harus jpg, jpeg, atau png.',
             'photo.max'                      => 'Ukuran foto maksimal 2MB.',
@@ -27,8 +26,11 @@ class InstallationResultController extends Controller
         // Validasi status tiket harus processing
         TicketStateMachine::validate($installationTicket->status, 'completed');
 
-        // Upload foto meteran
-        $photoUrl = FileHelper::uploadPhoto($request->file('photo'), 'meter-photos');
+        // Upload foto meteran (opsional)
+        $photoUrl = null;
+        if ($request->hasFile('photo')) {
+            $photoUrl = FileHelper::uploadPhoto($request->file('photo'), 'meter-photos');
+        }
 
         // Simpan sementara di cache untuk digunakan saat aktivasi
         cache()->put(
