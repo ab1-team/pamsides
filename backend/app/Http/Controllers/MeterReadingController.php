@@ -42,30 +42,36 @@ class MeterReadingController extends Controller
         ]);
     }
 
-    /**
-     * Ambil data pelanggan yang BELUM dicatat meternya berdasarkan filter Bulan dan Tahun
-     */
+
+    //  Ambil data pelanggan yang BELUM dicatat meternya berdasarkan filter Bulan dan Tahun
     public function index(Request $request)
     {
-        // Ambil dari request filter frontend, jika kosong gunakan bulan & tahun saat ini
+        // 1. Validasi input parameter query dari frontend Vue
         $request->validate([
-            'month' => 'nullable|integer|between:1,12',
-            'year' => 'nullable|integer|min:2000',
+            'month' => 'required|integer|between:1,12',
+            'year' => 'required|integer|min:2000',
         ]);
 
-        $bulan = $request->query('month', Carbon::now()->month);
-        $tahun = $request->query('year', Carbon::now()->year);
+        $bulan = $request->month;
+        $tahun = $request->year;
 
-        // Ambil customer yang belum ada record meter di bulan & tahun terpilih
-        $customers = Customer::with(['user', 'ticket']) // Eager loading untuk mempermudah frontend
+        // 2. Ambil customer yang BELUM ada record meter di bulan & tahun terpilih
+        $customers = Customer::with(['user', 'ticket.village']) 
+            // Pastikan hanya memunculkan pelanggan yang tiket instalasinya sudah di-aktivasi (completed)
+            ->whereHas('ticket', function ($query) {
+                $query->where('status', 'completed');
+            })
+            // Filter pendeteksi pending: Tidak boleh ada record di tabel meter_readings pada periode ini
             ->whereDoesntHave('meterReadings', function ($query) use ($bulan, $tahun) {
                 $query->where('reading_month', $bulan)
                     ->where('reading_year', $tahun);
-            })->get();
+            })
+            ->get();
 
         return response()->json([
             'success' => true,
-            'message' => 'Daftar pelanggan yang belum dicatat meter periode bulan ini',
+            'message' => 'Daftar pelanggan yang belum dicatat meter periode terpilih',
+            'total_customers' => $customers->count(),
             'data' => $customers,
         ]);
     }

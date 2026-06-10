@@ -1,5 +1,5 @@
 <template>
-  <div class="installation-result-view p-4! lg:p-8!">
+  <div class="installation-result-view">
     <div class="mb-8! flex! items-center! justify-between!">
       <div>
         <BaseButton variant="ghost" icon="arrow-left" @click="$router.back()" class="mb-4!"

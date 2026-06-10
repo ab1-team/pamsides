@@ -1,5 +1,5 @@
 <template>
-  <div class="cater-pemakaian-root p-4! lg:p-8!">
+  <div class="cater-pemakaian-root">
     <!-- Desktop Layout -->
     <div class="hidden! lg:block! max-w-7xl mx-auto">
       <div class="flex! justify-between! items-start! mb-10!">

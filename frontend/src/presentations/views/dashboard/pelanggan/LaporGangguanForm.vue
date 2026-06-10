@@ -1,5 +1,5 @@
 <template>
-  <div class="trouble-report-form p-4! lg:p-8!">
+  <div class="trouble-report-form">
     <div class="max-w-4xl! mx-auto!">
       <div class="mb-8!">
         <BaseButton variant="ghost" icon="arrow-left" @click="$router.back()" class="mb-4!"

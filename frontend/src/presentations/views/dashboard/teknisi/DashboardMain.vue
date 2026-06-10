@@ -1,5 +1,5 @@
 <template>
-  <div class="teknisi-dashboard p-4! lg:p-8!">
+  <div class="teknisi-dashboard">
     <!-- Loading Overlay / State -->
     <div
       v-if="isLoading"
