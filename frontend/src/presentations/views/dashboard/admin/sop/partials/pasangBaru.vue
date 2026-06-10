@@ -10,10 +10,10 @@
 
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4!">
         <div
-          @click="form.statusPembayaran = 'wajib'"
+          @click="form.statusPembayaran = true"
           class="group! relative! cursor-pointer! py-3.5! px-5! rounded-2xl! border-2! transition-all! duration-300!"
           :class="[
-            form.statusPembayaran === 'wajib'
+            form.statusPembayaran
               ? 'border-indigo-600! bg-indigo-50/30! shadow-lg! shadow-indigo-100!'
               : 'border-slate-100! bg-white! hover:border-indigo-200! hover:bg-slate-50/50!',
           ]"
@@ -22,7 +22,7 @@
             <div
               class="w-10! h-10! rounded-xl! flex! items-center! justify-center! transition-colors! shrink-0!"
               :class="
-                form.statusPembayaran === 'wajib'
+                form.statusPembayaran
                   ? 'bg-indigo-600! text-white!'
                   : 'bg-slate-100! text-slate-400! group-hover:bg-indigo-100! group-hover:text-indigo-600!'
               "
@@ -33,14 +33,12 @@
               <div class="flex! items-center! justify-between! mb-1!">
                 <span
                   class="font-bold! text-sm!"
-                  :class="
-                    form.statusPembayaran === 'wajib' ? 'text-indigo-900!' : 'text-slate-700!'
-                  "
+                  :class="form.statusPembayaran ? 'text-indigo-900!' : 'text-slate-700!'"
                 >
                   A. Wajib Lunas
                 </span>
                 <font-awesome-icon
-                  v-if="form.statusPembayaran === 'wajib'"
+                  v-if="form.statusPembayaran"
                   icon="check-circle"
                   class="text-indigo-600!"
                 />
@@ -48,7 +46,7 @@
               <p
                 class="text-[11px]! leading-relaxed!"
                 :class="
-                  form.statusPembayaran === 'wajib' ? 'text-indigo-700/70!' : 'text-slate-400!'
+                  form.statusPembayaran ? 'text-indigo-700/70!' : 'text-slate-400!'
                 "
               >
                 Pelanggan harus melunasi seluruh biaya sebelum pemasangan dilakukan.
@@ -58,10 +56,10 @@
         </div>
 
         <div
-          @click="form.statusPembayaran = 'tidak'"
+          @click="form.statusPembayaran = false"
           class="group! relative! cursor-pointer! py-3.5! px-5! rounded-2xl! border-2! transition-all! duration-300!"
           :class="[
-            form.statusPembayaran === 'tidak'
+            form.statusPembayaran === false
               ? 'border-indigo-600! bg-indigo-50/30! shadow-lg! shadow-indigo-100!'
               : 'border-slate-100! bg-white! hover:border-indigo-200! hover:bg-slate-50/50!',
           ]"
@@ -70,7 +68,7 @@
             <div
               class="w-10! h-10! rounded-xl! flex! items-center! justify-center! transition-colors! shrink-0!"
               :class="
-                form.statusPembayaran === 'tidak'
+                form.statusPembayaran === false
                   ? 'bg-indigo-600! text-white!'
                   : 'bg-slate-100! text-slate-400! group-hover:bg-indigo-100! group-hover:text-indigo-600!'
               "
@@ -81,14 +79,12 @@
               <div class="flex! items-center! justify-between! mb-1!">
                 <span
                   class="font-bold! text-sm!"
-                  :class="
-                    form.statusPembayaran === 'tidak' ? 'text-indigo-900!' : 'text-slate-700!'
-                  "
+                  :class="form.statusPembayaran === false ? 'text-indigo-900!' : 'text-slate-700!'"
                 >
                   B. Tidak Wajib Lunas
                 </span>
                 <font-awesome-icon
-                  v-if="form.statusPembayaran === 'tidak'"
+                  v-if="form.statusPembayaran === false"
                   icon="check-circle"
                   class="text-indigo-600!"
                 />
@@ -96,7 +92,7 @@
               <p
                 class="text-[11px]! leading-relaxed!"
                 :class="
-                  form.statusPembayaran === 'tidak' ? 'text-indigo-700/70!' : 'text-slate-400!'
+                  form.statusPembayaran === false ? 'text-indigo-700/70!' : 'text-slate-400!'
                 "
               >
                 Pemasangan tetap bisa dilakukan meskipun pembayaran belum lunas sepenuhnya.

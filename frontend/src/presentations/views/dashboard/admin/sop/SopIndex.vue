@@ -87,7 +87,6 @@
                 <LogoForm
                   v-if="activeSection === 'logo'"
                   v-model="logoForm"
-                  :on-upload="handleLogoUpload"
                   :on-save="saveSettings"
                 />
                 <WhatsappForm
@@ -182,7 +181,6 @@
               <LogoForm
                 v-if="activeSection === 'logo'"
                 v-model="logoForm"
-                :on-upload="handleLogoUpload"
                 :on-save="saveSettings"
               />
               <WhatsappForm
@@ -216,7 +214,6 @@ const {
   lembagaForm,
   logoForm,
   whatsappForm,
-  handleLogoUpload,
   saveSettings,
   wellcomeForm,
   pasangBaruForm,

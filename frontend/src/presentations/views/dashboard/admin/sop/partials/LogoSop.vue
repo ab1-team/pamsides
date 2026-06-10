@@ -15,7 +15,7 @@
           </div>
 
           <h3 class="text-lg! md:text-xl! font-black! text-slate-800! leading-none! mb-3!">
-            Logo Lembaga Utama
+            Logo Lembaga
           </h3>
 
           <p class="text-[11px]! text-slate-500! leading-relaxed! mb-6! max-w-sm!">
@@ -49,14 +49,21 @@
 
         <div class="w-48! h-48! md:w-64! md:h-64! shrink-0! mx-auto! md:mx-0!">
           <div
-            @click="triggerUpload('mainLogo')"
+            @click="triggerUpload"
             class="group/logo relative! w-full! h-full! bg-slate-50! border-2! border-dashed! border-slate-200! rounded-2xl! overflow-hidden! cursor-pointer! hover:border-indigo-400! hover:bg-white! transition-all! duration-500! shadow-inner!"
           >
             <div class="absolute inset-0! flex! items-center! justify-center! p-4! md:p-6!">
               <img
-                :src="form.previews.mainLogo"
+                v-if="form.preview"
+                :src="form.preview"
                 class="max-w-full! max-h-full! object-contain! transition-transform! duration-700! group-hover/logo:scale-110!"
               />
+              <div v-else class="flex! flex-col! items-center! gap-2! text-slate-300!">
+                <font-awesome-icon icon="image" class="text-4xl!" />
+                <span class="text-[10px]! font-bold! uppercase! tracking-widest!"
+                  >Belum ada logo</span
+                >
+              </div>
             </div>
 
             <div
@@ -78,10 +85,10 @@
           </div>
           <input
             type="file"
-            id="mainLogo"
+            ref="fileInput"
             class="hidden"
-            accept="image/*"
-            @change="onUpload($event, 'mainLogo')"
+            accept="image/png,image/jpeg,image/webp"
+            @change="onUpload"
           />
         </div>
       </div>
@@ -97,29 +104,40 @@
         icon="save"
         class="w-full! md:w-auto! rounded-xl! px-8! shadow-lg! shadow-indigo-100!"
       >
-        Simpan Branding
+        Simpan Logo
       </BaseButton>
     </div>
   </div>
 </template>
 
 <script setup>
+import { ref } from 'vue'
 import BaseButton from '@/presentations/components/ui/BaseButton.vue'
 
 const form = defineModel({ required: true })
 
 defineProps({
-  onUpload: {
-    type: Function,
-    required: true,
-  },
   onSave: {
     type: Function,
     required: true,
   },
 })
 
-const triggerUpload = (id) => {
-  document.getElementById(id).click()
+const fileInput = ref(null)
+
+const triggerUpload = () => {
+  fileInput.value?.click()
+}
+
+const onUpload = (event) => {
+  const file = event.target.files?.[0]
+  if (!file) return
+  form.value.file = file
+  const reader = new FileReader()
+  reader.onload = (e) => {
+    form.value.preview = e.target.result
+  }
+  reader.readAsDataURL(file)
+  event.target.value = ''
 }
 </script>

@@ -10,6 +10,8 @@ export const useUiStore = defineStore('ui', () => {
   const activeRequests = ref(0)
   const userRole = ref(localStorage.getItem('user_role') || 'admin')
   const userData = ref(JSON.parse(localStorage.getItem('user_data')) || null)
+  const lembagaName = ref('')
+  const settingsVersion = ref(0)
 
   // Modal State
   const activeModalCount = ref(0)
@@ -53,6 +55,14 @@ export const useUiStore = defineStore('ui', () => {
     localStorage.setItem('user_data', JSON.stringify(data))
   }
 
+  const setLembagaName = (name) => {
+    lembagaName.value = name || ''
+  }
+
+  const bumpSettings = () => {
+    settingsVersion.value++
+  }
+
   return {
     loading,
     toastMessage,
@@ -66,6 +76,10 @@ export const useUiStore = defineStore('ui', () => {
     setUserRole,
     userData,
     setUserData,
+    lembagaName,
+    setLembagaName,
+    settingsVersion,
+    bumpSettings,
     openModal,
     closeModal,
     hasActiveModal,

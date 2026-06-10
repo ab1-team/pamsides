@@ -134,10 +134,11 @@
 </template>
 
 <script setup>
-import { watch, computed, reactive } from 'vue'
+import { onMounted, watch, computed, reactive } from 'vue'
 import { useRoute } from 'vue-router'
 import { useUiStore } from '@/stores/uiStore'
 import BaseButton from '@/presentations/components/ui/BaseButton.vue'
+import sopService from '@/services/sop.service'
 
 const props = defineProps({
   sidebarOpen: {
@@ -155,6 +156,9 @@ const uiStore = useUiStore()
 const route = useRoute()
 
 const roleTitle = computed(() => {
+  if (uiStore.lembagaName) {
+    return uiStore.lembagaName
+  }
   switch (uiStore.userRole) {
     case 'surveyor':
       return 'Surveyor Portal'
@@ -168,6 +172,9 @@ const roleTitle = computed(() => {
 })
 
 const roleSubtitle = computed(() => {
+  if (uiStore.lembagaName) {
+    return uiStore.userRole?.toUpperCase() || 'PORTAL'
+  }
   switch (uiStore.userRole) {
     case 'surveyor':
       return 'FIELD OPERATIONS'
@@ -178,6 +185,21 @@ const roleSubtitle = computed(() => {
     default:
       return 'MANAGEMENT SUITE'
   }
+})
+
+const loadLembagaName = async () => {
+  try {
+    const res = await sopService.getAll()
+    const data = res?.data ?? res
+    const name = data?.lembaga?.nama?.trim()
+    uiStore.setLembagaName(name || '')
+  } catch {
+    // silent: fallback to default role title
+  }
+}
+
+onMounted(() => {
+  loadLembagaName()
 })
 
 const openSubmenus = reactive({})
@@ -324,6 +346,13 @@ watch(
   () => route.path,
   () => {
     syncOpenSubmenus()
+  },
+)
+
+watch(
+  () => uiStore.settingsVersion,
+  () => {
+    loadLembagaName()
   },
 )
 </script>
