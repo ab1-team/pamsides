@@ -1,4 +1,4 @@
-<template>
+template>
   <div class="sidebar-panel" :class="{ collapsed: !sidebarOpen, 'mobile-open': mobileSidebarOpen, 'blurred': uiStore.activeModalCount > 0 }">
     <div class="sidebar-header">
       <div class="sidebar-header-content">
@@ -223,13 +223,13 @@ const menuItems = [
   {
     label: 'Dashboard',
     icon: 'home',
-    to: '/dashboard',
+    to: '/app',
     roles: ['admin', 'surveyor', 'teknisi', 'pelanggan'],
   },
   {
     label: 'Create Survey Baru',
     icon: 'plus-circle',
-    to: '/survey/create',
+    to: '/app/survey/create',
     roles: ['surveyor'],
   },
   {
@@ -237,9 +237,9 @@ const menuItems = [
     icon: 'cog',
     roles: ['admin'],
     children: [
-      { label: 'Personalisasi SOP', to: '/settings/personalisasi-sop' },
-      { label: 'Chart of Account COA', to: '/settings/coa' },
-      { label: 'Paket & Tarif Layanan', to: '/kelas-biaya' },
+      { label: 'Personalisasi SOP', to: '/app/settings/personalisasi-sop' },
+      { label: 'Chart of Account COA', to: '/app/settings/coa' },
+      { label: 'Paket & Tarif Layanan', to: '/app/kelas-biaya' },
     ],
   },
   {
@@ -251,19 +251,19 @@ const menuItems = [
         label: 'Pelanggan',
         icon: 'users',
         children: [
-          { label: 'Create Pelanggan', to: '/data-pelanggan/tambah' },
-          { label: 'Data Pelanggan', to: '/data-pelanggan' },
+          { label: 'Create Pelanggan', to: '/app/data-pelanggan/tambah' },
+          { label: 'Data Pelanggan', to: '/app/data-pelanggan' },
         ],
       },
       {
         label: 'Desa',
         icon: 'map-marker-alt',
         children: [
-          { label: 'Create Desa', to: '/data-desa/tambah' },
-          { label: 'Data Desa', to: '/data-desa' },
+          { label: 'Create Desa', to: '/app/data-desa/tambah' },
+          { label: 'Data Desa', to: '/app/data-desa' },
         ],
       },
-      { label: 'Daftar Instalasi', icon: 'building', to: '/dataInstalasi' },
+      { label: 'Daftar Instalasi', icon: 'building', to: '/app/dataInstalasi' },
     ],
   },
   {
@@ -271,9 +271,10 @@ const menuItems = [
     icon: 'chart-bar',
     roles: ['admin', 'teknisi'],
     children: [
-      { label: 'Register Instalasi', to: '/instalasi/register', roles: ['admin'] },
-      { label: 'Status Instalasi', to: '/instalasi/status', roles: ['admin'] },
-      { label: 'Hasil Survey', to: '/instalasi/hasil-survey', roles: ['admin'] },
+      { label: 'Register Instalasi', to: '/app/instalasi/register', roles: ['admin'] },
+      { label: 'Status Instalasi', to: '/app/instalasi/status', roles: ['admin'] },
+      { label: 'Hasil Survey', to: '/app/instalasi/hasil-survey', roles: ['admin'] },
+      { label: 'Input Pemakaian Air', to: '/app/instalasi/teknisiPemakaianAir', roles: ['teknisi'] },
     ],
   },
   {
@@ -281,29 +282,54 @@ const menuItems = [
     icon: 'file-invoice-dollar',
     roles: ['admin'],
     children: [
-      { label: 'Input Tagihan', to: '/instalasi/pemakaian-air' },
-      { label: 'Daftar Tagihan', to: '/instalasi/daftar-tagihan' },
-      { label: 'Pembayaran Tagihan', to: '/transaksi/tagihan-bulanan' },
+      { label: 'Input Tagihan', to: '/app/instalasi/pemakaian-air' },
+      { label: 'Daftar Tagihan', to: '/app/instalasi/daftar-tagihan' },
+      { label: 'Pembayaran Tagihan', to: '/app/transaksi/tagihan-bulanan' },
     ],
   },
   {
     label: 'Pelaporan',
     icon: 'file-alt',
     roles: ['admin'],
-    to: '/Pelaporan',
+    to: '/app/Pelaporan',
   },
 ]
 
+watch(
+  () => route.path,
+  (newPath) => {
+    menuItems.forEach((item) => {
+      if (!item.children) return
+      const hasActive = item.children.some(
+        (c) => c.to === newPath || (c.to && newPath.startsWith(c.to)),
+      )
+      if (hasActive) openSubmenus[item.label] = true
+    })
+  },
+  { immediate: true },
+)
+
 const filteredMenuItems = computed(() => {
-  return menuItems.filter((item) => {
-    if (item.roles && !item.roles.includes(uiStore.userRole)) return false
-    return true
-  })
+  return menuItems
+    .filter((item) => {
+      if (item.roles && !item.roles.includes(uiStore.userRole)) return false
+      return true
+    })
+    .map((item) => {
+      if (!item.children) return item
+      const visibleChildren = item.children.filter((child) => {
+        if (child.roles && !child.roles.includes(uiStore.userRole)) return false
+        return true
+      })
+      if (visibleChildren.length === 0) return null
+      return { ...item, children: visibleChildren }
+    })
+    .filter(Boolean)
 })
 
 syncOpenSubmenus()
 
-function handleMenuClick() {
+function handleMenuClick(event) {
   if (window.innerWidth < 1024) {
     emit('close-mobile-sidebar')
   }

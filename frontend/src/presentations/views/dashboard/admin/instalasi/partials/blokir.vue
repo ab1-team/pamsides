@@ -1,4 +1,4 @@
-<template>
+template>
   <div class="max-w-5xl! mx-auto grid! grid-cols-1! lg:grid-cols-3! gap-6!">
     <div class="lg:col-span-2! flex! flex-col! gap-6!">
       <ContentCard variant="bordered" padding="large" rounded="2xl">
@@ -260,3 +260,4 @@ const handlePrint = () => {
   printDetail({ ...customer.value, tglOrder: customer.value.tglBlokir }, 'Blokir')
 }
 </script>
+

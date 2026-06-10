@@ -748,23 +748,55 @@ const handleSubmit = async () => {
     const lastTicket = selectedCustomer.value.tickets[selectedCustomer.value.tickets.length - 1]
     const response = await api.put(`/installation-tickets/${lastTicket.id}/register`, payload)
 
-    await Swal.fire({
+    const ticketId = response.data?.data?.id || lastTicket.id
+
+    let customerCode = response.data?.data?.customer?.[0]?.customer_code
+    if (!customerCode) {
+      try {
+        const detail = await api.get(`/installation-tickets/${ticketId}`)
+        customerCode = detail.data?.data?.customer?.[0]?.customer_code
+      } catch {
+        // ignore, fallback handled below
+      }
+    }
+    if (!customerCode) {
+      customerCode = `#INS-${ticketId.toString().padStart(4, '0')}`
+    }
+
+    const result = await Swal.fire({
       title: 'Berhasil!',
       text: 'Instalasi berhasil didaftarkan. Status berubah menjadi pending.',
       icon: 'success',
+      showCancelButton: true,
       confirmButtonColor: '#3b82f6',
+      cancelButtonColor: '#64748b',
       confirmButtonText: 'Lihat Detail',
+      cancelButtonText: 'Tambah Registrasi Baru',
+      reverseButtons: true,
     })
 
-    const ticketId = response.data?.data?.id || lastTicket.id
-    const customerCode =
-      response.data?.data?.customer?.[0]?.customer_code ||
-      `#INS-${ticketId.toString().padStart(4, '0')}`
-
-    router.push({
-      name: 'Detail Permohonan',
-      params: { id: encodeURIComponent(customerCode) },
-    })
+    if (result.isConfirmed) {
+      router.push({
+        name: 'Detail Permohonan',
+        params: { id: encodeURIComponent(customerCode) },
+      })
+    } else if (result.dismiss === Swal.DismissReason.cancel) {
+      clearCustomer()
+      router.push('/instalasi/register').catch(() => {
+        selectedCustomer.value = null
+        customerSearch.value = ''
+        form.value.tanggalOrder = new Date()
+        form.value.user_id = ''
+        form.value.package_id = ''
+        form.value.nominal = 0
+        form.value.village_id = ''
+        form.value.namaDesa = ''
+        form.value.jalan = ''
+        form.value.koordinat = ''
+        form.value.lat = ''
+        form.value.lng = ''
+      })
+    }
   } catch (err) {
     console.error('Gagal mengirim registrasi instalasi:', err.response?.data || err)
 

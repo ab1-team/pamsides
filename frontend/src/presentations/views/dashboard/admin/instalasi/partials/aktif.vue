@@ -1,4 +1,4 @@
-<template>
+template>
   <div class="max-w-5xl! mx-auto grid! grid-cols-1! lg:grid-cols-3! gap-6!">
     <div class="lg:col-span-2! flex! flex-col! gap-6!">
       <ContentCard variant="bordered" padding="large" rounded="2xl">
@@ -81,21 +81,21 @@
             <p class="text-2xl! font-black! text-emerald-600!">
               {{ formatMeter(customer.meterAwal) }}
             </p>
-            <p class="text-xs! text-slate-400!">m³</p>
+            <p class="text-xs! text-slate-400!">m┬│</p>
           </div>
           <div class="text-center!">
             <p class="text-xs! text-slate-400! mb-1!">Pemakaian Terakhir</p>
             <p class="text-2xl! font-black! text-slate-800!">
               {{ formatMeter(customer.meterAkhir) }}
             </p>
-            <p class="text-xs! text-slate-400!">m³</p>
+            <p class="text-xs! text-slate-400!">m┬│</p>
           </div>
           <div class="text-center!">
             <p class="text-xs! text-slate-400! mb-1!">Total Pemakaian</p>
             <p class="text-2xl! font-black! text-blue-600!">
               {{ formatMeter(customer.totalPemakaian) }}
             </p>
-            <p class="text-xs! text-slate-400!">m³</p>
+            <p class="text-xs! text-slate-400!">m┬│</p>
           </div>
         </div>
       </ContentCard>
@@ -263,3 +263,4 @@ const handlePrint = () => {
   printDetail({ ...customer.value, tglOrder: customer.value.tglPasang }, 'Aktif')
 }
 </script>
+
