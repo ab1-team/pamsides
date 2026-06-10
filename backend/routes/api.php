@@ -1,7 +1,6 @@
 <?php
 
 use App\Http\Controllers\ActivationController;
-// Import Semua Controller
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BillingController;
 use App\Http\Controllers\CustomerController;
@@ -19,6 +18,7 @@ use App\Http\Controllers\SopController;
 use App\Http\Controllers\SurveyResultController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\VillageController;
+use App\Http\Controllers\PelaporanController;
 use App\Http\Controllers\WaterTariffBlockController;
 use Illuminate\Support\Facades\Route;
 
@@ -32,11 +32,8 @@ Route::get('/health', function () {
     return response()->json(['status' => 'OK']);
 });
 
-/*
-|--------------------------------------------------------------------------
-| Authenticated Routes (Semua Role)
-|--------------------------------------------------------------------------
-*/
+
+// Authenticated Routes (Semua Role)
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::post('/refresh', [AuthController::class, 'refresh']);
@@ -50,11 +47,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('settings/desa', [SettingController::class, 'getDesa']);
 });
 
-/*
-|--------------------------------------------------------------------------
-| Shared Routes (Bisa diakses Admin & Surveyor)
-|--------------------------------------------------------------------------
-*/
+
+//Shared Routes (Bisa diakses Admin & Surveyor)
+
 Route::middleware(['auth:sanctum', 'role:admin,surveyor'])->group(function () {
     // Dipindahkan ke sini agar admin bisa membaca draft & surveyor bisa membaca pending
     Route::get('installation-tickets', [InstallationTicketController::class, 'index']);
@@ -104,7 +99,7 @@ Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
     // Master Villages
     Route::apiResource('villages', VillageController::class);
 
-    // BARU ✨: Autocomplete pencarian pelanggan aktif (Diletakkan sebelum route ID agar tidak bentrok)
+    // BARU : Autocomplete pencarian pelanggan aktif (Diletakkan sebelum route ID agar tidak bentrok)
     Route::get('/customers/search', [CustomerController::class, 'search']);
 
     // Master Customers
@@ -129,7 +124,7 @@ Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
     Route::post('bills/generate', [BillingController::class, 'generate']);
     Route::get('bills/{monthlyBill}', [BillingController::class, 'show']);
 
-    // BARU ✨: Rekap riwayat pemakaian air bulanan pelanggan
+    // BARU : Rekap riwayat pemakaian air bulanan pelanggan
     Route::get('monthly-bills/usage', [MonthlyBillController::class, 'usage']);
 
     Route::get('monthly-bills', [MonthlyBillController::class, 'index']);
@@ -145,6 +140,13 @@ Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
     Route::get('reports/billing/export-pdf', [ReportController::class, 'exportBillingPdf']);
     Route::get('reports/installation/export-csv', [ReportController::class, 'exportInstallationCsv']);
     Route::get('reports/installation/export-pdf', [ReportController::class, 'exportInstallationPdf']);
+
+    // 
+    Route::get('pelaporan/sub-laporan/{file}', [PelaporanController::class, 'subLaporan']);
+    Route::get('pelaporan', [PelaporanController::class, 'index']);
+    Route::post('pelaporan/preview', [PelaporanController::class, 'preview']);
+    Route::post('pelaporan/excel', [PelaporanController::class, 'exportExcel']);
+    Route::post('pelaporan/simpan-saldo', [PelaporanController::class, 'simpanSaldo']);
 });
 
 /*
@@ -156,11 +158,8 @@ Route::middleware(['auth:sanctum', 'role:admin,surveyor'])->group(function () {
     Route::post('installation-tickets/{installationTicket}/survey', [SurveyResultController::class, 'store']);
 });
 
-/*
-|--------------------------------------------------------------------------
-| Teknisi Routes
-|--------------------------------------------------------------------------
-*/
+// Teknisi Routes
+
 Route::middleware(['auth:sanctum', 'role:teknisi'])->group(function () {
     Route::get('/test-teknisi', fn () => response()->json(['message' => 'Kamu teknisi!']));
 
@@ -169,11 +168,7 @@ Route::middleware(['auth:sanctum', 'role:teknisi'])->group(function () {
     // Note: Route meter-readings/pending, completed, store, update, destroy sudah dipindahkan ke grup Shared (Admin & Teknisi) di atas agar bisa diakses bersama.
 });
 
-/*
-|--------------------------------------------------------------------------
-| Pelanggan Routes
-|--------------------------------------------------------------------------
-*/
+// Pelanggan Routes
 Route::middleware(['auth:sanctum', 'role:pelanggan'])->group(function () {
     Route::get('/test-pelanggan', fn () => response()->json(['message' => 'Kamu pelanggan!']));
 
