@@ -8,7 +8,7 @@ export const pelangganService = {
    * Ambil data dashboard pelanggan
    */
   async getDashboardData() {
-    const response = await api.get('/pelanggan/dashboard')
+    const response = await api.get('/pelanggan/app')
     return response.data
   },
 

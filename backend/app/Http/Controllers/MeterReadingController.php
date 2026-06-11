@@ -84,13 +84,13 @@ class MeterReadingController extends Controller
         $request->validate([
             'customer_id' => 'required|exists:customers,id',
             'meter_value' => 'required|integer|min:0',
-            'photo' => 'required|image|max:2048', // Batasi max 2MB demi kapasitas server
-            'reading_month' => 'required|integer|between:1,12', // Dikirim dinamis dari frontend Vue
-            'reading_year' => 'required|integer|min:2000',  // Dikirim dinamis dari frontend Vue
+            'photo' => 'required|image|max:2048',
+            'reading_month' => 'nullable|integer|between:1,12',
+            'reading_year' => 'nullable|integer|min:2000',
         ]);
 
-        $bulan = $request->reading_month;
-        $tahun = $request->reading_year;
+        $bulan = $request->reading_month ?? Carbon::now()->month;
+        $tahun = $request->reading_year ?? Carbon::now()->year;
 
         // Cek apakah sudah ada input pada periode ini
         $exists = MeterReading::where('customer_id', $request->customer_id)
@@ -224,11 +224,10 @@ class MeterReadingController extends Controller
             ], 404);
         }
 
-        $reading->delete();
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Pencatatan meter berhasil dihapus',
-        ]);
+        return $this->safeDelete(
+            fn () => $reading->delete(),
+            'METER_READING_IN_USE',
+            'Pencatatan meter',
+        );
     }
 }

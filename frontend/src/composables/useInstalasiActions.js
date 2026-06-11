@@ -1,6 +1,7 @@
 import Swal from 'sweetalert2'
 import api from '@/utils/axios'
 import ticketService from '@/services/ticket.service'
+import { confirmDelete } from '@/utils/deleteHandler'
 
 export function useInstalasiActions() {
   const formatRupiah = (val) => {
@@ -110,44 +111,17 @@ export function useInstalasiActions() {
   }
 
   const deleteTicket = async (ticketId, customerName) => {
-    const result = await Swal.fire({
+    const result = await confirmDelete({
       title: 'Hapus Pelanggan?',
       text: `Data pelanggan "${customerName}" akan dihapus secara permanen.`,
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonColor: '#ef4444',
-      cancelButtonColor: '#64748b',
-      confirmButtonText: 'Ya, Hapus',
-      cancelButtonText: 'Batal',
-      reverseButtons: true,
+      successMessage: 'Data pelanggan berhasil dihapus',
+      entity: 'pelanggan',
+      errorCode: 'TICKET_IN_USE',
+      onConfirm: async () => {
+        await api.delete(`/customers/${ticketId}`)
+      },
     })
-
-    if (!result.isConfirmed) return { success: false, cancelled: true }
-
-    try {
-      await api.delete(`/customers/${ticketId}`)
-
-      await Swal.fire({
-        title: 'Terhapus!',
-        text: 'Data pelanggan berhasil dihapus.',
-        icon: 'success',
-        confirmButtonColor: '#3b82f6',
-        confirmButtonText: 'OK',
-      })
-
-      return { success: true }
-    } catch (err) {
-      const errorMessage = err.response?.data?.message || 'Gagal menghapus data.'
-
-      await Swal.fire({
-        title: 'Gagal!',
-        text: errorMessage,
-        icon: 'error',
-        confirmButtonColor: '#ef4444',
-      })
-
-      return { success: false, error: err }
-    }
+    return { success: result, cancelled: !result }
   }
 
   const printDetail = (customer, statusLabel) => {

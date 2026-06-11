@@ -86,13 +86,7 @@ export function useDataInstalasi() {
   const filteredData = computed(() => {
     if (!searchQuery.value) return tableData.value
     const q = searchQuery.value.toLowerCase()
-    return tableData.value.filter(
-      (r) =>
-        r.kodeInstalasi.toLowerCase().includes(q) ||
-        r.nama.toLowerCase().includes(q) ||
-        r.alamat.toLowerCase().includes(q) ||
-        r.status.toLowerCase().includes(q),
-    )
+    return tableData.value.filter((r) => r.nama.toLowerCase().includes(q))
   })
 
   const totalPages = computed(() =>

@@ -1,8 +1,8 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { STATUS_TYPES, STATUS_COLORS } from '@/types/pelanggan'
-import Swal from 'sweetalert2'
 import { useUiStore } from '@/stores/uiStore'
 import customerService from '@/services/customer.service'
+import { confirmDelete } from '@/utils/deleteHandler'
 
 export function usePelanggan(router = null) {
   const uiStore = useUiStore()
@@ -23,10 +23,9 @@ export function usePelanggan(router = null) {
         search: searchQuery.value,
       })
 
-      console.log('Response from API', response)
+      const list = response?.data?.data || response?.data || []
 
-      // Mapping data dari API ke format tabel
-      tableData.value = response.data.map((c) => ({
+      tableData.value = list.map((c) => ({
         id: c.customer_code || c.id,
         realId: c.id,
         nama: c.name,
@@ -42,7 +41,7 @@ export function usePelanggan(router = null) {
         nik: c.nik || '-',
         alamat: c.address || '-',
         no_telp: c.no_telp || '-',
-
+        customer_code: c.customer_code || null,
         status: c.status || 'draft',
       }))
     } catch (error) {
@@ -96,34 +95,21 @@ export function usePelanggan(router = null) {
   const handleEdit = (row) => {
     console.log('Edit Pelanggan:', row)
     if (router) {
-      router.push(`/data-pelanggan/edit/${row.id}`)
+      router.push(`/app/data-pelanggan/edit/${row.id}`)
     }
   }
 
   const handleDelete = async (row) => {
-    const result = await Swal.fire({
+    const ok = await confirmDelete({
       title: 'Hapus Pelanggan?',
       text: `Pelanggan an. "${row.nama}" akan dihapus secara permanent dari aplikasi`,
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonText: 'Ya, Hapus!',
-      cancelButtonText: 'Batal',
-      confirmButtonColor: '#ef4444',
-      cancelButtonColor: '#64748b',
-      reverseButtons: true,
-    })
-
-    if (result.isConfirmed) {
-      try {
+      successMessage: 'Data pelanggan berhasil dihapus',
+      entity: 'pelanggan',
+      onConfirm: async () => {
         await customerService.deleteCustomer(row.realId || row.id)
-        fetchCustomers()
-
-        uiStore.success('Data pelanggan berhasil dihapus')
-      } catch (error) {
-        console.error('Error deleting customer:', error)
-        // Error handled globally
-      }
-    }
+        await fetchCustomers()
+      },
+    })
   }
 
   return {
