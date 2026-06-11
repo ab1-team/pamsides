@@ -169,8 +169,8 @@ export function useInstalasiStatus() {
   })
 
   watch(activeStatus, (val) => {
-    if (route.path === '/instalasi/status' && route.query.filter !== val) {
-      router.replace({ path: '/instalasi/status', query: { filter: val } })
+    if (route.path === '/app/instalasi/status' && route.query.filter !== val) {
+      router.replace({ path: '/app/instalasi/status', query: { filter: val } })
     }
   })
 

@@ -67,28 +67,25 @@ class AuthController extends Controller
 
     public function me(Request $request)
     {
-        $user = $request->user()->load('customers.ticket');
+        $user = $request->user()->load(['customers.ticket.package', 'customers.meterReadings']);
+
+        $customer = $user->customers->first();
 
         return response()->json([
+            'success' => true,
             'data' => [
-                'id' => $user->id,
-                'name' => $user->name,
-                'email' => $user->email,
-                'role' => $user->role,
-
-                // avatar url
-                'avatar_url' => $user->avatar_path
-                    ? Storage::url($user->avatar_path)
-                    : null,
-
-                // identity (customer + ticket)
-                'identity' => $user->customer
-                    ? [
-                        'customer_id' => $user->customer->id,
-                        'ticket' => $user->customer->ticket
-                    ]
-                    : null
-            ]
+                'id'        => $user->id,
+                'name'      => $user->name,
+                'email'     => $user->email,
+                'role'      => $user->role,
+                'phone'     => $user->phone ?? null,
+                'avatar_url'=> $user->avatar_path ? Storage::url($user->avatar_path) : null,
+                'identity'  => $customer ? [
+                    'customer_id'   => $customer->id,
+                    'customer_code' => $customer->customer_code,
+                    'ticket'        => $customer->ticket,
+                ] : null,
+            ],
         ]);
     }
 

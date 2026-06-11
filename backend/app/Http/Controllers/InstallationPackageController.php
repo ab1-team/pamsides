@@ -71,11 +71,16 @@ class InstallationPackageController extends Controller
 
     public function destroy(InstallationPackage $installationPackage)
     {
-        $installationPackage->delete();
-
-        return response()->json([
-            'success' => true,
-            'data'    => ['message' => 'Paket instalasi berhasil dihapus.'],
-        ]);
+        return $this->safeDelete(
+            fn () => $installationPackage->delete(),
+            'PACKAGE_IN_USE',
+            'Paket instalasi',
+            $installationPackage->name,
+            null,
+            fn () => response()->json([
+                'success' => true,
+                'data'    => ['message' => 'Paket instalasi berhasil dihapus.'],
+            ]),
+        );
     }
 }

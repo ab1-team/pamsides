@@ -1,6 +1,6 @@
 import { ref, computed, onMounted } from 'vue'
-import Swal from 'sweetalert2'
 import villageService from '@/services/village.service'
+import { confirmDelete } from '@/utils/deleteHandler'
 
 export function useDesa(router) {
   // State
@@ -68,44 +68,24 @@ export function useDesa(router) {
   const handleEdit = (row) => {
     console.log('Edit Desa:', row)
     if (router) {
-      router.push(`/data-desa/edit/${row.id}`)
+      router.push(`/app/data-desa/edit/${row.id}`)
     }
   }
 
   // DELETE
   const handleDelete = async (row) => {
-    const result = await Swal.fire({
+    await confirmDelete({
       title: 'Hapus Desa?',
       text: `Desa "${row.desa}" akan dihapus`,
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonText: 'Ya, Hapus!',
-      cancelButtonText: 'Batal',
-      confirmButtonColor: '#ef4444',
-      cancelButtonColor: '#64748b',
-      reverseButtons: true,
-    })
-
-    if (result.isConfirmed) {
-      try {
+      successMessage: 'Data desa berhasil dihapus',
+      entity: 'desa',
+      errorCode: 'VILLAGE_IN_USE',
+      fallbackMessage: `Desa "${row.desa}" tidak dapat dihapus karena masih digunakan pada data lain.`,
+      onConfirm: async () => {
         await villageService.deleteVillage(row.id)
-
-        // refresh data dari server
         await getData()
-
-        Swal.fire({
-          title: 'Terhapus!',
-          text: 'Data desa berhasil dihapus.',
-          icon: 'success',
-          timer: 1500,
-          showConfirmButton: false,
-        })
-      } catch (err) {
-        console.error('Gagal hapus:', err)
-
-        Swal.fire('Error', 'Gagal menghapus data', 'error')
-      }
-    }
+      },
+    })
   }
 
   return {

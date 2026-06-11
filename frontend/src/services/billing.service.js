@@ -48,8 +48,8 @@ export const billingService = {
   /**
    * Konfirmasi pembayaran tagihan
    */
-  async confirmPayment(billId) {
-    const response = await api.post(`/monthly-bills/${billId}/pay`)
+  async confirmPayment(billId, payload = {}) {
+    const response = await api.post(`/monthly-bills/${billId}/pay`, payload)
     return response.data
   },
 
