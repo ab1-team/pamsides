@@ -9,8 +9,12 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('installation_tickets', function (Blueprint $table) {
-            $table->string('birth_place')->nullable()->after('gender');
-            $table->date('birth_date')->nullable()->after('birth_place');
+            if (! Schema::hasColumn('installation_tickets', 'birth_place')) {
+                $table->string('birth_place')->nullable()->after('gender');
+            }
+            if (! Schema::hasColumn('installation_tickets', 'birth_date')) {
+                $table->date('birth_date')->nullable()->after('birth_place');
+            }
         });
     }
 
