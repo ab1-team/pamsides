@@ -1,5 +1,7 @@
-﻿import { computed, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
+
 import { useRoute, useRouter } from 'vue-router'
+
 import { useInstalasiStore } from '@/stores/instalasiStore'
 
 export function useInstalasiStatus() {
@@ -7,9 +9,98 @@ export function useInstalasiStatus() {
   const route = useRoute()
   const router = useRouter()
 
-  if (route.query.filter && route.query.filter !== store.activeStatus) {
-    store.activeStatus = route.query.filter
-  }
+  const activeStatus = ref(route.query.filter || 'permohonan')
+
+  // const fetchData = async () => {
+  //   try {
+  //     isLoading.value = true
+  //     const response = await ticketService.getTickets({ per_page: 150 })
+  //     if (response?.success && response?.data?.data) {
+  //       const freshMap = {
+  //         permohonan: [],
+  //         pasang_baru: [],
+  //         aktif: [],
+  //         blokir: [],
+  //         cabut: [],
+  //       }
+
+  //       response.data.data.forEach((ticket) => {
+  //         const status = ticket.status
+  //         let category = null
+  //         let mappedStatusLabel = ''
+
+  //         if (status === 'pending') {
+  //           category = 'permohonan'
+  //           mappedStatusLabel = 'Permohonan'
+  //         } else if (['surveyed', 'unpaid', 'processing'].includes(status)) {
+  //           category = 'pasang_baru'
+  //           mappedStatusLabel = 'Pasang Baru'
+  //         } else if (status === 'completed') {
+  //           category = 'aktif'
+  //           mappedStatusLabel = 'Aktif'
+  //         } else if (status === 'suspended') {
+  //           category = 'blokir'
+  //           mappedStatusLabel = 'Blokir'
+  //         } else if (status === 'terminated') {
+  //           category = 'cabut'
+  //           mappedStatusLabel = 'Cabut'
+  //         }
+
+  //         if (!category) return
+
+  //         freshMap[category].push({
+  //           id:
+  //             ticket.customer?.[0]?.customer_code ||
+  //             `#INS-${ticket.id.toString().padStart(4, '0')}`,
+  //           ticketId: ticket.id,
+  //           name: ticket.applicant_name || '-',
+  //           nik: ticket.nik || '-',
+  //           phone: ticket.phone || '-',
+  //           initials: ticket.applicant_name
+  //             ? ticket.applicant_name
+  //                 .split(' ')
+  //                 .map((n) => n[0])
+  //                 .join('')
+  //                 .toUpperCase()
+  //                 .substring(0, 2)
+  //             : '?',
+  //           color: ['#3B82F6', '#8B5CF6', '#10B981', '#F59E0B', '#EF4444'][ticket.id % 5],
+  //           type: ticket.package?.name || '-',
+  //           packageId: ticket.package_id || null,
+  //           address: ticket.address || '-',
+  //           village: ticket.village?.name || '-',
+  //           villageId: ticket.village_id || null,
+  //           lat: ticket.lat || null,
+  //           lng: ticket.lng || null,
+  //           orderDate: ticket.order_date || '-',
+  //           category: mappedStatusLabel,
+  //           status: INSTALASI_RAW_STATUS_LABELS[status] || status,
+  //           rawStatus: status,
+  //           createdAt: ticket.created_at || '-',
+  //           updatedAt: ticket.updated_at || '-',
+  //           rawData: ticket,
+  //           surveyInfo: ticket.survey?.[0]
+  //             ? {
+  //                 id: ticket.survey[0].id,
+  //                 distance_to_pipe_m: ticket.survey[0].distance_to_pipe_m,
+  //                 material_notes: ticket.survey[0].material_notes,
+  //                 photo_url: ticket.survey[0].photo_url,
+  //                 surveyed_at: ticket.survey[0].surveyed_at,
+  //                 surveyor_name: ticket.survey[0].surveyor?.name || '-',
+  //                 surveyor_id: ticket.survey[0].surveyor_id,
+  //                 ticket: ticket,
+  //               }
+  //             : null,
+  //         })
+  //       })
+  //       dataMap.value = freshMap
+  //     }
+  //   } catch (error) {
+  //     console.error('Failed to fetch installation statuses:', error)
+  //   } finally {
+  //     isLoading.value = false
+  //   }
+  // }
 
   const activeLabel = computed(() => {
     return store.menuList.find((m) => m.key === store.activeStatus)?.label || ''
@@ -53,21 +144,15 @@ export function useInstalasiStatus() {
     store.currentPage = page
   }
 
-  watch(
-    [() => store.activeStatus, () => store.searchQuery],
-    () => {
-      store.currentPage = 1
-    },
-  )
+  watch([() => store.activeStatus, () => store.searchQuery], () => {
+    store.currentPage = 1
+  })
 
-  watch(
-    () => store.activeStatus,
-    (val) => {
-      if (route.path === '/instalasi/status' && route.query.filter !== val) {
-        router.replace({ path: '/instalasi/status', query: { filter: val } })
-      }
-    },
-  )
+  watch(activeStatus, (val) => {
+    if (route.path === '/app/instalasi/status' && route.query.filter !== val) {
+      router.replace({ path: '/app/instalasi/status', query: { filter: val } })
+    }
+  })
 
   const exportData = () => console.log('Export Excel for', activeLabel.value)
   const printData = () => console.log('Print Table for', activeLabel.value)
@@ -115,4 +200,3 @@ export function useInstalasiStatus() {
     getCategoryByStatus: store.getCategoryByStatus,
   }
 }
-

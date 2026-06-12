@@ -13,7 +13,7 @@ class WaterTariffBlockController extends Controller
     {
         return response()->json([
             'success' => true,
-            'data'    => $installationPackage->waterTariffBlocks,
+            'data' => $installationPackage->waterTariffBlocks,
         ]);
     }
 
@@ -47,7 +47,7 @@ class WaterTariffBlockController extends Controller
 
         return response()->json([
             'success' => true,
-            'data'    => $block,
+            'data' => $block,
         ], 201);
     }
 
@@ -55,7 +55,7 @@ class WaterTariffBlockController extends Controller
     {
         return response()->json([
             'success' => true,
-            'data'    => $waterTariffBlock,
+            'data' => $waterTariffBlock,
         ]);
     }
 
@@ -92,33 +92,38 @@ class WaterTariffBlockController extends Controller
 
         return response()->json([
             'success' => true,
-            'data'    => $waterTariffBlock,
+            'data' => $waterTariffBlock,
         ]);
     }
 
     public function destroy(InstallationPackage $installationPackage, WaterTariffBlock $waterTariffBlock)
     {
-        $waterTariffBlock->delete();
-
-        return response()->json([
-            'success' => true,
-            'data'    => ['message' => 'Blok tarif berhasil dihapus.'],
-        ]);
+        return $this->safeDelete(
+            fn () => $waterTariffBlock->delete(),
+            'TARIFF_BLOCK_IN_USE',
+            'Blok tarif',
+            null,
+            null,
+            fn () => response()->json([
+                'success' => true,
+                'data' => ['message' => 'Blok tarif berhasil dihapus.'],
+            ]),
+        );
     }
 
     private function checkOverlap(InstallationPackage $installationPackage, int $min, ?int $max, ?int $excludeId = null): void
     {
         $query = $installationPackage->waterTariffBlocks()
             ->where(function ($q) use ($min, $max) {
-                $q->where(function ($q) use ($min, $max) {
+                $q->where(function ($q) use ($min) {
                     // Blok existing yang usage_max_nya null (tidak terbatas) — selalu overlap jika min baru masuk di atasnya
                     $q->whereNull('usage_max_m3')
-                      ->where('usage_min_m3', '<=', $min);
+                        ->where('usage_min_m3', '<=', $min);
                 })->orWhere(function ($q) use ($min, $max) {
                     // Overlap biasa — range baru berpotongan dengan range existing
                     $q->whereNotNull('usage_max_m3')
-                      ->where('usage_min_m3', '<=', $max ?? PHP_INT_MAX)
-                      ->where('usage_max_m3', '>=', $min);
+                        ->where('usage_min_m3', '<=', $max ?? PHP_INT_MAX)
+                        ->where('usage_max_m3', '>=', $min);
                 });
             });
 

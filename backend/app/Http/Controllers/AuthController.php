@@ -5,15 +5,16 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
+
 class AuthController extends Controller
 {
     public function login(Request $request)
     {
         $request->validate([
-            'email'    => 'required|email',
+            'email' => 'required|email',
             'password' => 'required|string',
         ]);
 
@@ -29,8 +30,8 @@ class AuthController extends Controller
 
         return response()->json([
             'success' => true,
-            'data'    => [
-                'user'  => [
+            'data' => [
+                'user' => [
                     'id' => $user->id,
                     'name' => $user->name,
                     'email' => $user->email,
@@ -48,7 +49,7 @@ class AuthController extends Controller
 
         return response()->json([
             'success' => true,
-            'data'    => ['message' => 'Berhasil logout.'],
+            'data' => ['message' => 'Berhasil logout.'],
         ]);
     }
 
@@ -61,34 +62,31 @@ class AuthController extends Controller
 
         return response()->json([
             'success' => true,
-            'data'    => ['token' => $token],
+            'data' => ['token' => $token],
         ]);
     }
 
     public function me(Request $request)
     {
-        $user = $request->user()->load('customers.ticket');
+        $user = $request->user()->load(['customers.ticket.package', 'customers.meterReadings']);
+
+        $customer = $user->customers->first();
 
         return response()->json([
+            'success' => true,
             'data' => [
                 'id' => $user->id,
                 'name' => $user->name,
                 'email' => $user->email,
                 'role' => $user->role,
-
-                // avatar url
-                'avatar_url' => $user->avatar_path
-                    ? Storage::url($user->avatar_path)
-                    : null,
-
-                // identity (customer + ticket)
-                'identity' => $user->customer
-                    ? [
-                        'customer_id' => $user->customer->id,
-                        'ticket' => $user->customer->ticket
-                    ]
-                    : null
-            ]
+                'phone' => $user->phone ?? null,
+                'avatar_url' => $user->avatar_path ? Storage::url($user->avatar_path) : null,
+                'identity' => $customer ? [
+                    'customer_id' => $customer->id,
+                    'customer_code' => $customer->customer_code,
+                    'ticket' => $customer->ticket,
+                ] : null,
+            ],
         ]);
     }
 
@@ -102,22 +100,22 @@ class AuthController extends Controller
 
             $user = $request->user();
 
-            if (!Hash::check($request->current_password, $user->password)) {
+            if (! Hash::check($request->current_password, $user->password)) {
                 return response()->json([
-                    'message' => 'Password lama salah'
+                    'message' => 'Password lama salah',
                 ], 422);
             }
 
             $user->update([
-                'password' => Hash::make($request->new_password)
+                'password' => Hash::make($request->new_password),
             ]);
 
             return response()->json([
-                'message' => 'Password berhasil diubah'
+                'message' => 'Password berhasil diubah',
             ]);
-        } catch (\Illuminate\Validation\ValidationException $e) {
+        } catch (ValidationException $e) {
             return response()->json([
-                'message' => $e->getMessage()
+                'message' => $e->getMessage(),
             ], 422);
         }
     }
@@ -132,26 +130,27 @@ class AuthController extends Controller
                 'email' => [
                     'required',
                     'email',
-                    Rule::unique('users')->ignore($user->id)
+                    Rule::unique('users')->ignore($user->id),
                 ],
             ]);
 
             $user->update($validated);
 
             return response()->json([
-                'message' => 'Profil berhasil diperbarui'
+                'message' => 'Profil berhasil diperbarui',
             ]);
-        } catch (\Illuminate\Validation\ValidationException $e) {
+        } catch (ValidationException $e) {
             return response()->json([
-                'message' => $e->getMessage()
+                'message' => $e->getMessage(),
             ], 422);
         }
     }
+
     public function uploadAvatar(Request $request)
     {
         try {
             $request->validate([
-                'avatar' => 'required|image|mimes:png,jpg,jpeg,webp|max:2048'
+                'avatar' => 'required|image|mimes:png,jpg,jpeg,webp|max:2048',
             ]);
 
             $user = $request->user();
@@ -164,17 +163,17 @@ class AuthController extends Controller
             $path = $request->file('avatar')->store('avatars', 'public');
 
             $user->update([
-                'avatar_path' => $path
+                'avatar_path' => $path,
             ]);
 
             return response()->json([
                 'data' => [
-                    'avatar_url' => Storage::url($path)
-                ]
+                    'avatar_url' => Storage::url($path),
+                ],
             ]);
-        } catch (\Illuminate\Validation\ValidationException $e) {
+        } catch (ValidationException $e) {
             return response()->json([
-                'message' => $e->getMessage()
+                'message' => $e->getMessage(),
             ], 422);
         }
     }

@@ -58,9 +58,7 @@ export function useDataInstalasi() {
       const res = await ticketService.getTickets({ per_page: 200 })
       if (res?.success && Array.isArray(res?.data?.data)) {
         tableData.value = res.data.data.map((t) => ({
-          kodeInstalasi:
-            t.customer?.[0]?.customer_code ||
-            `#INS-${String(t.id).padStart(4, '0')}`,
+          kodeInstalasi: t.customer?.[0]?.customer_code || `#INS-${String(t.id).padStart(4, '0')}`,
           nama: t.applicant_name || '-',
           alamat: t.address || '-',
           rawStatus: t.status,
@@ -86,13 +84,7 @@ export function useDataInstalasi() {
   const filteredData = computed(() => {
     if (!searchQuery.value) return tableData.value
     const q = searchQuery.value.toLowerCase()
-    return tableData.value.filter(
-      (r) =>
-        r.kodeInstalasi.toLowerCase().includes(q) ||
-        r.nama.toLowerCase().includes(q) ||
-        r.alamat.toLowerCase().includes(q) ||
-        r.status.toLowerCase().includes(q),
-    )
+    return tableData.value.filter((r) => r.nama.toLowerCase().includes(q))
   })
 
   const totalPages = computed(() =>
