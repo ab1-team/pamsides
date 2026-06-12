@@ -216,7 +216,7 @@
 
 <script setup>
 defineOptions({ name: 'PermohonanDetail' })
-import { ref, reactive, computed } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useInstalasiStatus } from '@/composables/useInstalasiStatus'
 import { useInstalasiActions } from '@/composables/useInstalasiActions'
@@ -231,7 +231,21 @@ const router = useRouter()
 const uiStore = useUiStore()
 const { dataMap, fetchData } = useInstalasiStatus()
 const { printDetail } = useInstalasiActions()
-const id = decodeURIComponent(route.params.id)
+const decodeId = (raw) => {
+  let prev = raw
+  let curr = raw
+  for (let i = 0; i < 3; i++) {
+    try {
+      curr = decodeURIComponent(curr)
+    } catch {
+      break
+    }
+    if (curr === prev) break
+    prev = curr
+  }
+  return curr
+}
+const id = decodeId(String(route.params.id))
 
 const galleryInput = ref(null)
 const photoPreview = ref(null)
@@ -255,7 +269,7 @@ const formatInduk = (val) => {
 }
 
 const customer = computed(() => {
-  const found = dataMap.value.permohonan?.find((r) => r.id === id)
+  const found = dataMap.value.permohonan?.find((r) => r.id === id || String(r.ticketId) === id)
   if (!found)
     return {
       name: 'Tidak Ditemukan',
@@ -372,8 +386,8 @@ const submitSurvey = async () => {
 
     await ticketService.submitSurvey(customer.value.ticketId, submitData)
     uiStore.success('Survey berhasil disimpan.')
+    const kodeInstalasi = customer.value.kodeInstalasi || String(customer.value.ticketId)
     await fetchData()
-    const kodeInstalasi = customer.value.kodeInstalasi
     router.push({
       path: `/app/instalasi/status/pasang-baru/${encodeURIComponent(kodeInstalasi)}`,
     })
@@ -389,6 +403,10 @@ const submitSurvey = async () => {
 const handlePrint = () => {
   printDetail(customer.value, 'Permohonan')
 }
+
+onMounted(async () => {
+  await fetchData()
+})
 </script>
 
 <style scoped>

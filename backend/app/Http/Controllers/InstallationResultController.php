@@ -13,14 +13,14 @@ class InstallationResultController extends Controller
     {
         $request->validate([
             'initial_meter_reading' => 'required|numeric|min:0',
-            'photo'                 => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+            'photo' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
         ], [
             'initial_meter_reading.required' => 'Angka meter awal wajib diisi.',
-            'initial_meter_reading.numeric'  => 'Angka meter awal harus berupa angka.',
-            'initial_meter_reading.min'      => 'Angka meter awal tidak boleh negatif.',
-            'photo.image'                    => 'File harus berupa gambar.',
-            'photo.mimes'                    => 'Format foto harus jpg, jpeg, atau png.',
-            'photo.max'                      => 'Ukuran foto maksimal 2MB.',
+            'initial_meter_reading.numeric' => 'Angka meter awal harus berupa angka.',
+            'initial_meter_reading.min' => 'Angka meter awal tidak boleh negatif.',
+            'photo.image' => 'File harus berupa gambar.',
+            'photo.mimes' => 'Format foto harus jpg, jpeg, atau png.',
+            'photo.max' => 'Ukuran foto maksimal 2MB.',
         ]);
 
         // Validasi status tiket harus processing
@@ -37,17 +37,17 @@ class InstallationResultController extends Controller
             "installation_result_{$installationTicket->id}",
             [
                 'initial_meter_reading' => $request->initial_meter_reading,
-                'meter_photo_url'       => $photoUrl,
+                'meter_photo_url' => $photoUrl,
             ],
             now()->addHours(24)
         );
 
         return response()->json([
             'success' => true,
-            'data'    => [
-                'ticket_id'             => $installationTicket->id,
+            'data' => [
+                'ticket_id' => $installationTicket->id,
                 'initial_meter_reading' => $request->initial_meter_reading,
-                'meter_photo_url'       => $photoUrl,
+                'meter_photo_url' => $photoUrl,
             ],
         ]);
     }

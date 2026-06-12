@@ -20,7 +20,7 @@ class ActivationController extends Controller
         if (! $installationResult) {
             return response()->json([
                 'success' => false,
-                'data'    => ['message' => 'Data hasil instalasi tidak ditemukan. Pastikan teknisi sudah input hasil instalasi.'],
+                'data' => ['message' => 'Data hasil instalasi tidak ditemukan. Pastikan teknisi sudah input hasil instalasi.'],
             ], 422);
         }
 
@@ -43,10 +43,10 @@ class ActivationController extends Controller
         $customer = Customer::updateOrCreate(
             ['ticket_id' => $installationTicket->id, 'user_id' => $user->id],
             [
-                'customer_code'         => $customerCode,
+                'customer_code' => $customerCode,
                 'initial_meter_reading' => $installationResult['initial_meter_reading'] ?? 0,
-                'meter_photo_url'       => $installationResult['meter_photo_url'] ?? null,
-                'activated_at'          => now(),
+                'meter_photo_url' => $installationResult['meter_photo_url'] ?? null,
+                'activated_at' => now(),
             ]
         );
 
@@ -59,10 +59,10 @@ class ActivationController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Aktivasi pelanggan berhasil. Kode pelanggan telah dibuat.',
-            'data'    => [
+            'data' => [
                 'customer' => $customer,
-                'user'     => $user,
-                'ticket'   => $installationTicket,
+                'user' => $user,
+                'ticket' => $installationTicket,
             ],
         ], 200);
     }

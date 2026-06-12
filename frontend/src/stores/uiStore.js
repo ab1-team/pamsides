@@ -20,7 +20,7 @@ export const useUiStore = defineStore('ui', () => {
   const toastMessage = ref(null)
 
   const openModal = () => activeModalCount.value++
-  const closeModal = () => activeModalCount.value = Math.max(0, activeModalCount.value - 1)
+  const closeModal = () => (activeModalCount.value = Math.max(0, activeModalCount.value - 1))
   const hasActiveModal = () => activeModalCount.value > 0
 
   // Actions
