@@ -59,13 +59,16 @@ export function useSop() {
       const data = res?.data ?? res
       if (!data) return
 
-      if (data.lembaga) {
-        lembagaForm.value = { ...lembagaForm.value, ...data.lembaga }
-      }
-
-      if (data.pasangBaru) {
-        pasangBaruForm.value = {
-          statusPembayaran: Boolean(data.pasangBaru.statusPembayaran),
+      if (data.lembaga) lembagaForm.value = { ...lembagaForm.value, ...data.lembaga }
+      if (data.pasangBaru) pasangBaruForm.value = { ...pasangBaruForm.value, ...data.pasangBaru }
+      if (data.sistemTagihan)
+        sistemTagihanForm.value = { ...sistemTagihanForm.value, ...data.sistemTagihan }
+      if (data.whatsapp) whatsappForm.value = { ...whatsappForm.value, ...data.whatsapp }
+      if (data.logo) {
+        logoForm.value.previews = {
+          mainLogo: data.logo.mainLogo_url || data.logo.mainLogo || '',
+          dashboardLogo: data.logo.dashboardLogo_url || data.logo.dashboardLogo || '',
+          favicon: data.logo.favicon_url || data.logo.favicon || '',
         }
       }
 
@@ -165,12 +168,18 @@ export function useSop() {
 
   const saveSettings = () => {
     switch (activeSection.value) {
-      case 'lembaga': return saveLembaga()
-      case 'pasangBaru': return savePasangBaru()
-      case 'sistemTagihan': return saveSistemTagihan()
-      case 'logo': return saveLogo()
-      case 'whatsapp': return saveWhatsapp()
-      default: return Promise.resolve()
+      case 'lembaga':
+        return saveLembaga()
+      case 'pasangBaru':
+        return savePasangBaru()
+      case 'sistemTagihan':
+        return saveSistemTagihan()
+      case 'logo':
+        return saveLogo()
+      case 'whatsapp':
+        return saveWhatsapp()
+      default:
+        return Promise.resolve()
     }
   }
 

@@ -1,5 +1,5 @@
 import { ref, computed } from 'vue'
-import Swal from 'sweetalert2'
+import { confirmDelete } from '@/utils/deleteHandler'
 
 export function useCater(router) {
   // State untuk filter pencarian
@@ -38,34 +38,20 @@ export function useCater(router) {
   const handleEdit = (row) => {
     console.log('Edit Cater:', row)
     if (router) {
-      router.push(`/data-cater/edit/${row.id}`)
+      router.push(`/app/data-cater/edit/${row.id}`)
     }
   }
 
   const handleDelete = async (row) => {
-    const result = await Swal.fire({
+    await confirmDelete({
       title: 'Hapus Petugas?',
       text: `Petugas an. "${row.nama}" akan dihapus secara permanent dari aplikasi`,
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonText: 'Ya, Hapus!',
-      cancelButtonText: 'Batal',
-      confirmButtonColor: '#ef4444',
-      cancelButtonColor: '#64748b',
-      reverseButtons: true,
+      successMessage: 'Data petugas telah berhasil dihapus',
+      entity: 'petugas cater',
+      onConfirm: () => {
+        tableData.value = tableData.value.filter((item) => item.id !== row.id)
+      },
     })
-
-    if (result.isConfirmed) {
-      tableData.value = tableData.value.filter((item) => item.id !== row.id)
-
-      Swal.fire({
-        title: 'Terhapus!',
-        text: 'Data petugas telah berhasil dihapus.',
-        icon: 'success',
-        timer: 1500,
-        showConfirmButton: false,
-      })
-    }
   }
 
   return {

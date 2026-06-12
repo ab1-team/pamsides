@@ -136,12 +136,12 @@ const togglePassword = () => {
 
 const getDashboardRoute = (role) => {
   const routes = {
-    surveyor: '/surveyor/dashboard',
-    teknisi: '/teknisi/dashboard',
-    pelanggan: '/pelanggan/dashboard',
-    admin: '/dashboard',
+    surveyor: '/app',
+    teknisi: '/app',
+    pelanggan: '/app',
+    admin: '/app',
   }
-  return routes[role] || '/dashboard'
+  return routes[role] || '/app'
 }
 
 onMounted(() => {

@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Models\User;
+use Illuminate\Http\Request;
 
 class UserController extends Controller
 {
@@ -24,7 +24,7 @@ class UserController extends Controller
 
         return response()->json([
             'success' => true,
-            'data' => $users
+            'data' => $users,
         ]);
     }
 
@@ -34,23 +34,23 @@ class UserController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'name'     => 'required|string|max:255',
-            'email'    => 'required|email|unique:users,email',
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email',
             'password' => 'required|min:6',
-            'role'     => 'required|string'
+            'role' => 'required|string',
         ]);
 
         $user = User::create([
-            'name'     => $request->name,
-            'email'    => $request->email,
+            'name' => $request->name,
+            'email' => $request->email,
             'password' => bcrypt($request->password),
-            'role'     => $request->role
+            'role' => $request->role,
         ]);
 
         return response()->json([
             'success' => true,
             'message' => 'User berhasil dibuat',
-            'data'    => $user
+            'data' => $user,
         ], 201);
     }
 
@@ -63,7 +63,7 @@ class UserController extends Controller
 
         return response()->json([
             'success' => true,
-            'data' => $user
+            'data' => $user,
         ]);
     }
 
@@ -77,13 +77,13 @@ class UserController extends Controller
         $user->update($request->only([
             'name',
             'email',
-            'role'
+            'role',
         ]));
 
         return response()->json([
             'success' => true,
             'message' => 'User berhasil diupdate',
-            'data' => $user
+            'data' => $user,
         ]);
     }
 
@@ -92,11 +92,13 @@ class UserController extends Controller
      */
     public function destroy($id)
     {
-        User::findOrFail($id)->delete();
+        $user = User::findOrFail($id);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'User berhasil dihapus'
-        ]);
+        return $this->safeDelete(
+            fn () => $user->delete(),
+            'USER_IN_USE',
+            'Pengguna',
+            $user->name,
+        );
     }
 }
