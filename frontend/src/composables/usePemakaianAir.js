@@ -2,6 +2,7 @@ import { ref, computed, onMounted } from 'vue'
 import { STATUS_TYPES, STATUS_COLORS } from '@/types/pemakaianAir'
 import { billingService } from '@/services/billing.service'
 import { confirmDelete } from '@/utils/deleteHandler'
+import { MySwal } from '@/main'
 
 export function usePemakaianAir() {
   const bulanOptions = [
@@ -119,7 +120,7 @@ export function usePemakaianAir() {
       }
     } catch (err) {
       console.error('Gagal memuat data pemakaian air:', err)
-      Swal.fire({
+      MySwal.fire({
         icon: 'error',
         title: 'Gagal Memuat Data',
         text: err.response?.data?.message || 'Tidak dapat memuat data pemakaian air.',

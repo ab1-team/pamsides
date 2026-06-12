@@ -8,8 +8,8 @@
         prefix-icon="building"
       />
       <BaseInput
-        v-model="form.website"
-        label="Website"
+        v-model="form.domain"
+        label="Domain / Website"
         placeholder="https://..."
         prefix-icon="globe"
       />

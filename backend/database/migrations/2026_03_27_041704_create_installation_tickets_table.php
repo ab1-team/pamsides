@@ -20,9 +20,9 @@ return new class extends Migration
 
             // relasi user pelanggan
             $table->foreignId('user_id')
-                  ->nullable()
-                  ->constrained('users')
-                  ->nullOnDelete();
+                ->nullable()
+                ->constrained('users')
+                ->nullOnDelete();
 
             $table->string('applicant_name');
             $table->string('nik', 20);
@@ -32,7 +32,7 @@ return new class extends Migration
 
             $table->enum('gender', [
                 'male',
-                'female'
+                'female',
             ])->nullable();
 
             $table->string('birth_place')->nullable();
@@ -51,7 +51,7 @@ return new class extends Migration
                 'processing',
                 'completed',
                 'suspended',
-                'terminated'
+                'terminated',
             ])->default('pending');
 
             $table->foreignId('created_by')

@@ -6,9 +6,9 @@
           Daftar Tagihan
         </h1>
         <p class="text-xs md:text-sm text-slate-500! leading-relaxed">
-          Menampilkan seluruh tagihan air pelanggan. Satu pelanggan dapat muncul di lebih dari
-          satu baris bila memiliki banyak tagihan (mis. bulan ini &amp; bulan lalu). Anda dapat
-          mencari nama, ID, atau nomor invoice dan mengirim pengingat WhatsApp.
+          Menampilkan seluruh tagihan air pelanggan. Satu pelanggan dapat muncul di lebih dari satu
+          baris bila memiliki banyak tagihan (mis. bulan ini &amp; bulan lalu). Anda dapat mencari
+          nama, ID, atau nomor invoice dan mengirim pengingat WhatsApp.
         </p>
       </div>
 
@@ -38,7 +38,8 @@
         class="px-4! py-3! bg-amber-50! border-b! border-amber-200! text-amber-700! text-xs! font-semibold! flex! items-center! gap-2!"
       >
         <font-awesome-icon icon="info-circle" class="text-sm!" />
-        Tidak ada tagihan di database. Pastikan data sudah di-generate di menu Transaksi → Tagihan Bulanan.
+        Tidak ada tagihan di database. Pastikan data sudah di-generate di menu Transaksi → Tagihan
+        Bulanan.
       </div>
       <DataTable
         :data="filteredBills"
@@ -133,10 +134,7 @@
             >
               {{ getOverdueDays(row.due_date) }}
             </span>
-            <span
-              v-else
-              class="text-[9px]! font-bold! text-emerald-500! uppercase! mt-0.5!"
-            >
+            <span v-else class="text-[9px]! font-bold! text-emerald-500! uppercase! mt-0.5!">
               Lunas
             </span>
           </div>
@@ -175,11 +173,19 @@ const selectedBill = ref(null)
 const showDetailModal = ref(false)
 
 const bulanOptions = [
-  'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
-  'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember',
+  'Januari',
+  'Februari',
+  'Maret',
+  'April',
+  'Mei',
+  'Juni',
+  'Juli',
+  'Agustus',
+  'September',
+  'Oktober',
+  'November',
+  'Desember',
 ]
-
-const filter = ref({})
 
 const tableColumns = [
   { key: 'customer', title: 'PELANGGAN / ID' },
@@ -212,11 +218,6 @@ const fetchBills = async () => {
   }
 }
 
-const handleResetFilter = () => {
-  searchQuery.value = ''
-  currentPage.value = 1
-}
-
 const getInitials = (row) => {
   const name = row.customer?.user?.name || row.customer?.ticket?.applicant_name || 'PL'
   return name
@@ -229,11 +230,7 @@ const getInitials = (row) => {
 }
 
 const getCustomerName = (row) => {
-  return (
-    row.customer?.user?.name ||
-    row.customer?.ticket?.applicant_name ||
-    'Pelanggan Pamsimas'
-  )
+  return row.customer?.user?.name || row.customer?.ticket?.applicant_name || 'Pelanggan Pamsimas'
 }
 
 const getMonthName = (monthNum) => {
@@ -258,9 +255,23 @@ const formatDueDate = (dateStr) => {
   try {
     const d = new Date(dateStr)
     if (Number.isNaN(d.getTime())) return dateStr
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des']
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'Mei',
+      'Jun',
+      'Jul',
+      'Agu',
+      'Sep',
+      'Okt',
+      'Nov',
+      'Des',
+    ]
     return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`
   } catch (err) {
+    console.error('Error formatting due date:', err)
     return dateStr
   }
 }
@@ -281,6 +292,7 @@ const getOverdueDays = (dateStr) => {
     if (diffDays === 0) return 'Jatuh tempo hari ini'
     return `Tersisa ${Math.abs(diffDays)} hari`
   } catch (err) {
+    console.error('Error calculating overdue days:', err)
     return ''
   }
 }

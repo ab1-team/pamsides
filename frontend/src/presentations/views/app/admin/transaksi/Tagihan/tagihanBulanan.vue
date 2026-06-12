@@ -391,9 +391,7 @@ const handleSavePayment = async (paymentData) => {
     })
 
     if (billingStore.selectedCustomer) {
-      const cid =
-        billingStore.selectedCustomer.customer_id ||
-        billingStore.selectedCustomer.id
+      const cid = billingStore.selectedCustomer.customer_id || billingStore.selectedCustomer.id
       if (cid) {
         await billingStore.fetchBillingPeriods(cid)
       }

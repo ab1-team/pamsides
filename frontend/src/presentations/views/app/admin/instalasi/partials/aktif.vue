@@ -81,21 +81,21 @@
             <p class="text-2xl! font-black! text-emerald-600!">
               {{ formatMeter(customer.meterAwal) }}
             </p>
-            <p class="text-xs! text-slate-400!">m³</p>
+            <p class="text-xs! text-slate-400!">m┬│</p>
           </div>
           <div class="text-center!">
             <p class="text-xs! text-slate-400! mb-1!">Pemakaian Terakhir</p>
             <p class="text-2xl! font-black! text-slate-800!">
               {{ formatMeter(customer.meterAkhir) }}
             </p>
-            <p class="text-xs! text-slate-400!">m³</p>
+            <p class="text-xs! text-slate-400!">m┬│</p>
           </div>
           <div class="text-center!">
             <p class="text-xs! text-slate-400! mb-1!">Total Pemakaian</p>
             <p class="text-2xl! font-black! text-blue-600!">
               {{ formatMeter(customer.totalPemakaian) }}
             </p>
-            <p class="text-xs! text-slate-400!">m³</p>
+            <p class="text-xs! text-slate-400!">m┬│</p>
           </div>
         </div>
       </ContentCard>

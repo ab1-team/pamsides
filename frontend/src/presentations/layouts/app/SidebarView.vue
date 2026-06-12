@@ -1,5 +1,12 @@
 <template>
-  <div class="sidebar-panel" :class="{ collapsed: !sidebarOpen, 'mobile-open': mobileSidebarOpen, 'blurred': uiStore.activeModalCount > 0 }">
+  <div
+    class="sidebar-panel"
+    :class="{
+      collapsed: !sidebarOpen,
+      'mobile-open': mobileSidebarOpen,
+      blurred: uiStore.activeModalCount > 0,
+    }"
+  >
     <div class="sidebar-header">
       <div class="sidebar-header-content">
         <div class="sidebar-header-title" v-show="sidebarOpen || mobileSidebarOpen">
@@ -134,10 +141,11 @@
 </template>
 
 <script setup>
-import { watch, computed, reactive } from 'vue'
+import { onMounted, watch, computed, reactive } from 'vue'
 import { useRoute } from 'vue-router'
 import { useUiStore } from '@/stores/uiStore'
 import BaseButton from '@/presentations/components/ui/BaseButton.vue'
+import sopService from '@/services/sop.service'
 
 const props = defineProps({
   sidebarOpen: {
@@ -155,6 +163,9 @@ const uiStore = useUiStore()
 const route = useRoute()
 
 const roleTitle = computed(() => {
+  if (uiStore.lembagaName) {
+    return uiStore.lembagaName
+  }
   switch (uiStore.userRole) {
     case 'surveyor':
       return 'Surveyor Portal'
@@ -168,6 +179,9 @@ const roleTitle = computed(() => {
 })
 
 const roleSubtitle = computed(() => {
+  if (uiStore.lembagaName) {
+    return uiStore.userRole?.toUpperCase() || 'PORTAL'
+  }
   switch (uiStore.userRole) {
     case 'surveyor':
       return 'FIELD OPERATIONS'
@@ -178,6 +192,21 @@ const roleSubtitle = computed(() => {
     default:
       return 'MANAGEMENT SUITE'
   }
+})
+
+const loadLembagaName = async () => {
+  try {
+    const res = await sopService.getAll()
+    const data = res?.data ?? res
+    const name = data?.lembaga?.nama?.trim()
+    uiStore.setLembagaName(name || '')
+  } catch {
+    // silent: fallback to default role title
+  }
+}
+
+onMounted(() => {
+  loadLembagaName()
 })
 
 const openSubmenus = reactive({})
@@ -274,7 +303,11 @@ const menuItems = [
       { label: 'Register Instalasi', to: '/app/instalasi/register', roles: ['admin'] },
       { label: 'Status Instalasi', to: '/app/instalasi/status', roles: ['admin'] },
       { label: 'Hasil Survey', to: '/app/instalasi/hasil-survey', roles: ['admin'] },
-      { label: 'Input Pemakaian Air', to: '/app/instalasi/teknisiPemakaianAir', roles: ['teknisi'] },
+      {
+        label: 'Input Pemakaian Air',
+        to: '/app/instalasi/teknisiPemakaianAir',
+        roles: ['teknisi'],
+      },
     ],
   },
   {
@@ -329,7 +362,7 @@ const filteredMenuItems = computed(() => {
 
 syncOpenSubmenus()
 
-function handleMenuClick(event) {
+function handleMenuClick() {
   if (window.innerWidth < 1024) {
     emit('close-mobile-sidebar')
   }
@@ -350,6 +383,13 @@ watch(
   () => route.path,
   () => {
     syncOpenSubmenus()
+  },
+)
+
+watch(
+  () => uiStore.settingsVersion,
+  () => {
+    loadLembagaName()
   },
 )
 </script>

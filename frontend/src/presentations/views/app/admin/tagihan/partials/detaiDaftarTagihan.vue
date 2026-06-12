@@ -421,6 +421,7 @@ const handlePrint = () => {
   const year = props.bill.billing_period_year
   const total = new Intl.NumberFormat('id-ID').format(props.bill.total_amount)
   const usage = props.bill.usage_m3 || 0
+  const date = new Date().toLocaleString('id-ID')
 
   const html = `<!DOCTYPE html>
 <html><head><meta charset="UTF-8"><title>Invoice INV-${props.bill.id}</title>
@@ -448,8 +449,8 @@ const handlePrint = () => {
   <div class="row"><span class="label">Volume Pemakaian</span><span>${usage} m³</span></div>
   <div class="row"><span class="label">Jatuh Tempo</span><span>${formatDate(props.bill.due_date)}</span></div>
   <div class="row total"><span>Total Tagihan</span><span>Rp. ${total}</span></div>
-  <div class="footer">Dicetak pada ${new Date().toLocaleString('id-ID')}</div>
-  <script>window.onload=function(){window.print();}<\/script>
+  <div class="footer">Dicetak pada ${date}</div>
+  <scr${''}ipt>window.onload=function(){window.print();}</scr${''}ipt>
 </body></html>`
 
   printWindow.document.write(html)

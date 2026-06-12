@@ -165,9 +165,7 @@ const props = defineProps({
 const billingStore = useBillingStore()
 
 const paidBills = computed(() => {
-  return billingStore.billingPeriods.filter(
-    (p) => p.type === 'paid' || p.status === 'LUNAS',
-  )
+  return billingStore.billingPeriods.filter((p) => p.type === 'paid' || p.status === 'LUNAS')
 })
 
 const emit = defineEmits(['close'])

@@ -156,8 +156,7 @@ const router = createRouter({
         {
           path: 'instalasi/hasil-survey',
           name: 'Hasil Survey',
-          component: () =>
-            import('@/presentations/views/app/admin/instalasi/hasilSurvey.vue'),
+          component: () => import('@/presentations/views/app/admin/instalasi/hasilSurvey.vue'),
         },
         {
           path: 'instalasi/status/permohonan/:id',
@@ -197,8 +196,7 @@ const router = createRouter({
         {
           path: 'instalasi/daftar-tagihan',
           name: 'Daftar Tagihan',
-          component: () =>
-            import('@/presentations/views/app/admin/tagihan/daftarTagihan.vue'),
+          component: () => import('@/presentations/views/app/admin/tagihan/daftarTagihan.vue'),
         },
         {
           path: 'survey/create',
@@ -233,8 +231,7 @@ const router = createRouter({
         {
           path: 'pelanggan/lapor-gangguan/form',
           name: 'Form Lapor Gangguan',
-          component: () =>
-            import('@/presentations/views/app/pelanggan/LaporGangguanForm.vue'),
+          component: () => import('@/presentations/views/app/pelanggan/LaporGangguanForm.vue'),
         },
         {
           path: 'instalasi/teknisiPemakaianAir',
@@ -321,7 +318,16 @@ router.beforeEach((to) => {
       '/app/instalasi/teknisiPemakaianAir',
       '/app/instalasi/pemakaian-air',
     ],
-    admin: ['/app/data-pelanggan', '/app/data-desa', '/app/settings/', '/app/coa', '/app/kelas-biaya', '/app/instalasi/', '/app/transaksi/', '/app/pelaporan'],
+    admin: [
+      '/app/data-pelanggan',
+      '/app/data-desa',
+      '/app/settings/',
+      '/app/coa',
+      '/app/kelas-biaya',
+      '/app/instalasi/',
+      '/app/transaksi/',
+      '/app/pelaporan',
+    ],
     pelanggan: ['/app/pelanggan/'],
   }
 
@@ -339,10 +345,7 @@ router.beforeEach((to) => {
 
   const isSurveyorOnly = matchesRole('surveyor') && !['surveyor', 'admin'].includes(userRole)
   const isTeknisiOnly = isTeknisiPath && !['teknisi', 'admin'].includes(userRole)
-  const isAdminOnly =
-    matchesRole('admin') &&
-    !['admin'].includes(userRole) &&
-    !isTeknisiAllowedPath
+  const isAdminOnly = matchesRole('admin') && !['admin'].includes(userRole) && !isTeknisiAllowedPath
   const isPelangganOnly = matchesRole('pelanggan') && !['pelanggan', 'admin'].includes(userRole)
 
   if (isSurveyorOnly || isTeknisiOnly || isAdminOnly || isPelangganOnly) {

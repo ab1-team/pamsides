@@ -8,7 +8,10 @@
               <p class="text-xs! font-bold! text-sky-500! uppercase! tracking-widest!">
                 Customer Profile
               </p>
-              <span class="px-3! py-1! rounded-full! text-xs! font-bold! uppercase! tracking-wider!" :class="statusBadge.class">
+              <span
+                class="px-3! py-1! rounded-full! text-xs! font-bold! uppercase! tracking-wider!"
+                :class="statusBadge.class"
+              >
                 {{ statusBadge.label }}
               </span>
             </div>
@@ -44,19 +47,44 @@
       </ContentCard>
 
       <ContentCard variant="bordered" padding="normal" rounded="2xl">
-        <p class="text-xs! font-bold! text-slate-400! uppercase! tracking-widest! mb-4!">Tahapan Proses</p>
+        <p class="text-xs! font-bold! text-slate-400! uppercase! tracking-widest! mb-4!">
+          Tahapan Proses
+        </p>
         <div class="flex! items-center! justify-between! gap-2!">
-          <div v-for="(step, idx) in steps" :key="step.key" class="flex-1! flex! flex-col! items-center! relative!">
+          <div
+            v-for="(step, idx) in steps"
+            :key="step.key"
+            class="flex-1! flex! flex-col! items-center! relative!"
+          >
             <div
               class="w-10! h-10! rounded-full! flex! items-center! justify-center! text-white! font-bold! shadow-md! z-10! transition-all!"
-              :class="step.state === 'done' ? 'bg-emerald-500!' : step.state === 'current' ? 'bg-sky-500! ring-4! ring-sky-100!' : 'bg-slate-300!'"
+              :class="
+                step.state === 'done'
+                  ? 'bg-emerald-500!'
+                  : step.state === 'current'
+                    ? 'bg-sky-500! ring-4! ring-sky-100!'
+                    : 'bg-slate-300!'
+              "
             >
               <font-awesome-icon :icon="step.state === 'done' ? 'check' : step.icon" />
             </div>
-            <p class="text-[11px]! font-bold! mt-2! text-center!" :class="step.state === 'done' ? 'text-emerald-600!' : step.state === 'current' ? 'text-sky-600!' : 'text-slate-400!'">
+            <p
+              class="text-[11px]! font-bold! mt-2! text-center!"
+              :class="
+                step.state === 'done'
+                  ? 'text-emerald-600!'
+                  : step.state === 'current'
+                    ? 'text-sky-600!'
+                    : 'text-slate-400!'
+              "
+            >
               {{ step.label }}
             </p>
-            <div v-if="idx < steps.length - 1" class="absolute! top-5! left-1/2! w-full! h-0.5! -z-0!" :class="step.state === 'done' ? 'bg-emerald-400!' : 'bg-slate-200!'"></div>
+            <div
+              v-if="idx < steps.length - 1"
+              class="absolute! top-5! left-1/2! w-full! h-0.5! -z-0!"
+              :class="step.state === 'done' ? 'bg-emerald-400!' : 'bg-slate-200!'"
+            ></div>
           </div>
         </div>
       </ContentCard>
@@ -70,7 +98,11 @@
             <div>
               <p class="text-xs! text-slate-400! mb-0.5!">Hasil Survey</p>
               <p class="text-sm! font-bold! text-slate-800!">
-                {{ customer.surveyInfo ? `${customer.surveyInfo.distance_to_pipe_m}m dari pipa utama` : 'Belum ada survey' }}
+                {{
+                  customer.surveyInfo
+                    ? `${customer.surveyInfo.distance_to_pipe_m}m dari pipa utama`
+                    : 'Belum ada survey'
+                }}
               </p>
               <p v-if="customer.surveyInfo" class="text-[11px]! text-slate-400!">
                 {{ customer.surveyInfo.surveyor_name || '-' }}
@@ -99,18 +131,39 @@
 
         <div class="space-y-4!">
           <div>
-            <label class="text-xs! font-semibold! text-slate-500! uppercase! tracking-wide! block! mb-1!">Kode Instalasi</label>
-            <input type="text" :value="customer.kodeInstalasi" readonly class="w-full! border! border-slate-200! rounded-xl! px-3! py-2.5! text-sm! text-slate-700! bg-slate-50! focus:outline-none!" />
+            <label
+              class="text-xs! font-semibold! text-slate-500! uppercase! tracking-wide! block! mb-1!"
+              >Kode Instalasi</label
+            >
+            <input
+              type="text"
+              :value="customer.kodeInstalasi"
+              readonly
+              class="w-full! border! border-slate-200! rounded-xl! px-3! py-2.5! text-sm! text-slate-700! bg-slate-50! focus:outline-none!"
+            />
           </div>
           <div>
-            <label class="text-xs! font-semibold! text-slate-500! uppercase! tracking-wide! block! mb-1!">Tanggal Pasang</label>
+            <label
+              class="text-xs! font-semibold! text-slate-500! uppercase! tracking-wide! block! mb-1!"
+              >Tanggal Pasang</label
+            >
             <AppDatePicker v-model="tanggalPasang" placeholder="Pilih tanggal pasang" />
           </div>
           <div>
-            <label class="text-xs! font-semibold! text-slate-500! uppercase! tracking-wide! block! mb-1!">Jumlah Pembayaran</label>
+            <label
+              class="text-xs! font-semibold! text-slate-500! uppercase! tracking-wide! block! mb-1!"
+              >Jumlah Pembayaran</label
+            >
             <div class="relative!">
-              <span class="absolute! left-3! top-1/2! -translate-y-1/2! text-sm! text-slate-400!">Rp</span>
-              <input type="text" :value="formatRupiah(customer.installationFee)" readonly class="w-full! border! border-slate-200! rounded-xl! pl-10! pr-3! py-2.5! text-sm! font-bold! text-sky-700! bg-sky-50! focus:outline-none!" />
+              <span class="absolute! left-3! top-1/2! -translate-y-1/2! text-sm! text-slate-400!"
+                >Rp</span
+              >
+              <input
+                type="text"
+                :value="formatRupiah(customer.installationFee)"
+                readonly
+                class="w-full! border! border-slate-200! rounded-xl! pl-10! pr-3! py-2.5! text-sm! font-bold! text-sky-700! bg-sky-50! focus:outline-none!"
+              />
             </div>
           </div>
         </div>
@@ -125,11 +178,19 @@
             {{ buttonLabel }}
           </button>
           <div class="grid! grid-cols-2! gap-2!">
-            <button @click="handlePrint" class="flex! items-center! justify-center! gap-2! border! border-slate-200! hover:bg-slate-50! text-slate-600! font-semibold! py-2.5! rounded-xl! text-sm! transition-all!">
+            <button
+              @click="handlePrint"
+              class="flex! items-center! justify-center! gap-2! border! border-slate-200! hover:bg-slate-50! text-slate-600! font-semibold! py-2.5! rounded-xl! text-sm! transition-all!"
+            >
               <font-awesome-icon icon="print" />
               Cetak
             </button>
-            <button @click="$router.push({ path: '/app/instalasi/status', query: { filter: 'pasang_baru' } })" class="flex! items-center! justify-center! gap-2! border! border-slate-200! hover:bg-slate-50! text-slate-600! font-semibold! py-2.5! rounded-xl! text-sm! transition-all!">
+            <button
+              @click="
+                $router.push({ path: '/app/instalasi/status', query: { filter: 'pasang_baru' } })
+              "
+              class="flex! items-center! justify-center! gap-2! border! border-slate-200! hover:bg-slate-50! text-slate-600! font-semibold! py-2.5! rounded-xl! text-sm! transition-all!"
+            >
               <font-awesome-icon icon="arrow-left" />
               Kembali
             </button>
@@ -272,16 +333,24 @@ const handleFinalize = async () => {
   let result
 
   if (currentStatus === 'surveyed') {
-    result = await confirmPayment(customer.value.ticketId, customer.value.installationFee, customer.value.name)
+    result = await confirmPayment(
+      customer.value.ticketId,
+      customer.value.installationFee,
+      customer.value.name,
+    )
   } else if (currentStatus === 'unpaid') {
     result = await transitionStatus(
       customer.value.ticketId,
       'processing',
       'Lanjutkan ke tahap Processing?',
-      tanggalPasang.value
+      tanggalPasang.value,
     )
   } else if (currentStatus === 'processing') {
-    result = await transitionStatus(customer.value.ticketId, 'completed', 'Tandai instalasi selesai?')
+    result = await transitionStatus(
+      customer.value.ticketId,
+      'completed',
+      'Tandai instalasi selesai?',
+    )
   }
 
   isProcessing.value = false

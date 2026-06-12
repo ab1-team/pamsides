@@ -168,9 +168,12 @@ Route::middleware(['auth:sanctum', 'role:admin,surveyor'])->group(function () {
     Route::post('installation-tickets/{installationTicket}/survey', [SurveyResultController::class, 'store']);
 });
 
-// Teknisi Routes
-
-Route::middleware(['auth:sanctum', 'role:teknisi'])->group(function () {
+/*
+|--------------------------------------------------------------------------
+| Teknisi & Admin Routes
+|--------------------------------------------------------------------------
+*/
+Route::middleware(['auth:sanctum', 'role:admin,teknisi'])->group(function () {
     Route::get('/test-teknisi', fn () => response()->json(['message' => 'Kamu teknisi!']));
 
     Route::post('installation-tickets/{installationTicket}/installation-result', [InstallationResultController::class, 'store']);

@@ -313,11 +313,11 @@
           </div>
         </div>
 
-          <BaseButton
-            :to="{
-              path: '/app/instalasi/pemakaian-air/input',
-              query: { tahun: form.tahun, bulan: form.bulan },
-            }"
+        <BaseButton
+          :to="{
+            path: '/app/instalasi/pemakaian-air/input',
+            query: { tahun: form.tahun, bulan: form.bulan },
+          }"
           variant="primary-gradient"
           size="lg"
           block

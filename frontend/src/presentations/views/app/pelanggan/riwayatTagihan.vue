@@ -131,7 +131,9 @@
               v-for="bill in filteredBills"
               :key="bill.id"
               class="p-5! lg:p-6! active:bg-slate-50! transition-all! cursor-pointer! group!"
-              @click="$router.push({ path: '/app/pelanggan/tagihan-detail', query: { id: bill.id } })"
+              @click="
+                $router.push({ path: '/app/pelanggan/tagihan-detail', query: { id: bill.id } })
+              "
             >
               <div class="flex! items-center! justify-between! mb-5!">
                 <div class="flex! items-center! gap-3!">

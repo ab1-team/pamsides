@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Storage;
 
 class SurveyResult extends Model
 {
@@ -17,7 +18,7 @@ class SurveyResult extends Model
 
     protected $casts = [
         'distance_to_pipe_m' => 'integer',
-        'surveyed_at'        => 'datetime',
+        'surveyed_at' => 'datetime',
     ];
 
     public function ticket()
@@ -40,6 +41,6 @@ class SurveyResult extends Model
             return $value;
         }
 
-        return \Illuminate\Support\Facades\Storage::url($value);
+        return Storage::url($value);
     }
 }

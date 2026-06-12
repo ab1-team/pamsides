@@ -6,7 +6,6 @@ use App\Models\Customer;
 use App\Models\InstallationTicket;
 use App\StateMachines\TicketStateMachine;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
 
 class ActivationController extends Controller
 {
@@ -21,24 +20,33 @@ class ActivationController extends Controller
         if (! $installationResult) {
             return response()->json([
                 'success' => false,
-                'data'    => ['message' => 'Data hasil instalasi tidak ditemukan. Pastikan teknisi sudah input hasil instalasi.'],
+                'data' => ['message' => 'Data hasil instalasi tidak ditemukan. Pastikan teknisi sudah input hasil instalasi.'],
             ], 422);
         }
 
         // 3. Gunakan user yang sudah ada saat registrasi awal
         $user = $installationTicket->user; // Relasi ke User
 
-        // 4. Buat customer_code dengan format yang seragam
-        $customerCode = 'PAM-' . date('Ym') . '-' . Str::padLeft($user->id, 4, '0');
+        // 4. Buat customer_code sequence per bulan (PAM-YYYYMM-XXXX)
+        $yearMonth = now()->format('Ym');
+        $latestCustomer = Customer::where('customer_code', 'like', 'PAM-'.$yearMonth.'-%')
+            ->orderBy('customer_code', 'desc')
+            ->first();
+
+        $nextNumber = $latestCustomer
+            ? str_pad((int) substr($latestCustomer->customer_code, -4) + 1, 4, '0', STR_PAD_LEFT)
+            : '0001';
+
+        $customerCode = 'PAM-'.$yearMonth.'-'.$nextNumber;
 
         // 5. Buat record customer
         $customer = Customer::updateOrCreate(
             ['ticket_id' => $installationTicket->id, 'user_id' => $user->id],
             [
-                'customer_code'         => $customerCode,
+                'customer_code' => $customerCode,
                 'initial_meter_reading' => $installationResult['initial_meter_reading'] ?? 0,
-                'meter_photo_url'       => $installationResult['meter_photo_url'] ?? null,
-                'activated_at'          => now(),
+                'meter_photo_url' => $installationResult['meter_photo_url'] ?? null,
+                'activated_at' => now(),
             ]
         );
 
@@ -51,10 +59,10 @@ class ActivationController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Aktivasi pelanggan berhasil. Kode pelanggan telah dibuat.',
-            'data'    => [
+            'data' => [
                 'customer' => $customer,
-                'user'     => $user,
-                'ticket'   => $installationTicket,
+                'user' => $user,
+                'ticket' => $installationTicket,
             ],
         ], 200);
     }

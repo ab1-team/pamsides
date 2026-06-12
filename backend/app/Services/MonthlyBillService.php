@@ -2,9 +2,9 @@
 
 namespace App\Services;
 
-use App\Models\MonthlyBill;
-use App\Models\MeterReading;
 use App\Models\Customer;
+use App\Models\MeterReading;
+use App\Models\MonthlyBill;
 use App\Models\WaterTariffBlock;
 use Carbon\Carbon;
 
@@ -24,7 +24,7 @@ class MonthlyBillService
         if ($exists) {
             return [
                 'status' => false,
-                'message' => 'Tagihan bulan ini sudah pernah digenerate'
+                'message' => 'Tagihan bulan ini sudah pernah digenerate',
             ];
         }
 
@@ -38,7 +38,7 @@ class MonthlyBillService
         if ($totalReading < $totalCustomer) {
             return [
                 'status' => false,
-                'message' => 'Masih ada pelanggan yang belum dicatat meternya'
+                'message' => 'Masih ada pelanggan yang belum dicatat meternya',
             ];
         }
 
@@ -62,15 +62,19 @@ class MonthlyBillService
                 ->orderByDesc('reading_month')
                 ->first();
 
-            if (!$last) continue;
+            if (! $last) {
+                continue;
+            }
 
             $usage = $reading->meter_value - $last->meter_value;
 
-            if ($usage < 0) continue;
+            if ($usage < 0) {
+                continue;
+            }
 
             $customer = Customer::with('ticket.package')->find($reading->customer_id);
 
-            if (!$customer || !$customer->ticket || !$customer->ticket->package) {
+            if (! $customer || ! $customer->ticket || ! $customer->ticket->package) {
                 continue;
             }
 
@@ -101,7 +105,7 @@ class MonthlyBillService
                 'penalty_amount' => $penalty,
                 'total_amount' => $total,
                 'status' => 'unpaid',
-                'due_date' => $this->computeDueDate($tahun, $bulan)
+                'due_date' => $this->computeDueDate($tahun, $bulan),
             ]);
 
             $count++;
@@ -110,7 +114,7 @@ class MonthlyBillService
         return [
             'status' => true,
             'message' => 'Tagihan berhasil digenerate',
-            'total_generated' => $count
+            'total_generated' => $count,
         ];
     }
 
@@ -124,7 +128,9 @@ class MonthlyBillService
         $total = 0;
 
         foreach ($blocks as $block) {
-            if ($remaining <= 0) break;
+            if ($remaining <= 0) {
+                break;
+            }
 
             $min = $block->usage_min_m3;
             $max = $block->usage_max_m3 ?? $remaining;
@@ -158,6 +164,7 @@ class MonthlyBillService
     public function computeDueDate(int $year, int $month): string
     {
         $next = Carbon::create($year, $month, 1)->addMonth();
+
         return $next->setDay(20)->toDateString();
     }
 }

@@ -276,6 +276,7 @@
 <script setup>
 import { useInstalasiStatus } from '@/composables/useInstalasiStatus'
 import { useRouter } from 'vue-router'
+import { onMounted } from 'vue'
 import DataTable from '@/presentations/components/ui/DataTable.vue'
 import ContentCard from '@/presentations/components/ui/ContentCard.vue'
 import BaseButton from '@/presentations/components/ui/BaseButton.vue'
@@ -296,6 +297,7 @@ const {
   prevPage,
   nextPage,
   exportData,
+  fetchData,
 } = useInstalasiStatus()
 
 const router = useRouter()
@@ -314,6 +316,10 @@ const handleRowClick = (row) => {
     router.push({ name: routeName, params: { id: encodeURIComponent(row.id) } })
   }
 }
+
+onMounted(() => {
+  fetchData()
+})
 
 const tableColumns = [
   { key: 'name', title: 'NAMA PELANGGAN', tdClass: '' },

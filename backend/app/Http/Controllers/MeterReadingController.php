@@ -42,7 +42,6 @@ class MeterReadingController extends Controller
         ]);
     }
 
-
     //  Ambil data pelanggan yang BELUM dicatat meternya berdasarkan filter Bulan dan Tahun
     public function index(Request $request)
     {
@@ -56,7 +55,7 @@ class MeterReadingController extends Controller
         $tahun = $request->year;
 
         // 2. Ambil customer yang BELUM ada record meter di bulan & tahun terpilih
-        $customers = Customer::with(['user', 'ticket.village']) 
+        $customers = Customer::with(['user', 'ticket.village'])
             // Pastikan hanya memunculkan pelanggan yang tiket instalasinya sudah di-aktivasi (completed)
             ->whereHas('ticket', function ($query) {
                 $query->where('status', 'completed');
