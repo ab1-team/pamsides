@@ -11,6 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (! Schema::hasTable('villages') || ! Schema::hasTable('settings')) {
+            return;
+        }
+
         Schema::table('villages', function (Blueprint $table) {
             if (! Schema::hasColumn('villages', 'setting_id')) {
                 $table->foreignId('setting_id')

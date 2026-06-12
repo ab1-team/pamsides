@@ -4,49 +4,47 @@ namespace App\Services;
 
 use App\Models\Customer;
 use App\Models\MonthlyBill;
+use App\Models\WaterTariffBlock;
+use Carbon\Carbon;
 
 class BillingService
 {
     public function generateForCustomer(Customer $customer, int $year, int $month): MonthlyBill
     {
-        // Ambil meter reading bulan ini
         $currentReading = $customer->meterReadings()
             ->where('reading_year', $year)
             ->where('reading_month', $month)
             ->first();
 
-        // Ambil meter reading bulan lalu
-        $lastMonth        = $month === 1 ? 12 : $month - 1;
-        $lastMonthYear    = $month === 1 ? $year - 1 : $year;
-        $previousReading  = $customer->meterReadings()
+        if (! $currentReading) {
+            throw new \RuntimeException('Belum ada pencatatan meter untuk periode ini.');
+        }
+
+        $lastMonth     = $month === 1 ? 12 : $month - 1;
+        $lastMonthYear = $month === 1 ? $year - 1 : $year;
+
+        $previousReading = $customer->meterReadings()
             ->where('reading_year', $lastMonthYear)
             ->where('reading_month', $lastMonth)
             ->first();
 
-        // Jika bulan lalu tidak ada, pakai initial_meter_reading
         $startMeter = $previousReading
             ? $previousReading->meter_value
             : $customer->initial_meter_reading;
 
-        $endMeter  = $currentReading->meter_value;
-        $usageM3   = $endMeter - $startMeter;
+        $endMeter = $currentReading->meter_value;
+        $usageM3  = max(0, $endMeter - $startMeter);
 
-        // Kalkulasi biaya pemakaian progresif
         $usageCharge = $this->calculateProgressiveCharge(
             $customer->ticket->package,
             $usageM3
         );
 
-        // Ambil abodemen dari paket
-        $abodemen = $customer->ticket->package->monthly_abodemen;
-
-        // Cek denda dari tagihan 2 bulan lalu
+        $abodemen     = $customer->ticket->package->monthly_abodemen;
         $penaltyAmount = $this->calculatePenalty($customer, $year, $month);
 
-        // Total tagihan
         $totalAmount = $usageCharge + $abodemen + $penaltyAmount;
 
-        // Buat tagihan
         return MonthlyBill::create([
             'customer_id'          => $customer->id,
             'billing_period_year'  => $year,
@@ -59,32 +57,45 @@ class BillingService
             'penalty_amount'       => $penaltyAmount,
             'total_amount'         => $totalAmount,
             'status'               => 'unpaid',
-            'due_date'             => now()->setYear($year)->setMonth($month)->endOfMonth(),
+            'due_date'             => $this->computeDueDate($year, $month),
         ]);
     }
 
-    private function calculateProgressiveCharge($package, float $usageM3): float
+    public function calculateProgressiveCharge($package, float $usageM3): float
     {
-        $blocks = $package->waterTariffBlocks()->orderBy('usage_min_m3')->get();
+        $blocks = WaterTariffBlock::where('package_id', $package->id)
+            ->orderBy('usage_min_m3')
+            ->get();
 
-        foreach ($blocks as $block) {
-            $blockMin = (float) $block->usage_min_m3;
-            $blockMax = $block->usage_max_m3 !== null ? (float) $block->usage_max_m3 : PHP_FLOAT_MAX;
-
-            if ($usageM3 >= $blockMin && $usageM3 <= $blockMax) {
-                return $usageM3 * (float) $block->price_per_m3;
-            }
+        if ($blocks->isEmpty()) {
+            return 0;
         }
 
-        $lastBlock = $blocks->last();
-        return $usageM3 * (float) $lastBlock->price_per_m3;
+        $remaining = $usageM3;
+        $total     = 0;
+
+        foreach ($blocks as $block) {
+            if ($remaining <= 0) {
+                break;
+            }
+
+            $min = (float) $block->usage_min_m3;
+            $max = $block->usage_max_m3 !== null ? (float) $block->usage_max_m3 : PHP_FLOAT_MAX;
+
+            $range = max(0, $max - $min);
+            $used  = min($remaining, $range);
+
+            $total += $used * (float) $block->price_per_m3;
+            $remaining -= $used;
+        }
+
+        return $total;
     }
 
-    private function calculatePenalty(Customer $customer, int $year, int $month): float
+    public function calculatePenalty(Customer $customer, int $year, int $month): float
     {
-        // Cek tagihan 2 bulan lalu
-        $twoMonthsAgo      = $month <= 2 ? 12 + $month - 2 : $month - 2;
-        $twoMonthsAgoYear  = $month <= 2 ? $year - 1 : $year;
+        $twoMonthsAgo     = $month <= 2 ? 12 + $month - 2 : $month - 2;
+        $twoMonthsAgoYear = $month <= 2 ? $year - 1 : $year;
 
         $oldBill = MonthlyBill::where('customer_id', $customer->id)
             ->where('billing_period_year', $twoMonthsAgoYear)
@@ -92,9 +103,17 @@ class BillingService
             ->where('status', 'unpaid')
             ->first();
 
-        if (! $oldBill) return 0;
+        if (! $oldBill) {
+            return 0;
+        }
 
         return $customer->ticket->package->late_penalty;
+    }
+
+    public function computeDueDate(int $year, int $month): string
+    {
+        $next = Carbon::create($year, $month, 1)->addMonth();
+        return $next->setDay(20)->toDateString();
     }
 
     public function calculateChargeForTesting($package, float $usageM3): float

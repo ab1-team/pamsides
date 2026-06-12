@@ -126,9 +126,9 @@ export function useSop() {
       if (data.whatsapp) whatsappForm.value = { ...whatsappForm.value, ...data.whatsapp }
       if (data.logo) {
         logoForm.value.previews = {
-          mainLogo: data.logo.mainLogo || '',
-          dashboardLogo: data.logo.dashboardLogo || '',
-          favicon: data.logo.favicon || '',
+          mainLogo: data.logo.mainLogo_url || data.logo.mainLogo || '',
+          dashboardLogo: data.logo.dashboardLogo_url || data.logo.dashboardLogo || '',
+          favicon: data.logo.favicon_url || data.logo.favicon || '',
         }
       }
     } catch (error) {

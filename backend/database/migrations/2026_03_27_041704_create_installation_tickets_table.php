@@ -20,12 +20,6 @@ return new class extends Migration
 
             // relasi user pelanggan
             $table->foreignId('user_id')
-                ->nullable()
-                ->constrained('users')
-                ->nullOnDelete();
-
-            // relasi user pelanggan
-            $table->foreignId('user_id')
                   ->nullable()
                   ->constrained('users')
                   ->nullOnDelete();

@@ -92,11 +92,13 @@ class UserController extends Controller
      */
     public function destroy($id)
     {
-        User::findOrFail($id)->delete();
+        $user = User::findOrFail($id);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'User berhasil dihapus'
-        ]);
+        return $this->safeDelete(
+            fn () => $user->delete(),
+            'USER_IN_USE',
+            'Pengguna',
+            $user->name,
+        );
     }
 }

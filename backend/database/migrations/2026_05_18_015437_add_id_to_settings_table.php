@@ -8,8 +8,14 @@ return new class extends Migration
 {
     public function up(): void
     {
+        if (! Schema::hasTable('settings')) {
+            return;
+        }
+
         Schema::table('settings', function (Blueprint $table) {
-            $table->bigIncrements('id')->first();
+            if (! Schema::hasColumn('settings', 'id')) {
+                $table->bigIncrements('id')->first();
+            }
         });
     }
 

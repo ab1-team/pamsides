@@ -153,6 +153,9 @@ import {
   faBox,
   faClipboardCheck,
   faMoneyBillWave,
+  faIdBadge,
+  faLightbulb,
+  faUserCircle,
 
 } from '@fortawesome/free-solid-svg-icons'
 
@@ -281,6 +284,9 @@ library.add(
   faBox,
   faClipboardCheck,
   faMoneyBillWave,
+  faIdBadge,
+  faLightbulb,
+  faUserCircle,
 )
 
 export {
