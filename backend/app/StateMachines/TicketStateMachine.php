@@ -6,13 +6,15 @@ use Illuminate\Validation\ValidationException;
 
 class TicketStateMachine
 {
-    // Transisi yang diizinkan
     private static array $transitions = [
-        'pending'    => ['surveyed'],
-        'surveyed'   => ['unpaid'],
-        'unpaid'     => ['processing'],
-        'processing' => ['completed'],
-        'completed'  => [],
+        'draft' => ['pending', 'terminated'],
+        'pending' => ['surveyed', 'terminated'],
+        'surveyed' => ['unpaid', 'pending', 'terminated'],
+        'unpaid' => ['processing', 'pending', 'terminated'],
+        'processing' => ['completed', 'terminated'],
+        'completed' => ['suspended', 'terminated'],
+        'suspended' => ['completed', 'terminated'],
+        'terminated' => [],
     ];
 
     public static function validate(string $currentStatus, string $newStatus): void
@@ -22,7 +24,7 @@ class TicketStateMachine
         if (! in_array($newStatus, $allowed)) {
             throw ValidationException::withMessages([
                 'status' => [
-                    "Transisi status dari '{$currentStatus}' ke '{$newStatus}' tidak diizinkan."
+                    "Transisi status dari '{$currentStatus}' ke '{$newStatus}' tidak diizinkan.",
                 ],
             ]);
         }
@@ -33,5 +35,10 @@ class TicketStateMachine
         $allowed = self::$transitions[$currentStatus] ?? [];
 
         return in_array($newStatus, $allowed);
+    }
+
+    public static function allowedFrom(string $currentStatus): array
+    {
+        return self::$transitions[$currentStatus] ?? [];
     }
 }

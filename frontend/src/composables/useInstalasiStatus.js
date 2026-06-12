@@ -99,16 +99,18 @@ export function useInstalasiStatus() {
             createdAt: ticket.created_at || '-',
             updatedAt: ticket.updated_at || '-',
             rawData: ticket,
-            surveyInfo: ticket.survey?.[0] ? {
-              id: ticket.survey[0].id,
-              distance_to_pipe_m: ticket.survey[0].distance_to_pipe_m,
-              material_notes: ticket.survey[0].material_notes,
-              photo_url: ticket.survey[0].photo_url,
-              surveyed_at: ticket.survey[0].surveyed_at,
-              surveyor_name: ticket.survey[0].surveyor?.name || '-',
-              surveyor_id: ticket.survey[0].surveyor_id,
-              ticket: ticket,
-            } : null,
+            surveyInfo: ticket.survey?.[0]
+              ? {
+                  id: ticket.survey[0].id,
+                  distance_to_pipe_m: ticket.survey[0].distance_to_pipe_m,
+                  material_notes: ticket.survey[0].material_notes,
+                  photo_url: ticket.survey[0].photo_url,
+                  surveyed_at: ticket.survey[0].surveyed_at,
+                  surveyor_name: ticket.survey[0].surveyor?.name || '-',
+                  surveyor_id: ticket.survey[0].surveyor_id,
+                  ticket: ticket,
+                }
+              : null,
           })
         })
         dataMap.value = freshMap
@@ -169,8 +171,8 @@ export function useInstalasiStatus() {
   })
 
   watch(activeStatus, (val) => {
-    if (route.path === '/instalasi/status' && route.query.filter !== val) {
-      router.replace({ path: '/instalasi/status', query: { filter: val } })
+    if (route.path === '/app/instalasi/status' && route.query.filter !== val) {
+      router.replace({ path: '/app/instalasi/status', query: { filter: val } })
     }
   })
 
