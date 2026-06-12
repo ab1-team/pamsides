@@ -27,23 +27,23 @@ class TroubleReportController extends Controller
 
         return response()->json([
             'success' => true,
-            'data'    => $reports,
+            'data' => $reports,
         ]);
     }
 
     public function store(Request $request)
     {
         $request->validate([
-            'trouble_type'  => 'required|string|max:100',
-            'description'   => 'required|string',
+            'trouble_type' => 'required|string|max:100',
+            'description' => 'required|string',
             'contact_phone' => 'required|string|max:20',
-            'photo'         => 'nullable|file|mimes:jpg,jpeg,png,mp4,mov|max:5120',
+            'photo' => 'nullable|file|mimes:jpg,jpeg,png,mp4,mov|max:5120',
         ], [
-            'trouble_type.required'  => 'Jenis gangguan wajib dipilih.',
-            'description.required'   => 'Deskripsi gangguan wajib diisi.',
+            'trouble_type.required' => 'Jenis gangguan wajib dipilih.',
+            'description.required' => 'Deskripsi gangguan wajib diisi.',
             'contact_phone.required' => 'Nomor telepon wajib diisi.',
-            'photo.mimes'            => 'Format foto/video harus jpg, jpeg, png, mp4, atau mov.',
-            'photo.max'              => 'Ukuran file maksimal 5MB.',
+            'photo.mimes' => 'Format foto/video harus jpg, jpeg, png, mp4, atau mov.',
+            'photo.max' => 'Ukuran file maksimal 5MB.',
         ]);
 
         $user = Auth::user();
@@ -59,19 +59,19 @@ class TroubleReportController extends Controller
         }
 
         $report = TroubleReport::create([
-            'customer_id'   => $customer?->id,
-            'user_id'       => $user?->id,
-            'trouble_type'  => $request->trouble_type,
-            'description'   => $request->description,
+            'customer_id' => $customer?->id,
+            'user_id' => $user?->id,
+            'trouble_type' => $request->trouble_type,
+            'description' => $request->description,
             'contact_phone' => $request->contact_phone,
-            'photo_path'    => $photoPath,
-            'status'        => 'pending',
+            'photo_path' => $photoPath,
+            'status' => 'pending',
         ]);
 
         return response()->json([
             'success' => true,
             'message' => 'Laporan gangguan berhasil dikirim.',
-            'data'    => $report,
+            'data' => $report,
         ], 201);
     }
 
@@ -81,14 +81,14 @@ class TroubleReportController extends Controller
 
         return response()->json([
             'success' => true,
-            'data'    => $report,
+            'data' => $report,
         ]);
     }
 
     public function updateStatus(Request $request, $id)
     {
         $request->validate([
-            'status'     => 'required|in:pending,processing,resolved',
+            'status' => 'required|in:pending,processing,resolved',
             'admin_note' => 'nullable|string',
         ]);
 
@@ -107,7 +107,7 @@ class TroubleReportController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Status laporan diperbarui.',
-            'data'    => $report,
+            'data' => $report,
         ]);
     }
 }

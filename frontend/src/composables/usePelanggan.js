@@ -1,11 +1,10 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { STATUS_TYPES, STATUS_COLORS } from '@/types/pelanggan'
-import { useUiStore } from '@/stores/uiStore'
 import customerService from '@/services/customer.service'
 import { confirmDelete } from '@/utils/deleteHandler'
+import { MySwal } from '@/main.js'
 
 export function usePelanggan(router = null) {
-  const uiStore = useUiStore()
   // State untuk filter pencarian
   const searchQuery = ref('')
   const currentPage = ref(1)
@@ -46,7 +45,7 @@ export function usePelanggan(router = null) {
       }))
     } catch (error) {
       console.error('Error fetching customers:', error)
-      Swal.fire({
+      MySwal.fire({
         title: 'Gagal!',
         text: 'Tidak dapat mengambil data pelanggan.',
         icon: 'error',
@@ -100,7 +99,7 @@ export function usePelanggan(router = null) {
   }
 
   const handleDelete = async (row) => {
-    const ok = await confirmDelete({
+    await confirmDelete({
       title: 'Hapus Pelanggan?',
       text: `Pelanggan an. "${row.nama}" akan dihapus secara permanent dari aplikasi`,
       successMessage: 'Data pelanggan berhasil dihapus',

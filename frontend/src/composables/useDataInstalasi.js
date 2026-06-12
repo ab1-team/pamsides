@@ -58,9 +58,7 @@ export function useDataInstalasi() {
       const res = await ticketService.getTickets({ per_page: 200 })
       if (res?.success && Array.isArray(res?.data?.data)) {
         tableData.value = res.data.data.map((t) => ({
-          kodeInstalasi:
-            t.customer?.[0]?.customer_code ||
-            `#INS-${String(t.id).padStart(4, '0')}`,
+          kodeInstalasi: t.customer?.[0]?.customer_code || `#INS-${String(t.id).padStart(4, '0')}`,
           nama: t.applicant_name || '-',
           alamat: t.address || '-',
           rawStatus: t.status,

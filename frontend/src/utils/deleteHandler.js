@@ -7,7 +7,16 @@ const FALLBACK_MESSAGES = {
   500: 'Terjadi kesalahan pada server. Silakan coba lagi.',
 }
 
-export const confirmDelete = async ({ title, text, confirmText = 'Ya, Hapus!', successMessage, onConfirm, entity, errorCode, fallbackMessage }) => {
+export const confirmDelete = async ({
+  title,
+  text,
+  confirmText = 'Ya, Hapus!',
+  successMessage,
+  onConfirm,
+  entity,
+  errorCode,
+  fallbackMessage,
+}) => {
   const result = await Swal.fire({
     title,
     text,
@@ -58,8 +67,7 @@ export const confirmDelete = async ({ title, text, confirmText = 'Ya, Hapus!', s
         confirmButtonText: 'Saya Mengerti',
       })
     } else {
-      const message =
-        data?.message || FALLBACK_MESSAGES[status] || 'Gagal menghapus data.'
+      const message = data?.message || FALLBACK_MESSAGES[status] || 'Gagal menghapus data.'
       showErrorToast({ message })
     }
     return false

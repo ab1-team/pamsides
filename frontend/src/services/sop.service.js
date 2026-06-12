@@ -46,15 +46,12 @@ export const sopService = {
 
   /**
    * Logo & Branding
-   * Mengirim file via multipart/form-data.
-   * Field yang dikirim hanya yang berupa File (yang baru diupload).
-   * @param {{ mainLogo?: File, dashboardLogo?: File, favicon?: File }} files
+   * Mengirim 1 file via multipart/form-data dengan field `logo`.
+   * @param {File} file
    */
-  async saveLogo(files) {
+  async saveLogo(file) {
     const formData = new FormData()
-    if (files.mainLogo instanceof File) formData.append('mainLogo', files.mainLogo)
-    if (files.dashboardLogo instanceof File) formData.append('dashboardLogo', files.dashboardLogo)
-    if (files.favicon instanceof File) formData.append('favicon', files.favicon)
+    formData.append('logo', file)
 
     const response = await api.post('/settings/sop/logo', formData, {
       headers: { 'Content-Type': 'multipart/form-data' },

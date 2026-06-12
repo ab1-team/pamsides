@@ -64,7 +64,10 @@
                     v-else
                     class="bg-slate-100! border-2! border-dashed! border-slate-200! rounded-xl! p-6! sm:p-8! text-center!"
                   >
-                    <font-awesome-icon icon="image" class="text-2xl! sm:text-3xl! text-slate-300! mb-2!" />
+                    <font-awesome-icon
+                      icon="image"
+                      class="text-2xl! sm:text-3xl! text-slate-300! mb-2!"
+                    />
                     <p class="text-xs! sm:text-sm! text-slate-400! font-medium!">Tidak ada foto</p>
                   </div>
                 </div>
@@ -74,12 +77,16 @@
               <div class="md:col-span-2 space-y-3! sm:space-y-4!">
                 <!-- Info Pemohon -->
                 <div class="bg-slate-50! rounded-xl! p-3! sm:p-4! space-y-2! sm:space-y-3!">
-                  <h3 class="text-[10px]! sm:text-xs! font-bold! text-slate-800! uppercase! tracking-wider! mb-2!">
+                  <h3
+                    class="text-[10px]! sm:text-xs! font-bold! text-slate-800! uppercase! tracking-wider! mb-2!"
+                  >
                     Informasi Pemohon
                   </h3>
                   <div class="grid grid-cols-2 gap-2! sm:gap-3!">
                     <div>
-                      <p class="text-[9px]! sm:text-[10px]! font-bold! text-slate-400! uppercase! tracking-wider! mb-0.5! sm:mb-1!">
+                      <p
+                        class="text-[9px]! sm:text-[10px]! font-bold! text-slate-400! uppercase! tracking-wider! mb-0.5! sm:mb-1!"
+                      >
                         Nama Lengkap
                       </p>
                       <p class="text-xs! sm:text-sm! font-semibold! text-slate-800!">
@@ -87,7 +94,9 @@
                       </p>
                     </div>
                     <div>
-                      <p class="text-[9px]! sm:text-[10px]! font-bold! text-slate-400! uppercase! tracking-wider! mb-0.5! sm:mb-1!">
+                      <p
+                        class="text-[9px]! sm:text-[10px]! font-bold! text-slate-400! uppercase! tracking-wider! mb-0.5! sm:mb-1!"
+                      >
                         NIK
                       </p>
                       <p class="text-xs! sm:text-sm! font-semibold! text-slate-800!">
@@ -95,7 +104,9 @@
                       </p>
                     </div>
                     <div class="col-span-2">
-                      <p class="text-[9px]! sm:text-[10px]! font-bold! text-slate-400! uppercase! tracking-wider! mb-0.5! sm:mb-1!">
+                      <p
+                        class="text-[9px]! sm:text-[10px]! font-bold! text-slate-400! uppercase! tracking-wider! mb-0.5! sm:mb-1!"
+                      >
                         Alamat
                       </p>
                       <p class="text-xs! sm:text-sm! font-semibold! text-slate-800!">
@@ -103,7 +114,9 @@
                       </p>
                     </div>
                     <div>
-                      <p class="text-[9px]! sm:text-[10px]! font-bold! text-slate-400! uppercase! tracking-wider! mb-0.5! sm:mb-1!">
+                      <p
+                        class="text-[9px]! sm:text-[10px]! font-bold! text-slate-400! uppercase! tracking-wider! mb-0.5! sm:mb-1!"
+                      >
                         No. Telepon
                       </p>
                       <p class="text-xs! sm:text-sm! font-semibold! text-slate-800!">
@@ -115,12 +128,16 @@
 
                 <!-- Hasil Survey -->
                 <div class="bg-slate-50! rounded-xl! p-3! sm:p-4! space-y-2! sm:space-y-3!">
-                  <h3 class="text-[10px]! sm:text-xs! font-bold! text-slate-800! uppercase! tracking-wider! mb-2!">
+                  <h3
+                    class="text-[10px]! sm:text-xs! font-bold! text-slate-800! uppercase! tracking-wider! mb-2!"
+                  >
                     Hasil Survey Lapangan
                   </h3>
                   <div class="grid grid-cols-2 gap-2! sm:gap-3!">
                     <div>
-                      <p class="text-[9px]! sm:text-[10px]! font-bold! text-slate-400! uppercase! tracking-wider! mb-0.5! sm:mb-1!">
+                      <p
+                        class="text-[9px]! sm:text-[10px]! font-bold! text-slate-400! uppercase! tracking-wider! mb-0.5! sm:mb-1!"
+                      >
                         Jarak ke Pipa Utama
                       </p>
                       <p class="text-xl! sm:text-2xl! font-black! text-cyan-600!">
@@ -129,7 +146,9 @@
                       </p>
                     </div>
                     <div>
-                      <p class="text-[9px]! sm:text-[10px]! font-bold! text-slate-400! uppercase! tracking-wider! mb-0.5! sm:mb-1!">
+                      <p
+                        class="text-[9px]! sm:text-[10px]! font-bold! text-slate-400! uppercase! tracking-wider! mb-0.5! sm:mb-1!"
+                      >
                         Surveyor
                       </p>
                       <p class="text-xs! sm:text-sm! font-semibold! text-slate-800!">
@@ -137,7 +156,9 @@
                       </p>
                     </div>
                     <div class="col-span-2">
-                      <p class="text-[9px]! sm:text-[10px]! font-bold! text-slate-400! uppercase! tracking-wider! mb-0.5! sm:mb-1!">
+                      <p
+                        class="text-[9px]! sm:text-[10px]! font-bold! text-slate-400! uppercase! tracking-wider! mb-0.5! sm:mb-1!"
+                      >
                         Tanggal Survey
                       </p>
                       <p class="text-xs! sm:text-sm! font-semibold! text-slate-800!">
@@ -149,7 +170,9 @@
 
                 <!-- Catatan Material -->
                 <div class="bg-slate-50! rounded-xl! p-3! sm:p-4!">
-                  <p class="text-[9px]! sm:text-[10px]! font-bold! text-slate-400! uppercase! tracking-wider! mb-1! sm:mb-2!">
+                  <p
+                    class="text-[9px]! sm:text-[10px]! font-bold! text-slate-400! uppercase! tracking-wider! mb-1! sm:mb-2!"
+                  >
                     Catatan Material & Teknis
                   </p>
                   <p class="text-xs! sm:text-sm! text-slate-700! font-medium! leading-relaxed!">

@@ -30,7 +30,10 @@
               icon="id-card"
               maxlength="16"
             />
-            <div v-if="nikChecking" class="mt-1.5! flex! items-center! gap-1.5! text-xs! text-slate-500!">
+            <div
+              v-if="nikChecking"
+              class="mt-1.5! flex! items-center! gap-1.5! text-xs! text-slate-500!"
+            >
               <font-awesome-icon icon="spinner" spin class="text-[12px]!" />
               <span>Memeriksa NIK...</span>
             </div>
@@ -210,6 +213,7 @@ watch(
           if (detail) applyAutofill(detail)
         }
       } catch (e) {
+        console.error('Error checking NIK:', e)
         nikExists.value = null
       } finally {
         nikChecking.value = false

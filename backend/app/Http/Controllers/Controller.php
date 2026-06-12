@@ -69,7 +69,7 @@ abstract class Controller
         }
 
         $name = $displayName ? "\"{$displayName}\"" : $entityLabel;
-        $message = "{$name} tidak dapat dihapus karena masih digunakan pada data lain" . ($usage ? " ({$usage})." : '.');
+        $message = "{$name} tidak dapat dihapus karena masih digunakan pada data lain".($usage ? " ({$usage})." : '.');
 
         return [
             'code' => $entityCode,
@@ -90,6 +90,7 @@ abstract class Controller
         } catch (QueryException $e) {
             if ($this->isForeignKeyViolation($e)) {
                 $info = $this->detectForeignKeyUsage($e->getMessage(), $entityCode, $entityLabel, $displayName);
+
                 return response()->json([
                     'success' => false,
                     'code' => $info['code'],

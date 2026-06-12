@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Helpers\FileHelper;
 use App\Models\InstallationTicket;
 use App\Models\SurveyResult;
-use App\StateMachines\TicketStateMachine;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -27,7 +26,7 @@ class SurveyResultController extends Controller
 
         return response()->json([
             'success' => true,
-            'data'    => $surveys,
+            'data' => $surveys,
         ]);
     }
 
@@ -37,7 +36,7 @@ class SurveyResultController extends Controller
 
         return response()->json([
             'success' => true,
-            'data'    => $survey,
+            'data' => $survey,
         ]);
     }
 
@@ -45,17 +44,17 @@ class SurveyResultController extends Controller
     {
         $request->validate([
             'distance_to_pipe_m' => 'required|integer|min:0',
-            'material_notes'     => 'required|string',
-            'photo'              => 'required|image|mimes:jpg,jpeg,png|max:2048',
+            'material_notes' => 'required|string',
+            'photo' => 'required|image|mimes:jpg,jpeg,png|max:2048',
         ], [
             'distance_to_pipe_m.required' => 'Jarak ke pipa utama wajib diisi.',
-            'distance_to_pipe_m.integer'  => 'Jarak ke pipa utama harus berupa angka.',
-            'distance_to_pipe_m.min'      => 'Jarak ke pipa utama tidak boleh negatif.',
-            'material_notes.required'     => 'Catatan material wajib diisi.',
-            'photo.required'              => 'Foto lokasi wajib diupload.',
-            'photo.image'                 => 'File harus berupa gambar.',
-            'photo.mimes'                 => 'Format foto harus jpg, jpeg, atau png.',
-            'photo.max'                   => 'Ukuran foto maksimal 2MB.',
+            'distance_to_pipe_m.integer' => 'Jarak ke pipa utama harus berupa angka.',
+            'distance_to_pipe_m.min' => 'Jarak ke pipa utama tidak boleh negatif.',
+            'material_notes.required' => 'Catatan material wajib diisi.',
+            'photo.required' => 'Foto lokasi wajib diupload.',
+            'photo.image' => 'File harus berupa gambar.',
+            'photo.mimes' => 'Format foto harus jpg, jpeg, atau png.',
+            'photo.max' => 'Ukuran foto maksimal 2MB.',
         ]);
 
         if (! in_array($installationTicket->status, ['pending', 'draft'], true)) {
@@ -70,12 +69,12 @@ class SurveyResultController extends Controller
         DB::beginTransaction();
         try {
             $survey = SurveyResult::create([
-                'ticket_id'          => $installationTicket->id,
-                'surveyor_id'        => $request->user()->id,
+                'ticket_id' => $installationTicket->id,
+                'surveyor_id' => $request->user()->id,
                 'distance_to_pipe_m' => $request->distance_to_pipe_m,
-                'material_notes'     => $request->material_notes,
-                'photo_url'          => $photoPath,
-                'surveyed_at'        => now(),
+                'material_notes' => $request->material_notes,
+                'photo_url' => $photoPath,
+                'surveyed_at' => now(),
             ]);
 
             $installationTicket->update(['status' => 'surveyed']);
@@ -84,11 +83,12 @@ class SurveyResultController extends Controller
 
             return response()->json([
                 'success' => true,
-                'data'    => $survey->load(['surveyor', 'ticket.package']),
+                'data' => $survey->load(['surveyor', 'ticket.package']),
             ], 201);
         } catch (\Exception $e) {
             DB::rollBack();
             FileHelper::deletePhoto($photoPath);
+
             return response()->json([
                 'success' => false,
                 'message' => 'Gagal menyimpan survey: '.$e->getMessage(),
@@ -104,15 +104,15 @@ class SurveyResultController extends Controller
 
         $request->validate([
             'distance_to_pipe_m' => 'sometimes|integer|min:0',
-            'material_notes'     => 'sometimes|string',
-            'photo'              => 'sometimes|nullable|image|mimes:jpg,jpeg,png|max:2048',
+            'material_notes' => 'sometimes|string',
+            'photo' => 'sometimes|nullable|image|mimes:jpg,jpeg,png|max:2048',
         ], [
             'distance_to_pipe_m.integer' => 'Jarak ke pipa utama harus berupa angka.',
-            'distance_to_pipe_m.min'     => 'Jarak ke pipa utama tidak boleh negatif.',
-            'material_notes.required'    => 'Catatan material wajib diisi.',
-            'photo.image'                => 'File harus berupa gambar.',
-            'photo.mimes'                => 'Format foto harus jpg, jpeg, atau png.',
-            'photo.max'                  => 'Ukuran foto maksimal 2MB.',
+            'distance_to_pipe_m.min' => 'Jarak ke pipa utama tidak boleh negatif.',
+            'material_notes.required' => 'Catatan material wajib diisi.',
+            'photo.image' => 'File harus berupa gambar.',
+            'photo.mimes' => 'Format foto harus jpg, jpeg, atau png.',
+            'photo.max' => 'Ukuran foto maksimal 2MB.',
         ]);
 
         DB::beginTransaction();
@@ -137,10 +137,11 @@ class SurveyResultController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Survey berhasil diupdate.',
-                'data'    => $survey->fresh()->load(['surveyor', 'ticket.package']),
+                'data' => $survey->fresh()->load(['surveyor', 'ticket.package']),
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
+
             return response()->json([
                 'success' => false,
                 'message' => 'Gagal update survey: '.$e->getMessage(),

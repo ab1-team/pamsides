@@ -44,10 +44,7 @@ axiosInstance.interceptors.response.use(
       localStorage.removeItem('user_role')
       localStorage.removeItem('auth_expires_at')
 
-      if (
-        typeof window !== 'undefined' &&
-        window.location.pathname !== '/login'
-      ) {
+      if (typeof window !== 'undefined' && window.location.pathname !== '/login') {
         window.location.href = '/login?logout=expired'
       }
     }

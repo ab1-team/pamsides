@@ -40,7 +40,7 @@ class SettingController extends Controller
 
         return response()->json([
             'success' => true,
-            'data'    => array_values(array_unique($items)),
+            'data' => array_values(array_unique($items)),
         ]);
     }
 
@@ -62,7 +62,7 @@ class SettingController extends Controller
 
         return response()->json([
             'success' => true,
-            'data'    => $villages,
+            'data' => $villages,
         ]);
     }
 }

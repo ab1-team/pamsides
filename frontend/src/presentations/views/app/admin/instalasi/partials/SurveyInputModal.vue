@@ -4,8 +4,12 @@
     class="fixed! inset-0! bg-black/50! backdrop-blur-sm! z-[60]! flex! items-center! justify-center! p-4!"
     @click.self="$emit('close')"
   >
-    <div class="bg-white! rounded-2xl! w-full! max-w-2xl! max-h-[90vh]! overflow-y-auto! shadow-2xl! z-[61]!">
-      <div class="sticky! top-0! bg-white! border-b! border-slate-100! px-6! py-4! flex! items-center! justify-between!">
+    <div
+      class="bg-white! rounded-2xl! w-full! max-w-2xl! max-h-[90vh]! overflow-y-auto! shadow-2xl! z-[61]!"
+    >
+      <div
+        class="sticky! top-0! bg-white! border-b! border-slate-100! px-6! py-4! flex! items-center! justify-between!"
+      >
         <div class="flex! items-center! gap-3!">
           <div class="w-10! h-10! bg-indigo-100! rounded-xl! flex! items-center! justify-center!">
             <font-awesome-icon icon="clipboard-check" class="text-indigo-600!" />
@@ -26,7 +30,9 @@
       <div class="p-6! space-y-6!">
         <div class="space-y-4!">
           <div>
-            <label class="text-xs! font-bold! text-slate-500! uppercase! tracking-wide! block! mb-2!">
+            <label
+              class="text-xs! font-bold! text-slate-500! uppercase! tracking-wide! block! mb-2!"
+            >
               Jarak ke Pipa Utama (Meter)
             </label>
             <div class="relative!">
@@ -37,12 +43,17 @@
                 class="w-full! h-12! px-4! bg-slate-50! border! border-slate-200! rounded-xl! text-sm! text-slate-700! focus:outline-none! focus:border-indigo-500! focus:bg-white! transition-all! font-bold!"
                 placeholder="0"
               />
-              <span class="absolute! right-4! top-1/2! -translate-y-1/2! text-xs! font-bold! text-slate-400!">METER</span>
+              <span
+                class="absolute! right-4! top-1/2! -translate-y-1/2! text-xs! font-bold! text-slate-400!"
+                >METER</span
+              >
             </div>
           </div>
 
           <div>
-            <label class="text-xs! font-bold! text-slate-500! uppercase! tracking-wide! block! mb-2!">
+            <label
+              class="text-xs! font-bold! text-slate-500! uppercase! tracking-wide! block! mb-2!"
+            >
               Catatan Material & Teknis
             </label>
             <textarea
@@ -54,26 +65,40 @@
           </div>
 
           <div>
-            <label class="text-xs! font-bold! text-slate-500! uppercase! tracking-wide! block! mb-3!">
+            <label
+              class="text-xs! font-bold! text-slate-500! uppercase! tracking-wide! block! mb-3!"
+            >
               Foto Lokasi
             </label>
             <div class="photo-uploader">
               <div v-if="!photoPreview" class="grid! grid-cols-2! gap-4!">
-                <div class="upload-placeholder group p-6! text-center! cursor-pointer! transition-all!" @click="triggerCamera">
-                  <div class="icon-box w-12! h-12! bg-slate-50! rounded-2xl! flex! items-center! justify-center! mx-auto! mb-3! text-slate-300! group-hover:text-indigo-500! group-hover:scale-110! transition-all!">
+                <div
+                  class="upload-placeholder group p-6! text-center! cursor-pointer! transition-all!"
+                  @click="triggerCamera"
+                >
+                  <div
+                    class="icon-box w-12! h-12! bg-slate-50! rounded-2xl! flex! items-center! justify-center! mx-auto! mb-3! text-slate-300! group-hover:text-indigo-500! group-hover:scale-110! transition-all!"
+                  >
                     <font-awesome-icon icon="camera" class="text-xl!" />
                   </div>
                   <h4 class="text-xs! font-black! text-slate-700! uppercase!">Ambil Foto</h4>
                   <p class="text-[11px]! text-slate-400! font-bold! mt-1!">Kamera</p>
                 </div>
 
-                <div class="upload-placeholder-secondary group p-4! cursor-pointer! transition-all!" @click="triggerGallery">
+                <div
+                  class="upload-placeholder-secondary group p-4! cursor-pointer! transition-all!"
+                  @click="triggerGallery"
+                >
                   <div class="flex! items-center! gap-3!">
-                    <div class="icon-box-sm w-10! h-10! bg-slate-50! rounded-xl! flex! items-center! justify-center! text-slate-400! group-hover:text-indigo-500! group-hover:bg-white! transition-all!">
+                    <div
+                      class="icon-box-sm w-10! h-10! bg-slate-50! rounded-xl! flex! items-center! justify-center! text-slate-400! group-hover:text-indigo-500! group-hover:bg-white! transition-all!"
+                    >
                       <font-awesome-icon icon="images" />
                     </div>
                     <div class="text-left! min-w-0!">
-                      <h4 class="text-[11px]! font-black! text-slate-700! uppercase! truncate!">Pilih Galeri</h4>
+                      <h4 class="text-[11px]! font-black! text-slate-700! uppercase! truncate!">
+                        Pilih Galeri
+                      </h4>
                       <p class="text-xs! text-slate-400! font-bold! truncate!">Upload file</p>
                     </div>
                   </div>
@@ -83,7 +108,13 @@
               <div v-else class="preview-box h-48!">
                 <img :src="photoPreview" class="preview-img" />
                 <div class="preview-overlay"></div>
-                <button @click="photoPreview = null; formData.photo = null" class="remove-btn">
+                <button
+                  @click="
+                    photoPreview = null
+                    formData.photo = null
+                  "
+                  class="remove-btn"
+                >
                   <font-awesome-icon icon="times" />
                 </button>
                 <div class="preview-info">
@@ -95,7 +126,13 @@
               </div>
 
               <div class="hidden!">
-                <input ref="galleryInput" type="file" accept="image/*" class="hidden!" @change="handlePhotoUpload" />
+                <input
+                  ref="galleryInput"
+                  type="file"
+                  accept="image/*"
+                  class="hidden!"
+                  @change="handlePhotoUpload"
+                />
               </div>
             </div>
           </div>
@@ -157,10 +194,13 @@ onBeforeUnmount(() => {
   uiStore.closeModal()
 })
 
-watch(() => props.show, (newVal) => {
-  if (newVal) uiStore.openModal()
-  else uiStore.closeModal()
-})
+watch(
+  () => props.show,
+  (newVal) => {
+    if (newVal) uiStore.openModal()
+    else uiStore.closeModal()
+  },
+)
 
 const formData = reactive({
   distance_to_pipe_m: '',

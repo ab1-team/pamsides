@@ -70,7 +70,9 @@
             Cetak
           </button>
           <button
-            @click="$router.push({ path: '/app/instalasi/status', query: { filter: 'permohonan' } })"
+            @click="
+              $router.push({ path: '/app/instalasi/status', query: { filter: 'permohonan' } })
+            "
             class="flex! items-center! justify-center! gap-2! bg-slate-100! hover:bg-slate-200! text-slate-600! font-semibold! py-2.5! rounded-lg! text-sm! transition-all!"
           >
             <font-awesome-icon icon="arrow-left" />
@@ -91,7 +93,9 @@
 
         <div class="space-y-2!">
           <div>
-            <label class="text-[10px]! font-bold! text-slate-500! uppercase! tracking-wide! block! mb-1!">
+            <label
+              class="text-[10px]! font-bold! text-slate-500! uppercase! tracking-wide! block! mb-1!"
+            >
               Jarak ke Pipa Utama
             </label>
             <div class="relative!">
@@ -102,12 +106,17 @@
                 class="w-full! h-9! px-3! bg-slate-50! border! border-slate-200! rounded-lg! text-xs! text-slate-700! focus:outline-none! focus:border-indigo-500! focus:bg-white! transition-all!"
                 placeholder="0"
               />
-              <span class="absolute! right-3! top-1/2! -translate-y-1/2! text-[10px]! text-slate-400!">Meter</span>
+              <span
+                class="absolute! right-3! top-1/2! -translate-y-1/2! text-[10px]! text-slate-400!"
+                >Meter</span
+              >
             </div>
           </div>
 
           <div>
-            <label class="text-[10px]! font-bold! text-slate-500! uppercase! tracking-wide! block! mb-1!">
+            <label
+              class="text-[10px]! font-bold! text-slate-500! uppercase! tracking-wide! block! mb-1!"
+            >
               Catatan Material
             </label>
             <textarea
@@ -119,7 +128,9 @@
           </div>
 
           <div>
-            <label class="text-[10px]! font-bold! text-slate-500! uppercase! tracking-wide! block! mb-2!">
+            <label
+              class="text-[10px]! font-bold! text-slate-500! uppercase! tracking-wide! block! mb-2!"
+            >
               Foto Lokasi
             </label>
             <div class="photo-uploader">
@@ -137,7 +148,10 @@
                   </div>
                 </template>
                 <template v-else>
-                  <div class="preview-slot border-indigo-300 flex flex-col items-center justify-center gap-1" @click="triggerCamera">
+                  <div
+                    class="preview-slot border-indigo-300 flex flex-col items-center justify-center gap-1"
+                    @click="triggerCamera"
+                  >
                     <font-awesome-icon icon="camera" class="text-indigo-400 text-lg" />
                     <span class="text-[9px] font-bold text-slate-500">Kamera</span>
                   </div>
@@ -156,7 +170,10 @@
                   </div>
                 </template>
                 <template v-else>
-                  <div class="preview-slot border-indigo-300 flex flex-col items-center justify-center gap-1" @click="triggerGallery">
+                  <div
+                    class="preview-slot border-indigo-300 flex flex-col items-center justify-center gap-1"
+                    @click="triggerGallery"
+                  >
                     <font-awesome-icon icon="images" class="text-indigo-400 text-lg" />
                     <span class="text-[9px] font-bold text-slate-500">Galeri</span>
                   </div>
@@ -164,7 +181,13 @@
               </div>
 
               <div class="hidden!">
-                <input ref="galleryInput" type="file" accept="image/*" class="hidden!" @change="handlePhotoUpload" />
+                <input
+                  ref="galleryInput"
+                  type="file"
+                  accept="image/*"
+                  class="hidden!"
+                  @change="handlePhotoUpload"
+                />
               </div>
             </div>
           </div>

@@ -99,16 +99,18 @@ export function useInstalasiStatus() {
             createdAt: ticket.created_at || '-',
             updatedAt: ticket.updated_at || '-',
             rawData: ticket,
-            surveyInfo: ticket.survey?.[0] ? {
-              id: ticket.survey[0].id,
-              distance_to_pipe_m: ticket.survey[0].distance_to_pipe_m,
-              material_notes: ticket.survey[0].material_notes,
-              photo_url: ticket.survey[0].photo_url,
-              surveyed_at: ticket.survey[0].surveyed_at,
-              surveyor_name: ticket.survey[0].surveyor?.name || '-',
-              surveyor_id: ticket.survey[0].surveyor_id,
-              ticket: ticket,
-            } : null,
+            surveyInfo: ticket.survey?.[0]
+              ? {
+                  id: ticket.survey[0].id,
+                  distance_to_pipe_m: ticket.survey[0].distance_to_pipe_m,
+                  material_notes: ticket.survey[0].material_notes,
+                  photo_url: ticket.survey[0].photo_url,
+                  surveyed_at: ticket.survey[0].surveyed_at,
+                  surveyor_name: ticket.survey[0].surveyor?.name || '-',
+                  surveyor_id: ticket.survey[0].surveyor_id,
+                  ticket: ticket,
+                }
+              : null,
           })
         })
         dataMap.value = freshMap

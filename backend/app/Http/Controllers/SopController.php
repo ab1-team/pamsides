@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Setting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\ValidationException;
 
 class SopController extends Controller
 {
@@ -14,32 +15,32 @@ class SopController extends Controller
 
         $data = [
             'lembaga' => [
-                'nama'    => $s?->nama    ?? '',
-                'alamat'  => $s?->alamat  ?? '',
-                'email'   => $s?->email   ?? '',
+                'nama' => $s?->nama ?? '',
+                'alamat' => $s?->alamat ?? '',
+                'email' => $s?->email ?? '',
                 'telepon' => $s?->telepon ?? '',
-                'domain'  => $s?->domain  ?? '',
+                'domain' => $s?->domain ?? '',
             ],
             'sistemTagihan' => [
-                'batasTagihan'        => $s?->batas_tagihan        ?? 10,
-                'toleransiTunggakan'  => $s?->toleransi_tunggakan  ?? 0,
+                'batasTagihan' => $s?->batas_tagihan ?? 10,
+                'toleransiTunggakan' => $s?->toleransi_tunggakan ?? 0,
             ],
             'pasangBaru' => [
                 'statusPembayaran' => (bool) ($s?->status_pembayaran ?? false),
             ],
             'logo' => [
-                'logo'     => $s?->logo ?? null,
+                'logo' => $s?->logo ?? null,
                 'logo_url' => $s?->logo ? Storage::url($s->logo) : null,
             ],
             'whatsapp' => [
-                'templateTagihan'    => $s?->pesan_tagihan    ?? '',
+                'templateTagihan' => $s?->pesan_tagihan ?? '',
                 'templatePembayaran' => $s?->pesan_pembayaran ?? '',
             ],
         ];
 
         return response()->json([
             'success' => true,
-            'data'    => $data,
+            'data' => $data,
         ]);
     }
 
@@ -47,11 +48,11 @@ class SopController extends Controller
     {
         try {
             $data = $request->validate([
-                'nama'    => 'nullable|string|max:150',
-                'alamat'  => 'nullable|string',
-                'email'   => 'nullable|email|max:150',
+                'nama' => 'nullable|string|max:150',
+                'alamat' => 'nullable|string',
+                'email' => 'nullable|email|max:150',
                 'telepon' => 'nullable|string|max:30',
-                'domain'  => 'nullable|string|max:255',
+                'domain' => 'nullable|string|max:255',
             ]);
 
             $s = Setting::firstOrNew([]);
@@ -85,12 +86,12 @@ class SopController extends Controller
     {
         try {
             $data = $request->validate([
-                'batasTagihan'       => 'required|integer|min:1|max:28',
+                'batasTagihan' => 'required|integer|min:1|max:28',
                 'toleransiTunggakan' => 'required|integer|min:0|max:120',
             ]);
 
             $s = Setting::firstOrNew([]);
-            $s->batas_tagihan       = (int) $data['batasTagihan'];
+            $s->batas_tagihan = (int) $data['batasTagihan'];
             $s->toleransi_tunggakan = (int) $data['toleransiTunggakan'];
             $s->save();
 
@@ -120,8 +121,8 @@ class SopController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Logo berhasil disimpan',
-                'data'    => [
-                    'logo'     => $path,
+                'data' => [
+                    'logo' => $path,
                     'logo_url' => Storage::url($path),
                 ],
             ]);
@@ -134,12 +135,12 @@ class SopController extends Controller
     {
         try {
             $data = $request->validate([
-                'templateTagihan'    => 'nullable|string',
+                'templateTagihan' => 'nullable|string',
                 'templatePembayaran' => 'nullable|string',
             ]);
 
             $s = Setting::firstOrNew([]);
-            $s->pesan_tagihan    = $data['templateTagihan']    ?? null;
+            $s->pesan_tagihan = $data['templateTagihan'] ?? null;
             $s->pesan_pembayaran = $data['templatePembayaran'] ?? null;
             $s->save();
 
@@ -163,10 +164,12 @@ class SopController extends Controller
             'success' => false,
             'message' => $e->getMessage(),
         ];
-        if ($e instanceof \Illuminate\Validation\ValidationException) {
+        if ($e instanceof ValidationException) {
             $payload['errors'] = $e->errors();
+
             return response()->json($payload, 422);
         }
+
         return response()->json($payload, 500);
     }
 }

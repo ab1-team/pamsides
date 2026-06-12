@@ -22,7 +22,7 @@
               </div>
             </div>
             <BaseInput
-              v-model="form.jatuhTempo"
+              v-model="form.batasTagihan"
               placeholder="Tanggal"
               type="number"
               size="md"

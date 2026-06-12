@@ -7,13 +7,13 @@ use Illuminate\Validation\ValidationException;
 class TicketStateMachine
 {
     private static array $transitions = [
-        'draft'      => ['pending', 'terminated'],
-        'pending'    => ['surveyed', 'terminated'],
-        'surveyed'   => ['unpaid', 'pending', 'terminated'],
-        'unpaid'     => ['processing', 'pending', 'terminated'],
+        'draft' => ['pending', 'terminated'],
+        'pending' => ['surveyed', 'terminated'],
+        'surveyed' => ['unpaid', 'pending', 'terminated'],
+        'unpaid' => ['processing', 'pending', 'terminated'],
         'processing' => ['completed', 'terminated'],
-        'completed'  => ['suspended', 'terminated'],
-        'suspended'  => ['completed', 'terminated'],
+        'completed' => ['suspended', 'terminated'],
+        'suspended' => ['completed', 'terminated'],
         'terminated' => [],
     ];
 

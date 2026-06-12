@@ -11,7 +11,7 @@ class FileHelper
     {
         $path = $file->store($folder, 'public');
 
-        return '/storage/' . $path;
+        return '/storage/'.$path;
     }
 
     public static function uploadPhotoWithUrl(UploadedFile $file, string $folder): array
@@ -20,7 +20,7 @@ class FileHelper
 
         return [
             'path' => $path,
-            'url'  => Storage::url($path),
+            'url' => Storage::url($path),
         ];
     }
 
