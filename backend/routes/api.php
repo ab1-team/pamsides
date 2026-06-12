@@ -166,10 +166,10 @@ Route::middleware(['auth:sanctum', 'role:admin,surveyor'])->group(function () {
 
 /*
 |--------------------------------------------------------------------------
-| Teknisi Routes
+| Teknisi & Admin Routes
 |--------------------------------------------------------------------------
 */
-Route::middleware(['auth:sanctum', 'role:teknisi'])->group(function () {
+Route::middleware(['auth:sanctum', 'role:admin,teknisi'])->group(function () {
     Route::get('/test-teknisi', fn () => response()->json(['message' => 'Kamu teknisi!']));
 
     Route::post('installation-tickets/{installationTicket}/installation-result', [InstallationResultController::class, 'store']);

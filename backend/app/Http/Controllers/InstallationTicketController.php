@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Customer;
 use App\Models\InstallationTicket;
 use App\StateMachines\TicketStateMachine;
 use Illuminate\Http\Request;
@@ -247,7 +246,7 @@ class InstallationTicketController extends Controller
                 if ($installationTicket->customer()->exists()) {
                     return response()->json([
                         'success' => false,
-                        'message' => 'Tiket ini sudah diaktivasi menjadi pelanggan.',
+                        'message' => 'Aktivasi awal harus melalui endpoint /installation-result dan /activate. Pastikan hasil instalasi sudah diinput oleh teknisi.',
                     ], 422);
                 }
 
