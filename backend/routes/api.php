@@ -66,6 +66,7 @@ Route::middleware(['auth:sanctum', 'role:admin,teknisi'])->group(function () {
     Route::get('dashboard/statistics', [DashboardController::class, 'statistics']);
 
     Route::get('meter-readings/pending', [MeterReadingController::class, 'index']);
+    Route::get('meter-readings/progress', [MeterReadingController::class, 'progress']);
     Route::post('meter-readings', [MeterReadingController::class, 'store']);
     Route::get('meter-readings/{id}', [MeterReadingController::class, 'show']);
     Route::put('meter-readings/{id}', [MeterReadingController::class, 'update']);

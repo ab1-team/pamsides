@@ -76,6 +76,41 @@ class MeterReadingController extends Controller
     }
 
     /**
+     * Progres pencatatan meter untuk periode tertentu
+     * Return: total pelanggan aktif + jumlah sudah dicatat
+     */
+    public function progress(Request $request)
+    {
+        $request->validate([
+            'month' => 'required|integer|between:1,12',
+            'year' => 'required|integer|min:2000',
+        ]);
+
+        $bulan = $request->month;
+        $tahun = $request->year;
+
+        $totalActive = Customer::whereHas('ticket', function ($q) {
+            $q->where('status', 'completed');
+        })->count();
+
+        $totalRecorded = \App\Models\MeterReading::where('reading_month', $bulan)
+            ->where('reading_year', $tahun)
+            ->count();
+
+        $totalPending = max(0, $totalActive - $totalRecorded);
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'total_active' => $totalActive,
+                'total_recorded' => $totalRecorded,
+                'total_pending' => $totalPending,
+                'is_complete' => $totalPending === 0 && $totalActive > 0,
+            ],
+        ]);
+    }
+
+    /**
      * Simpan data pencatatan meter baru
      */
     public function store(Request $request)
