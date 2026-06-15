@@ -13,6 +13,15 @@ export const meterService = {
   },
 
   /**
+   * Ambil progres pencatatan meter untuk periode tertentu
+   * Return: { total_active, total_recorded, total_pending, is_complete }
+   */
+  async getProgress(params = {}) {
+    const response = await api.get('/meter-readings/progress', { params })
+    return response.data
+  },
+
+  /**
    * Input angka meter bulanan + foto (Teknisi/Admin)
    */
   async submitReading(formData) {

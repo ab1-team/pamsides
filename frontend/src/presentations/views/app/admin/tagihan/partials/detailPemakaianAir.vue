@@ -25,12 +25,68 @@
           variant="info-gradient"
           size="md"
           @click="handleGenerateBills"
-          class="w-full! sm:w-auto! rounded-xl! shadow-lg! text-xs md:text-sm font-bold! flex! items-center! gap-1.5!"
+          :disabled="!progress.is_complete"
+          class="w-full! sm:w-auto! rounded-xl! shadow-lg! text-xs md:text-sm font-bold! flex! items-center! gap-1.5! disabled:opacity-50! disabled:cursor-not-allowed!"
           icon="file-invoice-dollar"
         >
           Generate Tagihan
         </BaseButton>
       </div>
+    </div>
+
+    <!-- Progres Pencatatan Meter -->
+    <div
+      v-if="uiStore.userRole !== 'teknisi'"
+      class="mb-6! bg-gradient-to-br! from-cyan-50! to-blue-50! border! border-cyan-100! rounded-2xl! p-4! md:p-5! shadow-sm!"
+    >
+      <div class="flex! flex-col! md:flex-row! md:items-center! md:justify-between! gap-3! mb-3!">
+        <div class="flex! items-center! gap-3!">
+          <div
+            class="w-10! h-10! rounded-xl! bg-white! shadow-sm! flex! items-center! justify-center! text-cyan-600!"
+          >
+            <font-awesome-icon icon="chart-pie" />
+          </div>
+          <div>
+            <p class="text-[10px]! font-black! text-cyan-600! uppercase! tracking-widest! leading-none! mb-1!">
+              Progres Pencatatan Meter
+            </p>
+            <p class="text-sm! font-bold! text-slate-800!">
+              <span class="text-cyan-700!">{{ progress.total_recorded }}</span>
+              <span class="text-slate-400! font-medium!"> dari </span>
+              <span class="text-slate-800!">{{ progress.total_active }}</span>
+              <span class="text-slate-500! font-medium!"> pelanggan sudah dicatat</span>
+            </p>
+          </div>
+        </div>
+        <div
+          class="text-2xl! font-black! tracking-tight!"
+          :class="progress.is_complete ? 'text-emerald-600!' : 'text-cyan-700!'"
+        >
+          {{ progressPercent }}%
+        </div>
+      </div>
+      <div class="w-full! bg-white! h-2.5! rounded-full! overflow-hidden! shadow-inner!">
+        <div
+          class="h-full! transition-all! duration-500! rounded-full!"
+          :class="progress.is_complete ? 'bg-emerald-500!' : 'bg-cyan-500!'"
+          :style="{ width: progressPercent + '%' }"
+        ></div>
+      </div>
+      <p
+        v-if="!progress.is_complete && progress.total_pending > 0"
+        class="mt-2! text-[11px]! font-medium! text-amber-700! flex! items-center! gap-1.5!"
+      >
+        <font-awesome-icon icon="exclamation-triangle" class="text-xs!" />
+        Sisa {{ progress.total_pending }} pelanggan belum dicatat. Selesaikan dulu sebelum generate
+        tagihan.
+      </p>
+      <p
+        v-else-if="progress.is_complete"
+        class="mt-2! text-[11px]! font-medium! text-emerald-700! flex! items-center! gap-1.5!"
+      >
+        <font-awesome-icon icon="check-circle" class="text-xs!" />
+        Semua pelanggan sudah dicatat. Tombol generate tagihan sudah aktif.
+      </p>
     </div>
 
     <div class="hidden! md:block!">
@@ -93,7 +149,8 @@
             variant="info-gradient"
             size="sm"
             @click="handleGenerateBills"
-            class="rounded-xl! shadow-sm! text-xs font-bold! flex! items-center! gap-1!"
+            :disabled="!progress.is_complete"
+            class="rounded-xl! shadow-sm! text-xs font-bold! flex! items-center! gap-1! disabled:opacity-50! disabled:cursor-not-allowed!"
             icon="file-invoice-dollar"
           >
             Generate
@@ -238,6 +295,18 @@ const uiStore = useUiStore()
 const isLoading = ref(false)
 const customers = ref([])
 
+const progress = ref({
+  total_active: 0,
+  total_recorded: 0,
+  total_pending: 0,
+  is_complete: false,
+})
+
+const progressPercent = computed(() => {
+  if (progress.value.total_active === 0) return 0
+  return Math.round((progress.value.total_recorded / progress.value.total_active) * 100)
+})
+
 const getMonthNumber = (m) => {
   if (!m) return new Date().getMonth() + 1
   if (!isNaN(m)) return parseInt(m)
@@ -287,7 +356,15 @@ const fetchData = async () => {
     const monthVal = getMonthNumber(month || bulan)
     const yearVal = parseInt(year || tahun) || new Date().getFullYear()
 
-    const res = await meterService.getPendingReadings({ month: monthVal, year: yearVal })
+    const [res, progressRes] = await Promise.all([
+      meterService.getPendingReadings({ month: monthVal, year: yearVal }),
+      meterService.getProgress({ month: monthVal, year: yearVal }),
+    ])
+
+    if (progressRes?.success && progressRes.data) {
+      progress.value = progressRes.data
+    }
+
     if (res.data) {
       // Map data backend ke format tabel jika perlu
       customers.value = res.data.map((item) => {

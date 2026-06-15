@@ -6,6 +6,7 @@ Selamat datang di repositori **Pamsides**. Ikuti langkah-langkah di bawah ini un
 
 - [🚀 Roadmap Proyek](docs/roadmap.md)
 - [🗄️ Struktur Database](docs/database.md)
+- [🤖 AGENTS.md - Panduan untuk AI Agent](AGENTS.md)
 
 ## 🛠 Prasyarat (Prerequisites)
 
@@ -107,6 +108,28 @@ Jalankan dev server Vite:
 
 ```bash
 pnpm run dev
+```
+
+---
+
+## 🧪 Menjalankan Testing
+
+### Frontend (Vitest)
+
+```bash
+cd frontend
+pnpm test             # Single run (CI mode)
+pnpm test:watch       # Watch mode (development)
+pnpm test:coverage    # Generate coverage report (output: coverage/)
+```
+
+Test frontend saat ini: **84 tests** di 4 file (currency, date, notification, currency format helpers).
+
+### Backend (Pest)
+
+```bash
+cd backend
+composer test
 ```
 
 ---

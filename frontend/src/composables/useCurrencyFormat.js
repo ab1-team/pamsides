@@ -16,9 +16,12 @@ export function useCurrencyFormat(amount, options = {}) {
     return showSymbol ? 'Rp 0,00' : '0,00'
   }
 
+  const safeMin = Math.min(minimumFractionDigits, maximumFractionDigits)
+  const safeMax = Math.max(minimumFractionDigits, maximumFractionDigits)
+
   const formattedAmount = Number(amount).toLocaleString(locale, {
-    minimumFractionDigits,
-    maximumFractionDigits,
+    minimumFractionDigits: safeMin,
+    maximumFractionDigits: safeMax,
   })
 
   return showSymbol ? `Rp ${formattedAmount}` : formattedAmount

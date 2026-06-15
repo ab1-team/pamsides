@@ -61,6 +61,69 @@
       </ContentCard>
 
       <ContentCard variant="bordered" padding="normal" rounded="2xl">
+        <div class="flex! items-center! gap-2! mb-4!">
+          <div class="w-7! h-7! bg-indigo-100! rounded-lg! flex! items-center! justify-center!">
+            <font-awesome-icon icon="stream" class="text-indigo-500! text-xs!" />
+          </div>
+          <h3 class="text-sm! font-bold! text-slate-800!">Timeline Status</h3>
+        </div>
+        <ol class="space-y-3!">
+          <li
+            v-for="(step, idx) in timelineSteps"
+            :key="step.key"
+            class="flex! items-start! gap-3!"
+          >
+            <div class="flex flex-col items-center">
+              <div
+                :class="[
+                  'w-8! h-8! rounded-full! flex! items-center! justify-center! text-xs!',
+                  step.state === 'done'
+                    ? 'bg-emerald-500! text-white!'
+                    : step.state === 'current'
+                      ? 'bg-indigo-600! text-white! ring-4! ring-indigo-100!'
+                      : step.state === 'terminated'
+                        ? 'bg-rose-500! text-white!'
+                        : step.state === 'suspended'
+                          ? 'bg-amber-500! text-white!'
+                          : 'bg-slate-100! text-slate-400!',
+                ]"
+              >
+                <font-awesome-icon :icon="step.icon" />
+              </div>
+              <span
+                v-if="idx < timelineSteps.length - 1"
+                class="w-0.5! h-6! bg-slate-200! mt-1!"
+                :class="{ 'bg-emerald-300!': step.state === 'done' }"
+              ></span>
+            </div>
+            <div class="pt-1!">
+              <p
+                :class="[
+                  'text-sm! font-semibold!',
+                  step.state === 'upcoming' ? 'text-slate-400!' : 'text-slate-800!',
+                ]"
+              >
+                {{ step.label }}
+              </p>
+              <p class="text-[11px]! text-slate-400! capitalize!">
+                {{
+                  step.state === 'done'
+                    ? 'Selesai'
+                    : step.state === 'current'
+                      ? 'Sedang berjalan'
+                      : step.state === 'terminated'
+                        ? 'Permohonan dibatalkan'
+                        : step.state === 'suspended'
+                          ? 'Sementara diblokir'
+                          : 'Menunggu'
+                }}
+              </p>
+            </div>
+          </li>
+        </ol>
+      </ContentCard>
+
+      <ContentCard variant="bordered" padding="normal" rounded="2xl">
         <div class="grid! grid-cols-2! gap-3!">
           <button
             @click="handlePrint"
@@ -305,6 +368,34 @@ const customer = computed(() => {
     rawStatus: found.rawStatus,
     rawData: found.rawData,
   }
+})
+
+const timelineSteps = computed(() => {
+  const order = ['draft', 'pending', 'surveyed', 'unpaid', 'processing', 'completed']
+  const current = customer.value.rawStatus
+  const currentIdx = order.indexOf(current)
+
+  const defs = [
+    { key: 'pending', label: 'Permohonan', icon: 'file-signature' },
+    { key: 'surveyed', label: 'Survey', icon: 'clipboard-check' },
+    { key: 'unpaid', label: 'Pembayaran', icon: 'money-bill-wave' },
+    { key: 'processing', label: 'Pemasangan', icon: 'tools' },
+    { key: 'completed', label: 'Aktif', icon: 'check-circle' },
+  ]
+
+  return defs.map((s, i) => ({
+    ...s,
+    state:
+      current === 'terminated'
+        ? 'terminated'
+        : current === 'suspended'
+          ? 'suspended'
+          : i < currentIdx
+            ? 'done'
+            : i === currentIdx
+              ? 'current'
+              : 'upcoming',
+  }))
 })
 
 const triggerCamera = () => {

@@ -189,8 +189,15 @@ const handleLogin = async () => {
 
     if (res.success) {
       localStorage.setItem('auth_token', res.data.token)
-      const expireTime = Date.now() + 8 * 60 * 60 * 1000
-      localStorage.setItem('auth_expires_at', expireTime.toString())
+
+      const expiresAt = res.data.expires_at
+      if (expiresAt) {
+        localStorage.setItem('auth_expires_at', String(expiresAt))
+      } else {
+        const fallbackExpire = Date.now() + 8 * 60 * 60 * 1000
+        localStorage.setItem('auth_expires_at', String(fallbackExpire))
+      }
+
       uiStore.setUserData(res.data.user)
       uiStore.setUserRole(res.data.user.role)
 

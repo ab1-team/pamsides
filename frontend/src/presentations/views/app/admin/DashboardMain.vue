@@ -400,9 +400,14 @@ const loadData = async () => {
         beban: 0,
         surplus: revenue,
       }
+    } else {
+      statsData.value = null
+      financialData.value = { pendapatan: 0, beban: 0, surplus: 0 }
     }
   } catch (error) {
     console.error('Failed to load dashboard statistics', error)
+    statsData.value = null
+    financialData.value = { pendapatan: 0, beban: 0, surplus: 0 }
   } finally {
     formattedPendapatan.value = formatCurrency(financialData.value.pendapatan)
     formattedBeban.value = formatCurrency(financialData.value.beban)

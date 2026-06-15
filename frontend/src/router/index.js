@@ -37,9 +37,9 @@ import DesaEdit from '@/presentations/views/app/admin/desa/DesaEdit.vue'
 
 const getDashboardRoute = (role) => {
   const routes = {
-    surveyor: '/app',
+    surveyor: '/app/surveyor',
     teknisi: '/app/teknisi',
-    pelanggan: '/app',
+    pelanggan: '/app/pelanggan/dashboard',
     admin: '/app',
   }
   return routes[role] || '/app'
@@ -56,314 +56,364 @@ const router = createRouter({
       path: '/login',
       name: 'login',
       component: LoginView,
+      meta: { guest: true },
     },
     {
       path: '/app',
       name: 'layout-dashboard',
       component: MainView,
+      meta: { auth: true, roles: ['admin', 'surveyor', 'teknisi', 'pelanggan'] },
       children: [
         {
           path: '',
           name: 'dashboard',
           component: DashboardHome,
+          meta: { roles: ['admin', 'surveyor', 'teknisi', 'pelanggan'] },
         },
         {
           path: 'surveyor',
           name: 'surveyor-dashboard',
           component: SurveyorDashboard,
+          meta: { roles: ['admin', 'surveyor'] },
         },
         {
           path: 'teknisi',
           name: 'teknisi-dashboard',
           component: TeknisiDashboard,
+          meta: { roles: ['admin', 'teknisi'] },
         },
         {
           path: 'profil',
           name: 'profil',
           component: profil,
+          meta: { roles: ['admin', 'surveyor', 'teknisi', 'pelanggan'] },
         },
         {
           path: 'settings/personalisasi-sop',
           name: 'personalisasi-sop',
           component: SopIndex,
+          meta: { roles: ['admin'] },
         },
         {
           path: 'settings/coa',
           name: 'coa',
           component: () => import('@/presentations/views/app/admin/sop/CoaIndex.vue'),
+          meta: { roles: ['admin'] },
         },
         {
           path: 'kelas-biaya',
           name: 'kelas biaya',
           component: KelasBiayaView,
+          meta: { roles: ['admin'] },
         },
         {
           path: 'kelas-biaya/config',
           name: 'Tambah Kelas',
           component: CreateKelasView,
+          meta: { roles: ['admin'] },
         },
         {
           path: 'kelas-biaya/config/:id',
           name: 'Edit Kelas',
           component: EditKelasView,
+          meta: { roles: ['admin'] },
         },
         {
           path: 'data-pelanggan',
           name: 'Data Pelanggan',
           component: pelangganView,
+          meta: { roles: ['admin'] },
         },
         {
           path: 'data-pelanggan/tambah',
           name: 'Tambah Pelanggan',
           component: PelangganCreate,
+          meta: { roles: ['admin'] },
         },
         {
           path: 'data-pelanggan/edit/:id',
           name: 'Edit Pelanggan',
           component: PelangganEdit,
+          meta: { roles: ['admin'] },
         },
         {
           path: 'data-desa',
           name: 'Data Desa',
           component: DesaIndex,
+          meta: { roles: ['admin'] },
         },
         {
           path: 'data-desa/tambah',
           name: 'Tambah Desa',
           component: DesaCreate,
+          meta: { roles: ['admin'] },
         },
         {
           path: 'data-desa/edit/:id',
           name: 'Edit Desa',
           component: DesaEdit,
+          meta: { roles: ['admin'] },
         },
 
         {
           path: 'dataInstalasi',
           name: 'Data Instalasi',
           component: datainstalasiView,
+          meta: { roles: ['admin'] },
         },
         {
           path: 'instalasi/register',
           name: 'Register Instalasi',
           component: registerInstalasi,
+          meta: { roles: ['admin'] },
         },
         {
           path: 'instalasi/status',
           name: 'Status Instalasi',
           component: statusInstalasi,
+          meta: { roles: ['admin'] },
         },
         {
           path: 'instalasi/hasil-survey',
           name: 'Hasil Survey',
           component: () => import('@/presentations/views/app/admin/instalasi/hasilSurvey.vue'),
+          meta: { roles: ['admin'] },
         },
         {
           path: 'instalasi/status/permohonan/:id',
           name: 'Detail Permohonan',
           component: DetailPermohonan,
+          meta: { roles: ['admin'] },
         },
         {
           path: 'instalasi/status/pasang-baru/:id',
           name: 'Detail Pasang Baru',
           component: DetailPasangBaru,
+          meta: { roles: ['admin'] },
         },
         {
           path: 'instalasi/status/aktif/:id',
           name: 'Detail Aktif',
           component: DetailAktif,
+          meta: { roles: ['admin'] },
         },
         {
           path: 'instalasi/status/blokir/:id',
           name: 'Detail Blokir',
           component: DetailBlokir,
+          meta: { roles: ['admin'] },
         },
         {
           path: 'instalasi/status/cabut/:id',
           name: 'Detail Cabut',
           component: DetailCabut,
+          meta: { roles: ['admin'] },
         },
         {
           path: 'instalasi/pemakaian-air',
           name: 'Pemakaian Air',
           component: pemakaianair,
+          meta: { roles: ['admin'] },
         },
         {
           path: 'instalasi/pemakaian-air/input',
           name: 'Input Pemakaian Air',
           component: detailPemakaianAir,
+          meta: { roles: ['admin'] },
         },
         {
           path: 'instalasi/daftar-tagihan',
           name: 'Daftar Tagihan',
           component: () => import('@/presentations/views/app/admin/tagihan/daftarTagihan.vue'),
+          meta: { roles: ['admin'] },
         },
         {
           path: 'survey/create',
           name: 'Create Survey',
           component: () => import('@/presentations/views/app/surveyor/createSurvey.vue'),
+          meta: { roles: ['admin', 'surveyor'] },
         },
         {
           path: 'teknisi/pencatatan-meter',
           name: 'Catat Meter',
           component: () => import('@/presentations/views/app/teknisi/MeterReading.vue'),
+          meta: { roles: ['admin', 'teknisi'] },
         },
         {
           path: 'teknisi/hasil-instalasi/:id',
           name: 'Hasil Instalasi',
           component: () => import('@/presentations/views/app/teknisi/InstallationResult.vue'),
+          meta: { roles: ['admin', 'teknisi'] },
+        },
+        {
+          path: 'pelanggan/dashboard',
+          name: 'Dashboard Pelanggan',
+          component: () => import('@/presentations/views/app/pelanggan/DashboardMain.vue'),
+          meta: { roles: ['admin', 'pelanggan'] },
         },
         {
           path: 'pelanggan/tagihan-detail',
           name: 'Detail Tagihan',
           component: () => import('@/presentations/views/app/pelanggan/BillDetail.vue'),
+          meta: { roles: ['admin', 'pelanggan'] },
         },
         {
           path: 'pelanggan/riwayat-tagihan',
           name: 'Riwayat Tagihan',
           component: () => import('@/presentations/views/app/pelanggan/riwayatTagihan.vue'),
+          meta: { roles: ['admin', 'pelanggan'] },
         },
         {
           path: 'pelanggan/lapor-gangguan',
           name: 'Lapor Gangguan',
           component: () => import('@/presentations/views/app/pelanggan/LaporGangguan.vue'),
+          meta: { roles: ['admin', 'pelanggan'] },
         },
         {
           path: 'pelanggan/lapor-gangguan/form',
           name: 'Form Lapor Gangguan',
           component: () => import('@/presentations/views/app/pelanggan/LaporGangguanForm.vue'),
+          meta: { roles: ['admin', 'pelanggan'] },
         },
         {
           path: 'instalasi/teknisiPemakaianAir',
           name: 'Input Pemakaian Air Teknisi',
           component: TeknisiPemakaianAir,
+          meta: { roles: ['admin', 'teknisi'] },
         },
         {
           path: 'teknisi/daftar-tagihan',
           name: 'Daftar Tagihan Teknisi',
           component: () => import('@/presentations/views/app/teknisi/DaftarTagihan.vue'),
+          meta: { roles: ['admin', 'teknisi'] },
         },
 
         {
           path: 'transaksi/jurnal-umum',
           name: 'transaksi jurnal umum',
           component: jurnalUmum,
+          meta: { roles: ['admin'] },
         },
         {
           path: 'transaksi/tagihan-instalasi',
           name: 'transaksi Intalasi',
           component: tagihanInstalasi,
+          meta: { roles: ['admin'] },
         },
         {
           path: 'transaksi/tagihan-bulanan',
           name: 'transaksi bulanan',
           component: tagihanBulanan,
+          meta: { roles: ['admin'] },
         },
         {
           path: 'transaksi/E-budgeting',
           name: 'transaksi E-Budgeting',
           component: ebudgeting,
+          meta: { roles: ['admin'] },
         },
         {
           path: 'transaksi/tutup-buku',
           name: 'transaksi tutup buku',
           component: tutupBuku,
+          meta: { roles: ['admin'] },
         },
         {
           path: 'transaksi/alokasi-laba',
           name: 'transaksi alokasi laba',
           component: alokasiLaba,
+          meta: { roles: ['admin'] },
         },
         {
           path: 'transaksi/komisi-sps',
           name: 'transaksi komisi sps',
           component: komisiSPS,
+          meta: { roles: ['admin'] },
         },
         {
           path: 'Pelaporan',
           name: 'Pelaporan',
           component: laporan,
+          meta: { roles: ['admin'] },
         },
       ],
     },
     {
       path: '/usages/cetak_input',
       name: 'Cetak Input',
+      meta: { roles: ['admin', 'teknisi'] },
       component: () =>
         import('@/presentations/views/app/admin/instalasi/partials/view/cetakInput.vue'),
     },
   ],
 })
 
-router.beforeEach((to) => {
+const isExpired = () => {
   const token = localStorage.getItem('auth_token')
   const expiresAt = localStorage.getItem('auth_expires_at')
+  if (!token || !expiresAt) return false
+  return Date.now() > parseInt(expiresAt, 10)
+}
+
+const clearAuth = () => {
+  localStorage.removeItem('auth_token')
+  localStorage.removeItem('user_data')
+  localStorage.removeItem('user_role')
+  localStorage.removeItem('auth_expires_at')
+}
+
+const canAccess = (to, userRole) => {
+  const requiredRoles = to.matched
+    .slice()
+    .reverse()
+    .find((record) => record.meta?.roles)?.meta?.roles
+
+  if (!requiredRoles || requiredRoles.length === 0) {
+    return { allowed: true }
+  }
+
+  if (requiredRoles.includes(userRole)) {
+    return { allowed: true }
+  }
+
+  return {
+    allowed: false,
+    reason: `Role "${userRole}" tidak diizinkan mengakses "${to.path}"`,
+  }
+}
+
+router.beforeEach((to) => {
+  const token = localStorage.getItem('auth_token')
   const userRole = localStorage.getItem('user_role') || 'admin'
-  const isAuthPage = to.name === 'login'
-  const now = Date.now()
 
-  if (token && expiresAt && now > parseInt(expiresAt)) {
-    localStorage.removeItem('auth_token')
-    localStorage.removeItem('user_data')
-    localStorage.removeItem('user_role')
-    localStorage.removeItem('auth_expires_at')
-
-    return { name: 'login' }
-  }
-
-  const roleSpecificRoutes = {
-    surveyor: ['/app/survey/create', '/app/surveyor'],
-    teknisi: [
-      '/app/teknisi/',
-      '/app/instalasi/teknisiPemakaianAir',
-      '/app/instalasi/pemakaian-air',
-    ],
-    admin: [
-      '/app/data-pelanggan',
-      '/app/data-desa',
-      '/app/settings/',
-      '/app/coa',
-      '/app/kelas-biaya',
-      '/app/instalasi/',
-      '/app/transaksi/',
-      '/app/pelaporan',
-    ],
-    pelanggan: ['/app/pelanggan/'],
-  }
-
-  const isTeknisiPath =
-    to.path.startsWith('/app/teknisi/') ||
-    to.path === '/app/instalasi/teknisiPemakaianAir' ||
-    to.path.startsWith('/app/instalasi/pemakaian-air')
-
-  const matchesRole = (role) => {
-    if (role === 'admin' && isTeknisiPath && userRole === 'teknisi') return false
-    return roleSpecificRoutes[role].some((r) => to.path.startsWith(r))
-  }
-
-  const isTeknisiAllowedPath = isTeknisiPath && userRole === 'teknisi'
-
-  const isSurveyorOnly = matchesRole('surveyor') && !['surveyor', 'admin'].includes(userRole)
-  const isTeknisiOnly = isTeknisiPath && !['teknisi', 'admin'].includes(userRole)
-  const isAdminOnly = matchesRole('admin') && !['admin'].includes(userRole) && !isTeknisiAllowedPath
-  const isPelangganOnly = matchesRole('pelanggan') && !['pelanggan', 'admin'].includes(userRole)
-
-  if (isSurveyorOnly || isTeknisiOnly || isAdminOnly || isPelangganOnly) {
-    return { name: 'login' }
-  }
-
-  if (to.path.startsWith('/app') || to.path === '/') {
-    if (!token) {
-      return { name: 'login' }
-    }
-    return true
-  }
-
-  if (isAuthPage && token) {
+  if (to.meta?.guest && token) {
     return { path: getDashboardRoute(userRole) }
   }
 
+  if (to.path.startsWith('/app') || to.meta?.auth) {
+    if (!token || isExpired()) {
+      clearAuth()
+      return { name: 'login' }
+    }
+  }
+
+  if (to.matched.some((record) => record.meta?.roles)) {
+    const check = canAccess(to, userRole)
+    if (!check.allowed) {
+      return {
+        name: 'login',
+        query: { error: 'unauthorized', from: to.fullPath },
+      }
+    }
+  }
+
   return true
+})
+
+router.afterEach((to) => {
+  if (to.query?.error === 'unauthorized') {
+    console.warn('[Router] Akses ditolak:', to.query.from)
+  }
 })
 
 export default router
