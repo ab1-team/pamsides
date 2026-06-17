@@ -284,10 +284,16 @@
                         Nominal Pasang Baru
                       </div>
                       <input
-                        v-model="form.nominal"
-                        type="number"
-                        placeholder="0"
-                        class="text-sm! font-extrabold! text-blue-600! text-right! border-none! focus:outline-none! bg-transparent! w-32!"
+                        :value="nominalDisplay"
+                        @input="onNominalInput"
+                        :readonly="nominalLocked"
+                        :class="[
+                          'text-sm! font-extrabold! text-blue-600! text-right! border-none! focus:outline-none! bg-transparent! w-40!',
+                          nominalLocked ? 'cursor-not-allowed! opacity-70!' : '',
+                        ]"
+                        type="text"
+                        inputmode="numeric"
+                        placeholder="0,00"
                       />
                     </div>
                   </div>
@@ -439,6 +445,7 @@ import BaseInput from '@/presentations/components/ui/BaseInput.vue'
 import SelectSearch from '@/presentations/components/SelectSearch.vue'
 import AppDatePicker from '@/presentations/components/AppDatePicker.vue'
 import ticketService from '@/services/ticket.service.js'
+import sopService from '@/services/sop.service.js'
 import Swal from 'sweetalert2'
 
 const isCustomerDropdownOpen = ref(false)
@@ -463,6 +470,10 @@ const form = ref({
 const customerOptions = ref([])
 const packages = ref([])
 const caterUsers = ref([])
+
+// 0 = tidak wajib lunas (editable), 1 = wajib lunas (locked)
+const statusPembayaran = ref(0)
+const nominalLocked = computed(() => Number(statusPembayaran.value) === 1)
 
 // 1. FETCH CUSTOMERS
 const fetchCustomers = async () => {
@@ -828,8 +839,46 @@ const formatRupiah = (angka) => {
   return val.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.')
 }
 
+const formatRupiahDecimal = (angka) => {
+  if (angka === null || angka === undefined || angka === '') return '0,00'
+  const num = parseFloat(angka)
+  if (isNaN(num)) return '0,00'
+  const fixed = num.toFixed(2)
+  const [intPart, decPart] = fixed.split('.')
+  const intFormatted = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, '.')
+  return `${intFormatted},${decPart}`
+}
+
+const nominalDisplay = computed({
+  get: () => formatRupiahDecimal(form.value.nominal),
+  set: () => {},
+})
+
+const onNominalInput = (e) => {
+  if (nominalLocked.value) {
+    e.target.value = formatRupiahDecimal(form.value.nominal)
+    return
+  }
+  const raw = e.target.value
+  const digits = raw.replace(/[^\d]/g, '')
+  form.value.nominal = digits === '' ? 0 : parseInt(digits, 10)
+  e.target.value = formatRupiahDecimal(form.value.nominal)
+}
+
 const handleKeydown = (e) => {
   if (e.key === 'Escape') isCustomerDropdownOpen.value = false
+}
+
+const fetchSopPasangBaru = async () => {
+  try {
+    const res = await sopService.getAll()
+    const data = res?.data ?? res
+    const pb = data?.pasangBaru?.statusPembayaran
+    if (pb === undefined || pb === null) return
+    statusPembayaran.value = Number(pb) === 1 ? 1 : 0
+  } catch (err) {
+    console.error('Gagal mengambil SOP pasang baru:', err)
+  }
 }
 
 onMounted(() => {
@@ -837,6 +886,7 @@ onMounted(() => {
   fetchPackages()
   fetchCaterUsers()
   fetchVillages()
+  fetchSopPasangBaru()
   document.addEventListener('keydown', handleKeydown)
 })
 
