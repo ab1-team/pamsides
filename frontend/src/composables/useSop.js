@@ -1,5 +1,6 @@
 import { ref, computed, onMounted } from 'vue'
 import { showSuccessToast, showErrorToast } from '@/utils/swal'
+import { storageUrl } from '@/utils/storage'
 import sopService from '@/services/sop.service'
 import { useUiStore } from '@/stores/uiStore'
 
@@ -43,6 +44,7 @@ export function useSop() {
   const logoForm = ref({
     file: null,
     preview: '',
+    previewName: '',
   })
 
   const whatsappForm = ref({
@@ -56,7 +58,7 @@ export function useSop() {
     try {
       isLoading.value = true
       const res = await sopService.getAll()
-      const data = res?.data ?? res
+      const data = res?.data?.data ?? res?.data ?? res
       if (!data) return
 
       if (data.lembaga) lembagaForm.value = { ...lembagaForm.value, ...data.lembaga }
@@ -87,7 +89,9 @@ export function useSop() {
       }
 
       if (data.logo) {
-        logoForm.value.preview = data.logo.logo_url || ''
+        const fileName = data.logo.logo || ''
+        logoForm.value.preview = fileName ? storageUrl(`storage/sop/logo/${fileName}`) : ''
+        logoForm.value.previewName = fileName
       }
     } catch (error) {
       showErrorToast(error)
@@ -141,9 +145,10 @@ export function useSop() {
     try {
       isSaving.value = true
       const res = await sopService.saveLogo(logoForm.value.file)
-      const data = res?.data ?? res
-      if (data?.logo_url) {
-        logoForm.value.preview = data.logo_url
+      const data = res?.data?.data ?? res?.data ?? res
+      if (data?.logo) {
+        logoForm.value.preview = storageUrl(`storage/sop/logo/${data.logo}`)
+        logoForm.value.previewName = data.logo
       }
       logoForm.value.file = null
       showSuccessToast('Logo berhasil disimpan')

@@ -54,7 +54,7 @@
                     class="relative! rounded-xl! overflow-hidden! border-4! border-white! shadow-xl!"
                   >
                     <img
-                      :src="survey.photo_url"
+                      :src="photoUrl"
                       alt="Foto Survey"
                       class="w-full! h-48! sm:h-64! md:h-auto! object-cover!"
                       @error="handleImageError"
@@ -189,7 +189,8 @@
 </template>
 
 <script setup>
-import { watch, onMounted, onUnmounted } from 'vue'
+import { computed, watch, onMounted, onUnmounted } from 'vue'
+import { storageUrl } from '@/utils/storage'
 
 const props = defineProps({
   show: {
@@ -203,6 +204,13 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['close', 'approve', 'reject'])
+
+const photoUrl = computed(() => {
+  const v = props.survey?.photo_url
+  if (!v) return ''
+  if (/^https?:\/\//i.test(v)) return v
+  return storageUrl(`storage/survey-photos/${v}`)
+})
 
 const close = () => {
   emit('close')

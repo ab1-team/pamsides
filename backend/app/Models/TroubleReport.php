@@ -3,7 +3,6 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Storage;
 
 class TroubleReport extends Model
 {
@@ -47,6 +46,10 @@ class TroubleReport extends Model
             return null;
         }
 
-        return Storage::url($this->photo_path);
+        if (preg_match('/^https?:\/\//i', $this->photo_path)) {
+            return $this->photo_path;
+        }
+
+        return $this->photo_path;
     }
 }

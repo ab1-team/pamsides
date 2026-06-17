@@ -192,6 +192,7 @@
 
 <script setup>
 import { ref, reactive, watch, computed, onMounted, onUnmounted } from 'vue'
+import { storageUrl } from '@/utils/storage'
 
 const props = defineProps({
   show: {
@@ -225,7 +226,12 @@ watch(
     if (newSurvey) {
       formData.distance_to_pipe_m = newSurvey.distance_to_pipe_m || 0
       formData.material_notes = newSurvey.material_notes || ''
-      photoPreview.value = newSurvey.photo_url || null
+      const url = newSurvey.photo_url
+      if (url) {
+        photoPreview.value = /^https?:\/\//i.test(url) ? url : storageUrl(`storage/survey-photos/${url}`)
+      } else {
+        photoPreview.value = null
+      }
       newPhotoFile.value = null
     }
   },
