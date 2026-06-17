@@ -20,12 +20,6 @@
                 Pilih parameter laporan yang ingin ditampilkan
               </p>
             </div>
-            <div
-              class="self-start! flex! items-center! px-4! py-2! rounded-xl! bg-white/10! backdrop-blur-md! border! border-white/20! text-white! text-sm! font-semibold! shadow-sm!"
-            >
-              <font-awesome-icon icon="info-circle" class="mr-2! opacity-80!" />
-              Wajib diisi semua
-            </div>
           </div>
         </div>
         <div class="space-y-3!">
@@ -35,21 +29,18 @@
               :options="tahunOptions"
               label="Tahun"
               placeholder="Pilih Tahun"
-              icon="calendar"
             />
             <SelectSearch
               v-model="selectedBulan"
               :options="bulanOptions"
               label="Bulan"
               placeholder="Pilih Bulan"
-              icon="calendar-days"
             />
             <SelectSearch
               v-model="selectedTanggal"
               :options="tanggalOptions"
               label="Tanggal"
-              placeholder="Pilih Tanggal"
-              icon="calendar-check"
+              placeholder="--"
             />
           </div>
 
@@ -58,45 +49,41 @@
               v-model="selectedNamaLaporan"
               :options="namaLaporanOptions"
               label="Nama Laporan"
-              placeholder="Pilih Jenis Laporan"
-              icon="file-lines"
+              placeholder="--"
             />
             <SelectSearch
               v-model="selectedNamaSubLaporan"
               :options="namaSubLaporanOptions"
               label="Nama Sub Laporan"
-              placeholder="Pilih Periode Laporan"
-              icon="clock-rotate-left"
+              placeholder="--"
             />
           </div>
 
           <div class="flex! flex-col! sm:flex-row! gap-4! sm:justify-end! pt-4!">
             <BaseButton
-              variant="secondary"
+              variant="danger"
               size="md"
-              @click="handlePreview"
-              class="px-5! rounded-xl! shadow-lg! shadow-blue-500/20! font-bold! tracking-wide!"
-              icon="eye"
+              @click="handleSimpanSaldo"
+              class="px-5! rounded-xl! shadow-lg! shadow-amber-500/20! font-bold! tracking-wide!"
             >
-              Preview Laporan
+              Simpan Saldo
             </BaseButton>
             <BaseButton
               variant="success"
               size="md"
               @click="handleExcel"
               class="px-5! rounded-xl! shadow-lg! shadow-emerald-500/20! font-bold! tracking-wide!"
-              icon="file-export"
             >
-              Download Excel
+              Excel
             </BaseButton>
             <BaseButton
-              variant="danger"
+              variant="secondary"
               size="md"
-              @click="handleSimpanSaldo"
-              class="px-5! rounded-xl! shadow-lg! shadow-amber-500/20! font-bold! tracking-wide!"
-              icon="save"
+              @click="handlePreview"
+              class="px-5! rounded-xl! shadow-lg! shadow-blue-500/20! font-bold! tracking-wide!"
+              
             >
-              Simpan Saldo
+              Preview
             </BaseButton>
           </div>
         </div>
@@ -172,11 +159,13 @@
         </ContentCard>
       </div>
     </div>
+
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted, watch } from 'vue'
+import pelaporanService from '@/services/pelaporan.service.js' 
 import ContentCard from '@/presentations/components/ui/ContentCard.vue'
 import SelectSearch from '@/presentations/components/SelectSearch.vue'
 import BaseButton from '@/presentations/components/ui/BaseButton.vue'
@@ -187,96 +176,160 @@ const selectedTanggal = ref('')
 const selectedNamaLaporan = ref('')
 const selectedNamaSubLaporan = ref('')
 
-const tahunOptions = ref([
-  { id: '2026', text: '2026' },
-  { id: '2025', text: '2025' },
-  { id: '2024', text: '2024' },
-  { id: '2023', text: '2023' },
-  { id: '2022', text: '2022' },
-  { id: '2021', text: '2021' },
-  { id: '2020', text: '2020' },
-  { id: '2019', text: '2019' },
-  { id: '2018', text: '2018' },
-  { id: '2017', text: '2017' },
-  { id: '2016', text: '2016' },
-  { id: '2015', text: '2015' },
-])
+const tahunOptions = ref([])
+const namaLaporanOptions = ref([])
+const namaSubLaporanOptions = ref([]) 
 
 const bulanOptions = ref([
-  { id: '01', text: 'Januari' },
-  { id: '02', text: 'Februari' },
-  { id: '03', text: 'Maret' },
-  { id: '04', text: 'April' },
-  { id: '05', text: 'Mei' },
-  { id: '06', text: 'Juni' },
-  { id: '07', text: 'Juli' },
-  { id: '08', text: 'Agustus' },
-  { id: '09', text: 'September' },
-  { id: '10', text: 'Oktober' },
-  { id: '11', text: 'November' },
-  { id: '12', text: 'Desember' },
+  { id: '01', text: '01. JANUARI' },
+  { id: '02', text: '02. FEBRUARI' },
+  { id: '03', text: '03. MARET' },
+  { id: '04', text: '04. APRIL' },
+  { id: '05', text: '05. MEI' },
+  { id: '06', text: '06. JUNI' },
+  { id: '07', text: '07. JULI' },
+  { id: '08', text: '08. AGUSTUS' },
+  { id: '09', text: '09. SEPTEMBER' },
+  { id: '10', text: '10. OKTOBER' },
+  { id: '11', text: '11. NOVEMBER' },
+  { id: '12', text: '12. DESEMBER' },
 ])
 
-const tanggalOptions = ref(
-  Array.from({ length: 31 }, (_, i) => ({
+const tanggalOptions = ref([
+  { id: '', text: '---' },
+  ...Array.from({ length: 31 }, (_, i) => ({
     id: String(i + 1).padStart(2, '0'),
     text: String(i + 1),
-  })),
-)
-
-const namaLaporanOptions = ref([
-  { id: 'laba-rugi', text: 'Laba Rugi' },
-  { id: 'neraca', text: 'Neraca' },
-  { id: 'arus-kas', text: 'Arus Kas' },
-  { id: 'perubahan-modal', text: 'Perubahan Modal' },
-  { id: 'rekap-transaksi', text: 'Rekapitulasi Transaksi' },
-  { id: 'jurnal-umum', text: 'Jurnal Umum' },
-  { id: 'buku-besar', text: 'Buku Besar' },
-  { id: 'laporan-penjualan', text: 'Laporan Penjualan' },
-  { id: 'laporan-pembelian', text: 'Laporan Pembelian' },
-  { id: 'laporan-stok', text: 'Laporan Stok Barang' },
-  { id: 'laporan-piutang', text: 'Laporan Piutang Usaha' },
-  { id: 'laporan-utang', text: 'Laporan Utang Usaha' },
+  }))
 ])
 
-const namaSubLaporanOptions = ref([
-  { id: 'harian', text: 'Harian' },
-  { id: 'mingguan', text: 'Mingguan' },
-  { id: 'bulanan', text: 'Bulanan' },
-  { id: 'kuartalan', text: 'Kuartalan' },
-  { id: 'semester', text: 'Semester' },
-  { id: 'tahunan', text: 'Tahunan' },
-  { id: 'kumulatif', text: 'Kumulatif' },
-  { id: 'per-periode', text: 'Per Periode' },
-])
+const fetchMasterFilterPelaporan = async () => {
+  try {
+    const res = await pelaporanService.getMasterFilter() 
+    
+    if (res.success) {
+      namaLaporanOptions.value = res.data.laporan
+      selectedNamaLaporan.value = ''
 
-const handlePreview = () => {
-  console.log('Preview clicked', {
-    tahun: selectedTahun.value,
-    bulan: selectedBulan.value,
-    tanggal: selectedTanggal.value,
-    namaLaporan: selectedNamaLaporan.value,
-    namaSubLaporan: selectedNamaSubLaporan.value,
-  })
+      const thnAwal = res.data.tahun_awal ? parseInt(res.data.tahun_awal) : new Date().getFullYear()
+      const thnSekarang = new Date().getFullYear() 
+      
+      const listTahun = []
+      for (let i = thnSekarang; i >= thnAwal; i--) {
+        listTahun.push({ 
+          id: String(i), // Disinkronkan dalam tipe data String agar dibaca komponen Select
+          text: String(i) 
+        })
+      }
+      tahunOptions.value = listTahun
+      selectedTahun.value = String(thnSekarang)
+    }
+  } catch (error) {
+    console.error('Gagal memuat master filter pelaporan:', error)
+  }
 }
 
-const handleExcel = () => {
-  console.log('Excel clicked', {
-    tahun: selectedTahun.value,
-    bulan: selectedBulan.value,
-    tanggal: selectedTanggal.value,
-    namaLaporan: selectedNamaLaporan.value,
-    namaSubLaporan: selectedNamaSubLaporan.value,
-  })
+const fetchSubLaporanDinamis = async (fileJenisLaporan) => {
+  if (!fileJenisLaporan || fileJenisLaporan === '') {
+    namaSubLaporanOptions.value = [
+      { id: '', text: '---' }
+    ]
+    selectedNamaSubLaporan.value = ''
+    return
+  }
+
+  try {
+    const res = await pelaporanService.getSubLaporan(fileJenisLaporan)
+    if (res.success) {
+      if (res.data && res.data.length > 0) {
+        namaSubLaporanOptions.value = res.data.map(sub => ({
+          id: String(sub.value),
+          text: sub.title
+        }))
+        selectedNamaSubLaporan.value = namaSubLaporanOptions.value[0].id
+      } else {
+        namaSubLaporanOptions.value = [
+          { id: '', text: '---' }
+        ]
+        selectedNamaSubLaporan.value = ''
+      }
+    }
+  } catch (error) {
+    console.error(`Gagal memuat sub laporan untuk ${fileJenisLaporan}:`, error)
+  }
 }
 
-const handleSimpanSaldo = () => {
-  console.log('Simpan Saldo clicked', {
+watch(selectedNamaLaporan, (newFile) => {
+  fetchSubLaporanDinamis(newFile)
+})
+
+onMounted(() => {
+  fetchMasterFilterPelaporan()
+  
+  namaSubLaporanOptions.value = [
+    { id: '', text: '---' }
+  ]
+  selectedNamaSubLaporan.value = ''
+  selectedTanggal.value = ''
+
+  const currentMonth = String(new Date().getMonth() + 1).padStart(2, '0')
+  selectedBulan.value = currentMonth
+})
+
+const getFilterPayload = () => {
+  return {
     tahun: selectedTahun.value,
     bulan: selectedBulan.value,
     tanggal: selectedTanggal.value,
-    namaLaporan: selectedNamaLaporan.value,
-    namaSubLaporan: selectedNamaSubLaporan.value,
-  })
+    nama_laporan: selectedNamaLaporan.value,
+    nama_sub_laporan: selectedNamaSubLaporan.value,
+  }
+}
+
+const handlePreview = async () => {
+  const payload = getFilterPayload()
+  const query = new URLSearchParams({
+    tahun: payload.tahun || '',
+    bulan: payload.bulan || '',
+    tanggal: payload.tanggal || '',
+    nama_laporan: payload.nama_laporan || '',
+    nama_sub_laporan: payload.nama_sub_laporan || '',
+  }).toString()
+
+  const previewUrl = `${window.location.origin}/pelaporan/preview?${query}`
+  const newTab = window.open(previewUrl, '_blank')
+  if (!newTab) {
+    window.location.href = previewUrl
+  }
+}
+
+const handleExcel = async () => {
+  try {
+    const payload = getFilterPayload()
+    const blobData = await pelaporanService.exportExcel(payload)
+    
+    const url = window.URL.createObjectURL(new Blob([blobData]))
+    const link = document.createElement('a')
+    link.href = url
+    link.setAttribute('download', `Laporan_${selectedNamaLaporan.value}_${selectedTahun.value}.xlsx`)
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+  } catch (error) {
+    console.error('Gagal mengunduh berkas Excel:', error)
+  }
+}
+
+const handleSimpanSaldo = async () => {
+  try {
+    const payload = getFilterPayload()
+    const res = await pelaporanService.simpanSaldo(payload)
+    
+    if (res.success) {
+      console.log('Saldo akhir berhasil disimpan ke database:', res.message)
+    }
+  } catch (error) {
+    console.error('Gagal menyimpan saldo akhir:', error)
+  }
 }
 </script>
