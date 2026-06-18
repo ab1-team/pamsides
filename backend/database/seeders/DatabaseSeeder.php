@@ -13,7 +13,14 @@ class DatabaseSeeder extends Seeder
             InstallationPackageSeeder::class,
             InstallationTicketSeeder::class, 
             CustomerSeeder::class,
-            SettingsSeeder::class,   
+            SettingsSeeder::class,
+            AccountsTableSeeder::class,   
+            AkunLevel1Seeder::class,
+            AkunLevel2Seeder::class,
+            AkunLevel3Seeder::class,
+            EbudgetingSeeder::class,
+            JenisTransactionsSeeder::class,
+            MasterArusKasSeeder::class,
         ]);
     }
 }
