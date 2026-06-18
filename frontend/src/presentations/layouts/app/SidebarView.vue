@@ -317,14 +317,15 @@ const menuItems = [
     children: [
       { label: 'Input Tagihan', to: '/app/instalasi/pemakaian-air' },
       { label: 'Daftar Tagihan', to: '/app/instalasi/daftar-tagihan' },
-      { label: 'Pembayaran Tagihan', to: '/app/transaksi/tagihan-bulanan' },
+      { label: 'Tagihan Bulanan', to: '/app/transaksi/tagihan-bulanan' },
+      { label: 'Tagihan Instalasi', to: '/app/transaksi/tagihan-instalasi' },
     ],
   },
   {
     label: 'Pelaporan',
     icon: 'file-alt',
     roles: ['admin'],
-    to: '/app/Pelaporan',
+    to: '/app/pelaporan',
   },
 ]
 

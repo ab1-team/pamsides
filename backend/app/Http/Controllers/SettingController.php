@@ -65,4 +65,21 @@ class SettingController extends Controller
             'data' => $villages,
         ]);
     }
+
+    public function getPaymentMode()
+    {
+        $row = DB::table('settings')->first();
+
+        $statusPembayaran = isset($row->status_pembayaran) ? (int) $row->status_pembayaran : 1;
+
+        $mustBeFullyPaid = $statusPembayaran === 1;
+
+        return response()->json([
+            'success' => true,
+            'data'    => [
+                'status_pembayaran' => $statusPembayaran,
+                'must_be_fully_paid' => $mustBeFullyPaid,
+            ],
+        ]);
+    }
 }

@@ -9,42 +9,27 @@ class SettingsSeeder extends Seeder
 {
     public function run(): void
     {
-        DB::table('settings')->insert([
+        DB::table('settings')->updateOrInsert(
+            ['id' => 1],
             [
-                'key' => 'lembaga',
-                'value' => json_encode([
-                    'nama_lembaga' => 'BUMDes Tirta Makmur',
-                    'alamat' => 'Desa Sonosari',
-                    'telepon' => '08123456789'
-                ])
-            ],
-            [
-                'key' => 'sistem_tagihan',
-                'value' => json_encode([
-                    'jatuh_tempo' => 20,
-                    'denda' => 5000
-                ])
-            ],
-            [
-                'key' => 'pasang_baru',
-                'value' => json_encode([
-                    'biaya_pendaftaran' => 150000,
-                    'estimasi_hari' => 3
-                ])
-            ],
-            [
-                'key' => 'whatsapp',
-                'value' => json_encode([
-                    'template_tagihan' => 'Tagihan Anda {{total}}',
-                    'template_pasang_baru' => 'Pengajuan diproses'
-                ])
-            ],
-            [
-                'key' => 'logo',
-                'value' => json_encode([
-                    'logo' => 'sop/logo/test.png'
-                ])
+                'key' => 'sop',
+                'value' => '',
+                'nama' => 'PAMSIDES Tirto Mulo',
+                'alamat' => 'Desa Sonosari, Kecamatan Karangmalang, Kabupaten Sragen',
+                'email' => 'admin@tirtomulo.desa.id',
+                'telepon' => '08123456789',
+                'domain' => 'https://tirtomulo.desa.id',
+                'status_pembayaran' => true,
+                'batas_tagihan' => 10,
+                'toleransi_tunggakan' => 3,
+                'logo' => null,
+                'pesan_tagihan' => 'Yth. {customer}, tagihan air bulan ini sebesar {jumlah_tagihan}. Mohon segera melakukan pembayaran sebelum jatuh tempo. Terima kasih.',
+                'pesan_pembayaran' => 'Yth. {customer}, pembayaran tagihan air sebesar {tagihan} telah kami terima. Terima kasih.',
+                'updated_at' => now(),
             ]
-        ]);
+        );
+
+        // Hapus baris duplikat dari seeder lama (key-value lama)
+        DB::table('settings')->where('id', '!=', 1)->delete();
     }
 }

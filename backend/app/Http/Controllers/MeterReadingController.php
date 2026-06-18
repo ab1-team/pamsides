@@ -3,10 +3,16 @@
 namespace App\Http\Controllers;
 
 use App\Models\Customer;
+use App\Models\InstallationTicket;
 use App\Models\MeterReading;
+use App\Models\MonthlyBill;
+use App\Models\Setting;
+use App\Services\BillingService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 class MeterReadingController extends Controller
 {
@@ -76,22 +82,22 @@ class MeterReadingController extends Controller
     }
 
     /**
-     * Simpan data pencatatan meter baru
+     * Simpan data pencatatan meter baru + generate tagihan + cek tunggakan
      */
     public function store(Request $request)
     {
         $request->validate([
             'customer_id' => 'required|exists:customers,id',
-            'meter_value' => 'required|integer|min:0',
+            'meter_value' => 'required|numeric|min:0|max:99999999.99',
             'photo' => 'required|image|max:2048',
-            'reading_month' => 'nullable|integer|between:1,12',
-            'reading_year' => 'nullable|integer|min:2000',
+            'reading_month' => 'required|integer|between:1,12',
+            'reading_year' => 'required|integer|min:2000',
         ]);
 
-        $bulan = $request->reading_month ?? Carbon::now()->month;
-        $tahun = $request->reading_year ?? Carbon::now()->year;
+        $bulan = $request->reading_month;
+        $tahun = $request->reading_year;
 
-        // Cek apakah sudah ada input pada periode ini
+        // Cek duplikat
         $exists = MeterReading::where('customer_id', $request->customer_id)
             ->where('reading_month', $bulan)
             ->where('reading_year', $tahun)
@@ -104,7 +110,7 @@ class MeterReadingController extends Controller
             ], 400);
         }
 
-        // Ambil data meter terakhir (secara urutan waktu global ke belakang)
+        // Cek meter >= bulan lalu
         $last = MeterReading::where('customer_id', $request->customer_id)
             ->orderByDesc('reading_year')
             ->orderByDesc('reading_month')
@@ -118,23 +124,67 @@ class MeterReadingController extends Controller
             ], 400);
         }
 
-        // Upload foto bukti meteran ke public storage
-        $path = $request->file('photo')->store('meter-readings', 'public');
+        // Baca settings
+        $settings = Setting::first();
+        $batasTagihan = $settings?->batas_tagihan ?? 27;
+        $toleransiTunggakan = $settings?->toleransi_tunggakan ?? 0;
 
-        $reading = MeterReading::create([
-            'customer_id' => $request->customer_id,
-            'recorded_by' => Auth::id(), // Menggunakan ID user yang sedang login
-            'reading_month' => $bulan,
-            'reading_year' => $tahun,
-            'meter_value' => $request->meter_value,
-            'photo_url' => $path,
-            'recorded_at' => now(),
-        ]);
+        // Upload foto
+        $file = $request->file('photo');
+        $fileName = time().'_'.$file->getClientOriginalName();
+        $file->storeAs('meter-readings', $fileName, 'public');
+
+        // recorded_at sesuai batas_tagihan dari settings
+        $recordedAt = Carbon::create($tahun, $bulan, min($batasTagihan, Carbon::create($tahun, $bulan)->daysInMonth));
+
+        $result = DB::transaction(function () use ($request, $bulan, $tahun, $fileName, $recordedAt, $batasTagihan, $toleransiTunggakan) {
+            // Simpan meter reading
+            $reading = MeterReading::create([
+                'customer_id' => $request->customer_id,
+                'recorded_by' => Auth::id(),
+                'reading_month' => $bulan,
+                'reading_year' => $tahun,
+                'meter_value' => $request->meter_value,
+                'photo_url' => $fileName,
+                'recorded_at' => $recordedAt,
+            ]);
+
+            // Generate tagihan langsung
+            $customer = Customer::with(['ticket.package.waterTariffBlocks'])->find($request->customer_id);
+            $billingService = new BillingService();
+            $bill = $billingService->generateForCustomer($customer, $tahun, $bulan, $batasTagihan);
+
+            // Cek tunggakan unpaid
+            $isSuspended = false;
+            if ($toleransiTunggakan > 0) {
+                $unpaidCount = MonthlyBill::where('customer_id', $customer->id)
+                    ->where('status', 'unpaid')
+                    ->count();
+
+                if ($unpaidCount >= $toleransiTunggakan) {
+                    $ticket = InstallationTicket::find($customer->ticket_id);
+                    if ($ticket && $ticket->status !== 'suspended') {
+                        $ticket->update(['status' => 'suspended']);
+                    }
+                    $isSuspended = true;
+                }
+            }
+
+            return [
+                'reading' => $reading,
+                'bill' => $bill,
+                'is_suspended' => $isSuspended,
+            ];
+        });
+
+        $message = $result['is_suspended']
+            ? 'Meter dicatat, tagihan dibuat. Pelanggan DISUSPEND karena tunggakan!'
+            : 'Meter berhasil dicatat dan tagihan dibuat';
 
         return response()->json([
             'success' => true,
-            'message' => 'Meter berhasil dicatat',
-            'data' => $reading,
+            'message' => $message,
+            'data' => $result,
         ]);
     }
 
@@ -169,7 +219,7 @@ class MeterReadingController extends Controller
 
         // Validasi input
         $request->validate([
-            'meter_value' => 'required|integer|min:0',
+            'meter_value' => 'required|numeric|min:0|max:99999999.99',
             'photo' => 'nullable|image|max:2048',
         ]);
 

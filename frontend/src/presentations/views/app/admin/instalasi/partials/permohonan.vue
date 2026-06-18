@@ -1,79 +1,62 @@
 <template>
   <div class="max-w-6xl! mx-auto grid! grid-cols-1! lg:grid-cols-5! gap-6">
     <div class="lg:col-span-2! flex! flex-col! gap-6!">
-      <ContentCard variant="bordered" padding="large" rounded="2xl">
-        <div class="flex! items-start! justify-between! gap-4!">
-          <div class="flex-1!">
-            <p class="text-xs! font-bold! text-indigo-500! uppercase! tracking-widest! mb-2!">
-              Customer Profile
-            </p>
-            <h1 class="text-2xl! md:text-3xl! font-extrabold! text-slate-800! mb-3!">
-              {{ customer.name }}
-            </h1>
-            <div class="flex! items-start! gap-2! text-slate-500!">
-              <font-awesome-icon icon="map-marker-alt" class="text-indigo-400! mt-0.5! shrink-0!" />
-              <div>
-                <p class="text-sm! font-medium!">{{ customer.address }}</p>
-                <p class="text-xs! text-slate-400!">{{ customer.region }}</p>
-              </div>
-            </div>
-          </div>
-          <div class="shrink-0! flex! flex-col! items-center! gap-2!">
-            <div
-              class="w-24! h-24! bg-slate-800! rounded-xl! flex! items-center! justify-center! shadow-md!"
-            >
-              <font-awesome-icon icon="qrcode" class="text-white! text-5xl!" />
-            </div>
-            <span class="text-[10px]! text-slate-400! font-medium! tracking-wide!"
-              >Work Order QR</span
-            >
-          </div>
-        </div>
-
-        <div class="border-t! border-dashed! border-slate-200! mt-4! pt-4!">
-          <h3 class="text-sm! font-bold! text-slate-800! mb-3! flex! items-center! gap-2!">
-            <font-awesome-icon icon="file-invoice" class="text-indigo-500!" />
-            Informasi Permohonan
-          </h3>
-
-          <div class="info-grid">
-            <div class="info-item">
-              <span class="info-label">No. Induk</span>
-              <span class="info-value" v-html="formatInduk(customer.noInduk)"></span>
-            </div>
-
-            <div class="info-item">
-              <span class="info-label">Tgl Order</span>
-              <span class="info-value">{{ customer.tglOrder }}</span>
-            </div>
-
-            <div class="info-item">
-              <span class="info-label">Paket Instalasi</span>
-              <span class="info-value paket">{{ customer.paket }}</span>
-            </div>
-
-            <div class="info-item">
-              <span class="info-label">Abodemen</span>
-              <span class="info-value">{{ customer.abodemen }}</span>
-            </div>
-          </div>
-        </div>
-      </ContentCard>
-
       <ContentCard variant="bordered" padding="normal" rounded="2xl">
-        <div class="grid! grid-cols-2! gap-3!">
+        <div class="flex! items-center! justify-between! mb-3!">
+          <p class="text-[10px]! font-bold! text-indigo-500! uppercase! tracking-widest!">
+            Permohonan Baru
+          </p>
+          <span
+            class="inline-flex! items-center! gap-1! px-2.5! py-1! rounded-full! text-[10px]! font-bold! uppercase! tracking-wider! bg-indigo-100! text-indigo-700!"
+          >
+            <span class="w-1.5! h-1.5! rounded-full! bg-current! opacity-60!"></span>
+            Pending
+          </span>
+        </div>
+        <h1 class="text-lg! font-bold! text-slate-800! truncate! mb-1!">{{ customer.name }}</h1>
+        <div class="flex! items-center! gap-1.5! text-slate-500!">
+          <font-awesome-icon icon="map-marker-alt" class="text-indigo-400! text-[10px]! shrink-0!" />
+          <p class="text-[11px]! truncate!">{{ customer.address }}, {{ customer.region }}</p>
+        </div>
+
+        <div class="grid! grid-cols-2! gap-2! mt-4! pt-4! border-t! border-slate-100!">
+          <div class="info-item">
+            <span class="info-label">No. Induk</span>
+            <span class="info-value">{{ customer.noInduk }}</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">NIK</span>
+            <span class="info-value">{{ customer.nik }}</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Paket</span>
+            <span class="info-value">{{ customer.paket }}</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Abodemen</span>
+            <span class="info-value">Rp {{ customer.abodemen }}</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Tgl Order</span>
+            <span class="info-value">{{ customer.tglOrder }}</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">No. Telepon</span>
+            <span class="info-value">{{ customer.phone }}</span>
+          </div>
+        </div>
+
+        <div class="grid! grid-cols-2! gap-2! mt-4!">
           <button
             @click="handlePrint"
-            class="flex! items-center! justify-center! gap-2! bg-indigo-600! hover:bg-indigo-700! text-white! font-semibold! py-2.5! rounded-lg! text-sm! transition-all!"
+            class="flex! items-center! justify-center! gap-2! bg-indigo-600! hover:bg-indigo-700! text-white! font-semibold! py-2.5! rounded-xl! text-sm! transition-all!"
           >
             <font-awesome-icon icon="print" />
             Cetak
           </button>
           <button
-            @click="
-              $router.push({ path: '/app/instalasi/status', query: { filter: 'permohonan' } })
-            "
-            class="flex! items-center! justify-center! gap-2! bg-slate-100! hover:bg-slate-200! text-slate-600! font-semibold! py-2.5! rounded-lg! text-sm! transition-all!"
+            @click="$router.push({ path: '/app/instalasi/status', query: { filter: 'permohonan' } })"
+            class="flex! items-center! justify-center! gap-2! border! border-slate-200! hover:bg-slate-50! text-slate-600! font-semibold! py-2.5! rounded-xl! text-sm! transition-all! bg-white!"
           >
             <font-awesome-icon icon="arrow-left" />
             Kembali
@@ -263,40 +246,36 @@ const isFormValid = computed(() => {
   return formData.distance_to_pipe_m && formData.material_notes && formData.photo
 })
 
-const formatInduk = (val) => {
-  if (!val || val === '-') return '-'
-  return `<span class="text-blue-600 font-bold">${val}</span>`
-}
-
 const customer = computed(() => {
+  const empty = {
+    name: 'Pelanggan Tidak Ditemukan',
+    address: 'Alamat belum tercatat',
+    region: 'Wilayah belum tercatat',
+    noInduk: 'Tidak tersedia',
+    nik: 'Tidak tersedia',
+    phone: 'Tidak tersedia',
+    abodemen: '0',
+    tglOrder: 'Belum tercatat',
+    paket: 'Belum ada paket',
+    kodeInstalasi: 'Tidak tersedia',
+    isPaid: false,
+    ticketId: null,
+    rawStatus: null,
+  }
+
   const found = dataMap.value.permohonan?.find((r) => r.id === id || String(r.ticketId) === id)
-  if (!found)
-    return {
-      name: 'Tidak Ditemukan',
-      address: '-',
-      region: '-',
-      noInduk: '-',
-      nik: '-',
-      phone: '-',
-      abodemen: '0',
-      tglOrder: '-',
-      paket: '-',
-      kodeInstalasi: '-',
-      isPaid: false,
-      ticketId: null,
-      rawStatus: null,
-    }
+  if (!found) return empty
   return {
-    name: found.name,
-    address: found.address,
-    region: found.village || '-',
-    noInduk: found.id,
-    nik: found.nik,
-    phone: found.phone,
+    name: found.name || 'Pelanggan Tidak Ditemukan',
+    address: found.address || 'Alamat belum tercatat',
+    region: found.village || 'Wilayah belum tercatat',
+    noInduk: found.id || 'Tidak tersedia',
+    nik: found.nik || 'Tidak tersedia',
+    phone: found.phone || 'Tidak tersedia',
     abodemen: found.rawData?.package?.installation_fee || '0',
-    tglOrder: found.orderDate || found.createdAt,
-    paket: found.type,
-    kodeInstalasi: found.id,
+    tglOrder: found.orderDate || found.createdAt || 'Belum tercatat',
+    paket: found.type || 'Belum ada paket',
+    kodeInstalasi: found.id || 'Tidak tersedia',
     isPaid:
       found.rawStatus === 'unpaid' ||
       found.rawStatus === 'processing' ||
@@ -412,40 +391,16 @@ onMounted(async () => {
 <style scoped>
 @reference "@/assets/css/main.css";
 
-.info-grid {
-  @apply grid grid-cols-2 gap-3;
-}
-
 .info-item {
-  @apply flex flex-col gap-1 bg-white rounded-xl p-3 border border-slate-100 shadow-sm;
+  @apply flex flex-col gap-0.5 bg-slate-50 rounded-lg px-3! py-2! border border-slate-100;
 }
 
 .info-label {
-  @apply text-[10px] font-bold text-slate-400 uppercase tracking-wider;
+  @apply text-[9px] font-bold text-slate-400 uppercase tracking-wider;
 }
 
 .info-value {
-  @apply text-sm font-bold text-slate-800 truncate;
-}
-
-.section-header {
-  @apply flex flex-col gap-0.5;
-}
-
-.section-title {
-  @apply text-sm font-bold text-slate-800;
-}
-
-.section-subtitle {
-  @apply text-[11px] text-slate-400 font-medium mt-0.5;
-}
-
-.upload-placeholder {
-  @apply border-2 border-dashed border-slate-200 rounded-2xl;
-}
-
-.upload-placeholder-secondary {
-  @apply flex items-center gap-4 border border-slate-200 rounded-2xl;
+  @apply text-[12px] font-bold text-slate-800 truncate;
 }
 
 .preview-slot {

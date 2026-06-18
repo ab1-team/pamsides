@@ -1,17 +1,17 @@
 <template>
-  <div class="registrasi-root!">
-    <div class="mb-2!">
-      <h1 class="text-2xl! font-bold! text-slate-800! tracking-tight!">Register Instalasi</h1>
-      <p class="text-sm! text-slate-500! mt-1!">
+  <div class="registrasi-root! px-3! sm:px-0!">
+    <div class="mb-3! sm:mb-2!">
+      <h1 class="text-xl! sm:text-2xl! font-bold! text-slate-800! tracking-tight!">Register Instalasi</h1>
+      <p class="text-xs! sm:text-sm! text-slate-500! mt-1!">
         Buat koneksi layanan baru untuk pelanggan yang telah divalidasi.
       </p>
     </div>
 
-    <div class="mb-5!">
+    <div class="mb-4! sm:mb-5!">
       <div class="relative!" ref="customerSelectRef">
         <ContentCard variant="bordered" padding="none" rounded="xl" class="overflow-hidden!">
           <div
-            class="flex! items-center! gap-3! w-full! bg-white! rounded-xl! pl-4! py-0! transition-all! duration-200!"
+            class="flex! items-center! gap-2! sm:gap-3! w-full! bg-white! rounded-xl! pl-3! sm:pl-4! py-0! transition-all! duration-200!"
             :class="[
               isCustomerDropdownOpen
                 ? 'border-blue-400! ring-2! ring-blue-100! shadow-xl! shadow-blue-500/10!'
@@ -23,8 +23,8 @@
             <input
               v-model="customerSearch"
               type="text"
-              placeholder="Search Nama, NIK.."
-              class="flex-1! bg-transparent! border-none! text-sm! text-slate-700! placeholder-slate-400! focus:outline-none! py-4!"
+              placeholder="Cari nama / NIK..."
+              class="flex-1! min-w-0! bg-transparent! border-none! text-sm! text-slate-700! placeholder-slate-400! focus:outline-none! py-3.5! sm:py-4!"
               @focus="isCustomerDropdownOpen = true"
               @input="isCustomerDropdownOpen = true"
             />
@@ -34,13 +34,13 @@
                 v-if="selectedCustomer || customerSearch"
                 variant="ghost"
                 size="sm"
-                class="w-10! h-10! p-0! rounded-full! mr-2!"
+                class="w-9! h-9! sm:w-10! sm:h-10! p-0! rounded-full! mr-1! sm:mr-2!"
                 @click.stop="clearCustomer"
                 icon="times"
               />
               <BaseButton
                 variant="primary"
-                class="h-[52px]! px-4! sm:px-5! rounded-l-none! rounded-r-xl! border-none! bg-linear-to-r! from-indigo-600! via-blue-600! to-cyan-500! shadow-lg! shadow-indigo-500/20! hover:shadow-indigo-500/40! text-white! ring-offset-0! focus:ring-0!"
+                class="h-[48px]! sm:h-[52px]! px-3! sm:px-5! rounded-l-none! rounded-r-xl! border-none! bg-linear-to-r! from-indigo-600! via-blue-600! to-cyan-500! shadow-lg! shadow-indigo-500/20! hover:shadow-indigo-500/40! text-white! ring-offset-0! focus:ring-0!"
                 icon="user-plus"
                 @click.stop="handleNewCustomerRegistration"
               >
@@ -100,13 +100,44 @@
                   </div>
                   <div
                     :class="[
-                      'text-[9px]! font-black! px-2! py-0.5! rounded-md! border! shrink-0! uppercase! tracking-wider!',
+                      'text-[9px]! font-black! px-2! py-0.5! rounded-md! border! shrink-0! uppercase! tracking-wider! flex! items-center! gap-1!',
                       customer.status === 'Aktif'
-                        ? 'bg-emerald-50 border-emerald-200 text-emerald-700'
-                        : 'bg-slate-50 border-slate-200 text-slate-600',
+                        ? 'bg-emerald-50! border-emerald-200! text-emerald-700!'
+                        : customer.status === 'Draft'
+                          ? 'bg-amber-50! border-amber-200! text-amber-700!'
+                          : customer.status === 'Suspended'
+                            ? 'bg-orange-50! border-orange-200! text-orange-700!'
+                            : customer.status === 'Terminated'
+                              ? 'bg-rose-50! border-rose-200! text-rose-700!'
+                              : 'bg-slate-50! border-slate-200! text-slate-600!',
                     ]"
+                    :title="customer.statusLabel"
                   >
-                    {{ customer.status === 'Aktif' ? 'Terdaftar' : 'Belum Terdaftar' }}
+                    <font-awesome-icon
+                      :icon="
+                        customer.status === 'Aktif'
+                          ? 'check-circle'
+                          : customer.status === 'Draft'
+                            ? 'edit'
+                            : customer.status === 'Suspended'
+                              ? 'lock'
+                              : customer.status === 'Terminated'
+                                ? 'ban'
+                                : 'circle-xmark'
+                      "
+                      class="text-[9px]!"
+                    />
+                    {{
+                      customer.status === 'Aktif'
+                        ? 'Terdaftar'
+                        : customer.status === 'Draft'
+                          ? 'Belum Daftar'
+                          : customer.status === 'Suspended'
+                            ? 'Blokir'
+                            : customer.status === 'Terminated'
+                              ? 'Cabut'
+                              : 'Tidak Aktif'
+                    }}
                   </div>
                 </div>
               </BaseButton>
@@ -129,7 +160,7 @@
       >
         <div
           v-if="selectedCustomer"
-          class="bg-linear-to-br! from-indigo-600! via-blue-600! to-cyan-500! p-4! sm:p-5! text-white! flex! items-center! gap-4! sm:gap-5! border-b! border-white/10!"
+          class="bg-linear-to-br! from-indigo-600! via-blue-600! to-cyan-500! p-3! sm:p-5! text-white! flex! flex-wrap! items-center! gap-3! sm:gap-5! border-b! border-white/10!"
         >
           <div
             class="w-10! h-10! sm:w-14! sm:h-14! rounded-full! bg-white/20! backdrop-blur-md! flex! items-center! justify-center! text-white! font-bold! text-base! sm:text-xl! border-2! border-white/40! shrink-0!"
@@ -137,30 +168,126 @@
             {{ selectedCustomer.name.charAt(0).toUpperCase() }}
           </div>
           <div class="flex-1! min-w-0!">
-            <div class="font-bold! text-white! text-base! sm:text-lg! truncate! tracking-tight!">
+            <div class="font-bold! text-white! text-sm! sm:text-lg! truncate! tracking-tight!">
               {{ selectedCustomer.name }}
             </div>
             <div
-              class="flex! items-center! gap-2! text-blue-50! text-[10px]! sm:text-xs! mt-0.5! sm:mt-1! opacity-90!"
+              class="flex! flex-wrap! items-center! gap-x-2! gap-y-0.5! text-blue-50! text-[10px]! sm:text-xs! mt-0.5! opacity-90!"
             >
-              <span class="font-mono! font-bold!">ID Tiket: {{ selectedCustomer.id }}</span>
+              <span class="font-mono! font-bold!">NIK: {{ selectedCustomer.nik }}</span>
               <span class="hidden! sm:inline!">·</span>
-              <span class="truncate! hidden! sm:inline!">NIK: {{ selectedCustomer.nik }}</span>
+              <span class="truncate!">
+                Status:
+                <span class="font-bold! text-white!">{{ selectedCustomer.statusLabel || '-' }}</span>
+              </span>
             </div>
           </div>
           <div
-            class="backdrop-blur-md! text-white! border! text-[9px]! sm:text-[10px]! font-bold! px-2! sm:px-3! py-1! sm:py-1.5! rounded-full! shrink-0! uppercase! tracking-wider! bg-white/20! border-white/30!"
+            class="backdrop-blur-md! text-white! border! text-[9px]! sm:text-[10px]! font-bold! px-2! sm:px-3! py-1! sm:py-1.5! rounded-full! shrink-0! uppercase! tracking-wider! bg-white/20! border-white/30! flex! items-center! gap-1!"
+            :title="selectedCustomer.statusLabel"
           >
-            ✓ {{ selectedCustomer.status }}
+            <font-awesome-icon
+              :icon="
+                selectedCustomer.status === 'Aktif'
+                  ? 'check-circle'
+                  : selectedCustomer.status === 'Draft'
+                    ? 'edit'
+                    : selectedCustomer.status === 'Suspended'
+                      ? 'lock'
+                      : selectedCustomer.status === 'Terminated'
+                        ? 'ban'
+                        : 'circle-xmark'
+              "
+            />
+            <span class="whitespace-nowrap!">
+              {{
+                selectedCustomer.status === 'Aktif'
+                  ? 'Terdaftar'
+                  : selectedCustomer.status === 'Draft'
+                    ? 'Belum Daftar'
+                    : selectedCustomer.status === 'Suspended'
+                      ? 'Blokir'
+                      : selectedCustomer.status === 'Terminated'
+                        ? 'Cabut'
+                        : 'Tidak Aktif'
+              }}
+            </span>
           </div>
         </div>
       </Transition>
 
       <div
+        v-if="selectedCustomer && selectedCustomer.isBlocked"
+        :class="[
+          'flex! flex-col! items-center! justify-center! text-center! py-8! sm:py-12! px-4! sm:px-6! gap-3! border-b!',
+          selectedCustomer.status === 'Suspended'
+            ? 'bg-orange-50! border-orange-200!'
+            : 'bg-rose-50! border-rose-200!',
+        ]"
+      >
+        <div
+          :class="[
+            'w-16! h-16! rounded-full! flex! items-center! justify-center! shadow-sm!',
+            selectedCustomer.status === 'Suspended'
+              ? 'bg-orange-100! text-orange-600!'
+              : 'bg-rose-100! text-rose-600!',
+          ]"
+        >
+          <font-awesome-icon
+            :icon="selectedCustomer.status === 'Suspended' ? 'lock' : 'ban'"
+            class="text-2xl!"
+          />
+        </div>
+        <h3
+          :class="[
+            'text-base! font-bold!',
+            selectedCustomer.status === 'Suspended' ? 'text-orange-900!' : 'text-rose-900!',
+          ]"
+        >
+          {{
+            selectedCustomer.status === 'Suspended'
+              ? 'Pendaftaran Ditolak — Pelanggan Dalam Status Blokir'
+              : 'Pendaftaran Ditolak — Pelanggan Sudah Dicabut'
+          }}
+        </h3>
+        <p
+          :class="[
+            'text-xs! max-w-md! leading-relaxed!',
+            selectedCustomer.status === 'Suspended' ? 'text-orange-800!' : 'text-rose-800!',
+          ]"
+        >
+          <template v-if="selectedCustomer.status === 'Suspended'">
+            Pelanggan <strong>{{ selectedCustomer.name }}</strong> masih memiliki
+            <strong>tagihan tertunggak</strong>. Formulir pendaftaran instalasi baru
+            dikunci. Mohon <strong>lunasi tagihan lama</strong> terlebih dahulu, kemudian
+            status akan dibuka kembali.
+          </template>
+          <template v-else>
+            Pelanggan <strong>{{ selectedCustomer.name }}</strong> sudah dalam status
+            <strong>cabut (terminated)</strong>. Koneksi air telah dicabut permanen dan
+            <strong>tidak dapat didaftarkan kembali</strong>.
+          </template>
+        </p>
+        <button
+          type="button"
+          @click="clearBlockedCustomer"
+          :class="[
+            'mt-2! px-4! py-2! rounded-lg! text-xs! font-bold! uppercase! tracking-wider! transition-all!',
+            selectedCustomer.status === 'Suspended'
+              ? 'bg-orange-500! hover:bg-orange-600! text-white!'
+              : 'bg-rose-500! hover:bg-rose-600! text-white!',
+          ]"
+        >
+          Pilih Pelanggan Lain
+        </button>
+      </div>
+
+      <div
+        v-else
         class="grid! grid-cols-1! lg:grid-cols-2! gap-2! divide-y! lg:divide-y-0! lg:divide-x! divide-slate-100!"
       >
-        <div class="p-5! lg:p-6!">
-          <div class="flex! items-center! gap-2.5! mb-5!">
+        <div class="p-4! sm:p-5! lg:p-6! bg-gradient-to-br! from-slate-50/60! to-white!">
+          <div class="flex! items-center! gap-2.5! mb-4! sm:mb-5!">
             <div class="w-8! h-8! bg-blue-100! rounded-lg! flex! items-center! justify-center!">
               <font-awesome-icon icon="file-alt" class="w-4! h-4! text-blue-600!" />
             </div>
@@ -174,7 +301,7 @@
           />
 
           <div class="space-y-4!">
-            <div class="grid! grid-cols-2! gap-3!">
+            <div class="grid! grid-cols-1! sm:grid-cols-2! gap-3!">
               <SelectSearch
                 v-model="form.user_id"
                 :options="caterUsersOptionsFormatted"
@@ -207,9 +334,9 @@
                   class="bg-white! border! border-slate-200! rounded-xl! divide-y! divide-slate-100! shadow-xs! overflow-hidden!"
                 >
                   <div
-                    class="px-3.5! py-2! grid! grid-cols-3! bg-slate-50/70! text-[10px]! font-bold! text-slate-400! uppercase! tracking-wider!"
+                    class="px-2.5! sm:px-3.5! py-2! grid! grid-cols-3! gap-2! sm:gap-4! bg-slate-50/70! text-[9px]! sm:text-[10px]! font-bold! text-slate-400! uppercase! tracking-wider!"
                   >
-                    <div>Nama</div>
+                    <div>Blok</div>
                     <div class="text-center!">Volume</div>
                     <div class="text-right!">Harga / m³</div>
                   </div>
@@ -218,7 +345,7 @@
                     v-for="(block, index) in selectedPackageDetails.water_tariff_blocks ||
                     selectedPackageDetails.tariffBlocks"
                     :key="block.id || index"
-                    class="p-3.5! grid! grid-cols-3! items-center! gap-4! hover:bg-slate-50/50! transition-colors!"
+                    class="p-2.5! sm:p-3.5! grid! grid-cols-3! items-center! gap-2! sm:gap-4! hover:bg-slate-50/50! transition-colors!"
                   >
                     <div class="flex! items-center! gap-3!">
                       <div
@@ -246,7 +373,7 @@
                 </div>
 
                 <div class="space-y-3!">
-                  <div class="grid! grid-cols-2! gap-3!">
+                  <div class="grid! grid-cols-1! sm:grid-cols-2! gap-3!">
                     <div
                       class="bg-slate-50! border! border-slate-200! rounded-xl! px-4! py-2.5! flex! justify-between! items-center! h-[46px]!"
                     >
@@ -275,20 +402,52 @@
                   </div>
 
                   <div class="grid! grid-cols-1! gap-3!">
-                    <div
-                      class="bg-white! border! border-slate-300! rounded-xl! px-4! py-2.5! flex! justify-between! items-center! h-[46px]!"
-                    >
-                      <div
-                        class="text-[11px]! font-semibold! text-slate-500! uppercase! tracking-wider!"
-                      >
-                        Nominal Pasang Baru
+                    <div>
+                      <div class="flex! items-center! justify-between! mb-1.5!">
+                        <label class="text-xs! font-semibold! text-slate-500!">
+                          Nominal Pasang Baru
+                        </label>
+                        <span
+                          v-if="isMustFullyPaid"
+                          class="text-[9px]! font-bold! uppercase! tracking-wider! px-1.5! py-0.5! rounded! bg-rose-100! text-rose-700! flex! items-center! gap-1!"
+                          title="Wajib Lunas: nominal dikunci sesuai paket"
+                        >
+                          <font-awesome-icon icon="lock" />
+                          Wajib Lunas
+                        </span>
+                        <span
+                          v-else
+                          class="text-[9px]! font-bold! uppercase! tracking-wider! px-1.5! py-0.5! rounded! bg-emerald-100! text-emerald-700! flex! items-center! gap-1!"
+                          title="Boleh dicicil: nominal bisa disesuaikan"
+                        >
+                          <font-awesome-icon icon="pen" />
+                          Bisa Dicicil
+                        </span>
                       </div>
-                      <input
-                        v-model="form.nominal"
-                        type="number"
-                        placeholder="0"
-                        class="text-sm! font-extrabold! text-blue-600! text-right! border-none! focus:outline-none! bg-transparent! w-32!"
-                      />
+                      <div
+                        class="flex! items-center! rounded-xl! border! transition-all!"
+                        :class="
+                          isMustFullyPaid
+                            ? 'bg-slate-50! border-slate-200!'
+                            : 'bg-white! border-slate-200! focus-within:border-blue-400! focus-within:ring-2! focus-within:ring-blue-100!'
+                        "
+                      >
+                        <span
+                          class="pl-3! text-xs! font-bold! text-slate-400! uppercase! tracking-wider!"
+                          >Rp</span
+                        >
+                        <input
+                          :value="nominalDisplay"
+                          @input="onNominalInput"
+                          :readonly="isMustFullyPaid"
+                          :disabled="isMustFullyPaid"
+                          type="text"
+                          inputmode="decimal"
+                          placeholder="0"
+                          class="w-full! px-3! py-2.5! text-sm! font-extrabold! text-right! border-none! focus:outline-none! bg-transparent!"
+                          :class="isMustFullyPaid ? 'text-slate-500! cursor-not-allowed!' : 'text-blue-600!'"
+                        />
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -297,8 +456,8 @@
           </div>
         </div>
 
-        <div class="p-5! lg:p-6!">
-          <div class="flex! items-center! gap-2.5! mb-5!">
+        <div class="p-4! sm:p-5! lg:p-6! bg-gradient-to-br! from-cyan-50/40! to-white!">
+          <div class="flex! items-center! gap-2.5! mb-4! sm:mb-5!">
             <div class="w-8! h-8! bg-cyan-100! rounded-lg! flex! items-center! justify-center!">
               <font-awesome-icon icon="map-marker-alt" class="w-4! h-4! text-cyan-600!" />
             </div>
@@ -322,21 +481,59 @@
             class="bg-slate-50!"
           />
 
-          <div class="grid! grid-cols-1! gap-3!">
-            <BaseInput
-              v-model="form.koordinat"
-              label="Koordinat"
-              placeholder="-6.123, 106.123"
-              customClass="font-mono pr-10"
-            >
-              <BaseButton
-                variant="ghost"
+          <div>
+            <div class="flex! items-center! justify-between! mb-1.5!">
+              <label class="text-xs! font-semibold! text-slate-500!">
+                Koordinat <span class="text-rose-500!">*</span>
+              </label>
+              <button
+                type="button"
                 @click="getCurrentLocation"
-                class="absolute! right-2! top-1/2! -translate-y-1/2! p-2! w-8! h-8! text-cyan-500! hover:text-cyan-700!"
+                class="text-[10px]! font-bold! text-cyan-600! hover:text-cyan-700! flex! items-center! gap-1! uppercase! tracking-wider!"
                 title="Gunakan lokasi saat ini"
-                icon="map-marker-alt"
-              />
-            </BaseInput>
+              >
+                <font-awesome-icon icon="location-crosshairs" />
+                Lokasi Saya
+              </button>
+            </div>
+            <div class="grid! grid-cols-1! sm:grid-cols-2! gap-2!">
+              <div
+                class="flex! items-center! rounded-xl! border! border-slate-200! bg-white! transition-all! focus-within:border-blue-400! focus-within:ring-2! focus-within:ring-blue-100!"
+              >
+                <span
+                  class="pl-3! text-xs! font-bold! text-slate-400! uppercase! tracking-wider! shrink-0!"
+                  >Lat</span
+                >
+                <input
+                  v-model="form.lat"
+                  @input="onLatLngInput"
+                  type="text"
+                  inputmode="decimal"
+                  placeholder="contoh: -7.4591"
+                  class="w-full! min-w-0! px-3! py-2.5! text-xs! sm:text-sm! font-mono! text-slate-700! border-none! focus:outline-none! bg-transparent!"
+                />
+              </div>
+              <div
+                class="flex! items-center! rounded-xl! border! border-slate-200! bg-white! transition-all! focus-within:border-blue-400! focus-within:ring-2! focus-within:ring-blue-100!"
+              >
+                <span
+                  class="pl-3! text-xs! font-bold! text-slate-400! uppercase! tracking-wider! shrink-0!"
+                  >Lng</span
+                >
+                <input
+                  v-model="form.lng"
+                  @input="onLatLngInput"
+                  type="text"
+                  inputmode="decimal"
+                  placeholder="contoh: 110.2589"
+                  class="w-full! min-w-0! px-3! py-2.5! text-xs! sm:text-sm! font-mono! text-slate-700! border-none! focus:outline-none! bg-transparent!"
+                />
+              </div>
+            </div>
+            <p class="text-[10px]! text-slate-400! mt-1.5!">
+              <font-awesome-icon icon="info-circle" class="mr-1!" />
+              Masukkan nilai desimal, contoh: -7.4591, 110.2589
+            </p>
           </div>
 
           <div>
@@ -344,7 +541,7 @@
               >Preview Lokasi</label
             >
             <div
-              class="relative! w-full! h-44! bg-linear-to-br! from-slate-100! to-slate-200! rounded-xl! overflow-hidden! border! border-slate-200!"
+              class="relative! w-full! h-40! sm:h-44! bg-linear-to-br! from-slate-100! to-slate-200! rounded-xl! overflow-hidden! border! border-slate-200!"
             >
               <div
                 class="absolute! inset-0!"
@@ -359,13 +556,13 @@
               <div
                 class="absolute! inset-0! flex! items-center! justify-center! pointer-events-none! z-0!"
               >
-                <div v-if="!hasCoordinates" class="text-center!">
+                <div v-if="!hasCoordinates" class="text-center! px-3!">
                   <div
-                    class="w-12! h-12! rounded-full! bg-white/80! border-2! border-dashed! border-slate-300! flex! items-center! justify-center! mx-auto! mb-2!"
+                    class="w-10! h-10! sm:w-12! sm:h-12! rounded-full! bg-white/80! border-2! border-dashed! border-slate-300! flex! items-center! justify-center! mx-auto! mb-2!"
                   >
-                    <font-awesome-icon icon="map-marker-alt" class="w-5! h-5! text-slate-400!" />
+                    <font-awesome-icon icon="map-marker-alt" class="w-4! h-4! sm:w-5! sm:h-5! text-slate-400!" />
                   </div>
-                  <p class="text-xs! text-slate-400! font-medium!">
+                  <p class="text-[11px]! sm:text-xs! text-slate-400! font-medium!">
                     Masukkan koordinat untuk preview
                   </p>
                 </div>
@@ -382,7 +579,7 @@
                 </div>
               </div>
 
-              <div class="absolute! bottom-3! left-1/2! -translate-x-1/2! z-30!">
+              <div class="hidden! sm:block! absolute! bottom-3! left-1/2! -translate-x-1/2! z-30!">
                 <button
                   type="button"
                   @click="openMapPreview"
@@ -393,25 +590,35 @@
                 </button>
               </div>
             </div>
+            <button
+              type="button"
+              @click="openMapPreview"
+              class="sm:hidden! mt-2! w-full! flex! items-center! justify-center! px-4! py-2! bg-white! text-slate-700! text-xs! font-bold! rounded-lg! border! border-slate-200! shadow-sm! active:bg-slate-50! transition-all! cursor-pointer!"
+            >
+              <font-awesome-icon icon="eye" class="mr-2! text-blue-500!" />
+              PREVIEW LOCATION
+            </button>
           </div>
         </div>
       </div>
     </ContentCard>
 
-    <div class="mt-8! sm:mt-10! flex! flex-col! sm:flex-row! items-center! justify-between! gap-5!">
-      <div class="flex! items-center! gap-2! text-xs! text-slate-400! opacity-80!">
+    <div class="mt-6! sm:mt-10! flex! flex-col! sm:flex-row! items-stretch! sm:items-center! justify-between! gap-3! sm:gap-5!">
+      <div class="flex! items-start! sm:items-center! gap-2! text-xs! text-slate-400! opacity-80! order-2! sm:order-1!">
         <div
-          class="w-4! h-4! rounded-full! bg-blue-50! flex! items-center! justify-center! shrink-0!"
+          class="w-4! h-4! rounded-full! bg-blue-50! flex! items-center! justify-center! shrink-0! mt-0.5! sm:mt-0!"
         >
           <font-awesome-icon icon="info-circle" class="w-2.5! h-2.5! text-blue-500!" />
         </div>
-        Pastikan semua data terisi dengan benar sebelum menyimpan transaksi.
+        <span class="leading-relaxed!">
+          Pastikan semua data terisi dengan benar sebelum menyimpan transaksi.
+        </span>
       </div>
 
-      <div class="w-full! sm:w-auto!">
+      <div class="w-full! sm:w-auto! order-1! sm:order-2!">
         <BaseButton
           variant="primary-gradient"
-          class="w-full! sm:w-auto! px-10! py-3.5! rounded-xl! shadow-lg! text-sm! font-bold! uppercase! tracking-wide!"
+          class="w-full! sm:w-auto! px-6! sm:px-10! py-3! sm:py-3.5! rounded-xl! shadow-lg! text-sm! font-bold! uppercase! tracking-wide!"
           @click="handleSubmit"
           :disabled="!isFormValid"
         >
@@ -432,7 +639,7 @@
 <script setup>
 import api from '@/utils/axios'
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import ContentCard from '@/presentations/components/ui/ContentCard.vue'
 import BaseButton from '@/presentations/components/ui/BaseButton.vue'
 import BaseInput from '@/presentations/components/ui/BaseInput.vue'
@@ -446,6 +653,8 @@ const customerSearch = ref('')
 const selectedCustomer = ref(null)
 const villageOptions = ref([])
 const router = useRouter()
+const route = useRoute()
+const isMustFullyPaid = ref(true)
 
 const form = ref({
   tanggalOrder: new Date(),
@@ -455,7 +664,6 @@ const form = ref({
   village_id: '',
   namaDesa: '',
   jalan: '',
-  koordinat: '',
   lat: '',
   lng: '',
 })
@@ -504,6 +712,34 @@ const fetchCustomers = async () => {
         nominal: item.package?.installation_fee || 0,
         status: item.status || 'draft',
       })
+    })
+
+    Object.values(grouped).forEach((c) => {
+      const activeStatuses = ['pending', 'surveyed', 'unpaid', 'processing', 'completed']
+      const hasActive = c.tickets.some((t) => activeStatuses.includes(t.status))
+      const hasDraft = c.tickets.some((t) => t.status === 'draft')
+      const hasSuspended = c.tickets.some((t) => t.status === 'suspended')
+      const hasTerminated = c.tickets.some((t) => t.status === 'terminated')
+      const latestTicket = [...c.tickets].sort((a, b) => (b.id || 0) - (a.id || 0))[0]
+
+      if (hasTerminated) {
+        c.status = 'Terminated'
+        c.statusLabel = 'cabut'
+        c.isBlocked = true
+      } else if (hasSuspended) {
+        c.status = 'Suspended'
+        c.statusLabel = 'blokir'
+        c.isBlocked = true
+      } else if (hasActive) {
+        c.status = 'Aktif'
+        c.statusLabel = latestTicket?.status || 'aktif'
+      } else if (hasDraft) {
+        c.status = 'Draft'
+        c.statusLabel = 'draft'
+      } else {
+        c.status = 'Tidak Aktif'
+        c.statusLabel = 'tidak aktif'
+      }
     })
 
     customerOptions.value = Object.values(grouped)
@@ -564,6 +800,25 @@ const fetchVillages = async () => {
   }
 }
 
+const fetchPaymentMode = async () => {
+  try {
+    const res = await api.get('/settings/payment-mode', {
+      params: { _t: Date.now() },
+      headers: { 'Cache-Control': 'no-cache', Pragma: 'no-cache' },
+    })
+    if (res.data?.success) {
+      isMustFullyPaid.value = Number(res.data.data?.status_pembayaran ?? 1) === 1
+      console.log('[Registrasi] payment mode loaded:', {
+        status_pembayaran: res.data.data?.status_pembayaran,
+        must_be_fully_paid: isMustFullyPaid.value,
+      })
+    }
+  } catch (err) {
+    console.error('Gagal membaca payment mode dari settings, default wajib lunas.', err)
+    isMustFullyPaid.value = true
+  }
+}
+
 // FILTER SEARCH CUSTOMER
 const filteredCustomerOptions = computed(() => {
   if (!customerSearch.value) return customerOptions.value
@@ -586,6 +841,10 @@ const selectCustomer = (customer) => {
   customerSearch.value = customer.name
   isCustomerDropdownOpen.value = false
 
+  if (customer.isBlocked) {
+    return
+  }
+
   const lastTicket = customer.tickets[customer.tickets.length - 1]
   if (!lastTicket) return
 
@@ -596,11 +855,9 @@ const selectCustomer = (customer) => {
   if (lastTicket.lat && lastTicket.lng && !(lastTicket.lat == 0 && lastTicket.lng == 0)) {
     form.value.lat = lastTicket.lat
     form.value.lng = lastTicket.lng
-    form.value.koordinat = `${lastTicket.lat}, ${lastTicket.lng}`
   } else {
     form.value.lat = ''
     form.value.lng = ''
-    form.value.koordinat = ''
   }
 
   form.value.package_id = ''
@@ -628,6 +885,12 @@ const clearCustomer = () => {
   form.value.village_id = ''
   form.value.namaDesa = ''
   form.value.jalan = ''
+  form.value.lat = ''
+  form.value.lng = ''
+}
+
+const clearBlockedCustomer = () => {
+  clearCustomer()
 }
 
 // WATCHER PAKET
@@ -654,23 +917,6 @@ watch(
   },
 )
 
-watch(
-  () => form.value.koordinat,
-  (val) => {
-    if (!val) return
-    const parts = val.split(',')
-    if (parts.length === 2) {
-      const lat = parseFloat(parts[0].trim())
-      const lng = parseFloat(parts[1].trim())
-      if (!isNaN(lat) && !isNaN(lng)) {
-        form.value.lat = lat
-        form.value.lng = lng
-      }
-    }
-  },
-  { immediate: true },
-)
-
 const handleVillageChange = () => {
   const selectedVillage = villageOptions.value.find((v) => v.id == form.value.village_id)
   if (selectedVillage) {
@@ -686,29 +932,20 @@ const getCurrentLocation = () => {
   if (navigator.geolocation) {
     navigator.geolocation.getCurrentPosition(
       (pos) => {
-        form.value.lat = pos.coords.latitude.toFixed(6)
-        form.value.lng = pos.coords.longitude.toFixed(6)
-        form.value.koordinat = `${form.value.lat}, ${form.value.lng}`
+        form.value.lat = pos.coords.latitude.toString()
+        form.value.lng = pos.coords.longitude.toString()
       },
       () => {
-        form.value.lat = '-6.123000'
-        form.value.lng = '106.123000'
-        form.value.koordinat = '-6.123000, 106.123000'
+        form.value.lat = '-7.459139746409505'
+        form.value.lng = '110.25898006208358'
       },
     )
   }
 }
 
 const openMapPreview = () => {
-  let lat = form.value.lat
-  let lng = form.value.lng
-  if ((!lat || !lng) && form.value.koordinat) {
-    const parts = form.value.koordinat.split(',')
-    if (parts.length === 2) {
-      lat = parseFloat(parts[0].trim())
-      lng = parseFloat(parts[1].trim())
-    }
-  }
+  const lat = parseFloat(form.value.lat)
+  const lng = parseFloat(form.value.lng)
   if (isNaN(lat) || isNaN(lng) || lat === 0 || lng === 0) {
     alert('Koordinat belum diisi atau tidak valid')
     return
@@ -719,6 +956,7 @@ const openMapPreview = () => {
 const isFormValid = computed(() => {
   return (
     selectedCustomer.value !== null &&
+    !selectedCustomer.value.isBlocked &&
     form.value.package_id !== '' &&
     form.value.user_id !== '' &&
     form.value.tanggalOrder !== null &&
@@ -728,7 +966,19 @@ const isFormValid = computed(() => {
 })
 
 const handleSubmit = async () => {
-  if (!isFormValid.value) return
+  if (!isFormValid.value) {
+    if (selectedCustomer.value?.isBlocked) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Tidak Dapat Mendaftar',
+        text:
+          selectedCustomer.value.status === 'Suspended'
+            ? 'Pelanggan masih dalam status blokir. Mohon lunasi tagihan tertunggak terlebih dahulu.'
+            : 'Pelanggan sudah dalam status cabut dan tidak dapat didaftarkan kembali.',
+      })
+    }
+    return
+  }
   try {
     const targetDate = new Date(form.value.tanggalOrder)
     const yyyy = targetDate.getFullYear()
@@ -743,6 +993,7 @@ const handleSubmit = async () => {
       village_id: form.value.village_id,
       lat: parseFloat(form.value.lat),
       lng: parseFloat(form.value.lng),
+      nominal: Number(String(form.value.nominal ?? 0).replace(',', '.')) || 0,
     }
 
     const lastTicket = selectedCustomer.value.tickets[selectedCustomer.value.tickets.length - 1]
@@ -782,7 +1033,7 @@ const handleSubmit = async () => {
       })
     } else if (result.dismiss === Swal.DismissReason.cancel) {
       clearCustomer()
-      router.push('/instalasi/register').catch(() => {
+      router.push('/app/instalasi/register').catch(() => {
         selectedCustomer.value = null
         customerSearch.value = ''
         form.value.tanggalOrder = new Date()
@@ -792,7 +1043,6 @@ const handleSubmit = async () => {
         form.value.village_id = ''
         form.value.namaDesa = ''
         form.value.jalan = ''
-        form.value.koordinat = ''
         form.value.lat = ''
         form.value.lng = ''
       })
@@ -828,6 +1078,47 @@ const formatRupiah = (angka) => {
   return val.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.')
 }
 
+const formatNominalDisplay = (val) => {
+  if (val === null || val === undefined || val === '') return ''
+  const str = String(val)
+  if (!str.includes(',')) {
+    const num = parseInt(str, 10)
+    if (isNaN(num)) return ''
+    return num.toLocaleString('id-ID')
+  }
+  const [intPart, decPart] = str.split(',')
+  const intNum = parseInt(intPart || '0', 10) || 0
+  const intFormatted = intNum.toLocaleString('id-ID')
+  return decPart !== undefined ? `${intFormatted},${decPart}` : `${intFormatted},`
+}
+
+const nominalDisplay = computed(() => formatNominalDisplay(form.value.nominal))
+
+const onNominalInput = (e) => {
+  if (isMustFullyPaid.value) return
+  const raw = String(e.target.value)
+  const cleaned = raw.replace(/[^\d,]/g, '')
+
+  const parts = cleaned.split(',')
+  const intPart = parts[0] || ''
+  const decPart = parts.length > 1 ? parts.slice(1).join('').slice(0, 2) : undefined
+
+  const intNum = parseInt(intPart, 10) || 0
+
+  form.value.nominal = decPart !== undefined ? `${intNum},${decPart}` : String(intNum)
+}
+
+const onLatLngInput = (e) => {
+  const cleaned = String(e.target.value).replace(/[^0-9.\-]/g, '')
+  const parts = cleaned.split('.')
+  const intPart = parts[0] || ''
+  const decPart = parts.length > 1 ? parts.slice(1).join('').slice(0, 15) : undefined
+  const sanitized = decPart !== undefined ? `${intPart}.${decPart}` : intPart
+  if (sanitized !== e.target.value) {
+    e.target.value = sanitized
+  }
+}
+
 const handleKeydown = (e) => {
   if (e.key === 'Escape') isCustomerDropdownOpen.value = false
 }
@@ -837,8 +1128,16 @@ onMounted(() => {
   fetchPackages()
   fetchCaterUsers()
   fetchVillages()
+  fetchPaymentMode()
   document.addEventListener('keydown', handleKeydown)
 })
+
+watch(
+  () => route.fullPath,
+  () => {
+    fetchPaymentMode()
+  },
+)
 
 onUnmounted(() => {
   document.removeEventListener('keydown', handleKeydown)

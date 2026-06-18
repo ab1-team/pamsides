@@ -8,8 +8,8 @@ class TicketStateMachine
 {
     private static array $transitions = [
         'draft' => ['pending', 'terminated'],
-        'pending' => ['surveyed', 'terminated'],
-        'surveyed' => ['unpaid', 'pending', 'terminated'],
+        'pending' => ['surveyed', 'unpaid', 'processing', 'terminated'],
+        'surveyed' => ['unpaid', 'processing', 'pending', 'terminated'],
         'unpaid' => ['processing', 'pending', 'terminated'],
         'processing' => ['completed', 'terminated'],
         'completed' => ['suspended', 'terminated'],

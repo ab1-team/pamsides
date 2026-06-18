@@ -11,9 +11,8 @@ class DatabaseSeeder extends Seeder
         $this->call([
             UserSeeder::class,
             InstallationPackageSeeder::class,
-            InstallationTicketSeeder::class, 
-            CustomerSeeder::class,
-            SettingsSeeder::class,   
+            SettingsSeeder::class,
+            DemoPelangganSeeder::class,
         ]);
     }
 }

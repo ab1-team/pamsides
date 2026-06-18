@@ -1,365 +1,765 @@
 <template>
-  <ContentCard variant="elevated" padding="large" hoverable>
-    <div
-      class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4! mb-6! lg:mb-8!"
-    >
-      <div class="flex-1!">
-        <div class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2!">
-          BILLING STATEMENT
+  <div class="tagihan-instalasi-root!">
+    <div class="flex! flex-col! lg:flex-row! lg:items-end! lg:justify-between! gap-4! mb-6!">
+      <div>
+        <div class="text-xs! font-bold! text-slate-500! uppercase! tracking-wider! mb-1!">
+          Tagihan & Pembayaran
         </div>
-        <div
-          class="text-2xl! sm:text-3xl! lg:text-4xl! font-black text-slate-900 tracking-tight leading-tight"
-        >
-          {{ billingStore.selectedCustomer?.name || 'Budi Darmawan' }}
-        </div>
-        <div
-          class="flex flex-col sm:flex-row sm:items-center gap-2! sm:gap-3! mt-2! text-sm! text-slate-600 font-medium"
-        >
-          <div class="flex items-center gap-2">
-            <span class="text-slate-500">ID:</span>
-            <span class="font-bold text-slate-800">{{
-              billingStore.selectedCustomer?.id || '#MA-882109'
-            }}</span>
-          </div>
-          <div class="hidden sm:block text-slate-300">•</div>
-          <div class="flex items-center gap-2">
-            <span class="text-slate-500">Zone:</span>
-            <span class="font-bold text-slate-800">{{
-              billingStore.selectedCustomer?.zone || 'Southern Spring'
-            }}</span>
-          </div>
-        </div>
+        <h1 class="text-2xl! sm:text-3xl! font-extrabold! text-slate-800! tracking-tight!">
+          Tagihan Instalasi
+        </h1>
+        <p class="text-sm! text-slate-500! mt-1! max-w-2xl!">
+          Kelola tagihan biaya pasang baru pelanggan. Mendukung pembayaran sebagian (cicilan) dan
+          pelunasan. Status tiket akan otomatis lanjut ke Processing ketika sudah lunas.
+        </p>
       </div>
-      <div class="text-left! lg:text-right! w-full! lg:w-auto!">
-        <BaseButton
-          variant="info"
-          class="px-5! py-2.5! rounded-full! shadow-lg! hover:shadow-xl! transition-all! font-bold! tracking-wide!"
-        >
-          <span>💧</span> Pelunasan Instalasi
-        </BaseButton>
 
-        <div class="text-xs! text-slate-500! mt-2!">
-          Last synced: Today,
-          {{ new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) }}
+      <div class="flex! flex-wrap! gap-2!">
+        <div
+          class="px-4! py-2! rounded-xl! bg-white! border! border-amber-200! shadow-sm! flex! items-center! gap-2!"
+        >
+          <div class="w-2! h-2! rounded-full! bg-amber-500!"></div>
+          <div>
+            <div class="text-[10px]! font-bold! text-slate-400! uppercase! tracking-wider!">
+              Surveyed
+            </div>
+            <div class="text-sm! font-extrabold! text-amber-600!">{{ counts.surveyed }}</div>
+          </div>
+        </div>
+        <div
+          class="px-4! py-2! rounded-xl! bg-white! border! border-orange-200! shadow-sm! flex! items-center! gap-2!"
+        >
+          <div class="w-2! h-2! rounded-full! bg-orange-500! animate-pulse!"></div>
+          <div>
+            <div class="text-[10px]! font-bold! text-slate-400! uppercase! tracking-wider!">
+              Unpaid
+            </div>
+            <div class="text-sm! font-extrabold! text-orange-600!">{{ counts.unpaid }}</div>
+          </div>
+        </div>
+        <div
+          class="px-4! py-2! rounded-xl! bg-white! border! border-sky-200! shadow-sm! flex! items-center! gap-2!"
+        >
+          <div class="w-2! h-2! rounded-full! bg-sky-500!"></div>
+          <div>
+            <div class="text-[10px]! font-bold! text-slate-400! uppercase! tracking-wider!">
+              Total Piutang
+            </div>
+            <div class="text-sm! font-extrabold! text-sky-700!">
+              Rp {{ formatRibuan(totalRemaining) }}
+            </div>
+          </div>
         </div>
       </div>
     </div>
 
-    <div class="grid grid-cols-1! xl:grid-cols-3! gap-4! lg:gap-6! mb-6!">
-      <div class="xl:col-span-2">
-        <div class="bg-white rounded-xl p-6! border border-gray-200">
-          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4! mb-4!">
-            <div class="flex items-center gap-3!">
-              <div class="w-10! h-10! bg-cyan-100 rounded-xl flex items-center justify-center">
-                <font-awesome-icon icon="info-circle" class="text-cyan-600" />
-              </div>
-              <h3 class="text-base font-bold text-slate-800">Informasi Harga Paket</h3>
+    <div class="grid! grid-cols-1! xl:grid-cols-5! gap-4! lg:gap-6!">
+      <ContentCard variant="bordered" padding="none" rounded="2xl" class="xl:col-span-2! overflow-hidden!">
+        <div class="px-4! py-3! border-b! border-slate-100! bg-slate-50/50! flex! items-center! justify-between!">
+          <div class="flex! items-center! gap-2!">
+            <div class="w-7! h-7! rounded-lg! bg-sky-100! flex! items-center! justify-center!">
+              <font-awesome-icon icon="list" class="text-sky-600! text-xs!" />
             </div>
+            <h3 class="text-sm! font-bold! text-slate-800!">Daftar Tagihan</h3>
           </div>
+          <button
+            @click="fetchTickets"
+            class="text-[10px]! font-bold! text-slate-500! hover:text-sky-600! flex! items-center! gap-1! uppercase! tracking-wider!"
+          >
+            <font-awesome-icon icon="sync" :class="loading ? 'animate-spin!' : ''" />
+            Refresh
+          </button>
+        </div>
 
-          <div class="mb-4!">
-            <SelectSearch
-              v-model="billingStore.selectedCustomer"
-              :options="pelangganList"
-              label="Pilih Pelanggan"
-              placeholder="Cari nama pelanggan, ID, atau kode instalasi..."
-              label-key="name"
-              value-key="id"
-              icon="user"
-              class="w-full"
-              @change="selectPelanggan"
+        <div class="p-3! border-b! border-slate-100!">
+          <div class="relative!">
+            <font-awesome-icon
+              icon="search"
+              class="absolute! left-3! top-1/2! -translate-y-1/2! text-slate-400! text-xs!"
+            />
+            <input
+              v-model="search"
+              type="text"
+              placeholder="Cari nama, NIK, atau kode..."
+              class="w-full! pl-9! pr-3! py-2! bg-slate-50! border! border-slate-200! rounded-lg! text-xs! text-slate-700! focus:outline-none! focus:ring-2! focus:ring-sky-100! focus:border-sky-400! transition-all!"
             />
           </div>
-
-          <div class="bg-white/80 backdrop-blur-sm rounded-xl p-4! border border-cyan-100">
-            <h4 class="text-sm font-semibold text-cyan-800 mb-3!">📋 Informasi Harga Paket</h4>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
-              <div class="flex items-center gap-2! bg-cyan-50 rounded-lg p-2!">
-                <div class="w-3! h-3! bg-cyan-500 rounded-full"></div>
-                <span class="text-slate-700 font-medium">Paket Dasar</span>
-                <span class="text-cyan-600 font-bold ml-auto">Rp 50.000</span>
-              </div>
-              <div class="flex items-center gap-2! bg-cyan-50 rounded-lg p-2!">
-                <div class="w-3! h-3! bg-cyan-500 rounded-full"></div>
-                <span class="text-slate-700 font-medium">Paket Silver</span>
-                <span class="text-cyan-600 font-bold ml-auto">Rp 75.000</span>
-              </div>
-              <div class="flex items-center gap-2! bg-cyan-50 rounded-lg p-2!">
-                <div class="w-3! h-3! bg-cyan-500 rounded-full"></div>
-                <span class="text-slate-700 font-medium">Paket Gold</span>
-                <span class="text-cyan-600 font-bold ml-auto">Rp 100.000</span>
-              </div>
-              <div class="flex items-center gap-2! bg-cyan-50 rounded-lg p-2!">
-                <div class="w-3! h-3! bg-cyan-500 rounded-full"></div>
-                <span class="text-slate-700 font-medium">Platinum</span>
-                <span class="text-cyan-600 font-bold ml-auto">Rp 150.000</span>
-              </div>
-            </div>
-            <p class="text-xs text-slate-500 mt-3! italic">
-              *Harga dapat berubah sesuai lokasi dan ketentuan
-            </p>
-          </div>
         </div>
-      </div>
 
-      <div class="xl:col-span-1!">
-        <div class="bill-card">
+        <div class="max-h-[640px]! overflow-y-auto!">
           <div
-            class="text-xs text-white/60 font-semibold uppercase tracking-wider mb-3! flex items-center gap-2!"
+            v-if="loading && tickets.length === 0"
+            class="py-16! text-center! text-slate-400! text-xs!"
           >
-            <div class="w-2! h-2! bg-cyan-400 rounded-full animate-pulse"></div>
-            Total Bill to Pay
+            <font-awesome-icon icon="spinner" spin class="text-2xl! mb-2!" />
+            <p>Memuat data tagihan...</p>
           </div>
+
           <div
-            class="text-2xl! sm:text-3xl! font-black text-white tracking-tight leading-tight mb-4!"
+            v-else-if="filteredTickets.length === 0"
+            class="py-16! text-center! text-slate-400! text-xs!"
           >
-            Rp {{ formatBillAmount(grandTotal) }}
+            <div
+              class="w-14! h-14! rounded-full! bg-slate-100! mx-auto! mb-3! flex! items-center! justify-center!"
+            >
+              <font-awesome-icon icon="inbox" class="text-slate-300! text-xl!" />
+            </div>
+            <p class="font-bold!">Tidak ada tagihan</p>
+            <p class="text-[11px]! mt-1!">Belum ada tiket dengan status surveyed / unpaid.</p>
           </div>
 
-          <div class="text-xs text-white/70 mb-3!">
-            Tanggal Transaksi:
-            {{
-              new Date().toLocaleDateString('id-ID', {
-                day: '2-digit',
-                month: 'short',
-                year: 'numeric',
-              })
-            }}
-          </div>
-
-          <div class="flex items-center justify-between mb-4!">
-            <div class="text-xs text-white/50 font-medium">
-              <span class="inline-flex items-center gap-1!">
-                <svg class="w-3! h-3!" fill="currentColor" viewBox="0 0 20 20">
-                  <path
-                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z"
-                  />
-                </svg>
-                Due Date
+          <button
+            v-for="t in filteredTickets"
+            :key="t.id"
+            @click="selectTicket(t)"
+            class="w-full! text-left! px-4! py-3! border-b! border-slate-100! hover:bg-sky-50/50! transition-colors! relative!"
+            :class="
+              selectedTicket?.id === t.id
+                ? 'bg-sky-50! border-l-4! border-l-sky-500!'
+                : 'border-l-4! border-l-transparent!'
+            "
+          >
+            <div class="flex! items-start! justify-between! gap-2!">
+              <div class="flex-1! min-w-0!">
+                <p class="text-sm! font-bold! text-slate-800! truncate!">{{ t.applicant_name }}</p>
+                <p class="text-[11px]! text-slate-500! font-mono! mt-0.5!">
+                  NIK {{ t.nik }} · #INS-{{ String(t.id).padStart(4, '0') }}
+                </p>
+              </div>
+              <span
+                class="text-[9px]! font-bold! uppercase! tracking-wider! px-2! py-0.5! rounded-full! shrink-0!"
+                :class="
+                  t.status === 'surveyed'
+                    ? 'bg-amber-100! text-amber-700!'
+                    : 'bg-orange-100! text-orange-700!'
+                "
+              >
+                {{ t.status === 'surveyed' ? 'Surveyed' : 'Unpaid' }}
               </span>
             </div>
-            <div class="text-xs text-white/80 font-bold">15 May 2025</div>
-          </div>
-          <div class="px-3! py-1.5! bg-emerald-500/20 border border-emerald-400/30 rounded-full">
-            <span
-              class="text-xs text-emerald-300 font-semibold tracking-wide flex items-center gap-1!"
-            >
-              <div class="w-1.5! h-1.5! bg-emerald-400 rounded-full pulse-status!"></div>
-              ACTIVE
-            </span>
-          </div>
 
-          <div class="mt-3! text-xs text-white/70">
-            <div class="font-medium mb-1!">Rincian Pembayaran:</div>
-            <ul class="space-y-1!">
-              <li v-for="item in billingItems" :key="item.id" class="flex justify-between">
-                <span class="truncate flex-1! mr-2!">{{ item.name }}</span>
-                <span class="font-mono whitespace-nowrap">{{
-                  billingStore.formatAmount(item.subtotal)
-                }}</span>
-              </li>
-            </ul>
-          </div>
+                <div class="mt-2!">
+                  <div class="flex! items-center! justify-between! text-[10px]! mb-1!">
+                    <span class="text-slate-500! font-medium!">{{ t.package }}</span>
+                    <span class="text-slate-700! font-bold!">
+                      {{ formatRibuan(Number(t.total_paid) || 0) }} / {{ formatRibuan(t.total_fee) }}
+                    </span>
+                  </div>
+                  <div class="h-1.5! rounded-full! bg-slate-200! overflow-hidden!">
+                    <div
+                      class="h-full! rounded-full! transition-all!"
+                      :class="t.is_paid_off ? 'bg-emerald-500!' : 'bg-gradient-to-r! from-orange-400! to-orange-500!'"
+                      :style="{ width: `${getProgress(t)}%` }"
+                    ></div>
+                  </div>
+                  <div class="flex! items-center! justify-between! mt-1!">
+                    <span class="text-[10px]! text-slate-400!">{{ getProgress(t).toFixed(0) }}% terbayar</span>
+                    <span
+                      v-if="!t.is_paid_off"
+                      class="text-[10px]! font-bold! text-orange-600!"
+                    >
+                      Sisa: Rp {{ formatRibuan(t.remaining) }}
+                    </span>
+                    <span v-else class="text-[10px]! font-bold! text-emerald-600!">LUNAS</span>
+                  </div>
+                  <div
+                    v-if="hasPendingPayments(t)"
+                    class="mt-1! text-[10px]! font-bold! text-amber-600! flex! items-center! gap-1!"
+                  >
+                    <font-awesome-icon icon="clock" />
+                    {{ pendingCount(t) }} pembayaran menunggu konfirmasi
+                  </div>
+                </div>
+          </button>
         </div>
-        <BaseButton
-          variant="secondary"
-          class="mt-4! p-4! rounded-xl font-bold w-full shadow-lg shadow-cyan-200/50"
-          @click="handlePayNow"
-          icon="credit-card"
+      </ContentCard>
+
+      <div class="xl:col-span-3!">
+        <ContentCard
+          v-if="!selectedTicket"
+          variant="bordered"
+          padding="large"
+          rounded="2xl"
+          class="h-full! flex! items-center! justify-center! min-h-[400px]!"
         >
-          Bayar Sekarang
-        </BaseButton>
-      </div>
-    </div>
-
-    <div class="bg-white rounded-xl p-6! border border-gray-200">
-      <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4! mb-4!">
-        <div class="flex items-center gap-3!">
-          <div class="w-8 h-8 bg-slate-100 rounded-xl flex items-center justify-center">
-            <font-awesome-icon icon="file-invoice" class="text-slate-600 text-sm" />
-          </div>
-          <h3 class="text-base font-bold text-slate-800">Detail Pembayaran</h3>
-        </div>
-
-        <div class="flex flex-col sm:flex-row sm:items-center gap-2!">
-          <label class="text-sm font-medium text-slate-600 whitespace-nowrap"
-            >Tanggal Transaksi</label
-          >
-          <AppDatePicker
-            v-model="tanggalTransaksi"
-            placeholder="Pilih tanggal transaksi"
-            @date-select="(date) => (tanggalTransaksi = date)"
-            class="w-full sm:w-auto"
-          />
-        </div>
-      </div>
-
-      <div class="overflow-x-auto">
-        <table class="w-full border-collapse min-w-[400px]!">
-          <thead>
-            <tr class="border-b-2! border-slate-200">
-              <th
-                class="px-4! py-3! text-xs font-bold text-slate-600 uppercase tracking-wide text-left"
-              >
-                Deskripsi
-              </th>
-              <th
-                class="px-4! py-3! text-xs font-bold text-slate-600 uppercase tracking-wide text-right"
-              >
-                Jumlah
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr
-              v-for="item in billingItems"
-              :key="item.id"
-              class="border-b border-slate-100 hover:bg-slate-50 transition-colors"
+          <div class="text-center! py-12!">
+            <div
+              class="w-20! h-20! rounded-2xl! bg-slate-100! mx-auto! mb-4! flex! items-center! justify-center!"
             >
-              <td class="px-4! py-2!">
-                <div class="font-semibold text-slate-800">{{ item.name }}</div>
-              </td>
-              <td class="px-4! py-2! text-right">
-                <MaksMoneyInput
-                  v-model="item.subtotal"
-                  placeholder="0,00"
-                  :show-helper="false"
-                  class="text-right font-bold text-cyan-600"
-                  @change="updateSubtotal(item.id, $event)"
-                />
-              </td>
-            </tr>
-            <tr class="border-t-2 border-slate-300 bg-gradient-to-r from-slate-100 to-slate-50">
-              <td class="px-4! py-2! text-right">
-                <span class="text-sm font-bold text-slate-700 uppercase tracking-wide">
-                  Total Pembayaran
+              <font-awesome-icon icon="file-invoice-dollar" class="text-slate-300! text-3xl!" />
+            </div>
+            <h3 class="text-base! font-bold! text-slate-700!">Pilih tagihan</h3>
+            <p class="text-sm! text-slate-400! mt-1! max-w-xs! mx-auto!">
+              Pilih tiket instalasi di daftar sebelah kiri untuk melakukan pembayaran.
+            </p>
+          </div>
+        </ContentCard>
+
+        <div v-else class="space-y-4!">
+          <div
+            class="rounded-2xl! p-5! text-white! relative! overflow-hidden!"
+            style="
+              background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+              box-shadow: 0 20px 25px -5px rgba(15, 23, 42, 0.2);
+            "
+          >
+            <div
+              class="absolute! -top-20! -right-20! w-60! h-60! rounded-full!"
+              style="background: radial-gradient(circle, rgba(56, 189, 248, 0.15) 0%, transparent 70%)"
+            ></div>
+
+            <div class="relative! z-10!">
+              <div class="flex! items-start! justify-between! gap-3! mb-4!">
+                <div>
+                  <div
+                    class="text-[10px]! font-bold! text-white/60! uppercase! tracking-widest! mb-1!"
+                  >
+                    BILLING STATEMENT
+                  </div>
+                  <h2 class="text-xl! font-extrabold! tracking-tight!">
+                    {{ selectedTicket.applicant_name }}
+                  </h2>
+                  <div class="flex! flex-wrap! items-center! gap-x-3! gap-y-1! mt-1! text-[11px]! text-white/70!">
+                    <span>NIK: {{ selectedTicket.nik }}</span>
+                    <span class="text-white/30!">•</span>
+                    <span class="font-mono!">#INS-{{ String(selectedTicket.id).padStart(4, '0') }}</span>
+                    <span class="text-white/30!">•</span>
+                    <span>{{ selectedTicket.package }}</span>
+                  </div>
+                </div>
+                <span
+                  class="px-3! py-1! rounded-full! text-[10px]! font-bold! uppercase! tracking-wider! shrink-0!"
+                  :class="
+                    selectedTicket.is_paid_off
+                      ? 'bg-emerald-500/20! text-emerald-300! border! border-emerald-400/30!'
+                      : 'bg-orange-500/20! text-orange-300! border! border-orange-400/30!'
+                  "
+                >
+                  {{ selectedTicket.is_paid_off ? 'LUNAS' : selectedTicket.status === 'surveyed' ? 'SURVEYED' : 'UNPAID' }}
                 </span>
-              </td>
-              <td class="px-4! py-2! text-right">
-                <span class="text-lg sm:text-xl font-black text-cyan-800">
-                  {{ billingStore.formatAmount(grandTotal) }}
+              </div>
+
+              <div class="grid! grid-cols-3! gap-2! mt-4!">
+                <div class="bg-white/5! backdrop-blur-sm! rounded-lg! p-3!">
+                  <div class="text-[10px]! text-white/60! uppercase! font-bold! tracking-wider!">
+                    Total Tagihan
+                  </div>
+                  <div class="text-base! font-extrabold! mt-1!">
+                    Rp {{ formatRibuan(selectedTicket.total_fee) }}
+                  </div>
+                </div>
+                <div class="bg-emerald-500/10! backdrop-blur-sm! rounded-lg! p-3! border! border-emerald-400/20!">
+                  <div class="text-[10px]! text-emerald-300! uppercase! font-bold! tracking-wider!">
+                    Sudah Dibayar
+                  </div>
+                  <div class="text-base! font-extrabold! mt-1! text-emerald-300!">
+                    Rp {{ formatRibuan(Number(selectedTicket.total_paid) || 0) }}
+                  </div>
+                </div>
+                <div
+                  class="rounded-lg! p-3! backdrop-blur-sm! border!"
+                  :class="
+                    selectedTicket.is_paid_off
+                      ? 'bg-emerald-500/10! border-emerald-400/20!'
+                      : 'bg-orange-500/10! border-orange-400/20!'
+                  "
+                >
+                  <div
+                    class="text-[10px]! uppercase! font-bold! tracking-wider!"
+                    :class="selectedTicket.is_paid_off ? 'text-emerald-300!' : 'text-orange-300!'"
+                  >
+                    {{ selectedTicket.is_paid_off ? 'Lunas' : 'Sisa' }}
+                  </div>
+                  <div
+                    class="text-base! font-extrabold! mt-1!"
+                    :class="selectedTicket.is_paid_off ? 'text-emerald-300!' : 'text-orange-300!'"
+                  >
+                    Rp {{ formatRibuan(selectedTicket.remaining) }}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <ContentCard variant="bordered" padding="normal" rounded="2xl">
+            <div class="flex! items-center! gap-2! mb-4!">
+              <div class="w-7! h-7! rounded-lg! bg-cyan-100! flex! items-center! justify-center!">
+                <font-awesome-icon icon="credit-card" class="text-cyan-600! text-xs!" />
+              </div>
+              <h3 class="text-sm! font-bold! text-slate-800!">Form Pembayaran</h3>
+            </div>
+
+            <div v-if="selectedTicket.is_paid_off" class="text-center! py-6!">
+              <div
+                class="w-16! h-16! rounded-full! bg-emerald-100! mx-auto! mb-3! flex! items-center! justify-center!"
+              >
+                <font-awesome-icon icon="check" class="text-emerald-600! text-2xl!" />
+              </div>
+              <p class="text-sm! font-bold! text-emerald-700!">Tagihan sudah lunas</p>
+              <p class="text-xs! text-slate-500! mt-1!">Tiket ini sudah lanjut ke tahap Processing.</p>
+            </div>
+
+            <div v-else class="space-y-4!">
+              <div>
+                <label class="text-[11px]! font-bold! text-slate-500! uppercase! tracking-wider! mb-1.5! block!">
+                  Tanggal Pembayaran
+                </label>
+                <AppDatePicker v-model="form.tanggalBayar" placeholder="Pilih tanggal" />
+              </div>
+
+              <div>
+                <label class="text-[11px]! font-bold! text-slate-500! uppercase! tracking-wider! mb-1.5! block!">
+                  Nominal Pembayaran
+                </label>
+                <div class="flex! gap-2! mb-2!">
+                  <button
+                    v-for="opt in quickOptions"
+                    :key="opt.value"
+                    @click="setQuickAmount(opt.value)"
+                    class="flex-1! px-2! py-1.5! rounded-lg! border! text-[11px]! font-bold! transition-all!"
+                    :class="
+                      form.amount === opt.value
+                        ? 'bg-sky-500! text-white! border-sky-500! shadow-sm!'
+                        : 'bg-white! text-slate-600! border-slate-200! hover:border-sky-300!'
+                    "
+                  >
+                    {{ opt.label }}
+                  </button>
+                </div>
+                <div class="relative!">
+                  <span
+                    class="absolute! left-3! top-1/2! -translate-y-1/2! text-xs! font-bold! text-slate-500!"
+                    >Rp</span
+                  >
+                  <input
+                    :value="form.amountDisplay"
+                    @input="onAmountInput"
+                    type="text"
+                    inputmode="numeric"
+                    placeholder="0"
+                    class="w-full! pl-10! pr-3! py-2.5! text-sm! font-extrabold! text-sky-700! bg-sky-50! border! border-sky-200! rounded-lg! focus:outline-none! focus:ring-2! focus:ring-sky-200! focus:border-sky-400!"
+                  />
+                </div>
+                <div class="flex! items-center! justify-between! mt-1.5! text-[11px]!">
+                  <span class="text-slate-500!">Sisa tagihan:</span>
+                  <span class="font-bold! text-orange-600!">Rp {{ formatRibuan(selectedTicket.remaining) }}</span>
+                </div>
+              </div>
+
+              <div
+                v-if="form.amount > 0 && form.amount < selectedTicket.remaining"
+                class="bg-amber-50! border! border-amber-200! rounded-lg! p-3! flex! gap-2!"
+              >
+                <font-awesome-icon icon="info-circle" class="text-amber-600! mt-0.5!" />
+                <div class="text-[11px]! text-amber-800!">
+                  <p class="font-bold!">Pembayaran Sebagian</p>
+                  <p class="mt-0.5!">
+                    Setelah ini, status tiket tetap
+                    <strong>Unpaid</strong> dan masih ada sisa
+                    <strong>Rp {{ formatRibuan(selectedTicket.remaining - form.amount) }}</strong>
+                    yang harus dilunasi.
+                  </p>
+                </div>
+              </div>
+
+              <div
+                v-else-if="form.amount >= selectedTicket.remaining"
+                class="bg-emerald-50! border! border-emerald-200! rounded-lg! p-3! flex! gap-2!"
+              >
+                <font-awesome-icon icon="check-circle" class="text-emerald-600! mt-0.5!" />
+                <div class="text-[11px]! text-emerald-800!">
+                  <p class="font-bold!">Pelunasan</p>
+                  <p class="mt-0.5!">Setelah konfirmasi, tiket otomatis lanjut ke tahap <strong>Processing</strong>.</p>
+                </div>
+              </div>
+
+              <div class="flex! gap-2! pt-2!">
+                <button
+                  @click="handleSubmit"
+                  :disabled="submitting || form.amount <= 0 || form.amount > selectedTicket.remaining"
+                  class="flex-1! py-2.5! rounded-lg! font-bold! text-sm! flex! items-center! justify-center! gap-2! transition-all! disabled:opacity-50! disabled:cursor-not-allowed!"
+                  :class="
+                    form.amount >= selectedTicket.remaining
+                      ? 'bg-gradient-to-r! from-emerald-500! to-emerald-600! hover:from-emerald-600! hover:to-emerald-700! text-white! shadow-lg! shadow-emerald-200!'
+                      : 'bg-gradient-to-r! from-sky-500! to-blue-600! hover:from-sky-600! hover:to-blue-700! text-white! shadow-lg! shadow-sky-200!'
+                  "
+                >
+                  <font-awesome-icon v-if="submitting" icon="spinner" spin />
+                  <font-awesome-icon v-else :icon="form.amount >= selectedTicket.remaining ? 'check-circle' : 'money-bill-wave'" />
+                  {{
+                    submitting
+                      ? 'Menyimpan...'
+                      : form.amount >= selectedTicket.remaining
+                        ? 'Pelunasan & Lanjut Processing'
+                        : 'Simpan Pembayaran'
+                  }}
+                </button>
+              </div>
+            </div>
+          </ContentCard>
+
+          <ContentCard variant="bordered" padding="normal" rounded="2xl">
+            <div class="flex! items-center! gap-2! mb-3!">
+              <div class="w-7! h-7! rounded-lg! bg-slate-100! flex! items-center! justify-center!">
+                <font-awesome-icon icon="history" class="text-slate-600! text-xs!" />
+              </div>
+              <h3 class="text-sm! font-bold! text-slate-800!">Riwayat Pembayaran</h3>
+            </div>
+
+            <div v-if="selectedTicket.payments.length === 0" class="text-center! py-6! text-xs! text-slate-400!">
+              Belum ada pembayaran
+            </div>
+            <div v-else class="space-y-2!">
+              <div
+                v-for="p in [...selectedTicket.payments].reverse()"
+                :key="p.id"
+                class="flex! items-center! justify-between! px-3! py-2! rounded-lg! border!"
+                :class="
+                  p.status === 'confirmed'
+                    ? 'bg-slate-50! border-slate-100!'
+                    : 'bg-amber-50! border-amber-200!'
+                "
+              >
+                <div class="flex! items-center! gap-2!">
+                  <div
+                    class="w-7! h-7! rounded-full! flex! items-center! justify-center!"
+                    :class="p.status === 'confirmed' ? 'bg-emerald-100!' : 'bg-amber-100!'"
+                  >
+                    <font-awesome-icon
+                      :icon="p.status === 'confirmed' ? 'check' : 'clock'"
+                      class="text-[10px]!"
+                      :class="p.status === 'confirmed' ? 'text-emerald-600!' : 'text-amber-600!'"
+                    />
+                  </div>
+                  <div>
+                    <div class="text-[11px]! font-bold! text-slate-700!">
+                      Rp {{ formatRibuan(p.amount) }}
+                    </div>
+                    <div class="text-[10px]! text-slate-400!">
+                      {{ p.paid_at ? new Date(p.paid_at).toLocaleString('id-ID') : 'Belum dibayar' }}
+                    </div>
+                  </div>
+                </div>
+                <span
+                  class="text-[10px]! font-bold! uppercase! tracking-wider! px-2! py-0.5! rounded-full!"
+                  :class="
+                    p.status === 'confirmed'
+                      ? 'bg-emerald-100! text-emerald-700!'
+                      : 'bg-amber-100! text-amber-700!'
+                  "
+                >
+                  {{ p.status === 'confirmed' ? 'Confirmed' : 'Pending' }}
                 </span>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+              </div>
+            </div>
+          </ContentCard>
+        </div>
       </div>
     </div>
-  </ContentCard>
+  </div>
 </template>
 
 <script setup>
-import { computed, onMounted, ref } from 'vue'
-import { useBillingStore } from '@/stores/billingStore.js'
-import SelectSearch from '@/presentations/components/SelectSearch.vue'
-import MaksMoneyInput from '@/presentations/components/MaksMoneyInput.vue'
-import AppDatePicker from '@/presentations/components/AppDatePicker.vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import Swal from 'sweetalert2'
 import ContentCard from '@/presentations/components/ui/ContentCard.vue'
-import BaseButton from '@/presentations/components/ui/BaseButton.vue'
+import AppDatePicker from '@/presentations/components/AppDatePicker.vue'
+import api from '@/utils/axios'
+import ticketService from '@/services/ticket.service'
 
-const billingStore = useBillingStore()
+const route = useRoute()
+const router = useRouter()
 
-onMounted(() => {
-  billingStore.initializeStore()
+const loading = ref(false)
+const submitting = ref(false)
+const tickets = ref([])
+const search = ref('')
+const selectedTicket = ref(null)
+
+const form = reactive({
+  tanggalBayar: new Date().toISOString().split('T')[0],
+  amount: 0,
+  amountDisplay: '',
 })
 
-const currentPeriod = computed(() => billingStore.currentPeriod)
+const fetchTickets = async () => {
+  loading.value = true
+  try {
+    const res = await api.get('/installation-tickets-unpaid')
+    if (res.data?.success) {
+      tickets.value = res.data.data || []
+      const qTicket = parseInt(route.query.ticket, 10)
+      if (qTicket) {
+        const found = tickets.value.find((t) => t.id === qTicket)
+        if (found) selectedTicket.value = found
+      }
+    }
+  } catch (err) {
+    console.error('Failed to load unpaid tickets', err)
+    Swal.fire('Gagal', 'Tidak dapat memuat daftar tagihan.', 'error')
+  } finally {
+    loading.value = false
+  }
+}
 
-const billingItems = computed(() => {
-  const period = currentPeriod.value
-  const pemakaian = period?.pemakaian || 23.25
-  const ratePerM3 = 15000
-  const maintenanceFee = 45000
-  const adminFee = 64450
+const filteredTickets = computed(() => {
+  if (!search.value) return tickets.value
+  const q = search.value.toLowerCase()
+  return tickets.value.filter(
+    (t) =>
+      t.applicant_name.toLowerCase().includes(q) ||
+      t.nik.toLowerCase().includes(q) ||
+      String(t.id).includes(q) ||
+      (t.package || '').toLowerCase().includes(q),
+  )
+})
 
+const counts = computed(() => {
+  const unpaid = tickets.value.filter((t) => t.status === 'unpaid').length
+  const surveyed = tickets.value.filter((t) => t.status === 'surveyed').length
+  return { unpaid, surveyed }
+})
+
+const totalRemaining = computed(() => {
+  return tickets.value.reduce((sum, t) => sum + Number(t.remaining || 0), 0)
+})
+
+const getProgress = (t) => {
+  if (!t.total_fee || t.total_fee === 0) return 0
+  return Math.min(100, (Number(t.total_paid || 0) / Number(t.total_fee)) * 100)
+}
+
+const pendingCount = (t) => {
+  return (t.payments || []).filter((p) => p.status === 'pending').length
+}
+
+const hasPendingPayments = (t) => {
+  return pendingCount(t) > 0
+}
+
+const selectTicket = (t) => {
+  selectedTicket.value = t
+  form.amount = 0
+  form.amountDisplay = ''
+  form.tanggalBayar = new Date().toISOString().split('T')[0]
+}
+
+const quickOptions = computed(() => {
+  if (!selectedTicket.value) return []
+  const rem = Number(selectedTicket.value.remaining)
   return [
-    {
-      id: 1,
-      name: 'Biaya sudah dibayar',
-      subtotal: pemakaian * ratePerM3,
-    },
-    {
-      id: 2,
-      name: 'Tagihan',
-      subtotal: maintenanceFee,
-    },
-    {
-      id: 3,
-      name: 'Pembayaran',
-      subtotal: adminFee,
-    },
+    { label: '50%', value: Math.floor(rem * 0.5) },
+    { label: '75%', value: Math.floor(rem * 0.75) },
+    { label: 'Lunas', value: rem },
   ]
 })
 
-const grandTotal = computed(() => billingItems.value.reduce((sum, item) => sum + item.subtotal, 0))
-
-// Removed unused selectedPaket, paketSearchQuery, detailInstalasi
-
-const tanggalTransaksi = ref(new Date().toISOString().split('T')[0])
-
-const selectPelanggan = (pelanggan) => {
-  billingStore.setSelectedCustomer(pelanggan)
+const setQuickAmount = (val) => {
+  form.amount = val
+  form.amountDisplay = formatRibuan(val)
 }
 
-const updateSubtotal = (id, value) => {
-  console.log(`Updating item ${id} to ${value}`)
+const onAmountInput = (e) => {
+  const raw = String(e.target.value).replace(/[^\d]/g, '')
+  let parsed = parseInt(raw || '0', 10)
+  if (isNaN(parsed)) parsed = 0
+
+  const max = Number(selectedTicket.value?.remaining || 0)
+  const isOver = parsed > max
+
+  if (isOver && max > 0) {
+    parsed = max
+    Swal.fire({
+      icon: 'warning',
+      title: 'Nominal Melebihi Sisa Tagihan',
+      html: `Nominal tidak boleh lebih dari sisa tagihan <strong style="color:#ea580c;">Rp ${formatRibuan(max)}</strong>. Nominal otomatis disesuaikan.`,
+      confirmButtonColor: '#f59e0b',
+      timer: 2500,
+      timerProgressBar: true,
+      showConfirmButton: false,
+      toast: true,
+      position: 'top-end',
+    })
+  }
+
+  form.amount = parsed
+  form.amountDisplay = formatRibuan(parsed)
 }
 
-const formatBillAmount = (value) => {
-  return new Intl.NumberFormat('id-ID').format(value)
+const formatRibuan = (val) => {
+  if (val === null || val === undefined || val === '') return '0'
+  return Number(val).toLocaleString('id-ID')
 }
 
-const pelangganList = ref([
-  { id: 1, name: 'Budi Darmawan', zone: 'Southern Spring' },
-  { id: 2, name: 'Siti Aminah', zone: 'Northern Valley' },
-])
+const handleSubmit = async () => {
+  if (!selectedTicket.value) return
+  if (form.amount <= 0) {
+    Swal.fire('Nominal kosong', 'Masukkan nominal pembayaran.', 'warning')
+    return
+  }
+  if (form.amount > selectedTicket.value.remaining) {
+    Swal.fire(
+      'Nominal terlalu besar',
+      `Maksimal pembayaran adalah Rp ${formatRibuan(selectedTicket.value.remaining)}`,
+      'warning',
+    )
+    return
+  }
 
-const handlePayNow = () => {
-  console.log('Pay now clicked')
-}
-</script>
+  const isLunas = form.amount >= selectedTicket.value.remaining
+  const confirm = await Swal.fire({
+    title: isLunas ? 'Konfirmasi Pelunasan' : 'Konfirmasi Pembayaran Sebagian',
+    html: `
+      <div style="text-align:left; font-size:13px;">
+        <div style="display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid #e2e8f0;">
+          <span style="color:#64748b;">Pelanggan</span>
+          <strong>${selectedTicket.value.applicant_name}</strong>
+        </div>
+        <div style="display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid #e2e8f0;">
+          <span style="color:#64748b;">Paket</span>
+          <strong>${selectedTicket.value.package}</strong>
+        </div>
+        <div style="display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid #e2e8f0;">
+          <span style="color:#64748b;">Sisa Tagihan</span>
+          <strong style="color:#ea580c;">Rp ${formatRibuan(selectedTicket.value.remaining)}</strong>
+        </div>
+        <div style="display:flex; justify-content:space-between; padding:10px 0;">
+          <span style="color:#64748b; font-weight:600;">Bayar</span>
+          <strong style="color:#0284c7; font-size:18px;">Rp ${formatRibuan(form.amount)}</strong>
+        </div>
+        ${
+          !isLunas
+            ? `<div style="background:#fef3c7; padding:8px 10px; border-radius:6px; font-size:11px; color:#92400e; margin-top:6px;">
+                Sisa setelah bayar: <strong>Rp ${formatRibuan(selectedTicket.value.remaining - form.amount)}</strong> — status tiket tetap <strong>Unpaid</strong>
+              </div>`
+            : `<div style="background:#d1fae5; padding:8px 10px; border-radius:6px; font-size:11px; color:#065f46; margin-top:6px;">
+                Status tiket akan otomatis lanjut ke <strong>Processing</strong>
+              </div>`
+        }
+      </div>
+    `,
+    icon: 'question',
+    showCancelButton: true,
+    confirmButtonColor: isLunas ? '#10b981' : '#0284c7',
+    cancelButtonColor: '#64748b',
+    confirmButtonText: isLunas ? 'Ya, Lunasi' : 'Ya, Bayar',
+    cancelButtonText: 'Batal',
+    reverseButtons: true,
+  })
 
-<style scoped>
-.bill-card {
-  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
-  border-radius: 24px;
-  padding: 24px;
-  position: relative;
-  overflow: hidden;
-  box-shadow:
-    0 20px 25px -5px rgba(0, 0, 0, 0.1),
-    0 10px 10px -5px rgba(0, 0, 0, 0.04);
-}
+  if (!confirm.isConfirmed) return
 
-.bill-card::before {
-  content: '';
-  position: absolute;
-  top: -50%;
-  right: -50%;
-  width: 100%;
-  height: 100%;
-  background: radial-gradient(circle, rgba(34, 211, 238, 0.1) 0%, transparent 70%);
-  transform: rotate(-45deg);
-}
+  submitting.value = true
+  try {
+    const res = await ticketService.confirmTicketPayment(selectedTicket.value.id, form.amount)
+    const data = res?.data || {}
+    const newRemaining = Number(data.remaining ?? 0)
+    const isPaidOff = !!data.is_paid_off
 
-.pulse-status {
-  position: relative;
-}
+    const kode = selectedTicket.value?.customer_code || `#INS-${String(selectedTicket.value.id).padStart(4, '0')}`
 
-.pulse-status::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: 9999px;
-  background: inherit;
-  animation: pulse-ping 2s cubic-bezier(0, 0, 0.2, 1) infinite;
-}
+    if (isPaidOff) {
+      const choice = await Swal.fire({
+        title: 'Pelunasan Berhasil!',
+        html: `<p style="font-size:13px;">Tiket telah lunas dan otomatis lanjut ke tahap <strong>Processing</strong>.</p>`,
+        icon: 'success',
+        showDenyButton: true,
+        showCancelButton: false,
+        showConfirmButton: true,
+        allowEscapeKey: false,
+        allowOutsideClick: false,
+        confirmButtonText: 'Lihat Detail Processing',
+        denyButtonText: 'Lanjut Tagihan Instalasi',
+        buttonsStyling: true,
+        confirmButtonColor: '#0284c7',
+        denyButtonColor: '#10b981',
+        reverseButtons: false,
+        customClass: {
+          popup: 'rounded-2xl !font-sans',
+          title: '!text-base !font-bold !text-slate-900 !pb-2',
+          confirmButton: '!rounded-lg !px-4 !py-2 !text-sm !font-semibold',
+          denyButton: '!rounded-lg !px-4 !py-2 !text-sm !font-semibold',
+          actions: '!gap-2',
+        },
+      })
+      if (choice.isConfirmed) {
+        router.push({
+          path: `/app/instalasi/status/pasang-baru/${encodeURIComponent(kode)}`,
+        })
+        return
+      }
+      if (choice.isDenied) {
+        window.location.assign('/app/transaksi/tagihan-instalasi')
+        return
+      }
+    } else {
+      await Swal.fire({
+        title: 'Pembayaran Berhasil',
+        html: `<p style="font-size:13px;">Sisa tagihan: <strong style="color:#ea580c;">Rp ${formatRibuan(newRemaining)}</strong></p>`,
+        icon: 'success',
+        confirmButtonColor: '#0284c7',
+      })
+    }
 
-@keyframes pulse-ping {
-  75%,
-  100% {
-    transform: scale(3);
-    opacity: 0;
+    form.amount = 0
+    form.amountDisplay = ''
+
+    await fetchTickets()
+
+    const backendTicket = data?.ticket
+      ? {
+          ...data.ticket,
+          paid: Number(data.paid ?? 0),
+          pending: Number(data.pending ?? 0),
+          total_paid: Number(data.total_paid ?? data.paid ?? 0),
+          remaining: Number(data.remaining ?? 0),
+          total_fee: Number(data.total_fee ?? data.ticket?.package?.installation_fee ?? 0),
+          is_paid_off: !!data.is_paid_off,
+          has_pending: Number(data.pending ?? 0) > 0,
+          status: data.ticket?.status,
+          package:
+            typeof data.ticket?.package === 'object'
+              ? data.ticket?.package?.name || '-'
+              : data.ticket?.package || '-',
+        }
+      : null
+
+    if (backendTicket) {
+      const listMatch = tickets.value.find((t) => t.id === backendTicket.id)
+      selectedTicket.value = {
+        ...(listMatch || backendTicket),
+        ...backendTicket,
+      }
+      if (!listMatch) {
+        tickets.value = [backendTicket, ...tickets.value]
+      }
+    } else {
+      const updated = tickets.value.find((t) => t.id === selectedTicket.value?.id)
+      if (updated) {
+        selectedTicket.value = updated
+      }
+    }
+  } catch (err) {
+    const msg =
+      err.response?.data?.message ||
+      err.response?.data?.errors?.amount?.[0] ||
+      'Gagal menyimpan pembayaran.'
+    Swal.fire('Gagal', msg, 'error')
+  } finally {
+    submitting.value = false
   }
 }
-</style>
+
+watch(
+  () => selectedTicket.value?.id,
+  () => {
+    form.amount = 0
+    form.amountDisplay = ''
+  },
+)
+
+onMounted(() => {
+  fetchTickets()
+})
+</script>

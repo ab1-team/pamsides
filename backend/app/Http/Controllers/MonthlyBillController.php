@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\BillPayment;
 use App\Models\Customer;
 use App\Models\MonthlyBill;
+use App\Models\Setting;
+use App\Services\BillingService;
 use App\Services\MonthlyBillService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -21,6 +23,7 @@ class MonthlyBillController extends Controller
             'customer.user',
             'customer.ticket.package',
             'customer.ticket.village',
+            'billPayments',
         ])->orderBy('billing_period_year', 'desc')
             ->orderBy('billing_period_month', 'desc');
 
@@ -62,6 +65,12 @@ class MonthlyBillController extends Controller
                     'total_amount' => $b->total_amount,
                     'status' => $b->status,
                     'due_date' => $b->due_date,
+                    'bill_payments' => $b->billPayments->map(fn ($p) => [
+                        'id' => $p->id,
+                        'amount_paid' => $p->amount_paid,
+                        'confirmed_by' => $p->confirmed_by,
+                        'paid_at' => $p->paid_at,
+                    ]),
                     'customer' => $customer ? [
                         'id' => $customer->id,
                         'customer_code' => $customer->customer_code,
@@ -269,6 +278,28 @@ class MonthlyBillController extends Controller
 
         return response()->json([
             'success' => true,
+            'data' => $bill,
+        ]);
+    }
+
+    public function destroy($id)
+    {
+        $bill = MonthlyBill::findOrFail($id);
+
+        if ($bill->status !== 'paid') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Hanya tagihan yang sudah lunas yang bisa di-rollback.',
+            ], 400);
+        }
+
+        $bill->update(['status' => 'unpaid']);
+
+        BillPayment::where('bill_id', $bill->id)->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Tagihan dikembalikan ke status belum dibayar.',
             'data' => $bill,
         ]);
     }

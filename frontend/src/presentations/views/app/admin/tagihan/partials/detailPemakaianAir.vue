@@ -21,15 +21,10 @@
       </div>
 
       <div v-if="uiStore.userRole !== 'teknisi'" class="shrink-0!">
-        <BaseButton
-          variant="info-gradient"
-          size="md"
-          @click="handleGenerateBills"
-          class="w-full! sm:w-auto! rounded-xl! shadow-lg! text-xs md:text-sm font-bold! flex! items-center! gap-1.5!"
-          icon="file-invoice-dollar"
-        >
-          Generate Tagihan
-        </BaseButton>
+        <div class="flex! items-center! gap-2! text-xs! text-slate-500! bg-slate-50! px-3! py-2! rounded-xl!">
+          <font-awesome-icon icon="info-circle" class="text-cyan-500!" />
+          <span>Tagihan otomatis saat simpan meter</span>
+        </div>
       </div>
     </div>
 
@@ -51,13 +46,13 @@
           :no-card="true"
         >
           <template #column-meterAwal="{ row }">
-            <span class="text-slate-500!">{{ row.meterAwal }}</span>
+            <span class="text-slate-500!">{{ formatMeter(row.meterAwal) }}</span>
           </template>
 
           <template #column-meterAkhir="{ row }">
             <input
               type="text"
-              inputmode="numeric"
+              inputmode="decimal"
               v-model.number="row.meterAkhir"
               class="w-16! md:w-20! text-right! bg-transparent! outline-none! border-b! border-transparent! focus:border-cyan-500! hover:border-slate-300! transition-colors! font-semibold!"
               :class="row.meterAkhir === row.meterAwal ? 'text-red-500!' : 'text-orange-500!'"
@@ -65,7 +60,7 @@
           </template>
 
           <template #column-pemakaian="{ row }">
-            <span class="text-slate-500!">{{ hitungPemakaian(row) }}</span>
+            <span class="text-slate-500!">{{ formatMeter(hitungPemakaian(row)) }}</span>
           </template>
         </DataTable>
       </ContentCard>
@@ -88,16 +83,10 @@
               <p class="text-[10px]! uppercase! tracking-[0.2em]! text-slate-400!">Pamsides V2</p>
             </div>
           </div>
-          <BaseButton
-            v-if="uiStore.userRole !== 'teknisi'"
-            variant="info-gradient"
-            size="sm"
-            @click="handleGenerateBills"
-            class="rounded-xl! shadow-sm! text-xs font-bold! flex! items-center! gap-1!"
-            icon="file-invoice-dollar"
-          >
-            Generate
-          </BaseButton>
+          <div class="flex! items-center! gap-2! text-[10px]! text-slate-400!">
+            <font-awesome-icon icon="info-circle" class="text-cyan-400!" />
+            <span>Otomatis saat simpan</span>
+          </div>
         </div>
 
         <div class="space-y-4!">
@@ -170,13 +159,13 @@
               <p class="text-[8px]! font-black! text-slate-400! uppercase! tracking-wider! mb-0.5!">
                 METER AWAL
               </p>
-              <p class="text-xs! font-bold! text-slate-700!">{{ row.meterAwal }} m³</p>
+              <p class="text-xs! font-bold! text-slate-700!">{{ formatMeter(row.meterAwal) }} m³</p>
             </div>
             <div class="pl-3! border-l! border-slate-200!">
               <p class="text-[8px]! font-black! text-slate-400! uppercase! tracking-wider! mb-0.5!">
                 PAKAI LALU
               </p>
-              <p class="text-xs! font-bold! text-cyan-600!">{{ row.usageLalu }} m³</p>
+              <p class="text-xs! font-bold! text-cyan-600!">{{ formatMeter(row.usageLalu) }} m³</p>
             </div>
           </div>
         </div>
@@ -225,7 +214,6 @@ import { ref, computed, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUiStore } from '@/stores/uiStore'
 import { meterService } from '@/services/meter.service'
-import { billingService } from '@/services/billing.service.js'
 import { MySwal } from '@/utils/swal.js'
 import BaseButton from '@/presentations/components/ui/BaseButton.vue'
 import DataTable from '@/presentations/components/ui/DataTable.vue'
@@ -340,59 +328,6 @@ const handleBack = () => {
   }
 }
 
-const handleGenerateBills = async () => {
-  const confirm = await MySwal.fire({
-    title: 'Generate Tagihan?',
-    text: 'Sistem akan memproses generate tagihan untuk pelanggan yang sudah diinput meteran airnya pada periode terpilih.',
-    icon: 'question',
-    showCancelButton: true,
-    confirmButtonText: 'Mulai Generate',
-    cancelButtonText: 'Batal',
-    confirmButtonColor: '#0891b2',
-    cancelButtonColor: '#64748b',
-    background: '#ffffff',
-    customClass: {
-      popup: 'rounded-2xl!',
-      confirmButton: 'rounded-xl! px-4! py-2! font-bold!',
-      cancelButton: 'rounded-xl! px-4! py-2! font-medium!',
-    },
-  })
-
-  if (!confirm.isConfirmed) return
-
-  try {
-    uiStore.setLoading(true)
-
-    const { month, year, bulan, tahun } = router.currentRoute.value.query
-    const monthVal = getMonthNumber(month || bulan)
-    const yearVal = parseInt(year || tahun) || new Date().getFullYear()
-
-    const res = await billingService.generateMonthlyBills({ month: monthVal, year: yearVal })
-
-    await MySwal.fire({
-      title: 'Generate Berhasil!',
-      text: res.data?.message || 'Tagihan pelanggan berhasil di-generate!',
-      icon: 'success',
-      confirmButtonText: 'Lihat Daftar Tagihan',
-      confirmButtonColor: '#0891b2',
-      customClass: {
-        popup: 'rounded-2xl!',
-        confirmButton: 'rounded-xl! px-5! py-2.5! font-bold!',
-      },
-    })
-
-    router.push('/app/instalasi/daftar-tagihan')
-  } catch (error) {
-    uiStore.error(
-      error.response?.data?.data?.message ||
-        error.response?.data?.message ||
-        'Gagal generate tagihan',
-    )
-  } finally {
-    uiStore.setLoading(false)
-  }
-}
-
 const isModalOpen = ref(false)
 const selectedCustomer = ref({})
 
@@ -421,12 +356,27 @@ const handleSaveMeter = async (payload) => {
     formData.append('customer_id', selectedCustomer.value.id)
     formData.append('meter_value', payload.meterValue)
     formData.append('photo', payload.photo)
-    formData.append('month', monthVal)
-    formData.append('year', yearVal)
+    formData.append('reading_month', monthVal)
+    formData.append('reading_year', yearVal)
 
-    await meterService.submitReading(formData)
+    const res = await meterService.submitReading(formData)
+    const data = res.data
 
-    uiStore.success('Data pemakaian dan foto berhasil disimpan!')
+    if (data?.is_suspended) {
+      await MySwal.fire({
+        title: 'Pelanggan Disuspend!',
+        text: 'Tagihan sudah dibuat. Pelanggan memiliki tunggakan dan statusnya diubah menjadi SUSPENDED.',
+        icon: 'warning',
+        confirmButtonText: 'Mengerti',
+        confirmButtonColor: '#f59e0b',
+        customClass: {
+          popup: 'rounded-2xl!',
+          confirmButton: 'rounded-xl! px-5! py-2.5! font-bold!',
+        },
+      })
+    } else {
+      uiStore.success('Meter & tagihan berhasil disimpan!')
+    }
 
     const index = customers.value.findIndex((c) => c.noInduk === selectedCustomer.value.noInduk)
     if (index !== -1) {
@@ -459,6 +409,12 @@ const tableColumns = [
 
 const hitungPemakaian = (row) => {
   return Math.max(0, row.meterAkhir - row.meterAwal)
+}
+
+const formatMeter = (val) => {
+  const num = Number(val)
+  if (isNaN(num)) return val
+  return Number.isInteger(num) ? num.toString() : num.toFixed(2)
 }
 
 const filteredData = computed(() => {

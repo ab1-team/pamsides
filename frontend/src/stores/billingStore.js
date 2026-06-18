@@ -116,6 +116,7 @@ export const useBillingStore = defineStore('billing', () => {
             meterAwal: bill.meter_reading_start || 0,
             meterAkhir: bill.meter_reading_end || 0,
             pemakaian: bill.usage_m3 || 0,
+            dueDate: bill.due_date || null,
             payments: bill.bill_payments
               ? bill.bill_payments.map((p) => ({
                   id: p.id,
@@ -260,6 +261,26 @@ export const useBillingStore = defineStore('billing', () => {
     searchQuery.value = ''
   }
 
+  const deleteBill = async (billId) => {
+    loading.value = true
+    error.value = null
+    try {
+      const res = await billingService.deleteBill(billId)
+      if (!res?.success) {
+        return { success: false, message: res?.message || 'Gagal rollback tagihan.' }
+      }
+      if (selectedCustomer.value?.id) {
+        await fetchBillingPeriods(selectedCustomer.value.id)
+      }
+      return { success: true, message: res.message || 'Tagihan dikembalikan ke belum dibayar.' }
+    } catch (err) {
+      error.value = 'Gagal rollback tagihan'
+      return { success: false, message: err.response?.data?.message || 'Gagal rollback tagihan.' }
+    } finally {
+      loading.value = false
+    }
+  }
+
   const resetStore = () => {
     billingPeriods.value = []
     searchQuery.value = ''
@@ -319,6 +340,7 @@ export const useBillingStore = defineStore('billing', () => {
     fetchBillingPeriods,
     togglePeriod,
     savePayment,
+    deleteBill,
     searchCustomers,
     selectCustomer,
     clearSearch,
