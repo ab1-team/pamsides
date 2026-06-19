@@ -9,9 +9,7 @@ class FileHelper
 {
     public static function uploadPhoto(UploadedFile $file, string $folder): string
     {
-        $path = $file->store($folder, 'public');
-
-        return '/storage/'.$path;
+        return $file->store($folder, 'public');
     }
 
     public static function uploadPhotoWithUrl(UploadedFile $file, string $folder): array

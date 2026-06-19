@@ -30,7 +30,6 @@ class SopController extends Controller
             ],
             'logo' => [
                 'logo' => $s?->logo ?? null,
-                'logo_url' => $s?->logo ? Storage::url($s->logo) : null,
             ],
             'whatsapp' => [
                 'templateTagihan' => $s?->pesan_tagihan ?? '',
@@ -110,20 +109,25 @@ class SopController extends Controller
 
             $s = Setting::firstOrNew([]);
 
-            if ($s->logo && Storage::disk('public')->exists($s->logo)) {
-                Storage::disk('public')->delete($s->logo);
+            if ($s->logo) {
+                $oldPath = 'sop/logo/'.$s->logo;
+                if (Storage::disk('public')->exists($oldPath)) {
+                    Storage::disk('public')->delete($oldPath);
+                }
             }
 
-            $path = $request->file('logo')->store('sop/logo', 'public');
-            $s->logo = $path;
+            $file = $request->file('logo');
+            $fileName = time().'_'.$file->getClientOriginalName();
+            $file->storeAs('sop/logo', $fileName, 'public');
+
+            $s->logo = $fileName;
             $s->save();
 
             return response()->json([
                 'success' => true,
                 'message' => 'Logo berhasil disimpan',
                 'data' => [
-                    'logo' => $path,
-                    'logo_url' => Storage::url($path),
+                    'logo' => $fileName,
                 ],
             ]);
         } catch (\Throwable $e) {

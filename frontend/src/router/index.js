@@ -58,6 +58,10 @@ const router = createRouter({
       component: LoginView,
     },
     {
+      path: '/profil',
+      redirect: '/app/profil',
+    },
+    {
       path: '/app',
       name: 'layout-dashboard',
       component: MainView,

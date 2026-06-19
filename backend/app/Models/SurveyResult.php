@@ -3,7 +3,6 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Storage;
 
 class SurveyResult extends Model
 {
@@ -41,6 +40,6 @@ class SurveyResult extends Model
             return $value;
         }
 
-        return Storage::url($value);
+        return $value;
     }
 }

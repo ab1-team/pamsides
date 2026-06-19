@@ -80,7 +80,7 @@ class AuthController extends Controller
                 'email' => $user->email,
                 'role' => $user->role,
                 'phone' => $user->phone ?? null,
-                'avatar_url' => $user->avatar_path ? Storage::url($user->avatar_path) : null,
+                'avatar_url' => $user->avatar_path ?: null,
                 'identity' => $customer ? [
                     'customer_id' => $customer->id,
                     'customer_code' => $customer->customer_code,
@@ -168,7 +168,7 @@ class AuthController extends Controller
 
             return response()->json([
                 'data' => [
-                    'avatar_url' => Storage::url($path),
+                    'avatar_url' => $path,
                 ],
             ]);
         } catch (ValidationException $e) {

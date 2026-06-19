@@ -11,7 +11,6 @@ use App\Services\MonthlyBillService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Storage;
 
 class MonthlyBillController extends Controller
 {
@@ -76,7 +75,7 @@ class MonthlyBillController extends Controller
                         'customer_code' => $customer->customer_code,
                         'initial_meter_reading' => $customer->initial_meter_reading,
                         'activated_at' => $customer->activated_at,
-                        'meter_photo_url' => $customer->meter_photo_url ? Storage::url($customer->meter_photo_url) : null,
+                        'meter_photo_url' => $customer->meter_photo_url ?: null,
                         'user' => $user ? [
                             'id' => $user->id,
                             'name' => $user->name,
@@ -178,7 +177,7 @@ class MonthlyBillController extends Controller
                 'abodemen' => $bill?->abodemen,
                 'status' => $statusLabel,
                 'due_date' => $bill?->due_date,
-                'reading_photo' => $reading?->photo_url ? Storage::url($reading->photo_url) : null,
+                'reading_photo' => $reading?->photo_url ?: null,
                 'reading_recorded_at' => $reading?->recorded_at,
             ];
         });

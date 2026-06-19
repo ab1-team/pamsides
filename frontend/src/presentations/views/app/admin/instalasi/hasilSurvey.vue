@@ -151,36 +151,30 @@ const tableColumns = [
 const fetchSurveys = async () => {
   isLoading.value = true
   try {
-    const res = await ticketService.getTickets({ status: 'surveyed' })
-    if (res.data && res.data.data) {
-      // Data dari API adalah array of tickets yang sudah di-survey
-      // Kita perlu mapping untuk menampilkan data survey
-      surveys.value = res.data.data.map((ticket) => {
-        // Ambil survey result dari relasi ticket
-        const survey = Array.isArray(ticket.survey) ? ticket.survey[0] : ticket.survey
-
-        // Perbaiki URL foto agar sesuai dengan backend
-        let photoUrl = survey?.photo_url
-        if (photoUrl) {
-          // Ganti URL localhost yang salah dengan URL backend yang benar
-          photoUrl = photoUrl.replace(
-            'http://localhost/pamsides-v2/backend/public',
-            'http://localhost:8000',
-          )
-        }
-
-        return {
-          id: survey?.id || ticket.id,
-          ticket_id: ticket.id,
-          ticket: ticket,
-          surveyor_id: survey?.surveyor_id,
-          surveyor: survey?.surveyor,
-          distance_to_pipe_m: survey?.distance_to_pipe_m || 0,
-          material_notes: survey?.material_notes || '-',
-          photo_url: photoUrl,
-          surveyed_at: survey?.surveyed_at || survey?.created_at,
-        }
-      })
+    const res = await ticketService.getSurveyResults({
+      page: currentPage.value,
+      per_page: perPage.value,
+      search: searchQuery.value || undefined,
+    })
+    const list = res?.data?.data
+    if (Array.isArray(list)) {
+      surveys.value = list.map((s) => ({
+        id: s.id,
+        ticket_id: s.ticket_id,
+        ticket: s.ticket,
+        surveyor_id: s.surveyor_id,
+        surveyor: s.surveyor,
+        distance_to_pipe_m: s.distance_to_pipe_m || 0,
+        material_notes: s.material_notes || '-',
+        photo_url: s.photo_url,
+        surveyed_at: s.surveyed_at || s.created_at,
+      }))
+      if (res.data.meta) {
+        currentPage.value = res.data.meta.current_page
+        perPage.value = res.data.meta.per_page
+      }
+    } else {
+      surveys.value = []
     }
   } catch (err) {
     console.error('Gagal memuat data survey:', err)
