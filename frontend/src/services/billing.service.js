@@ -46,6 +46,14 @@ export const billingService = {
   },
 
   /**
+   * Hapus tagihan (soft delete)
+   */
+  async deleteBill(id) {
+    const response = await api.delete(`/monthly-bills/${id}`)
+    return response.data
+  },
+
+  /**
    * Konfirmasi pembayaran tagihan
    */
   async confirmPayment(billId, payload = {}) {

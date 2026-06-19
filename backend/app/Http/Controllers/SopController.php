@@ -22,7 +22,7 @@ class SopController extends Controller
                 'domain' => $s?->domain ?? '',
             ],
             'sistemTagihan' => [
-                'batasTagihan' => $s?->batas_tagihan ?? 10,
+                'batasTagihan' => $s?->batas_tagihan ?? 27,
                 'toleransiTunggakan' => $s?->toleransi_tunggakan ?? 0,
             ],
             'pasangBaru' => [

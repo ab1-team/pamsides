@@ -1,96 +1,116 @@
 <template>
   <div class="billing-form" @click.stop>
-    <!-- Baris 1: Tanggal, Abodemen, Denda -->
-    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-5">
+    <!-- Info Jatuh Tempo -->
+    <div
+      v-if="formData.dueDate"
+      class="mb-4! flex! items-center! gap-2! px-3! py-2! rounded-lg! text-xs! font-bold!"
+      :class="isOverdue ? 'bg-red-50! text-red-700!' : 'bg-blue-50! text-blue-700!'"
+    >
+      <font-awesome-icon :icon="isOverdue ? 'exclamation-triangle' : 'calendar-alt'" />
+      <span>
+        Jatuh Tempo: {{ formatDueDate(formData.dueDate) }}
+        <template v-if="isOverdue"> — Terlambat {{ overdueDays }} hari</template>
+      </span>
+    </div>
+
+    <!-- Baris 1: Tanggal Pembayaran -->
+    <div class="grid! grid-cols-1! sm:grid-cols-3! gap-4! mb-5!">
       <AppDatePicker
-        v-model="formData.tanggal"
-        placeholder="Pilih tanggal transaksi"
-        label="Tanggal Transaksi"
-        @date-select="(date) => (formData.tanggal = date)"
+        v-model="tanggalStr"
+        label="Tanggal Pembayaran"
+        placeholder="Pilih tanggal pembayaran"
+        noMargin
       />
+      <div>
+        <label class="block! text-xs! font-bold! text-slate-500! mb-1.5!">Meter Awal (m³)</label>
+        <input
+          type="text"
+          :value="formatMeter(formData.meterAwal)"
+          disabled
+          class="w-full! px-3! py-2! text-sm! font-semibold! text-slate-700! bg-slate-50! border! border-slate-200! rounded-lg! cursor-not-allowed!"
+        />
+      </div>
+      <div>
+        <label class="block! text-xs! font-bold! text-slate-500! mb-1.5!">Meter Akhir (m³)</label>
+        <input
+          type="text"
+          :value="formatMeter(formData.meterAkhir)"
+          disabled
+          class="w-full! px-3! py-2! text-sm! font-semibold! text-slate-700! bg-slate-50! border! border-slate-200! rounded-lg! cursor-not-allowed!"
+        />
+      </div>
+    </div>
 
-      <MaksMoneyInput
-        v-model="formData.abodemen"
-        placeholder="0,00"
-        :show-helper="false"
-        label="Abodemen"
-      />
+    <!-- Baris 2: Pemakaian, Tagihan, Abodemen, Denda -->
+    <div class="grid! grid-cols-2! sm:grid-cols-4! gap-4! mb-5!">
+      <div>
+        <label class="block! text-xs! font-bold! text-slate-500! mb-1.5!">Pemakaian (m³)</label>
+        <input
+          type="text"
+          :value="formatMeter(formData.pemakaian)"
+          disabled
+          class="w-full! px-3! py-2! text-sm! font-semibold! text-cyan-700! bg-slate-50! border! border-slate-200! rounded-lg! cursor-not-allowed!"
+        />
+      </div>
+      <div>
+        <label class="block! text-xs! font-bold! text-slate-500! mb-1.5!">Tagihan Air</label>
+        <input
+          type="text"
+          :value="formatRupiah(formData.tagihan)"
+          disabled
+          class="w-full! px-3! py-2! text-sm! font-semibold! text-slate-700! bg-slate-50! border! border-slate-200! rounded-lg! cursor-not-allowed!"
+        />
+      </div>
+      <div>
+        <label class="block! text-xs! font-bold! text-slate-500! mb-1.5!">Abodemen</label>
+        <input
+          type="text"
+          :value="formatRupiah(formData.abodemen)"
+          disabled
+          class="w-full! px-3! py-2! text-sm! font-semibold! text-slate-700! bg-slate-50! border! border-slate-200! rounded-lg! cursor-not-allowed!"
+        />
+      </div>
+      <div>
+        <label class="block! text-xs! font-bold! text-slate-500! mb-1.5!">Denda</label>
+        <input
+          type="text"
+          :value="formatRupiah(formData.denda)"
+          disabled
+          class="w-full! px-3! py-2! text-sm! font-semibold! text-red-500! bg-slate-50! border! border-slate-200! rounded-lg! cursor-not-allowed!"
+        />
+      </div>
+    </div>
 
-      <MaksMoneyInput
-        v-model="formData.denda"
-        placeholder="0,00"
-        :show-helper="false"
-        label="Denda"
+    <!-- Baris 3: Total Pembayaran -->
+    <div class="mb-5!">
+      <label class="block! text-xs! font-bold! text-cyan-600! mb-1.5!">Total Pembayaran</label>
+      <input
+        type="text"
+        :value="formatRupiah(formData.pembayaran)"
+        disabled
+        class="w-full! px-3! py-2.5! text-base! font-extrabold! text-cyan-700! bg-cyan-50/50! border! border-cyan-200! rounded-lg! cursor-not-allowed!"
       />
     </div>
 
-    <!-- Baris 2: Meter Awal, Meter Akhir, Pemakaian -->
-    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-5">
-      <BaseInput
-        id="meter-awal"
-        v-model="formData.meterAwal"
-        label="Meter Awal"
-        type="number"
-        placeholder="0"
-        @click.stop
-        @focus.stop
-      />
-
-      <BaseInput
-        id="meter-akhir"
-        v-model="formData.meterAkhir"
-        label="Meter Akhir"
-        type="number"
-        placeholder="0"
-        @click.stop
-        @focus.stop
-      />
-
-      <BaseInput
-        id="pemakaian"
-        v-model="formData.pemakaian"
-        label="Pemakaian"
-        type="number"
-        placeholder="0"
-        @click.stop
-        @focus.stop
-      />
-    </div>
-
-    <!-- Baris 3: Total Pembayaran (Full width) -->
-    <div class="mb-8">
-      <MaksMoneyInput
-        v-model="formData.pembayaran"
-        placeholder="0,00"
-        :show-helper="false"
-        label="Total Pembayaran"
-      />
-    </div>
-
-    <!-- Tombol Simpan Pembayaran -->
-    <div class="flex justify-end mt-4! pt-4! pb-2! border-t! border-slate-200/60!">
-      <BaseButton
-        variant="secondary"
-        icon="save"
-        size="md"
-        class="px-8! rounded-xl shadow-lg shadow-emerald-200/50 bg-emerald-500! hover:bg-emerald-600! text-white! border-emerald-500!"
+    <!-- Tombol Konfirmasi -->
+    <div class="flex! justify-end! pt-4! pb-2! border-t! border-slate-200/60!">
+      <button
+        class="px-6! py-2.5! text-sm! font-bold! text-white! bg-emerald-500! hover:bg-emerald-600! rounded-xl! shadow-lg! shadow-emerald-200/50! transition-all! flex! items-center! gap-2!"
         @click="handleSave"
         @click.stop
       >
+        <font-awesome-icon icon="check-circle" />
         Konfirmasi Pembayaran
-      </BaseButton>
+      </button>
     </div>
   </div>
 </template>
 
 <script setup>
-import { reactive, watch } from 'vue'
-import BaseInput from '../ui/BaseInput.vue'
-import BaseButton from '../ui/BaseButton.vue'
+import { reactive, ref, computed } from 'vue'
 import AppDatePicker from '../AppDatePicker.vue'
-import MaksMoneyInput from '../MaksMoneyInput.vue'
+import { formatRupiah } from '@/composables/useFormatCurrency.js'
 
-// Properti untuk data awal
 const props = defineProps({
   initialData: {
     type: Object,
@@ -102,12 +122,20 @@ const props = defineProps({
   },
 })
 
-// Daftar event emit
-const emit = defineEmits(['save', 'change'])
+const emit = defineEmits(['save'])
 
-// Data formulir reaktif
+const toDateString = (d) => {
+  if (!d) return ''
+  const date = new Date(d)
+  const y = date.getFullYear()
+  const m = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
+}
+
+const tanggalStr = ref(toDateString(props.initialData.tanggal) || toDateString(new Date()))
+
 const formData = reactive({
-  tanggal: props.initialData.tanggal ? new Date(props.initialData.tanggal) : new Date(),
   periodId: props.initialData.periodId,
   meterAwal: props.initialData.meterAwal || 0,
   meterAkhir: props.initialData.meterAkhir || 0,
@@ -116,50 +144,46 @@ const formData = reactive({
   abodemen: props.initialData.abodemen || 0,
   denda: props.initialData.denda || 0,
   pembayaran: props.initialData.pembayaran || 0,
+  dueDate: props.initialData.dueDate || null,
 })
 
-// Hitung otomatis pemakaian
-watch([() => formData.meterAwal, () => formData.meterAkhir], ([awal, akhir]) => {
-  if (awal !== undefined && akhir !== undefined && akhir >= awal) {
-    formData.pemakaian = akhir - awal
-  }
-})
-
-// Hitung otomatis pembayaran
-watch(
-  [() => formData.tagihan, () => formData.abodemen, () => formData.denda],
-  ([tagihan, abodemen, denda]) => {
-    formData.pembayaran = (Number(tagihan) || 0) + (Number(abodemen) || 0) + (Number(denda) || 0)
-  },
-)
-
-// Emit event perubahan
-watch(
-  formData,
-  (newData) => {
-    emit('change', newData)
-  },
-  { deep: true },
-)
-
-// Fungsi penanganan simpan
-const handleSave = () => {
-  // Validasi
-  if (!formData.tanggal) {
-    alert('Mohon lengkapi data tanggal transaksi')
-    return
-  }
-
-  // Emit event simpan
-  emit('save', { ...formData })
+const formatMeter = (val) => {
+  const num = Number(val)
+  if (isNaN(num)) return val
+  return Number.isInteger(num) ? num.toString() : num.toFixed(2)
 }
 
-// Mengekspos data form untuk diakses komponen induk
+const formatDueDate = (dateStr) => {
+  if (!dateStr) return '-'
+  const d = new Date(dateStr)
+  return d.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })
+}
+
+const isOverdue = computed(() => {
+  if (!formData.dueDate) return false
+  return new Date(formData.dueDate) < new Date()
+})
+
+const overdueDays = computed(() => {
+  if (!formData.dueDate) return 0
+  const diff = new Date() - new Date(formData.dueDate)
+  return Math.max(0, Math.floor(diff / (1000 * 60 * 60 * 24)))
+})
+
+const handleSave = () => {
+  if (!tanggalStr.value) {
+    alert('Mohon pilih tanggal pembayaran')
+    return
+  }
+  emit('save', { ...formData, tanggal: tanggalStr.value })
+}
+
 defineExpose({
   formData,
+  tanggalStr,
   resetForm: () => {
+    tanggalStr.value = toDateString(new Date())
     Object.assign(formData, {
-      tanggal: new Date(),
       meterAwal: 0,
       meterAkhir: 0,
       pemakaian: 0,
@@ -167,6 +191,7 @@ defineExpose({
       abodemen: 0,
       denda: 0,
       pembayaran: 0,
+      dueDate: null,
     })
   },
 })
@@ -174,37 +199,9 @@ defineExpose({
 
 <style scoped>
 .billing-form {
-  padding: 1rem 1.25rem 1rem 1.25rem;
+  padding: 1rem 1.25rem;
   border-top: 1px solid #e2e8f0;
   background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-  position: relative;
-  overflow: hidden;
   border-radius: 1rem;
-}
-
-.billing-form::before {
-  content: '';
-  position: absolute;
-  bottom: -50px;
-  left: -50px;
-  width: 100px;
-  height: 100px;
-  background: radial-gradient(circle, rgba(11, 122, 158, 0.1) 0%, transparent 70%);
-  border-radius: 50%;
-}
-
-.billing-form::after {
-  content: '';
-  position: absolute;
-  bottom: -30px;
-  left: -30px;
-  width: 60px;
-  height: 60px;
-  background: radial-gradient(circle, rgba(59, 130, 246, 0.08) 0%, transparent 60%);
-  border-radius: 50%;
-}
-
-.rotate-180 {
-  transform: rotate(180deg);
 }
 </style>

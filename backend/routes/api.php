@@ -45,6 +45,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('settings/kecamatan', [SettingController::class, 'getKecamatan']);
     Route::get('settings/desa', [SettingController::class, 'getDesa']);
+    Route::get('settings/payment-mode', [SettingController::class, 'getPaymentMode']);
 });
 
 
@@ -113,7 +114,9 @@ Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
     Route::post('installation-tickets', [InstallationTicketController::class, 'store']);
     Route::put('installation-tickets/{id}/register', [InstallationTicketController::class, 'registerInstallation']);
     Route::patch('installation-tickets/{installationTicket}/transition', [InstallationTicketController::class, 'transition']);
+    Route::get('installation-tickets-unpaid', [InstallationTicketController::class, 'unpaidTickets']);
     Route::post('installation-tickets/{installationTicket}/payment', [PaymentController::class, 'store']);
+    Route::post('installation-tickets/{installationTicket}/advance-stage', [InstallationTicketController::class, 'advanceStage']);
     Route::post('installation-tickets/{installationTicket}/activate', [ActivationController::class, 'activate']);
 
     // Survey CRUD (Admin)
@@ -139,6 +142,7 @@ Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
     Route::get('monthly-bills/{id}', [MonthlyBillController::class, 'show']);
 
     Route::post('monthly-bills/{id}/pay', [MonthlyBillController::class, 'pay']);
+    Route::delete('monthly-bills/{id}', [MonthlyBillController::class, 'destroy']);
     Route::post('monthly-bills/generate', [MonthlyBillController::class, 'generate']);
 
     Route::get('reports/installations', [InstallationTicketController::class, 'report']);

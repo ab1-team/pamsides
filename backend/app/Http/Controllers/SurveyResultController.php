@@ -94,7 +94,8 @@ class SurveyResultController extends Controller
 
             return response()->json([
                 'success' => true,
-                'data' => $survey->load(['surveyor', 'ticket.package']),
+                'message' => 'Survey berhasil disimpan. Status tiket berubah menjadi surveyed.',
+                'data' => $survey->load(['surveyor', 'ticket.package', 'ticket.payments']),
             ], 201);
         } catch (\Exception $e) {
             DB::rollBack();

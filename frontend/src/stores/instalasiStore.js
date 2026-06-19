@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
+import { useRoute } from 'vue-router'
 import ticketService from '@/services/ticket.service'
 import {
   INSTALASI_STATUS_COLORS,
@@ -7,8 +8,16 @@ import {
   INSTALASI_RAW_STATUS_LABELS,
 } from '@/types/instalasiStatus'
 
+const ALLOWED_FILTERS = ['permohonan', 'pasang_baru', 'aktif', 'blokir', 'cabut']
+
 export const useInstalasiStore = defineStore('instalasi', () => {
-  const activeStatus = ref('permohonan')
+  const route = useRoute()
+  const initialFilter = (() => {
+    const q = route?.query?.filter
+    return ALLOWED_FILTERS.includes(q) ? q : 'permohonan'
+  })()
+
+  const activeStatus = ref(initialFilter)
   const currentPage = ref(1)
   const perPage = ref(10)
   const searchQuery = ref('')

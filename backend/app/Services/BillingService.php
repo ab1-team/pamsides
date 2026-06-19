@@ -4,12 +4,13 @@ namespace App\Services;
 
 use App\Models\Customer;
 use App\Models\MonthlyBill;
+use App\Models\Setting;
 use App\Models\WaterTariffBlock;
 use Carbon\Carbon;
 
 class BillingService
 {
-    public function generateForCustomer(Customer $customer, int $year, int $month): MonthlyBill
+    public function generateForCustomer(Customer $customer, int $year, int $month, ?int $batasTagihan = null): MonthlyBill
     {
         $currentReading = $customer->meterReadings()
             ->where('reading_year', $year)
@@ -45,6 +46,11 @@ class BillingService
 
         $totalAmount = $usageCharge + $abodemen + $penaltyAmount;
 
+        if ($batasTagihan === null) {
+            $settings = Setting::first();
+            $batasTagihan = $settings?->batas_tagihan ?? 27;
+        }
+
         return MonthlyBill::create([
             'customer_id' => $customer->id,
             'billing_period_year' => $year,
@@ -57,7 +63,7 @@ class BillingService
             'penalty_amount' => $penaltyAmount,
             'total_amount' => $totalAmount,
             'status' => 'unpaid',
-            'due_date' => $this->computeDueDate($year, $month),
+            'due_date' => $this->computeDueDate($year, $month, $batasTagihan),
         ]);
     }
 
@@ -110,11 +116,13 @@ class BillingService
         return $customer->ticket->package->late_penalty;
     }
 
-    public function computeDueDate(int $year, int $month): string
+    public function computeDueDate(int $year, int $month, int $day = 27): string
     {
-        $next = Carbon::create($year, $month, 1)->addMonth();
+        $carbon = Carbon::create($year, $month, 1);
+        $maxDay = $carbon->daysInMonth;
+        $day = min($day, $maxDay);
 
-        return $next->setDay(20)->toDateString();
+        return $carbon->setDay($day)->toDateString();
     }
 
     public function calculateChargeForTesting($package, float $usageM3): float

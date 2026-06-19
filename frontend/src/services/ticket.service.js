@@ -131,6 +131,14 @@ export const ticketService = {
     const response = await api.put(`/installation-tickets/${id}/register`, registrationData)
     return response.data
   },
+
+  /**
+   * Lanjut ke tahap berikutnya (surveyed → unpaid/processing)
+   */
+  async advanceStage(id) {
+    const response = await api.post(`/installation-tickets/${id}/advance-stage`)
+    return response.data
+  },
 }
 
 export default ticketService

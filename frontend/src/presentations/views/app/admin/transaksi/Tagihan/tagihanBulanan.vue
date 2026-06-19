@@ -76,7 +76,7 @@
                   <h3
                     class="text-sm! sm:text-base! font-extrabold! text-slate-800! tracking-tight! leading-tight!"
                   >
-                    {{ billingStore.selectedCustomer?.packageName || 'Paket Standar' }}
+                    {{ billingStore.selectedCustomer?.packageName || '-' }}
                   </h3>
 
                   <div class="flex! items-center! gap-1.5! text-[10px]!">
@@ -85,7 +85,7 @@
                     >
                       Abodemen:
                       <strong class="ml-1! text-slate-850!">{{
-                        billingStore.formatAmount(billingStore.selectedCustomer?.abodemen || 10000)
+                        billingStore.formatAmount(billingStore.selectedCustomer?.abodemen || 0)
                       }}</strong>
                     </span>
                     <span
@@ -93,7 +93,7 @@
                     >
                       Denda:
                       <strong class="ml-1! text-red-850!">{{
-                        billingStore.formatAmount(billingStore.selectedCustomer?.penalty || 5000)
+                        billingStore.formatAmount(billingStore.selectedCustomer?.penalty || 0)
                       }}</strong>
                     </span>
                   </div>
@@ -260,7 +260,7 @@
                 <div class="flex-1! min-w-0!">
                   <div class="flex! items-center! gap-2! mb-2!">
                     <span class="text-lg! sm:text-xl! font-bold! text-white! truncate!">{{
-                      billingStore.selectedCustomer?.name || 'Bambang Susanto'
+                      billingStore.selectedCustomer?.name || '-'
                     }}</span>
                     <div
                       class="w-2.5! h-2.5! bg-emerald-400! rounded-full! animate-pulse! flex-shrink-0!"
@@ -288,7 +288,7 @@
                     <div class="flex-1! min-w-0!">
                       <div class="text-xs! text-white/70!">Customer ID</div>
                       <div class="text-xs! sm:text-sm! font-bold! text-white! truncate!">
-                        {{ billingStore.selectedCustomer?.id || 'PAM-2025-09821' }}
+                        {{ billingStore.selectedCustomer?.id || '-' }}
                       </div>
                     </div>
                   </div>
@@ -302,10 +302,10 @@
                     <div class="flex-1! min-w-0!">
                       <div class="text-xs! text-white/70!">Alamat</div>
                       <div class="text-xs! sm:text-sm! font-bold! text-white!">
-                        {{ billingStore.selectedCustomer?.village || 'Mojosari' }},
-                        {{ billingStore.selectedCustomer?.hamlet || 'Mojosari Kulon' }}, RT{{
-                          billingStore.selectedCustomer?.rt || '04'
-                        }}/RW{{ billingStore.selectedCustomer?.rw || '02' }}
+                        {{ billingStore.selectedCustomer?.village || '-' }},
+                        {{ billingStore.selectedCustomer?.hamlet || '-' }}, RT{{
+                          billingStore.selectedCustomer?.rt || '-' }}/RW{{
+                          billingStore.selectedCustomer?.rw || '-' }}
                       </div>
                     </div>
                   </div>
@@ -319,7 +319,7 @@
                     <div class="flex-1! min-w-0!">
                       <div class="text-xs! text-white/70!">Cater</div>
                       <div class="text-xs! sm:text-sm! font-bold! text-white! truncate!">
-                        {{ billingStore.selectedCustomer?.cater || 'Cater-001' }}
+                        {{ billingStore.selectedCustomer?.cater || '-' }}
                       </div>
                     </div>
                   </div>
@@ -418,11 +418,12 @@ const getInitialFormData = (period) => {
     abodemen: period.abodemen || 0,
     denda: period.denda || 0,
     pembayaran: period.amount || 0,
+    dueDate: period.dueDate || null,
   }
 }
 
 const getCustomerInitials = () => {
-  const name = billingStore.selectedCustomer?.name || 'Bambang Susanto'
+  const name = billingStore.selectedCustomer?.name || '-'
   return name
     .split(' ')
     .map((n) => n[0])

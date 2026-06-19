@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Customer;
 use App\Models\MeterReading;
 use App\Models\MonthlyBill;
+use App\Models\Setting;
 use App\Models\WaterTariffBlock;
 use Carbon\Carbon;
 
@@ -15,6 +16,9 @@ class MonthlyBillService
         $now = now();
         $bulan = $now->month;
         $tahun = $now->year;
+
+        $settings = Setting::first();
+        $batasTagihan = $settings?->batas_tagihan ?? 27;
 
         // CEGAH GENERATE DOBEL
         $exists = MonthlyBill::where('billing_period_month', $bulan)
@@ -105,7 +109,7 @@ class MonthlyBillService
                 'penalty_amount' => $penalty,
                 'total_amount' => $total,
                 'status' => 'unpaid',
-                'due_date' => $this->computeDueDate($tahun, $bulan),
+                'due_date' => $this->computeDueDate($tahun, $bulan, $batasTagihan),
             ]);
 
             $count++;
@@ -124,6 +128,10 @@ class MonthlyBillService
             ->orderBy('usage_min_m3')
             ->get();
 
+        if ($blocks->isEmpty()) {
+            return 0;
+        }
+
         $remaining = $usage;
         $total = 0;
 
@@ -132,13 +140,13 @@ class MonthlyBillService
                 break;
             }
 
-            $min = $block->usage_min_m3;
-            $max = $block->usage_max_m3 ?? $remaining;
+            $min = (float) $block->usage_min_m3;
+            $max = $block->usage_max_m3 !== null ? (float) $block->usage_max_m3 : PHP_FLOAT_MAX;
 
-            $range = $max - $min + 1;
+            $range = max(0, $max - $min);
             $used = min($remaining, $range);
 
-            $total += $used * $block->price_per_m3;
+            $total += $used * (float) $block->price_per_m3;
             $remaining -= $used;
         }
 
@@ -161,10 +169,12 @@ class MonthlyBillService
         return 0;
     }
 
-    public function computeDueDate(int $year, int $month): string
+    public function computeDueDate(int $year, int $month, int $day = 27): string
     {
-        $next = Carbon::create($year, $month, 1)->addMonth();
+        $carbon = Carbon::create($year, $month, 1);
+        $maxDay = $carbon->daysInMonth;
+        $day = min($day, $maxDay);
 
-        return $next->setDay(20)->toDateString();
+        return $carbon->setDay($day)->toDateString();
     }
 }

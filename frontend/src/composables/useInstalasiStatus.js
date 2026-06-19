@@ -3,6 +3,9 @@ import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 import { useInstalasiStore } from '@/stores/instalasiStore'
+import { INSTALASI_MENU_LIST } from '@/types/instalasiStatus'
+
+const ALLOWED_FILTERS = INSTALASI_MENU_LIST.map((m) => m.key)
 
 export function useInstalasiStatus() {
   const store = useInstalasiStore()
@@ -148,11 +151,23 @@ export function useInstalasiStatus() {
     store.currentPage = 1
   })
 
-  watch(activeStatus, (val) => {
-    if (route.path === '/app/instalasi/status' && route.query.filter !== val) {
-      router.replace({ path: '/app/instalasi/status', query: { filter: val } })
-    }
-  })
+  watch(
+    () => store.activeStatus,
+    (val) => {
+      if (route.path === '/app/instalasi/status' && route.query.filter !== val) {
+        router.replace({ path: '/app/instalasi/status', query: { filter: val } })
+      }
+    },
+  )
+
+  watch(
+    () => route.query.filter,
+    (val) => {
+      if (ALLOWED_FILTERS.includes(val) && store.activeStatus !== val) {
+        store.activeStatus = val
+      }
+    },
+  )
 
   const exportData = () => console.log('Export Excel for', activeLabel.value)
   const printData = () => console.log('Print Table for', activeLabel.value)

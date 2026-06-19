@@ -53,4 +53,26 @@ class InstallationTicket extends Model
     {
         return $this->belongsTo(Village::class, 'village_id');
     }
+
+    public function getTotalFeeAttribute(): float
+    {
+        return (float) ($this->package?->installation_fee ?? 0);
+    }
+
+    public function getPaidAmountAttribute(): float
+    {
+        return (float) $this->payments()
+            ->where('status', 'confirmed')
+            ->sum('amount');
+    }
+
+    public function getRemainingAttribute(): float
+    {
+        return max(0, $this->total_fee - $this->paid_amount);
+    }
+
+    public function getIsFullyPaidAttribute(): bool
+    {
+        return $this->remaining <= 0;
+    }
 }
