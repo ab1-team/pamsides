@@ -2,17 +2,17 @@
 
 namespace App\Http\Controllers;
 
-use App\Helpers\FileHelper;
 use App\Models\InstallationTicket;
 use App\Models\SurveyResult;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 class SurveyResultController extends Controller
 {
     public function index(Request $request)
     {
-        $query = SurveyResult::with(['surveyor', 'ticket.package', 'ticket.village']);
+        $query = SurveyResult::with(['surveyor', 'ticket.package', 'ticket.village', 'ticket.user']);
 
         if ($request->has('ticket_id')) {
             $query->where('ticket_id', $request->ticket_id);
@@ -22,7 +22,16 @@ class SurveyResultController extends Controller
             $query->where('surveyor_id', $request->surveyor_id);
         }
 
-        $surveys = $query->latest('surveyed_at')->paginate(10);
+        if ($request->has('search')) {
+            $search = $request->search;
+            $query->whereHas('ticket', function ($q) use ($search) {
+                $q->where('applicant_name', 'like', "%{$search}%")
+                    ->orWhere('nik', 'like', "%{$search}%");
+            });
+        }
+
+        $perPage = (int) $request->input('per_page', 10);
+        $surveys = $query->latest('surveyed_at')->paginate($perPage);
 
         return response()->json([
             'success' => true,
@@ -64,7 +73,9 @@ class SurveyResultController extends Controller
             ], 422);
         }
 
-        $photoPath = FileHelper::uploadPhoto($request->file('photo'), 'survey-photos');
+        $file = $request->file('photo');
+        $fileName = time().'_'.$file->getClientOriginalName();
+        $file->storeAs('survey-photos', $fileName, 'public');
 
         DB::beginTransaction();
         try {
@@ -73,7 +84,7 @@ class SurveyResultController extends Controller
                 'surveyor_id' => $request->user()->id,
                 'distance_to_pipe_m' => $request->distance_to_pipe_m,
                 'material_notes' => $request->material_notes,
-                'photo_url' => $photoPath,
+                'photo_url' => $fileName,
                 'surveyed_at' => now(),
             ]);
 
@@ -87,7 +98,7 @@ class SurveyResultController extends Controller
             ], 201);
         } catch (\Exception $e) {
             DB::rollBack();
-            FileHelper::deletePhoto($photoPath);
+            Storage::disk('public')->delete('survey-photos/'.$fileName);
 
             return response()->json([
                 'success' => false,
@@ -99,8 +110,6 @@ class SurveyResultController extends Controller
     public function update(Request $request, $id)
     {
         $survey = SurveyResult::findOrFail($id);
-
-        $isMultipart = $request->isMethod('post') && $request->input('_method') === 'PUT';
 
         $request->validate([
             'distance_to_pipe_m' => 'sometimes|integer|min:0',
@@ -119,9 +128,12 @@ class SurveyResultController extends Controller
         try {
             if ($request->hasFile('photo')) {
                 if ($survey->photo_url) {
-                    FileHelper::deletePhoto($survey->photo_url);
+                    Storage::disk('public')->delete('survey-photos/'.$survey->photo_url);
                 }
-                $survey->photo_url = FileHelper::uploadPhoto($request->file('photo'), 'survey-photos');
+                $file = $request->file('photo');
+                $fileName = time().'_'.$file->getClientOriginalName();
+                $file->storeAs('survey-photos', $fileName, 'public');
+                $survey->photo_url = $fileName;
             }
 
             if ($request->filled('distance_to_pipe_m')) {
@@ -157,7 +169,7 @@ class SurveyResultController extends Controller
         return $this->safeDelete(
             fn () => DB::transaction(function () use ($survey, $ticket) {
                 if ($survey->photo_url) {
-                    FileHelper::deletePhoto($survey->photo_url);
+                    Storage::disk('public')->delete('survey-photos/'.$survey->photo_url);
                 }
 
                 $survey->delete();

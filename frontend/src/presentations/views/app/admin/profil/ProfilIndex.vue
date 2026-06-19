@@ -12,10 +12,11 @@
           >
             <img
               :src="
-                avatarPreview ||
-                'https://ui-avatars.com/api/?name=' +
-                  encodeURIComponent(form.name || 'User') +
-                  '&background=0D8ABC&color=fff'
+                avatarPreview
+                  ? avatarPreview
+                  : 'https://ui-avatars.com/api/?name=' +
+                    encodeURIComponent(form.name || 'User') +
+                    '&background=0D8ABC&color=fff'
               "
               alt="Profile"
               class="w-full! h-full! object-cover!"
@@ -38,17 +39,52 @@
             @change="handleAvatarChange"
           />
         </div>
-        <div class="text-left!">
-          <h1 class="text-2xl! font-bold! text-slate-800!">
+        <div class="text-left! flex-1! min-w-0!">
+          <h1 class="text-2xl! font-bold! text-slate-800! truncate!">
             {{ form.name || '-' }}
           </h1>
-          <p class="text-slate-500! font-medium!">{{ form.email || '-' }}</p>
-          <span
-            v-if="role"
-            class="inline-block! mt-2! px-3! py-1! bg-blue-50! text-blue-600! text-[10px]! font-bold! uppercase! tracking-widest! rounded-full!"
-          >
-            {{ role }}
-          </span>
+          <p class="text-slate-500! font-medium! truncate!">{{ form.email || '-' }}</p>
+          <div class="flex! items-center! gap-2! mt-2! flex-wrap!">
+            <span
+              v-if="role"
+              class="inline-block! px-3! py-1! bg-blue-50! text-blue-600! text-[10px]! font-bold! uppercase! tracking-widest! rounded-full!"
+            >
+              {{ role }}
+            </span>
+            <span
+              v-if="avatarFile || avatarPreview"
+              class="inline-flex! items-center! gap-1.5! px-2.5! py-1! bg-slate-50! border! border-slate-100! text-slate-500! text-[10px]! font-bold! rounded-md! max-w-full! min-w-0!"
+              :title="avatarFile?.name || avatarFileName"
+            >
+              <font-awesome-icon icon="file-image" class="text-[10px]! shrink-0!" />
+              <span class="truncate!">{{ avatarFile?.name || avatarFileName || 'Foto tersimpan' }}</span>
+              <span v-if="avatarFile" class="text-slate-400! shrink-0!">
+                • {{ (avatarFile.size / 1024).toFixed(1) }} KB
+              </span>
+            </span>
+          </div>
+        </div>
+        <div class="hidden! sm:flex! items-center! gap-2! shrink-0!">
+          <div class="flex! flex-col! gap-0.5!">
+            <span class="text-[9px]! font-bold! text-slate-400! uppercase! tracking-tighter!"
+              >Format</span
+            >
+            <div
+              class="px-2.5! py-1! bg-slate-50! border! border-slate-100! rounded-md! text-[10px]! font-black! text-slate-700!"
+            >
+              PNG / JPG
+            </div>
+          </div>
+          <div class="flex! flex-col! gap-0.5!">
+            <span class="text-[9px]! font-bold! text-slate-400! uppercase! tracking-tighter!"
+              >Maks</span
+            >
+            <div
+              class="px-2.5! py-1! bg-slate-50! border! border-slate-100! rounded-md! text-[10px]! font-black! text-slate-700!"
+            >
+              2 MB
+            </div>
+          </div>
         </div>
       </div>
     </ContentCard>
@@ -90,7 +126,7 @@
       </div>
     </ContentCard>
 
-    <ContentCard v-if="hasIdentity" variant="bordered" padding="large" rounded="xl" hoverable>
+    <ContentCard variant="bordered" padding="large" rounded="xl" hoverable>
       <template #header>
         <div class="flex! items-center! justify-between! mb-1!">
           <div>
@@ -107,7 +143,7 @@
         </div>
       </template>
 
-      <div class="grid! grid-cols-1! md:grid-cols-2! gap-x-6! gap-y-4! mt-4!">
+      <div v-if="hasIdentity" class="grid! grid-cols-1! md:grid-cols-2! gap-x-6! gap-y-4! mt-4!">
         <ProfileField label="NIK" :value="identity.nik" icon="id-card" />
         <ProfileField label="Kode Pelanggan" :value="identity.customer_code" icon="hashtag" />
         <ProfileField label="No. Telepon" :value="identity.phone" icon="phone" />
@@ -117,6 +153,18 @@
         <div class="md:col-span-2!">
           <ProfileField label="Alamat" :value="identity.address" icon="home" multiline />
         </div>
+      </div>
+      <div
+        v-else
+        class="mt-4! p-6! bg-slate-50! border! border-dashed! border-slate-200! rounded-xl! text-center!"
+      >
+        <font-awesome-icon icon="circle-info" class="text-slate-300! text-2xl! mb-2!" />
+        <p class="text-sm! text-slate-500! font-medium!">
+          Data diri belum tersedia untuk akun {{ role || 'ini' }}.
+        </p>
+        <p class="text-xs! text-slate-400! mt-1!">
+          Hanya akun pelanggan yang memiliki data diri dari pendaftaran instalasi.
+        </p>
       </div>
     </ContentCard>
 
@@ -184,6 +232,7 @@ import BaseInput from '@/presentations/components/ui/BaseInput.vue'
 import BaseButton from '@/presentations/components/ui/BaseButton.vue'
 import profileService from '@/services/profile.service'
 import { showSuccessToast, showErrorToast } from '@/utils/swal'
+import { storageUrl } from '@/utils/storage'
 
 const ProfileField = {
   name: 'ProfileField',
@@ -235,6 +284,8 @@ const isUploadingAvatar = ref(false)
 const role = ref('')
 const avatarInput = ref(null)
 const avatarPreview = ref('')
+const avatarFile = ref(null)
+const avatarFileName = ref('')
 
 const form = reactive({
   name: '',
@@ -282,24 +333,34 @@ const loadProfile = async () => {
   try {
     const res = await profileService.getMe()
     const data = res?.data || res
-    if (!data) return
+    if (!data) {
+      console.warn('[ProfilIndex] /me returned empty data', res)
+      return
+    }
 
     form.name = data.name || ''
     form.email = data.email || ''
     role.value = data.role || ''
-    avatarPreview.value = data.avatar_url || ''
+    if (data.avatar_url) {
+      avatarPreview.value = storageUrl(`storage/${data.avatar_url}`)
+      avatarFileName.value = String(data.avatar_url).split('/').pop()
+    } else {
+      avatarPreview.value = ''
+      avatarFileName.value = ''
+    }
 
     const id = data.identity || data.customer || {}
     const ticket = id.ticket || data.ticket || {}
 
     identity.nik = ticket.nik || id.nik || ''
     identity.customer_code = id.customer_code || ''
-    identity.phone = ticket.phone || id.phone || ''
+    identity.phone = ticket.phone || id.phone || data.phone || ''
     identity.gender = ticket.gender || id.gender || ''
     identity.birth_place = ticket.birth_place || id.birth_place || ''
     identity.birth_date = ticket.birth_date || id.birth_date || ''
     identity.address = ticket.address || id.address || ''
   } catch (error) {
+    console.error('[ProfilIndex] failed to load profile', error)
     showErrorToast(error)
   }
 }
@@ -337,6 +398,9 @@ const handleAvatarChange = async (event) => {
   }
 
   const previousPreview = avatarPreview.value
+  const previousFileName = avatarFileName.value
+  avatarFile.value = file
+  avatarFileName.value = file.name
   const reader = new FileReader()
   reader.onload = (e) => {
     avatarPreview.value = e.target.result
@@ -348,11 +412,14 @@ const handleAvatarChange = async (event) => {
     const res = await profileService.uploadAvatar(file)
     const data = res?.data || res
     if (data?.avatar_url) {
-      avatarPreview.value = data.avatar_url
+      avatarPreview.value = storageUrl(`storage/${data.avatar_url}`)
+      avatarFile.value = null
+      avatarFileName.value = data.avatar_url.split('/').pop()
     }
     showSuccessToast('Foto profil berhasil diperbarui')
   } catch (error) {
     avatarPreview.value = previousPreview
+    avatarFileName.value = previousFileName
     showErrorToast(error)
   } finally {
     isUploadingAvatar.value = false

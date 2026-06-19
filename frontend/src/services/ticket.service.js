@@ -15,6 +15,13 @@ export const ticketService = {
     return response.data
   },
 
+  async getSurveyResults(params = {}) {
+    const response = await api.get('/survey-results', {
+      params,
+    })
+    return response.data
+  },
+
   /**
    * Buat tiket baru
    */

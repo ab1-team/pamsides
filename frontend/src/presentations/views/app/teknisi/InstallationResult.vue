@@ -285,7 +285,7 @@ const submitInstallation = async () => {
     submitData.append('meter_number', formData.meter_number)
     submitData.append('initial_meter_value', formData.initial_meter_value)
     submitData.append('notes', formData.notes || '')
-    submitData.append('installation_photo', formData.photo)
+    submitData.append('photo', formData.photo)
 
     await ticketService.submitInstallation(route.params.id, submitData)
 
