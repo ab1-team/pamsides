@@ -291,6 +291,12 @@ const router = createRouter({
       ],
     },
     {
+      path: '/pelaporan/preview',
+      name: 'Pelaporan Preview',
+      component: () =>
+        import('@/presentations/views/app/admin/pelaporan/PelaporanPreviewView.vue'),
+    },
+    {
       path: '/usages/cetak_input',
       name: 'Cetak Input',
       component: () =>
@@ -354,6 +360,16 @@ router.beforeEach((to) => {
 
   if (isSurveyorOnly || isTeknisiOnly || isAdminOnly || isPelangganOnly) {
     return { name: 'login' }
+  }
+
+  if (to.path === '/pelaporan/preview') {
+    if (!token) {
+      return { name: 'login' }
+    }
+    if (!['admin', 'teknisi'].includes(userRole)) {
+      return { name: 'login' }
+    }
+    return true
   }
 
   if (to.path.startsWith('/app') || to.path === '/') {

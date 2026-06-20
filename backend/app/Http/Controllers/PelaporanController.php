@@ -14,6 +14,7 @@ use Illuminate\Http\Request;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class PelaporanController extends Controller
 {
@@ -138,19 +139,43 @@ class PelaporanController extends Controller
 
     public function preview(Request $request)
     {
-        $tahun = $request->tahun;
-        $bulan = $request->bulan;
-        $tanggal = $request->tanggal;
-        $jenisLaporan = $request->nama_laporan;
-        $subLaporan = $request->nama_sub_laporan;
+        $tahun = $request->tahun ?? date('Y');
+        $bulan = $request->bulan ?? '';
+        $tanggal = $request->tanggal ?? '';
+        $namaLaporan = $request->nama_laporan ?? '';
+        $subLaporan = $request->nama_sub_laporan ?? '';
 
-        $dataHasil = []; 
+        $jenis = JenisLaporan::where('file', $namaLaporan)->first();
+        $judulLaporan = $jenis ? $jenis->nama_laporan : 'Laporan';
+        $subJudul = '';
+        if ($subLaporan) {
+            $sub = SubLaporan::where('file_kab', $subLaporan)->first();
+            if ($sub) {
+                $subJudul = $sub->nama_laporan;
+            } else {
+                $acc = Account::where('kode_akun', $subLaporan)->first();
+                if ($acc) {
+                    $subJudul = $acc->nama_akun;
+                }
+            }
+        }
 
-        $pdfView = view('pelaporan.pdf_template', compact('dataHasil', 'tahun', 'bulan'))->render();
+        $dataHasil = [];
 
-        return response($pdfView, 200)
-            ->header('Content-Type', 'application/pdf')
-            ->header('Content-Disposition', 'inline; filename="Laporan_'.$jenisLaporan.'.pdf"');
+        $pdf = Pdf::loadView('pelaporan.pdf_template', [
+            'dataHasil' => $dataHasil,
+            'tahun' => $tahun,
+            'bulan' => $bulan,
+            'tanggal' => $tanggal,
+            'judulLaporan' => $judulLaporan,
+            'subJudul' => $subJudul,
+            'jenisLaporan' => $namaLaporan,
+            'tanggalCetak' => now()->format('d/m/Y H:i'),
+        ])->setPaper('a4', 'portrait');
+
+        $filename = 'Preview_' . ($namaLaporan ?: 'laporan') . '_' . $tahun . '.pdf';
+
+        return $pdf->stream($filename);
     }
 
     public function exportExcel(Request $request)

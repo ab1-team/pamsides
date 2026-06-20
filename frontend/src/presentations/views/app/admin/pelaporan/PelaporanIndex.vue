@@ -169,6 +169,9 @@ import pelaporanService from '@/services/pelaporan.service.js'
 import ContentCard from '@/presentations/components/ui/ContentCard.vue'
 import SelectSearch from '@/presentations/components/SelectSearch.vue'
 import BaseButton from '@/presentations/components/ui/BaseButton.vue'
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
 
 const selectedTahun = ref('')
 const selectedBulan = ref('')
@@ -286,20 +289,24 @@ const getFilterPayload = () => {
   }
 }
 
-const handlePreview = async () => {
+const handlePreview = () => {
   const payload = getFilterPayload()
-  const query = new URLSearchParams({
+  const queryObj = {
     tahun: payload.tahun || '',
     bulan: payload.bulan || '',
     tanggal: payload.tanggal || '',
     nama_laporan: payload.nama_laporan || '',
     nama_sub_laporan: payload.nama_sub_laporan || '',
-  }).toString()
+  }
 
-  const previewUrl = `${window.location.origin}/pelaporan/preview?${query}`
+  const routeData = router.resolve({
+    name: 'Pelaporan Preview',
+    query: queryObj,
+  })
+  const previewUrl = routeData.href
   const newTab = window.open(previewUrl, '_blank')
   if (!newTab) {
-    window.location.href = previewUrl
+    router.push({ name: 'Pelaporan Preview', query: queryObj })
   }
 }
 
