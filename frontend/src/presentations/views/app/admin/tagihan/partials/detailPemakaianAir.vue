@@ -360,9 +360,9 @@ const handleSaveMeter = async (payload) => {
     formData.append('reading_year', yearVal)
 
     const res = await meterService.submitReading(formData)
-    const data = res.data
+    const data = res?.data ?? res
 
-    if (data?.is_suspended) {
+    if (data?.suspended) {
       await MySwal.fire({
         title: 'Pelanggan Disuspend!',
         text: 'Tagihan sudah dibuat. Pelanggan memiliki tunggakan dan statusnya diubah menjadi SUSPENDED.',

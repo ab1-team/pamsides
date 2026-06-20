@@ -420,7 +420,7 @@
                           class="text-[9px]! font-bold! uppercase! tracking-wider! px-1.5! py-0.5! rounded! bg-emerald-100! text-emerald-700! flex! items-center! gap-1!"
                           title="Boleh dicicil: nominal bisa disesuaikan"
                         >
-                          <font-awesome-icon icon="pen" />
+                          <font-awesome-icon icon="pen-to-square" />
                           Bisa Dicicil
                         </span>
                       </div>
@@ -437,29 +437,17 @@
                           >Rp</span
                         >
                         <input
-                          :value="nominalDisplay"
-                          @input="onNominalInput"
+                          v-model="nominalInput"
+                          @blur="onNominalBlur"
                           :readonly="isMustFullyPaid"
                           :disabled="isMustFullyPaid"
                           type="text"
-                          inputmode="decimal"
-                          placeholder="0"
+                          inputmode="numeric"
+                          placeholder="0,00"
                           class="w-full! px-3! py-2.5! text-sm! font-extrabold! text-right! border-none! focus:outline-none! bg-transparent!"
                           :class="isMustFullyPaid ? 'text-slate-500! cursor-not-allowed!' : 'text-blue-600!'"
                         />
                       </div>
-                      <input
-                        :value="nominalDisplay"
-                        @input="onNominalInput"
-                        :readonly="nominalLocked"
-                        :class="[
-                          'text-sm! font-extrabold! text-blue-600! text-right! border-none! focus:outline-none! bg-transparent! w-40!',
-                          nominalLocked ? 'cursor-not-allowed! opacity-70!' : '',
-                        ]"
-                        type="text"
-                        inputmode="numeric"
-                        placeholder="0,00"
-                      />
                     </div>
                   </div>
                 </div>
@@ -504,7 +492,7 @@
                 class="text-[10px]! font-bold! text-cyan-600! hover:text-cyan-700! flex! items-center! gap-1! uppercase! tracking-wider!"
                 title="Gunakan lokasi saat ini"
               >
-                <font-awesome-icon icon="location-crosshairs" />
+                <font-awesome-icon icon="location-dot" />
                 Lokasi Saya
               </button>
             </div>
@@ -667,6 +655,8 @@ const selectedCustomer = ref(null)
 const villageOptions = ref([])
 const router = useRouter()
 const route = useRoute()
+
+// true = wajib lunas (locked), false = boleh dicicil (editable)
 const isMustFullyPaid = ref(true)
 
 const form = ref({
@@ -684,10 +674,6 @@ const form = ref({
 const customerOptions = ref([])
 const packages = ref([])
 const caterUsers = ref([])
-
-// 0 = tidak wajib lunas (editable), 1 = wajib lunas (locked)
-const statusPembayaran = ref(0)
-const nominalLocked = computed(() => Number(statusPembayaran.value) === 1)
 
 // 1. FETCH CUSTOMERS
 const fetchCustomers = async () => {
@@ -824,15 +810,28 @@ const fetchPaymentMode = async () => {
       headers: { 'Cache-Control': 'no-cache', Pragma: 'no-cache' },
     })
     if (res.data?.success) {
-      isMustFullyPaid.value = Number(res.data.data?.status_pembayaran ?? 1) === 1
+      const raw = res.data.data?.status_pembayaran
+      isMustFullyPaid.value = raw === true || raw === 1 || raw === '1'
       console.log('[Registrasi] payment mode loaded:', {
-        status_pembayaran: res.data.data?.status_pembayaran,
+        status_pembayaran: raw,
+        type: typeof raw,
         must_be_fully_paid: isMustFullyPaid.value,
       })
     }
   } catch (err) {
-    console.error('Gagal membaca payment mode dari settings, default wajib lunas.', err)
-    isMustFullyPaid.value = true
+    console.error('Gagal membaca payment mode dari settings, default bisa dicicil.', err)
+    isMustFullyPaid.value = false
+  }
+}
+
+const fetchPasangBaruMode = async () => {
+  try {
+    const res = await sopService.getAll()
+    const pb = res?.data?.pasangBaru?.statusPembayaran
+    if (pb === undefined || pb === null) return
+    isMustFullyPaid.value = pb === true || pb === 1 || pb === '1'
+  } catch (err) {
+    console.error('Gagal membaca mode pasang baru dari SOP:', err)
   }
 }
 
@@ -1105,36 +1104,28 @@ const formatRupiahDecimal = (angka) => {
   return `${intFormatted},${decPart}`
 }
 
-const nominalDisplay = computed({
-  get: () => formatRupiahDecimal(form.value.nominal),
-  set: () => {},
-})
+const nominalInput = ref('')
 
-const onNominalInput = (e) => {
-  if (nominalLocked.value) {
-    e.target.value = formatRupiahDecimal(form.value.nominal)
+watch(
+  () => form.value.nominal,
+  (val) => {
+    nominalInput.value = formatRupiahDecimal(val)
+  },
+  { immediate: true },
+)
+
+const onNominalBlur = () => {
+  if (isMustFullyPaid.value) {
+    nominalInput.value = formatRupiahDecimal(form.value.nominal)
     return
   }
-  const raw = e.target.value
-  const digits = raw.replace(/[^\d]/g, '')
+  const digits = String(nominalInput.value ?? '').replace(/[^\d]/g, '')
   form.value.nominal = digits === '' ? 0 : parseInt(digits, 10)
-  e.target.value = formatRupiahDecimal(form.value.nominal)
+  nominalInput.value = formatRupiahDecimal(form.value.nominal)
 }
 
 const handleKeydown = (e) => {
   if (e.key === 'Escape') isCustomerDropdownOpen.value = false
-}
-
-const fetchSopPasangBaru = async () => {
-  try {
-    const res = await sopService.getAll()
-    const data = res?.data ?? res
-    const pb = data?.pasangBaru?.statusPembayaran
-    if (pb === undefined || pb === null) return
-    statusPembayaran.value = Number(pb) === 1 ? 1 : 0
-  } catch (err) {
-    console.error('Gagal mengambil SOP pasang baru:', err)
-  }
 }
 
 onMounted(() => {
@@ -1142,7 +1133,8 @@ onMounted(() => {
   fetchPackages()
   fetchCaterUsers()
   fetchVillages()
-  fetchSopPasangBaru()
+  fetchPaymentMode()
+  fetchPasangBaruMode()
   document.addEventListener('keydown', handleKeydown)
 })
 
@@ -1150,6 +1142,7 @@ watch(
   () => route.fullPath,
   () => {
     fetchPaymentMode()
+    fetchPasangBaruMode()
   },
 )
 
