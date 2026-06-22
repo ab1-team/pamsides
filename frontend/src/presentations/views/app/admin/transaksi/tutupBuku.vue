@@ -21,7 +21,7 @@
             1. Tutup Buku
           </BaseButton>
           <BaseButton
-            href="/transaksi/alokasi-laba"
+            href="/app/transaksi/alokasi-laba"
             variant="secondary"
             class="w-full! sm:w-auto! h-11! rounded-xl!"
           >
