@@ -19,4 +19,9 @@ class Payment extends Model
     {
         return $this->belongsTo(InstallationTicket::class, 'ticket_id');
     }
+
+    public function transactions()
+    {
+        return $this->morphMany(Transaction::class, 'reverence');
+    }
 }

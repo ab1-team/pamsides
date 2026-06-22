@@ -17,6 +17,7 @@ use App\Http\Controllers\SettingController;
 use App\Http\Controllers\SopController;
 use App\Http\Controllers\SurveyResultController;
 use App\Http\Controllers\TroubleReportController;
+use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\VillageController;
 use App\Http\Controllers\PelaporanController;
@@ -154,7 +155,10 @@ Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
     Route::get('reports/installation/export-csv', [ReportController::class, 'exportInstallationCsv']);
     Route::get('reports/installation/export-pdf', [ReportController::class, 'exportInstallationPdf']);
 
-    // 
+    //transaction routes
+    Route::apiResource('transactions', TransactionController::class);
+
+    //
     Route::get('pelaporan/sub-laporan/{file}', [PelaporanController::class, 'subLaporan']);
     Route::get('pelaporan', [PelaporanController::class, 'index']);
     Route::post('pelaporan/preview', [PelaporanController::class, 'preview']);
