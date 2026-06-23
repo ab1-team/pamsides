@@ -5,6 +5,7 @@ use App\Http\Controllers\AmountController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BillingController;
 use App\Http\Controllers\CustomerController;
+use App\Http\Controllers\JenisTransactionController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\GenerateAmountController;
 use App\Http\Controllers\InstallationPackageController;
@@ -162,6 +163,8 @@ Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
     //transaction routes
     Route::apiResource('transactions', TransactionController::class);
     Route::post('generate-amount', [GenerateAmountController::class, 'generate']);
+
+    Route::apiResource('jenis-transactions', JenisTransactionController::class);
 
     //
     Route::get('pelaporan/sub-laporan/{file}', [PelaporanController::class, 'subLaporan']);
