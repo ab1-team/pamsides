@@ -64,7 +64,7 @@ class CustomerController extends Controller
             'package',
             'package.waterTariffBlocks',
             'village',
-        ])->whereIn('status', ['completed', 'active', 'processing', 'unpaid']);
+        ])->whereIn('status', ['completed', 'suspended', 'terminated']);
 
         if ($hasBills) {
             $query->whereHas('customer.monthlyBills');
