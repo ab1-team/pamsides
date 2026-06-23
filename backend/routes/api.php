@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\ActivationController;
+use App\Http\Controllers\AmountController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BillingController;
 use App\Http\Controllers\CustomerController;
@@ -98,6 +99,8 @@ Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
         Route::post('/logo', [SopController::class, 'updateLogo']);
         Route::post('/whatsapp', [SopController::class, 'updateWhatsapp']);
     });
+
+    Route::get('amount', [AmountController::class, 'show']);
 
     Route::apiResource('users', UserController::class);
     Route::apiResource('villages', VillageController::class);
