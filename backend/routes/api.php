@@ -1,10 +1,12 @@
 <?php
 
 use App\Http\Controllers\ActivationController;
+use App\Http\Controllers\AmountController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BillingController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\GenerateAmountController;
 use App\Http\Controllers\InstallationPackageController;
 use App\Http\Controllers\InstallationResultController;
 use App\Http\Controllers\InstallationTicketController;
@@ -98,6 +100,8 @@ Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
         Route::post('/whatsapp', [SopController::class, 'updateWhatsapp']);
     });
 
+    Route::get('amount', [AmountController::class, 'show']);
+
     Route::apiResource('users', UserController::class);
     Route::apiResource('villages', VillageController::class);
 
@@ -157,6 +161,7 @@ Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
 
     //transaction routes
     Route::apiResource('transactions', TransactionController::class);
+    Route::post('generate-amount', [GenerateAmountController::class, 'generate']);
 
     //
     Route::get('pelaporan/sub-laporan/{file}', [PelaporanController::class, 'subLaporan']);
