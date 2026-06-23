@@ -11,6 +11,7 @@ use App\Services\BillingService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
 class MeterReadingController extends Controller
@@ -56,9 +57,6 @@ class MeterReadingController extends Controller
         $tahun = $request->year;
 
         $customers = Customer::with(['user', 'ticket.village'])
-            ->whereHas('ticket', function ($query) {
-                $query->where('status', 'completed');
-            })
             ->whereDoesntHave('meterReadings', function ($query) use ($bulan, $tahun) {
                 $query->where('reading_month', $bulan)
                     ->where('reading_year', $tahun);
@@ -86,8 +84,8 @@ class MeterReadingController extends Controller
             'reading_year' => 'required|integer|min:2000',
         ]);
 
-        $bulan = $request->reading_month;
-        $tahun = $request->reading_year;
+        $bulan = (int) ($request->reading_month ?? $request->month);
+        $tahun = (int) ($request->reading_year ?? $request->year);
 
         $exists = MeterReading::where('customer_id', $request->customer_id)
             ->where('reading_month', $bulan)
@@ -117,20 +115,58 @@ class MeterReadingController extends Controller
         $fileName = time().'_'.$file->getClientOriginalName();
         $file->storeAs('meter-readings', $fileName, 'public');
 
-        $reading = MeterReading::create([
-            'customer_id' => $request->customer_id,
-            'recorded_by' => Auth::id(),
-            'reading_month' => $bulan,
-            'reading_year' => $tahun,
-            'meter_value' => $request->meter_value,
-            'photo_url' => $fileName,
-            'recorded_at' => now(),
-        ]);
+        $settings = Setting::first();
+        $batasTagihan = (int) ($settings?->batas_tagihan ?? 27);
+        $toleransi = (int) ($settings?->toleransi_tunggakan ?? 0);
+
+        $recordedAt = Carbon::create($tahun, $bulan, 1)
+            ->setDay(min($batasTagihan, Carbon::create($tahun, $bulan, 1)->daysInMonth))
+            ->setTimeFrom(now());
+
+        $result = DB::transaction(function () use ($request, $bulan, $tahun, $fileName, $recordedAt, $batasTagihan) {
+            $reading = MeterReading::create([
+                'customer_id' => $request->customer_id,
+                'recorded_by' => Auth::id(),
+                'reading_month' => $bulan,
+                'reading_year' => $tahun,
+                'meter_value' => $request->meter_value,
+                'photo_url' => $fileName,
+                'recorded_at' => $recordedAt,
+            ]);
+
+            $customer = Customer::with(['ticket.package.waterTariffBlocks'])
+                ->findOrFail($request->customer_id);
+
+            $bill = app(BillingService::class)
+                ->generateForCustomer($customer, $tahun, $bulan, $batasTagihan);
+
+            return ['reading' => $reading, 'bill' => $bill, 'customer' => $customer];
+        });
+
+        $suspended = false;
+        if ($toleransi > 0) {
+            $unpaidCount = MonthlyBill::where('customer_id', $result['customer']->id)
+                ->where('status', 'unpaid')
+                ->count();
+
+            if ($unpaidCount > $toleransi && $result['customer']->ticket) {
+                $result['customer']->ticket->update(['status' => 'suspended']);
+                $suspended = true;
+            }
+        }
+
+        $result['reading']->load(['customer.user', 'customer.ticket']);
 
         return response()->json([
             'success' => true,
-            'message' => $message,
-            'data' => $result,
+            'message' => $suspended
+                ? 'Pencatatan meter & tagihan tersimpan. Pelanggan disuspend karena tunggakan melebihi toleransi.'
+                : 'Pencatatan meter & tagihan berhasil disimpan.',
+            'data' => [
+                'reading' => $result['reading'],
+                'bill' => $result['bill'],
+                'suspended' => $suspended,
+            ],
         ]);
     }
 

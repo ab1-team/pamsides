@@ -213,7 +213,7 @@ class InstallationTicketController extends Controller
         ]);
 
         $settings = Setting::first();
-        $mustBeFullyPaid = isset($settings->status_pembayaran) ? (int) $settings->status_pembayaran === 1 : true;
+        $mustBeFullyPaid = (bool) ($settings->status_pembayaran ?? false);
 
         $nominalRaw = $request->input('nominal');
         $nominalInput = 0.0;

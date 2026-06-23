@@ -762,6 +762,7 @@ const handleAdvance = async () => {
   try {
     const res = await ticketService.advanceStage(customer.value.ticketId)
     if (res?.success) {
+      await fetchData()
       await Swal.fire({
         title: 'Berhasil!',
         text: res.message,
@@ -769,7 +770,18 @@ const handleAdvance = async () => {
         confirmButtonColor: '#0284c7',
         confirmButtonText: 'OK',
       })
-      router.push({ path: '/app/transaksi/tagihan-instalasi' })
+      const nextStatus = res?.data?.status || res?.status
+      if (nextStatus === 'processing') {
+        router.push({
+          name: 'Detail Pasang Baru',
+          params: { id: encodeURIComponent(customer.value.kodeInstalasi) },
+        })
+      } else {
+        router.push({
+          path: '/app/transaksi/tagihan-instalasi',
+          query: { ticket: customer.value.ticketId },
+        })
+      }
     }
   } catch (err) {
     const msg = err.response?.data?.message || 'Gagal memproses tahap.'
