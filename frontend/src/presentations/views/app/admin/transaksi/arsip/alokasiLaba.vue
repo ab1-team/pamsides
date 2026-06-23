@@ -211,9 +211,12 @@
 
 <script setup>
 import { ref, computed } from 'vue'
+import { useRouter } from 'vue-router'
 import MaksMoneyInput from '@/presentations/components/MaksMoneyInput.vue'
 import ContentCard from '@/presentations/components/ui/ContentCard.vue'
 import BaseButton from '@/presentations/components/ui/BaseButton.vue'
+
+const router = useRouter()
 
 const selectedTahun = ref(2026)
 const totalSaldo = ref(128450000)
@@ -244,7 +247,7 @@ const estimasiPertumbuhan = computed(
 const formatNum = (val) =>
   Number(val).toLocaleString('id-ID', { minimumFractionDigits: 0, maximumFractionDigits: 0 })
 
-const handleBack = () => console.log('Kembali')
+const handleBack = () => router.push('/app/transaksi/tutup-buku')
 const handleSimpan = () => console.log('Simpan Alokasi Laba')
 </script>
 

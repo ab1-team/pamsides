@@ -317,8 +317,19 @@ const menuItems = [
     children: [
       { label: 'Input Tagihan', to: '/app/instalasi/pemakaian-air' },
       { label: 'Daftar Tagihan', to: '/app/instalasi/daftar-tagihan' },
+    ],
+  },
+  {
+    label: 'Transaksi',
+    icon: 'money-bill-wave',
+    roles: ['admin'],
+    children: [
+      { label: 'Jurnal Umum', to: '/app/transaksi/jurnal-umum' },
       { label: 'Tagihan Bulanan', to: '/app/transaksi/tagihan-bulanan' },
       { label: 'Tagihan Instalasi', to: '/app/transaksi/tagihan-instalasi' },
+      { label: 'E-Budgeting', to: '/app/transaksi/E-budgeting' },
+      { label: 'Tutup Buku', to: '/app/transaksi/tutup-buku' },
+      { label: 'Komisi SPS', to: '/app/transaksi/komisi-sps' },
     ],
   },
   {
