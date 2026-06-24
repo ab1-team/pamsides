@@ -18,7 +18,7 @@
               </div>
               <div>
                 <h2 class="text-lg! font-semibold! text-slate-800 leading-tight">
-                  2.1.01.01 - Utang Dividen Pemdes Bulan April 2026
+                  {{ title }}
                 </h2>
               </div>
             </div>
@@ -56,7 +56,12 @@
                   <th
                     class="py-3! px-4! text-xs font-semibold uppercase tracking-wide border-b border-slate-700 whitespace-nowrap"
                   >
-                    Kode Akun
+                    Kode Akun Debet
+                  </th>
+                  <th
+                    class="py-3! px-4! text-xs font-semibold uppercase tracking-wide border-b border-slate-700 whitespace-nowrap"
+                  >
+                    Kode Akun Kredit
                   </th>
                   <th
                     class="py-3! px-4! text-xs font-semibold uppercase tracking-wide border-b border-slate-700 min-w-[200px]"
@@ -83,6 +88,11 @@
                   >
                     Saldo
                   </th>
+                  <th
+                    class="py-3! px-4! text-xs font-semibold uppercase tracking-wide border-b border-slate-700 text-center"
+                  >
+                    Aksi
+                  </th>
                 </tr>
               </thead>
               <tbody class="divide-y divide-slate-200">
@@ -100,38 +110,38 @@
                   </td>
                   <td class="py-4! px-4! text-center text-slate-600">{{ item.no }}</td>
                   <td class="py-4! px-4! text-slate-700">{{ item.tanggal }}</td>
-                  <td class="py-4! px-4! font-mono text-xs text-slate-500">{{ item.kodeAkun }}</td>
+                  <td class="py-4! px-4! font-mono text-xs text-slate-500">{{ item.kodeAkunDebet }}</td>
+                  <td class="py-4! px-4! font-mono text-xs text-slate-500">{{ item.kodeAkunKredit }}</td>
                   <td class="py-4! px-4! text-slate-700">{{ item.keterangan }}</td>
                   <td class="py-4! px-4! font-mono text-xs text-slate-500">{{ item.idTrx }}</td>
                   <td class="py-4! px-4! text-right font-mono text-slate-700">{{ item.debit }}</td>
                   <td class="py-4! px-4! text-right font-mono text-slate-700">{{ item.kredit }}</td>
                   <td class="py-4! px-4! text-center font-mono text-slate-700">{{ item.saldo }}</td>
+                  <td class="py-4! px-4! text-center">
+                    <div class="flex items-center justify-center gap-2!">
+                      <button
+                        class="w-8! h-8! rounded-lg! bg-blue-50! text-blue-600! hover:bg-blue-100! transition-all active:scale-90"
+                        title="Cetak"
+                      >
+                        <font-awesome-icon icon="print" />
+                      </button>
+                      <button
+                        class="w-8! h-8! rounded-lg! bg-red-50! text-red-600! hover:bg-red-100! transition-all active:scale-90"
+                        title="Hapus"
+                        @click="deleteTransaction(item.idTrx)"
+                      >
+                        <font-awesome-icon icon="trash" />
+                      </button>
+                    </div>
+                  </td>
                 </tr>
 
                 <tr class="bg-slate-100">
-                  <td colspan="6" class="py-4! px-6! font-semibold text-slate-800">
-                    Total Transaksi Bulan April 2026
+                  <td colspan="8" class="py-4! px-6! font-semibold text-slate-800">
+                    Total Transaksi
                   </td>
-                  <td class="py-4! px-4! text-right font-mono text-slate-800">0.00</td>
-                  <td class="py-4! px-4! text-right font-mono text-slate-800">0.00</td>
-                  <td></td>
-                </tr>
-
-                <tr class="bg-white">
-                  <td colspan="6" class="py-4! px-6! font-semibold text-slate-800">
-                    Total Transaksi sampai dengan Bulan April 2026
-                  </td>
-                  <td class="py-4! px-4! text-right font-mono text-slate-800">0.00</td>
-                  <td class="py-4! px-4! text-right font-mono text-slate-800">0.00</td>
-                  <td class="py-4! px-4! text-center font-mono text-slate-800">0.00</td>
-                </tr>
-
-                <tr class="bg-slate-100 border-b border-slate-200">
-                  <td colspan="6" class="py-4! px-6! font-semibold text-slate-800">
-                    Total Transaksi Komulatif sampai dengan Tahun 2026
-                  </td>
-                  <td class="py-4! px-4! text-right font-mono text-slate-800">0.00</td>
-                  <td class="py-4! px-4! text-right font-mono text-slate-800">0.00</td>
+                  <td class="py-4! px-4! text-right font-mono text-slate-800">{{ formatCurrency(totalDebit) }}</td>
+                  <td class="py-4! px-4! text-right font-mono text-slate-800">{{ formatCurrency(totalKredit) }}</td>
                   <td></td>
                 </tr>
               </tbody>
@@ -168,34 +178,36 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  transactions: {
+    type: Array,
+    default: () => [],
+  },
+  loading: {
+    type: Boolean,
+    default: false,
+  },
+  title: {
+    type: String,
+    default: 'Cetak Bukti Transaksi',
+  },
 })
 
-const emit = defineEmits(['close'])
+const emit = defineEmits(['close', 'delete'])
 
-const items = ref([
-  {
-    no: 1,
-    tanggal: '01/01/2026',
-    kodeAkun: '',
-    keterangan: 'Komulatif Transaksi Awal Tahun 2026',
-    idTrx: '',
-    debit: '0.00',
-    kredit: '0.00',
-    saldo: '0.00',
+const items = computed(() => {
+  return props.transactions.map((trx, index) => ({
+    no: index + 1,
+    tanggal: formatDate(trx.tgl_transaksi),
+    kodeAkunDebet: (trx.account_debet?.kode_akun || trx.account_debet) + (trx.account_debet?.nama_akun ? ` (${trx.account_debet.nama_akun})` : ''),
+    kodeAkunKredit: (trx.account_kredit?.kode_akun || trx.account_kredit) + (trx.account_kredit?.nama_akun ? ` (${trx.account_kredit.nama_akun})` : ''),
+    keterangan: trx.keterangan_transaksi || '-',
+    idTrx: trx.id,
+    debit: formatCurrency(trx.saldo),
+    kredit: formatCurrency(trx.saldo),
+    saldo: '-',
     selected: false,
-  },
-  {
-    no: 2,
-    tanggal: '01/04/2026',
-    kodeAkun: '',
-    keterangan: 'Komulatif Transaksi s/d Bulan Lalu',
-    idTrx: '',
-    debit: '0.00',
-    kredit: '0.00',
-    saldo: '0.00',
-    selected: false,
-  },
-])
+  }))
+})
 
 const isAllSelected = computed({
   get: () => items.value.length > 0 && items.value.every((item) => item.selected),
@@ -204,8 +216,38 @@ const isAllSelected = computed({
   },
 })
 
+const totalDebit = computed(() => {
+  return props.transactions.reduce((sum, trx) => sum + (parseFloat(trx.saldo) || 0), 0)
+})
+
+const totalKredit = computed(() => {
+  return props.transactions.reduce((sum, trx) => sum + (parseFloat(trx.saldo) || 0), 0)
+})
+
+const formatDate = (dateString) => {
+  if (!dateString) return '-'
+  const date = new Date(dateString)
+  return date.toLocaleDateString('id-ID', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  })
+}
+
+const formatCurrency = (amount) => {
+  if (!amount) return '0.00'
+  return new Intl.NumberFormat('id-ID', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(amount)
+}
+
 const close = () => {
   emit('close')
+}
+
+const deleteTransaction = (id) => {
+  emit('delete', id)
 }
 
 const handleKeydown = (e) => {

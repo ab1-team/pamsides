@@ -7,6 +7,7 @@ use App\Http\Controllers\BillingController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\JenisTransactionController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\EbudgetingController;
 use App\Http\Controllers\GenerateAmountController;
 use App\Http\Controllers\InstallationPackageController;
 use App\Http\Controllers\InstallationResultController;
@@ -21,10 +22,12 @@ use App\Http\Controllers\SopController;
 use App\Http\Controllers\SurveyResultController;
 use App\Http\Controllers\TroubleReportController;
 use App\Http\Controllers\TransactionController;
+use App\Http\Controllers\JenisTransactionController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\VillageController;
 use App\Http\Controllers\PelaporanController;
 use App\Http\Controllers\WaterTariffBlockController;
+use App\Http\Controllers\AccountController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -162,7 +165,13 @@ Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
 
     //transaction routes
     Route::apiResource('transactions', TransactionController::class);
+    Route::get('jenis-transactions', [JenisTransactionController::class, 'index']);
     Route::post('generate-amount', [GenerateAmountController::class, 'generate']);
+    Route::get('accounts', [AccountController::class, 'index']);
+    Route::get('amount/total-saldo', [AmountController::class, 'getTotalSaldo']);
+
+    //e-budgeting routes
+    Route::apiResource('ebudgeting', EbudgetingController::class);
 
     Route::apiResource('jenis-transactions', JenisTransactionController::class);
 

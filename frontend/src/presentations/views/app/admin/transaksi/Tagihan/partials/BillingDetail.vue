@@ -118,26 +118,28 @@
           </div>
 
           <table style="width: 100%; font-size: 13px; margin-bottom: 20px;">
-            <tr>
-              <td style="padding: 4px 0; width: 130px; color: #666;">No. Kuitansi</td>
-              <td style="padding: 4px 0;">: BP-{{ printBill.payments?.[0]?.id || printBill.id }}</td>
-            </tr>
-            <tr>
-              <td style="padding: 4px 0; color: #666;">Tanggal</td>
-              <td style="padding: 4px 0;">: {{ printBill.payments?.[0]?.paidAt || printBill.statusDate || '-' }}</td>
-            </tr>
-            <tr>
-              <td style="padding: 4px 0; color: #666;">Pelanggan</td>
-              <td style="padding: 4px 0;">: {{ printBill.customerName }}</td>
-            </tr>
-            <tr>
-              <td style="padding: 4px 0; color: #666;">ID Pelanggan</td>
-              <td style="padding: 4px 0;">: {{ printBill.customerId }}</td>
-            </tr>
-            <tr>
-              <td style="padding: 4px 0; color: #666;">Periode</td>
-              <td style="padding: 4px 0;">: {{ printBill.period }}</td>
-            </tr>
+            <tbody>
+              <tr>
+                <td style="padding: 4px 0; width: 130px; color: #666;">No. Kuitansi</td>
+                <td style="padding: 4px 0;">: BP-{{ printBill.payments?.[0]?.id || printBill.id }}</td>
+              </tr>
+              <tr>
+                <td style="padding: 4px 0; color: #666;">Tanggal</td>
+                <td style="padding: 4px 0;">: {{ printBill.payments?.[0]?.paidAt || printBill.statusDate || '-' }}</td>
+              </tr>
+              <tr>
+                <td style="padding: 4px 0; color: #666;">Pelanggan</td>
+                <td style="padding: 4px 0;">: {{ printBill.customerName }}</td>
+              </tr>
+              <tr>
+                <td style="padding: 4px 0; color: #666;">ID Pelanggan</td>
+                <td style="padding: 4px 0;">: {{ printBill.customerId }}</td>
+              </tr>
+              <tr>
+                <td style="padding: 4px 0; color: #666;">Periode</td>
+                <td style="padding: 4px 0;">: {{ printBill.period }}</td>
+              </tr>
+            </tbody>
           </table>
 
           <table style="width: 100%; border-collapse: collapse; font-size: 13px; margin-bottom: 20px;">
