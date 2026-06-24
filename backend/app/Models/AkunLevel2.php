@@ -4,9 +4,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class Account extends Model
+class AkunLevel2 extends Model
 {
+    protected $table = 'akun_level_2';
+
     protected $fillable = [
         'parent_id',
         'lev1',
@@ -16,29 +19,28 @@ class Account extends Model
         'kode_akun',
         'nama_akun',
         'jenis_mutasi',
-        'tgl_nonaktif',
     ];
 
     protected $casts = [
+        'parent_id' => 'integer',
         'lev1' => 'integer',
         'lev2' => 'integer',
         'lev3' => 'integer',
         'lev4' => 'integer',
-        'tgl_nonaktif' => 'date',
     ];
 
-    public function akunLevel1(): BelongsTo
+    public function parent(): BelongsTo
     {
-        return $this->belongsTo(AkunLevel1::class, 'lev1', 'lev1');
+        return $this->belongsTo(AkunLevel1::class, 'parent_id');
     }
 
-    public function akunLevel2(): BelongsTo
+    public function akunLevel3(): HasMany
     {
-        return $this->belongsTo(AkunLevel2::class, 'lev2', 'lev2');
+        return $this->hasMany(AkunLevel3::class, 'parent_id');
     }
 
-    public function akunLevel3(): BelongsTo
+    public function accounts(): HasMany
     {
-        return $this->belongsTo(AkunLevel3::class, 'lev3', 'lev3');
+        return $this->hasMany(Account::class, 'lev2', 'lev2');
     }
 }
