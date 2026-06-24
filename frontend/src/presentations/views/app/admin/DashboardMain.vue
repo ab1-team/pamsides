@@ -54,10 +54,11 @@
               >Pendapatan</span
             >
             <div
-              class="flex! items-center! gap-1! px-2! py-1! bg-rose-50! text-rose-600! rounded-md! text-[10px]! font-bold!"
+              :class="trendBadgeClass(financeTrend.pendapatan)"
+              class="flex! items-center! gap-1! px-2! py-1! rounded-md! text-[10px]! font-bold!"
             >
-              <font-awesome-icon icon="arrow-down" class="w-2.5! h-2.5!" />
-              <span>NEGATIVE</span>
+              <font-awesome-icon :icon="trendIcon(financeTrend.pendapatan)" class="w-2.5! h-2.5!" />
+              <span>{{ trendLabel(financeTrend.pendapatan) }}</span>
             </div>
           </div>
           <div class="flex! items-baseline! gap-1!">
@@ -79,10 +80,11 @@
               >Beban</span
             >
             <div
-              class="flex! items-center! gap-1! px-2! py-1! bg-slate-100! text-slate-500! rounded-md! text-[10px]! font-bold!"
+              :class="trendBadgeClass(financeTrend.beban, true)"
+              class="flex! items-center! gap-1! px-2! py-1! rounded-md! text-[10px]! font-bold!"
             >
-              <font-awesome-icon icon="arrow-left" class="w-2.5! h-2.5!" />
-              <span>0% TREND</span>
+              <font-awesome-icon :icon="trendIcon(financeTrend.beban)" class="w-2.5! h-2.5!" />
+              <span>{{ trendLabel(financeTrend.beban) }}</span>
             </div>
           </div>
           <div class="flex! items-baseline! gap-1!">
@@ -104,10 +106,11 @@
               >Surplus</span
             >
             <div
-              class="flex! items-center! gap-1! px-2! py-1! bg-rose-50! text-rose-600! rounded-md! text-[10px]! font-bold!"
+              :class="trendBadgeClass(financeTrend.surplus)"
+              class="flex! items-center! gap-1! px-2! py-1! rounded-md! text-[10px]! font-bold!"
             >
-              <font-awesome-icon icon="arrow-down" class="w-2.5! h-2.5!" />
-              <span>NEGATIVE</span>
+              <font-awesome-icon :icon="trendIcon(financeTrend.surplus)" class="w-2.5! h-2.5!" />
+              <span>{{ trendLabel(financeTrend.surplus) }}</span>
             </div>
           </div>
           <div class="flex! items-baseline! gap-1!">
@@ -142,12 +145,22 @@
             class="flex! flex-col! sm:flex-row! items-start! sm:items-center! justify-between! gap-2! mb-4!"
           >
             <div>
-              <h3 class="text-base! font-bold! text-slate-600!">Pendapatan dan Beban</h3>
+              <h3 class="text-base! font-bold! text-slate-600!">Pendapatan, Beban & Surplus</h3>
               <p class="text-[11px]! text-slate-400! mt-0.5!">
-                Visualisasi finansial kuartal pertama
+                {{ chartSubtitle }}
               </p>
             </div>
-            <div class="flex! items-center! gap-4!">
+            <div class="flex! items-center! gap-3!">
+              <div class="flex! items-center! gap-2!">
+                <font-awesome-icon icon="calendar-alt" class="text-slate-400! text-xs!" />
+                <select
+                  v-model.number="selectedYear"
+                  class="text-[11px]! font-bold! text-slate-600! bg-white! border! border-slate-200! rounded-md! px-2! py-1! focus:outline-none! focus:ring-2! focus:ring-blue-200!"
+                >
+                  <option v-for="y in availableYears" :key="y" :value="y">{{ y }}</option>
+                </select>
+              </div>
+              <div class="flex! items-center! gap-4!">
               <div class="flex! items-center! gap-2! text-[10px]! font-bold! text-slate-500!">
                 <div class="w-2.5! h-2.5! rounded-full! bg-blue-500!"></div>
                 Pendapatan
@@ -160,10 +173,16 @@
                 <div class="w-2.5! h-2.5! rounded-full! bg-amber-500!"></div>
                 Surplus
               </div>
+              </div>
             </div>
           </div>
           <div class="w-full! shrink-0!">
-            <svg viewBox="0 0 700 320" xmlns="http://www.w3.org/2000/svg" class="w-full! h-auto!">
+            <svg
+              v-if="chartGeometry"
+              :viewBox="`0 0 ${chartGeometry.width} ${chartGeometry.height}`"
+              xmlns="http://www.w3.org/2000/svg"
+              class="w-full! h-auto!"
+            >
               <defs>
                 <linearGradient id="gradP" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="0%" stop-color="#3b82f6" stop-opacity="0.18" />
@@ -175,48 +194,71 @@
                 </linearGradient>
               </defs>
 
-              <line x1="40" y1="20" x2="40" y2="250" stroke="#e2e8f0" stroke-width="1" />
-              <line x1="40" y1="250" x2="680" y2="250" stroke="#e2e8f0" stroke-width="1" />
-
-              <line x1="40" y1="200" x2="680" y2="200" stroke="#e2e8f0" stroke-dasharray="4 4" />
-              <line x1="40" y1="150" x2="680" y2="150" stroke="#e2e8f0" stroke-dasharray="4 4" />
-              <line x1="40" y1="100" x2="680" y2="100" stroke="#e2e8f0" stroke-dasharray="4 4" />
-
-              <text x="50" y="270" fill="#94a3b8" font-size="10">Awal Tahun</text>
-              <text x="230" y="270" fill="#94a3b8" font-size="10">Januari</text>
-              <text x="410" y="270" fill="#94a3b8" font-size="10">Februari</text>
-              <text x="630" y="270" fill="#94a3b8" font-size="10">Maret</text>
-
-              <path
-                d="M50,240 C100,230 150,210 230,180 C310,140 390,110 470,90 C540,76 610,70 680,66 L680,250 L50,250 Z"
-                fill="url(#gradP)"
+              <line
+                :x1="chartGeometry.padL" y1="20"
+                :x2="chartGeometry.padL" :y2="chartGeometry.padT + chartGeometry.innerH"
+                stroke="#e2e8f0" stroke-width="1"
               />
-              <path
-                d="M50,245 C100,240 150,225 230,210 C310,184 390,160 470,150 C540,140 610,136 680,132 L680,250 L50,250 Z"
-                fill="url(#gradB)"
+              <line
+                :x1="chartGeometry.padL" :y1="chartGeometry.padT + chartGeometry.innerH"
+                :x2="chartGeometry.width - chartGeometry.padR"
+                :y2="chartGeometry.padT + chartGeometry.innerH"
+                stroke="#e2e8f0" stroke-width="1"
               />
 
-              <path
-                d="M50,240 C100,230 150,210 230,180 C310,140 390,110 470,90 C540,76 610,70 680,66"
-                fill="none"
-                stroke="#3b82f6"
-                stroke-width="2.5"
-                stroke-linecap="round"
-              />
+              <g v-for="(t, idx) in chartGeometry.ticks" :key="idx">
+                <line
+                  :x1="chartGeometry.padL" :x2="chartGeometry.width - chartGeometry.padR"
+                  :y1="t.y" :y2="t.y"
+                  stroke="#e2e8f0" stroke-dasharray="4 4"
+                />
+                <text :x="chartGeometry.padL - 8" :y="t.y + 3" fill="#94a3b8" font-size="10" text-anchor="end">
+                  {{ t.label }}
+                </text>
+              </g>
+
+              <g v-for="(lbl, idx) in chartGeometry.xLabels" :key="`xl-${idx}`">
+                <text
+                  v-if="lbl.label"
+                  :x="lbl.x" :y="chartGeometry.height - 10"
+                  fill="#94a3b8" font-size="10" text-anchor="middle"
+                >
+                  {{ lbl.label }}
+                </text>
+              </g>
+
+              <path :d="chartGeometry.areaP" fill="url(#gradP)" />
+              <path :d="chartGeometry.areaB" fill="url(#gradB)" />
 
               <path
-                d="M50,245 C100,240 150,225 230,210 C310,184 390,160 470,150 C540,140 610,136 680,132"
-                fill="none"
-                stroke="#334155"
-                stroke-width="2.5"
-                stroke-linecap="round"
+                :d="chartGeometry.pathP"
+                fill="none" stroke="#3b82f6" stroke-width="2.5" stroke-linecap="round"
+              />
+              <path
+                :d="chartGeometry.pathB"
+                fill="none" stroke="#334155" stroke-width="2.5" stroke-linecap="round"
+              />
+              <path
+                :d="chartGeometry.pathS"
+                fill="none" stroke="#f59e0b" stroke-width="2.5" stroke-linecap="round" stroke-dasharray="6 4"
               />
 
-              <circle cx="230" cy="180" r="4" fill="white" stroke="#3b82f6" stroke-width="2" />
-              <circle cx="470" cy="90" r="4" fill="white" stroke="#3b82f6" stroke-width="2" />
-              <circle cx="230" cy="210" r="4" fill="white" stroke="#334155" stroke-width="2" />
-              <circle cx="470" cy="150" r="4" fill="white" stroke="#334155" stroke-width="2" />
+              <g v-for="(p, idx) in chartGeometry.pointsP" :key="`pp-${idx}`">
+                <circle :cx="p.x" :cy="p.y" r="4" fill="white" stroke="#3b82f6" stroke-width="2" />
+              </g>
+              <g v-for="(p, idx) in chartGeometry.pointsB" :key="`pb-${idx}`">
+                <circle :cx="p.x" :cy="p.y" r="4" fill="white" stroke="#334155" stroke-width="2" />
+              </g>
+              <g v-for="(p, idx) in chartGeometry.pointsS" :key="`ps-${idx}`">
+                <circle :cx="p.x" :cy="p.y" r="3" fill="white" stroke="#f59e0b" stroke-width="2" />
+              </g>
             </svg>
+            <div
+              v-else
+              class="w-full! h-[280px]! flex! items-center! justify-center! text-xs! text-slate-400!"
+            >
+              Belum ada data keuangan untuk ditampilkan
+            </div>
           </div>
         </ContentCard>
       </div>
@@ -267,7 +309,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import statCard from '@/presentations/components/stat-card.vue'
 import ContentCard from '@/presentations/components/ui/ContentCard.vue'
 import dashboardService from '@/services/dashboard.service'
@@ -339,6 +381,10 @@ const modalIcon = computed(() => {
 
 const statsData = ref(null)
 
+const selectedYear = ref(new Date().getFullYear())
+const availableYears = ref([])
+const loadingFinance = ref(false)
+
 const statsSummary = computed(() => {
   const data = statsData.value
   const tickets = data?.tickets_by_status || {}
@@ -380,6 +426,14 @@ const formattedPendapatan = ref('')
 const formattedBeban = ref('')
 const formattedSurplus = ref('')
 
+const financeTrend = ref({ pendapatan: 0, beban: 0, surplus: 0 })
+const chartData = ref([])
+const chartSubtitle = computed(() => {
+  const n = chartData.value.length
+  if (!n) return `Belum ada data jurnal umum tahun ${selectedYear.value}`
+  return `Visualisasi finansial tahun ${selectedYear.value} (${n} bulan memiliki transaksi)`
+})
+
 const formatCurrency = (amount) => {
   return new Intl.NumberFormat('id-ID', {
     style: 'currency',
@@ -388,30 +442,215 @@ const formatCurrency = (amount) => {
   }).format(amount)
 }
 
-const loadData = async () => {
+const monthLabel = (m) =>
+  ['', 'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+    'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'][m] || ''
+
+const chartGeometry = computed(() => {
+  const data = chartData.value
+  if (!data.length) return null
+
+  const padL = 50
+  const padR = 20
+  const padT = 20
+  const padB = 30
+  const width = 700
+  const height = 320
+  const innerW = width - padL - padR
+  const innerH = height - padT - padB
+
+  const maxVal = Math.max(
+    ...data.flatMap((d) => [d.pendapatan, d.beban, d.surplus]),
+    1
+  )
+  const niceMax = Math.max(Math.ceil(maxVal / 1e6) * 1e6, 1e6)
+
+  const stepX = data.length > 1 ? innerW / (data.length - 1) : 0
+  const yToPx = (v) => padT + innerH - (v / niceMax) * innerH
+
+  const pointAt = (i) => padL + i * stepX
+  const buildSmoothPath = (key) => {
+    if (!data.length) return ''
+    const pts = data.map((d, i) => `${pointAt(i)},${yToPx(d[key])}`)
+    if (pts.length === 1) return `M${pts[0]}`
+    let path = `M${pts[0]}`
+    for (let i = 1; i < pts.length; i++) {
+      const [x0, y0] = pts[i - 1].split(',').map(Number)
+      const [x1, y1] = pts[i].split(',').map(Number)
+      const cx = (x0 + x1) / 2
+      path += ` C${cx},${y0} ${cx},${y1} ${x1},${y1}`
+    }
+    return path
+  }
+
+  const pathP = buildSmoothPath('pendapatan')
+  const pathB = buildSmoothPath('beban')
+  const pathS = buildSmoothPath('surplus')
+
+  const ticks = 4
+  const tickValues = Array.from({ length: ticks + 1 }, (_, i) => (niceMax / ticks) * i)
+
+  const xLabels = data.map((d, i) => ({
+    x: pointAt(i),
+    label: data.length <= 6
+      ? monthLabel(d.month).slice(0, 3)
+      : (i === 0 || i === data.length - 1 || i % Math.ceil(data.length / 6) === 0)
+        ? monthLabel(d.month).slice(0, 3)
+        : '',
+  }))
+
+  return {
+    width,
+    height,
+    padL,
+    padR,
+    padT,
+    padB,
+    innerH,
+    niceMax,
+    pathP,
+    pathB,
+    pathS,
+    areaP: `${pathP} L${pointAt(data.length - 1)},${padT + innerH} L${pointAt(0)},${padT + innerH} Z`,
+    areaB: `${pathB} L${pointAt(data.length - 1)},${padT + innerH} L${pointAt(0)},${padT + innerH} Z`,
+    pointsP: data.map((d, i) => ({ x: pointAt(i), y: yToPx(d.pendapatan) })),
+    pointsB: data.map((d, i) => ({ x: pointAt(i), y: yToPx(d.beban) })),
+    pointsS: data.map((d, i) => ({ x: pointAt(i), y: yToPx(d.surplus) })),
+    ticks: tickValues.map((v) => ({ y: yToPx(v), label: v >= 1e6 ? `${(v / 1e6).toFixed(0)}jt` : v >= 1e3 ? `${(v / 1e3).toFixed(0)}rb` : `${v}` })),
+    xLabels,
+  }
+})
+
+const loadStats = async () => {
   try {
     const response = await dashboardService.getStatistics()
     if (response?.success && response?.data) {
       statsData.value = response.data
 
-      const revenue = Number(response.data.revenue_this_month) || 0
-      financialData.value = {
-        pendapatan: revenue,
-        beban: 0,
-        surplus: revenue,
+      const yrs = Array.isArray(response.data.available_years) && response.data.available_years.length
+        ? response.data.available_years
+        : [new Date().getFullYear()]
+      availableYears.value = yrs
+      if (!yrs.includes(selectedYear.value)) {
+        suppressWatch.value = true
+        selectedYear.value = yrs[yrs.length - 1]
+        queueMicrotask(() => { suppressWatch.value = false })
       }
     }
   } catch (error) {
     console.error('Failed to load dashboard statistics', error)
+  }
+}
+
+const suppressWatch = ref(false)
+
+const loadFinance = async () => {
+  loadingFinance.value = true
+  try {
+    const response = await dashboardService.getStatistics({ year: selectedYear.value })
+    if (response?.success && response?.data) {
+      const fin = response.data.finance
+      if (fin) {
+        const p = Number(fin.pendapatan) || 0
+        const b = Number(fin.beban) || 0
+        financialData.value = {
+          pendapatan: p,
+          beban: b,
+          surplus: Number(fin.surplus ?? (p - b)),
+        }
+      } else {
+        financialData.value = { pendapatan: 0, beban: 0, surplus: 0 }
+      }
+
+      const yrs = Array.isArray(response.data.available_years) && response.data.available_years.length
+        ? response.data.available_years
+        : [selectedYear.value]
+      availableYears.value = yrs
+
+      chartData.value = Array.isArray(response.data.finance_chart)
+        ? response.data.finance_chart.map((r) => ({
+            year: Number(r.year),
+            month: Number(r.month),
+            pendapatan: Number(r.pendapatan) || 0,
+            beban: Number(r.beban) || 0,
+            surplus: Number(r.surplus) || 0,
+          }))
+        : []
+
+      const prevMonth = await prevMonthFinance(selectedYear.value, fin?.month ?? new Date().getMonth() + 1)
+      financeTrend.value = {
+        pendapatan: pctChange(prevMonth.pendapatan, financialData.value.pendapatan),
+        beban: pctChange(prevMonth.beban, financialData.value.beban),
+        surplus: pctChange(prevMonth.surplus, financialData.value.surplus),
+      }
+    }
+  } catch (error) {
+    console.error('Failed to load finance data', error)
   } finally {
     formattedPendapatan.value = formatCurrency(financialData.value.pendapatan)
     formattedBeban.value = formatCurrency(financialData.value.beban)
     formattedSurplus.value = formatCurrency(financialData.value.surplus)
+    loadingFinance.value = false
   }
 }
 
-onMounted(() => {
-  loadData()
+async function prevMonthFinance(year, month) {
+  let py = year
+  let pm = month - 1
+  if (pm < 1) {
+    pm = 12
+    py -= 1
+  }
+  try {
+    const r = await dashboardService.getStatistics({ year: py, month: pm })
+    const f = r?.data?.finance
+    if (!f) return { pendapatan: 0, beban: 0, surplus: 0 }
+    const p = Number(f.pendapatan) || 0
+    const b = Number(f.beban) || 0
+    return {
+      pendapatan: p,
+      beban: b,
+      surplus: Number(f.surplus ?? (p - b)),
+    }
+  } catch {
+    return { pendapatan: 0, beban: 0, surplus: 0 }
+  }
+}
+
+watch(selectedYear, () => {
+  if (suppressWatch.value) return
+  loadFinance()
+})
+
+function pctChange(prev, curr) {
+  if (!prev) return 0
+  return ((curr - prev) / prev) * 100
+}
+
+function trendIcon(value) {
+  if (value > 0) return 'arrow-up'
+  if (value < 0) return 'arrow-down'
+  return 'arrow-right'
+}
+
+function trendLabel(value) {
+  if (!value) return '0%'
+  const abs = Math.abs(value).toFixed(1).replace(/\.0$/, '')
+  return `${value > 0 ? '+' : '-'}${abs}%`
+}
+
+function trendBadgeClass(value, lowerIsBetter = false) {
+  if (!value) return 'bg-slate-100! text-slate-500!'
+  const positive = value > 0
+  const good = lowerIsBetter ? !positive : positive
+  return good
+    ? 'bg-emerald-50! text-emerald-600!'
+    : 'bg-rose-50! text-rose-600!'
+}
+
+onMounted(async () => {
+  await loadStats()
+  await loadFinance()
 })
 </script>
 
