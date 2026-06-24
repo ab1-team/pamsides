@@ -193,6 +193,15 @@
 |--------|----------|------------|----------|
 | GET | `/api/amount` | AmountController | Debit/kredit by bulan, tahun, account_id |
 
+#### Jenis Transactions
+| Method | Endpoint | Controller | Response |
+|--------|----------|------------|----------|
+| GET | `/api/jenis-transactions` | JenisTransactionController | List semua jenis transaksi |
+| POST | `/api/jenis-transactions` | JenisTransactionController | Buat jenis transaksi |
+| GET | `/api/jenis-transactions/{id}` | JenisTransactionController | Detail jenis transaksi |
+| PUT | `/api/jenis-transactions/{id}` | JenisTransactionController | Update jenis transaksi |
+| DELETE | `/api/jenis-transactions/{id}` | JenisTransactionController | Hapus jenis transaksi |
+
 #### Pelaporan (sebagian besar masih stub)
 | Method | Endpoint | Controller | Respons |
 |--------|----------|------------|---------|
@@ -231,8 +240,8 @@
 
 ### TABEL DENGAN MODEL TAPI TANPA CONTROLLER
 
-- [ ] **`accounts`** - Bagan akun (kode_akun, nama_akun, hierarki level)
-  - Model: `Account.php` (model kosong, tanpa relasi)
+- [x] **`accounts`** - Bagan akun (kode_akun, nama_akun, hierarki level)
+  - Model: `Account.php` (relasi ke AkunLevel1/2/3)
   - Digunakan oleh: `TransactionController`, `PelaporanController`, `GenerateAmountController`
   - Belum ada controller CRUD
 
@@ -240,33 +249,35 @@
   - Tidak ada file model
   - Digunakan oleh: `GenerateAmountController` (akses langsung via DB::table)
   - DB trigger mengisi otomatis dari `transactions`
-  - Belum ada controller CRUD
 
 ### TABEL TANPA MODEL DAN TANPA CONTROLLER
 
-- [ ] **`akun_level_1`** - Akun level 1 (lev1, kode_akun, nama_akun, jenis_mutasi)
-  - Tidak ada model, tidak ada controller
-  - Direferensikan dalam data struktur.sql
+- [x] **`akun_level_1`** - Akun level 1 (lev1, kode_akun, nama_akun, jenis_mutasi)
+  - Model: `AkunLevel1.php` (relasi: hasMany AkunLevel2, accounts)
+  - Controller: - (belum ada)
 
-- [ ] **`akun_level_2`** - Akun level 2 (parent_id, lev1-4, kode_akun, nama_akun, jenis_mutasi)
-  - Tidak ada model, tidak ada controller
-  - Direferensikan dalam data struktur.sql
+- [x] **`akun_level_2`** - Akun level 2 (parent_id, lev1-4, kode_akun, nama_akun, jenis_mutasi)
+  - Model: `AkunLevel2.php` (relasi: belongsTo AkunLevel1, hasMany AkunLevel3, accounts)
+  - Controller: - (belum ada)
 
-- [ ] **`akun_level_3`** - Akun level 3 (parent_id, lev1-4, kode_akun, nama_akun, posisi, jenis_mutasi)
-  - Tidak ada model, tidak ada controller
-  - Direferensikan dalam data struktur.sql
+- [x] **`akun_level_3`** - Akun level 3 (parent_id, lev1-4, kode_akun, nama_akun, posisi, jenis_mutasi)
+  - Model: `AkunLevel3.php` (relasi: belongsTo AkunLevel2, hasMany accounts)
+  - Controller: - (belum ada)
 
-- [ ] **`ebudgeting`** - Entri e-budgeting (account_id, tahun, bulan, jumlah)
-  - Tidak ada model, tidak ada controller
+- [x] **`ebudgeting`** - Entri e-budgeting (account_id, tahun, bulan, jumlah)
+  - Model: `Ebudgeting.php` (relasi: belongsTo Account)
+  - Controller: - (belum ada)
   - Migration ada: `2026_06_18_020404_create_ebudgeting_table.php`
   - Direferensikan di `PelaporanController` (subLaporan: opsi e_budgeting yang di-hardcode)
 
-- [ ] **`jenis_transactions`** - Master jenis transaksi (nama_jt)
-  - Tidak ada model, tidak ada controller
+- [x] **`jenis_transactions`** - Master jenis transaksi (nama_jt)
+  - Model: `JenisTransaction.php`
+  - Controller: `JenisTransactionController` (CRUD lengkap + search)
   - Migration ada: `2026_06_18_021046_create_jenis_transactions_table.php`
 
-- [ ] **`master_arus_kas`** - Master arus kas (nama_akun, debit, kredit, parent_id)
-  - Tidak ada model, tidak ada controller
+- [x] **`master_arus_kas`** - Master arus kas (nama_akun, debit, kredit, parent_id)
+  - Model: `MasterArusKas.php` (relasi: hasMany children, belongsTo parent)
+  - Controller: - (belum ada)
   - Migration ada: `2026_06_18_021550_create_master_arus_kas_table.php`
 
 ### YANG HILANG/TIDAK LENGKAP
@@ -294,7 +305,7 @@
 - [ ] `personal_access_tokens` - Token Sanctum (otomatis, via model)
 - [ ] `sessions` - Sesi Laravel (otomatis)
 
-### TABEL YANG SUDAH DIIMPLEMENTASI PENUH
+### TABEL YANG SUDAH DIIMPLEMENTASI PENUH (model + controller + routes)
 
 - [x] `users` - UserController + model User
 - [x] `villages` - VillageController + model Village
@@ -310,8 +321,14 @@
 - [x] `bill_payments` - model BillPayment (digunakan oleh MonthlyBillController)
 - [x] `settings` - SettingController + model Setting
 - [x] `transactions` - TransactionController + model Transaction
+- [x] `jenis_transactions` - JenisTransactionController + model JenisTransaction
 - [x] `jenis_laporans` - model JenisLaporan (digunakan oleh PelaporanController)
 - [x] `sub_laporans` - model SubLaporan (digunakan oleh PelaporanController)
+- [x] `akun_level_1` - model AkunLevel1 (relasi: hasMany AkunLevel2, accounts)
+- [x] `akun_level_2` - model AkunLevel2 (relasi: belongsTo AkunLevel1, hasMany AkunLevel3, accounts)
+- [x] `akun_level_3` - model AkunLevel3 (relasi: belongsTo AkunLevel2, hasMany accounts)
+- [x] `ebudgeting` - model Ebudgeting (relasi: belongsTo Account)
+- [x] `master_arus_kas` - model MasterArusKas (relasi: hasMany children, belongsTo parent)
 
 ---
 
@@ -320,9 +337,9 @@
 | Kategori | Jumlah |
 |----------|--------|
 | Total tabel di DB | 33 |
-| Tabel dengan model | 17 |
-| Tabel dengan controller | 19 |
-| Tabel dengan rute API | 19 |
-| **Tabel tanpa model** | **7** (`accounts`, `akun_level_1`, `akun_level_2`, `akun_level_3`, `ebudgeting`, `jenis_transactions`, `master_arus_kas`) |
-| **Tabel tanpa controller/rute** | **7** (accounts + 6 tabel level/budgeting) |
+| Tabel dengan model | 26 |
+| Tabel dengan controller | 20 |
+| Tabel dengan rute API | 20 |
+| **Tabel tanpa model** | **1** (`amount`) |
+| **Tabel tanpa controller/rute** | **6** (`accounts`, `amount`, `akun_level_1/2/3`, `ebudgeting`, `master_arus_kas`) |
 | **Masalah kritis** | **2** (model `Calk` hilang, view pelaporan hilang) |
