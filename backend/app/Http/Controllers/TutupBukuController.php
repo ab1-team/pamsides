@@ -73,24 +73,30 @@ class TutupBukuController extends Controller
                 $saldoMap[$r->kode_akun] = (float) $r->saldo;
             }
         } else {
+            $kodeList = $accounts->pluck('kode_akun')->all();
+
+            $debits = DB::table('transactions')
+                ->select('account_debet as kode_akun', DB::raw('SUM(saldo) as total'))
+                ->whereIn('account_debet', $kodeList)
+                ->whereNull('deleted_at')
+                ->whereBetween('tgl_transaksi', [$start, $end])
+                ->groupBy('account_debet')
+                ->pluck('total', 'kode_akun');
+
+            $kredits = DB::table('transactions')
+                ->select('account_kredit as kode_akun', DB::raw('SUM(saldo) as total'))
+                ->whereIn('account_kredit', $kodeList)
+                ->whereNull('deleted_at')
+                ->whereBetween('tgl_transaksi', [$start, $end])
+                ->groupBy('account_kredit')
+                ->pluck('total', 'kode_akun');
+
             foreach ($accounts as $acc) {
-                $debit  = (float) DB::table('transactions')
-                    ->where('account_debet', $acc->kode_akun)
-                    ->whereNull('deleted_at')
-                    ->whereBetween('tgl_transaksi', [$start, $end])
-                    ->sum('saldo');
-
-                $kredit = (float) DB::table('transactions')
-                    ->where('account_kredit', $acc->kode_akun)
-                    ->whereNull('deleted_at')
-                    ->whereBetween('tgl_transaksi', [$start, $end])
-                    ->sum('saldo');
-
-                if ($acc->jenis_mutasi === 'kredit') {
-                    $saldoMap[$acc->kode_akun] = $kredit - $debit;
-                } else {
-                    $saldoMap[$acc->kode_akun] = $debit - $kredit;
-                }
+                $debit  = (float) ($debits[$acc->kode_akun]  ?? 0);
+                $kredit = (float) ($kredits[$acc->kode_akun] ?? 0);
+                $saldoMap[$acc->kode_akun] = $acc->jenis_mutasi === 'kredit'
+                    ? ($kredit - $debit)
+                    : ($debit - $kredit);
             }
         }
 
@@ -164,20 +170,28 @@ class TutupBukuController extends Controller
         $start = "{$tahun}-01-01";
         $end   = "{$tahun}-12-31";
 
+        $kodeList = $accounts->pluck('kode_akun')->all();
+
+        $debits = DB::table('transactions')
+            ->select('account_debet as kode_akun', DB::raw('SUM(saldo) as total'))
+            ->whereIn('account_debet', $kodeList)
+            ->whereNull('deleted_at')
+            ->whereBetween('tgl_transaksi', [$start, $end])
+            ->groupBy('account_debet')
+            ->pluck('total', 'kode_akun');
+
+        $kredits = DB::table('transactions')
+            ->select('account_kredit as kode_akun', DB::raw('SUM(saldo) as total'))
+            ->whereIn('account_kredit', $kodeList)
+            ->whereNull('deleted_at')
+            ->whereBetween('tgl_transaksi', [$start, $end])
+            ->groupBy('account_kredit')
+            ->pluck('total', 'kode_akun');
+
         $saldoAkhir = [];
         foreach ($accounts as $a) {
-            $debit  = (float) DB::table('transactions')
-                ->where('account_debet', $a->kode_akun)
-                ->whereNull('deleted_at')
-                ->whereBetween('tgl_transaksi', [$start, $end])
-                ->sum('saldo');
-
-            $kredit = (float) DB::table('transactions')
-                ->where('account_kredit', $a->kode_akun)
-                ->whereNull('deleted_at')
-                ->whereBetween('tgl_transaksi', [$start, $end])
-                ->sum('saldo');
-
+            $debit  = (float) ($debits[$a->kode_akun]  ?? 0);
+            $kredit = (float) ($kredits[$a->kode_akun] ?? 0);
             $saldo = $a->jenis_mutasi === 'kredit' ? ($kredit - $debit) : ($debit - $kredit);
 
             if (array_key_exists($a->kode_akun, $overrides)) {
@@ -202,46 +216,48 @@ class TutupBukuController extends Controller
             $userId = $request->user()->id ?? null;
             $tglTutup = $tahun . '-12-31';
             $group = (int) (microtime(true) * 1000);
+            $now = now();
 
+            $rows = [];
+            $urutanSnapshot = 1;
             foreach ($saldoAkhir as $kode => $saldo) {
                 if (abs($saldo) < 0.01) continue;
+                $first = substr($kode, 0, 1);
 
-                if (substr($kode, 0, 1) === '4') {
-                    $akunDebet  = $cfg['akun_laba_ditahan'];
-                    $akunKredit = $kode;
-                    $nominal = abs($saldo);
-                    Transaction::create([
+                if ($first === '4') {
+                    $rows[] = [
                         'tgl_transaksi'        => $tglTutup,
-                        'account_debet'        => $akunDebet,
-                        'account_kredit'       => $akunKredit,
+                        'account_debet'        => $cfg['akun_laba_ditahan'],
+                        'account_kredit'       => $kode,
                         'transaction_group'    => $group,
                         'reverence_type'       => 'tutup_buku_snapshot',
                         'reverence_id'         => $tahun,
                         'keterangan_transaksi' => "Tutup Buku {$tahun} - Penutupan Pendapatan {$kode}",
-                        'saldo'                => $nominal,
-                        'urutan'               => 1,
+                        'saldo'                => abs($saldo),
+                        'urutan'               => $urutanSnapshot++,
                         'id_user'              => $userId,
-                    ]);
-                } elseif (substr($kode, 0, 1) === '5') {
-                    $akunDebet  = $kode;
-                    $akunKredit = $cfg['akun_laba_ditahan'];
-                    $nominal = abs($saldo);
-                    Transaction::create([
+                        'created_at'           => $now,
+                        'updated_at'           => $now,
+                    ];
+                } elseif ($first === '5') {
+                    $rows[] = [
                         'tgl_transaksi'        => $tglTutup,
-                        'account_debet'        => $akunDebet,
-                        'account_kredit'       => $akunKredit,
+                        'account_debet'        => $kode,
+                        'account_kredit'       => $cfg['akun_laba_ditahan'],
                         'transaction_group'    => $group,
                         'reverence_type'       => 'tutup_buku_snapshot',
                         'reverence_id'         => $tahun,
                         'keterangan_transaksi' => "Tutup Buku {$tahun} - Penutupan Beban {$kode}",
-                        'saldo'                => $nominal,
-                        'urutan'               => 1,
+                        'saldo'                => abs($saldo),
+                        'urutan'               => $urutanSnapshot++,
                         'id_user'              => $userId,
-                    ]);
+                        'created_at'           => $now,
+                        'updated_at'           => $now,
+                    ];
                 }
             }
 
-            Transaction::create([
+            $rows[] = [
                 'tgl_transaksi'        => $tglTutup,
                 'account_debet'        => $labaRugi >= 0 ? $cfg['akun_laba_ditahan'] : $cfg['akun_laba_rugi_berjalan'],
                 'account_kredit'       => $labaRugi >= 0 ? $cfg['akun_laba_rugi_berjalan'] : $cfg['akun_laba_ditahan'],
@@ -252,9 +268,11 @@ class TutupBukuController extends Controller
                 'saldo'                => abs($labaRugi),
                 'urutan'               => 99,
                 'id_user'              => $userId,
-            ]);
+                'created_at'           => $now,
+                'updated_at'           => $now,
+            ];
 
-            Transaction::create([
+            $rows[] = [
                 'tgl_transaksi'        => $tglTutup,
                 'account_debet'        => $cfg['akun_laba_rugi_berjalan'],
                 'account_kredit'       => $cfg['akun_laba_ditahan'],
@@ -265,7 +283,13 @@ class TutupBukuController extends Controller
                 'saldo'                => abs($labaRugi),
                 'urutan'               => 100,
                 'id_user'              => $userId,
-            ]);
+                'created_at'           => $now,
+                'updated_at'           => $now,
+            ];
+
+            if (!empty($rows)) {
+                DB::table('transactions')->insert($rows);
+            }
 
             DB::commit();
 

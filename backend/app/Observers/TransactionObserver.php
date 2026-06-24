@@ -62,17 +62,16 @@ class TransactionObserver
         $startOfYear = "{$tahun}-01-01";
         $endOfMonth = Carbon::create($tahun, (int) $bulan, 1)->endOfMonth()->toDateString();
 
-        $debit = DB::table('transactions')
-            ->where('account_debet', $kodeAkun)
+        $row = DB::table('transactions')
+            ->selectRaw('COALESCE(SUM(CASE WHEN account_debet = ? THEN saldo ELSE 0 END), 0) as debit', [$kodeAkun])
+            ->selectRaw('COALESCE(SUM(CASE WHEN account_kredit = ? THEN saldo ELSE 0 END), 0) as kredit', [$kodeAkun])
             ->whereNull('deleted_at')
             ->whereBetween('tgl_transaksi', [$startOfYear, $endOfMonth])
-            ->sum('saldo');
-
-        $kredit = DB::table('transactions')
-            ->where('account_kredit', $kodeAkun)
-            ->whereNull('deleted_at')
-            ->whereBetween('tgl_transaksi', [$startOfYear, $endOfMonth])
-            ->sum('saldo');
+            ->where(function ($q) use ($kodeAkun) {
+                $q->where('account_debet', $kodeAkun)
+                    ->orWhere('account_kredit', $kodeAkun);
+            })
+            ->first();
 
         $id = (string) $account->id . $tahun . $bulan;
 
@@ -82,8 +81,8 @@ class TransactionObserver
                 'account_id' => $account->id,
                 'tahun' => $tahun,
                 'bulan' => $bulan,
-                'debit' => $debit,
-                'kredit' => $kredit,
+                'debit' => $row->debit ?? 0,
+                'kredit' => $row->kredit ?? 0,
             ]
         );
     }

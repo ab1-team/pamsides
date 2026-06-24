@@ -127,6 +127,7 @@ class AlokasiLabaController extends Controller
             $userId = $request->user()->id ?? null;
             $tglAlokasi = $tahun . '-12-31';
             $group = (int) (microtime(true) * 1000);
+            $now = now();
 
             $totalLaba = $this->getLabaRugi($tahun);
             $totalNominal = 0;
@@ -134,7 +135,18 @@ class AlokasiLabaController extends Controller
                 $totalNominal += (float) $it['nominal'];
             }
 
-            Transaction::create([
+            $kodeList = [];
+            foreach ($request->items as $it) {
+                if (!empty($it['kode_akun'])) {
+                    $kodeList[$it['kode_akun']] = true;
+                }
+            }
+            $akunMap = Account::whereIn('kode_akun', array_keys($kodeList))
+                ->get()
+                ->keyBy('kode_akun');
+
+            $rows = [];
+            $rows[] = [
                 'tgl_transaksi'        => $tglAlokasi,
                 'account_debet'        => $akunLabaDitahan,
                 'account_kredit'       => $akunLabaDitahan,
@@ -145,18 +157,20 @@ class AlokasiLabaController extends Controller
                 'saldo'                => $totalLaba,
                 'urutan'               => 0,
                 'id_user'              => $userId,
-            ]);
+                'created_at'           => $now,
+                'updated_at'           => $now,
+            ];
 
             $urutan = 1;
             foreach ($request->items as $it) {
                 $nominal = round((float) $it['nominal'], 2);
                 if ($nominal <= 0) continue;
 
-                $akun = Account::where('kode_akun', $it['kode_akun'])->first();
+                $akun = $akunMap[$it['kode_akun']] ?? null;
                 if (! $akun) continue;
 
                 if ($akun->jenis_mutasi === 'kredit') {
-                    Transaction::create([
+                    $rows[] = [
                         'tgl_transaksi'        => $tglAlokasi,
                         'account_debet'        => $akunLabaDitahan,
                         'account_kredit'       => $akun->kode_akun,
@@ -167,9 +181,11 @@ class AlokasiLabaController extends Controller
                         'saldo'                => $nominal,
                         'urutan'               => $urutan++,
                         'id_user'              => $userId,
-                    ]);
+                        'created_at'           => $now,
+                        'updated_at'           => $now,
+                    ];
                 } else {
-                    Transaction::create([
+                    $rows[] = [
                         'tgl_transaksi'        => $tglAlokasi,
                         'account_debet'        => $akun->kode_akun,
                         'account_kredit'       => $akunLabaDitahan,
@@ -180,8 +196,14 @@ class AlokasiLabaController extends Controller
                         'saldo'                => $nominal,
                         'urutan'               => $urutan++,
                         'id_user'              => $userId,
-                    ]);
+                        'created_at'           => $now,
+                        'updated_at'           => $now,
+                    ];
                 }
+            }
+
+            if (!empty($rows)) {
+                DB::table('transactions')->insert($rows);
             }
 
             DB::commit();
@@ -296,19 +318,18 @@ class AlokasiLabaController extends Controller
         $start = "{$tahun}-01-01";
         $end   = "{$tahun}-12-31";
 
-        $debit  = (float) DB::table('transactions')
-            ->where('account_debet', $akunLR)
+        $row = DB::table('transactions')
+            ->selectRaw('COALESCE(SUM(CASE WHEN account_debet = ? THEN saldo ELSE 0 END), 0) as debit', [$akunLR])
+            ->selectRaw('COALESCE(SUM(CASE WHEN account_kredit = ? THEN saldo ELSE 0 END), 0) as kredit', [$akunLR])
             ->whereNull('deleted_at')
             ->whereBetween('tgl_transaksi', [$start, $end])
-            ->sum('saldo');
+            ->where(function ($q) use ($akunLR) {
+                $q->where('account_debet', $akunLR)
+                    ->orWhere('account_kredit', $akunLR);
+            })
+            ->first();
 
-        $kredit = (float) DB::table('transactions')
-            ->where('account_kredit', $akunLR)
-            ->whereNull('deleted_at')
-            ->whereBetween('tgl_transaksi', [$start, $end])
-            ->sum('saldo');
-
-        return $kredit - $debit;
+        return (float)($row->kredit ?? 0) - (float)($row->debit ?? 0);
     }
 
     private function getClosingConfig(): array
