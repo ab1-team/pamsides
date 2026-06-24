@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Models\Transaction;
+use App\Observers\TransactionObserver;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\ServiceProvider;
 
@@ -19,5 +21,7 @@ class AppServiceProvider extends ServiceProvider
             'monthly_bill' => \App\Models\MonthlyBill::class,
             'customer'     => \App\Models\Customer::class,
         ]);
+
+        Transaction::observe(TransactionObserver::class);
     }
 }

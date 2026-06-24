@@ -19,99 +19,56 @@ class GenerateAmountController extends Controller
             'tahun.required' => 'Tahun wajib diisi.',
         ]);
 
-        $startDate = Carbon::create($request->tahun, $request->bulan, 1);
-        $endDate   = Carbon::now();
+        $bulan = (int) $request->bulan;
+        $tahun = (int) $request->tahun;
 
-        if ($startDate->greaterThan($endDate)) {
-            return response()->json([
-                'success' => false,
-                'data'    => ['message' => 'Bulan dan tahun tidak boleh lebih dari bulan ini.'],
-            ], 422);
-        }
+        // Hapus semua amount untuk tahun tersebut
+        DB::table('amount')->where('tahun', $tahun)->delete();
 
-        // Kumpulkan semua bulan dari input sampai bulan ini
-        $periods = [];
-        $current = $startDate->copy();
+        // Ambil SEMUA akun
+        $accounts = DB::table('accounts')->get();
 
-        while ($current->lte($endDate)) {
-            $periods[] = [
-                'tahun' => $current->year,
-                'bulan' => str_pad($current->month, 2, '0', STR_PAD_LEFT),
-            ];
-            $current->addMonth();
-        }
-
-        // Hapus amount dari bulan input sampai bulan ini
-        foreach ($periods as $period) {
-            DB::table('amount')
-                ->where('tahun', $period['tahun'])
-                ->where('bulan', $period['bulan'])
-                ->delete();
-        }
-
-        // Insert ulang amount dari transaksi
-        foreach ($periods as $period) {
-            $tahun = $period['tahun'];
-            $bulan = $period['bulan'];
-
-            // Ambil semua kode_akun yang terlibat di periode ini
-            $kodeAkuns = DB::table('transactions')
-                ->whereYear('tgl_transaksi', $tahun)
-                ->whereMonth('tgl_transaksi', (int) $bulan)
-                ->whereNull('deleted_at')
-                ->selectRaw('account_debet as kode_akun')
-                ->union(
-                    DB::table('transactions')
-                        ->whereYear('tgl_transaksi', $tahun)
-                        ->whereMonth('tgl_transaksi', (int) $bulan)
-                        ->whereNull('deleted_at')
-                        ->selectRaw('account_kredit as kode_akun')
-                )
-                ->pluck('kode_akun')
-                ->unique();
-
-            foreach ($kodeAkuns as $kodeAkun) {
-                $account = DB::table('accounts')->where('kode_akun', $kodeAkun)->first();
-
-                if (! $account) continue;
-
+        foreach ($accounts as $account) {
+            for ($m = 1; $m <= $bulan; $m++) {
+                $bulanStr = str_pad($m, 2, '0', STR_PAD_LEFT);
                 $startOfYear = "{$tahun}-01-01";
-                $endOfMonth  = Carbon::create($tahun, (int) $bulan, 1)->endOfMonth()->toDateString();
+                $endOfMonth = Carbon::create($tahun, $m, 1)->endOfMonth()->toDateString();
 
-                $debit = DB::table('transactions')
-                    ->where('account_debet', $kodeAkun)
+                $debit = (float) DB::table('transactions')
+                    ->where('account_debet', $account->kode_akun)
                     ->whereNull('deleted_at')
                     ->whereBetween('tgl_transaksi', [$startOfYear, $endOfMonth])
                     ->sum('saldo');
 
-                $kredit = DB::table('transactions')
-                    ->where('account_kredit', $kodeAkun)
+                $kredit = (float) DB::table('transactions')
+                    ->where('account_kredit', $account->kode_akun)
                     ->whereNull('deleted_at')
                     ->whereBetween('tgl_transaksi', [$startOfYear, $endOfMonth])
                     ->sum('saldo');
 
-                $id = (string) $account->id . $tahun . $bulan;
+                $id = (string) $account->id . $tahun . $bulanStr;
 
-                DB::table('amount')->updateOrInsert(
-                    ['id' => $id],
-                    [
-                        'account_id' => $account->id,
-                        'tahun'      => $tahun,
-                        'bulan'      => $bulan,
-                        'debit'      => $debit,
-                        'kredit'     => $kredit,
-                    ]
-                );
+                if ($debit > 0 || $kredit > 0) {
+                    DB::table('amount')->updateOrInsert(
+                        ['id' => $id],
+                        [
+                            'account_id' => $account->id,
+                            'tahun' => $tahun,
+                            'bulan' => $bulanStr,
+                            'debit' => $debit,
+                            'kredit' => $kredit,
+                        ]
+                    );
+                }
             }
         }
 
         return response()->json([
             'success' => true,
             'data'    => [
-                'message'         => 'Rekalibrasi amount berhasil.',
-                'total_periode'   => count($periods),
-                'dari'            => $startDate->format('Y-m'),
-                'sampai'          => $endDate->format('Y-m'),
+                'message' => 'Rekalibrasi amount berhasil.',
+                'tahun'   => $tahun,
+                'bulan'   => $bulan,
             ],
         ]);
     }
