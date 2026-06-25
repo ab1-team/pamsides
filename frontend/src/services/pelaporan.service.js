@@ -30,7 +30,7 @@ export const pelaporanService = {
    */
   async getPreview(data = {}) {
     const response = await api.post('/pelaporan/preview', data, {
-      responseType: 'blob',
+      responseType: 'json',
     })
     return response.data
   },
