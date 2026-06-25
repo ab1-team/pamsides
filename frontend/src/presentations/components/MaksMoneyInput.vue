@@ -53,14 +53,22 @@ watch(
   },
 )
 
-// Sync dari dalam ke luar — hanya emit setelah nilai final (blur/enter)
+// Sync dari dalam ke luar — coerce ke Number agar parent computed tidak NaN/null
+function toNum(v) {
+  if (v === null || v === undefined || v === '') return 0
+  const n = typeof v === 'number' ? v : Number(String(v).replace(/\./g, '').replace(',', '.'))
+  return Number.isFinite(n) ? n : 0
+}
+
 function handleInput(e) {
-  emit('update:modelValue', e.value)
+  emit('update:modelValue', toNum(e.value))
 }
 
 function handleBlur() {
-  emit('update:modelValue', internalValue.value)
-  emit('change', internalValue.value)
+  const v = toNum(internalValue.value)
+  internalValue.value = v
+  emit('update:modelValue', v)
+  emit('change', v)
 }
 
 function handleFocus() {}

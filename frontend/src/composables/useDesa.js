@@ -20,8 +20,6 @@ export function useDesa(router) {
         alamat: item.address,
         telepon: item.phone,
       }))
-
-      console.log('DATA DESA:', tableData.value)
     } catch (err) {
       console.error('Gagal ambil desa:', err)
     }
@@ -59,7 +57,6 @@ export function useDesa(router) {
   })
 
   const handleEdit = (row) => {
-    console.log('Edit Desa:', row)
     if (router) {
       router.push(`/app/data-desa/edit/${row.id}`)
     }

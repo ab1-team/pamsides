@@ -42,7 +42,7 @@
 <script setup>
 import { ref, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { MySwal } from '@/main.js'
+import { MySwal } from '@/utils/swal'
 import axios from '@/utils/axios.js'
 import SidebarView from './SidebarView.vue'
 import TopNavigationView from './TopNavigationView.vue'

@@ -106,7 +106,7 @@
                 variant="primary-gradient"
                 block
                 class="rounded-full! font-black! h-12! text-sm! shadow-xl! shadow-indigo-200! hover:-translate-y-1! transition-all!"
-                @click="$router.push('/app/pelanggan/tagihan-detail')"
+                @click="goToBillDetail"
               >
                 CEK DETAIL
                 <font-awesome-icon icon="chevron-right" class="ml-2! text-[10px]!" />
@@ -120,13 +120,15 @@
             padding="none"
             class="h-full! border-0! shadow-[0_25px_50px_-12px_rgba(0,0,0,0.1)]! rounded-3xl! bg-white!"
           >
-            <div class="p-5! lg:p-8! flex! items-center! justify-between! mb-2!">
+            <div class="p-5! lg:p-8! flex! items-start! justify-between! mb-3! gap-4!">
               <div>
                 <h2 class="text-lg! lg:text-xl! font-black! text-slate-800! tracking-tight!">
                   Distribusi Penggunaan
                 </h2>
                 <p class="text-slate-400! text-[10px]! lg:text-xs! font-medium! mt-1!">
-                  Perbandingan volume air 5 bulan terakhir
+                  Pemakaian air 12 bulan terakhir •
+                  <span class="font-black! text-indigo-500!">{{ recordedCount }}/12</span>
+                  bulan tercatat
                 </p>
               </div>
               <div class="flex! bg-slate-50! p-1.5! rounded-2xl! border! border-slate-100!">
@@ -134,19 +136,60 @@
                   @click="viewType = 'bar'"
                   :class="`text-[10px]! font-black! px-4! py-2! rounded-xl! transition-all! ${viewType === 'bar' ? 'bg-white! shadow-md! text-indigo-600!' : 'text-slate-400! hover:text-slate-600!'}`"
                 >
-                  Bar
+                  Batang
                 </button>
                 <button
-                  @click="viewType = 'pie'"
-                  :class="`text-[10px]! font-black! px-4! py-2! rounded-xl! transition-all! ${viewType === 'pie' ? 'bg-white! shadow-md! text-indigo-600!' : 'text-slate-400! hover:text-slate-600!'}`"
+                  @click="viewType = 'line'"
+                  :class="`text-[10px]! font-black! px-4! py-2! rounded-xl! transition-all! ${viewType === 'line' ? 'bg-white! shadow-md! text-indigo-600!' : 'text-slate-400! hover:text-slate-600!'}`"
                 >
-                  Pie
+                  Garis
                 </button>
               </div>
             </div>
 
+            <!-- Summary metrics -->
+            <div class="px-5! lg:px-8! grid! grid-cols-2! md:grid-cols-4! gap-3! mb-4!">
+              <div class="p-3! rounded-2xl! bg-indigo-50! border! border-indigo-100!">
+                <div class="text-[9px]! font-black! text-indigo-400! uppercase! tracking-widest!">
+                  Rata-rata
+                </div>
+                <div class="text-base! font-black! text-indigo-700! mt-1!">
+                  {{ formatDecimal(avgUsage) }} <span class="text-[10px]!">m³</span>
+                </div>
+              </div>
+              <div class="p-3! rounded-2xl! bg-emerald-50! border! border-emerald-100!">
+                <div class="text-[9px]! font-black! text-emerald-500! uppercase! tracking-widest!">
+                  Minimum
+                </div>
+                <div class="text-base! font-black! text-emerald-700! mt-1!">
+                  {{ formatDecimal(summary.min_m3) }} <span class="text-[10px]!">m³</span>
+                </div>
+              </div>
+              <div class="p-3! rounded-2xl! bg-rose-50! border! border-rose-100!">
+                <div class="text-[9px]! font-black! text-rose-500! uppercase! tracking-widest!">
+                  Maksimum
+                </div>
+                <div class="text-base! font-black! text-rose-700! mt-1!">
+                  {{ formatDecimal(summary.max_m3) }} <span class="text-[10px]!">m³</span>
+                </div>
+              </div>
+              <div
+                :class="`p-3! rounded-2xl! border! ${trend.bg}! ${trend.color.replace('text-rose-600', 'border-rose-100').replace('text-emerald-600', 'border-emerald-100').replace('text-slate-500', 'border-slate-200')}!`"
+              >
+                <div
+                  :class="`text-[9px]! font-black! uppercase! tracking-widest! ${trend.color}! opacity-70!`"
+                >
+                  Tren 3 bln
+                </div>
+                <div :class="`flex! items-center! gap-1! mt-1! ${trend.color}!`">
+                  <font-awesome-icon :icon="trend.icon" class="text-xs!" />
+                  <span class="text-base! font-black!">{{ trend.label }}</span>
+                </div>
+              </div>
+            </div>
+
             <div
-              class="px-5! lg:px-8! pb-8! lg:pb-10! flex! flex-col! lg:flex-row! items-center! justify-center! gap-8! lg:gap-10! min-h-[280px]! lg:min-h-[300px]!"
+              class="px-5! lg:px-8! pb-8! lg:pb-10! flex! flex-col! items-center! justify-center! min-h-[260px]! lg:min-h-[280px]!"
             >
               <div
                 v-if="usageValues.length === 0"
@@ -162,54 +205,39 @@
 
               <div
                 v-else-if="viewType === 'bar'"
-                class="flex-1! w-full! h-64! lg:h-72! relative! flex! flex-col! pt-10!"
+                class="w-full! relative!"
               >
-                <svg viewBox="0 0 100 40" class="w-full! h-full! overflow-visible!">
+                <svg viewBox="0 0 100 40" class="w-full! h-56! lg:h-64! overflow-visible!">
                   <defs>
-                    <linearGradient id="areaGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                      <stop offset="0%" style="stop-color: #6366f1; stop-opacity: 0.3" />
-                      <stop offset="100%" style="stop-color: #6366f1; stop-opacity: 0" />
+                    <linearGradient id="barGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                      <stop offset="0%" style="stop-color: #6366f1; stop-opacity: 1" />
+                      <stop offset="100%" style="stop-color: #a5b4fc; stop-opacity: 0.7" />
+                    </linearGradient>
+                    <linearGradient id="barGradCurrent" x1="0%" y1="0%" x2="0%" y2="100%">
+                      <stop offset="0%" style="stop-color: #4f46e5; stop-opacity: 1" />
+                      <stop offset="100%" style="stop-color: #06b6d4; stop-opacity: 0.8" />
                     </linearGradient>
                   </defs>
-
-                  <path :d="generateAreaPath" fill="url(#areaGradient)" />
-
-                  <path
-                    :d="generateLinePath"
-                    fill="none"
-                    stroke="#6366f1"
-                    stroke-width="1.5"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    class="drop-shadow-[0_4px_10px_rgba(99,102,241,0.4)]!"
-                  />
-
-                  <g v-for="(val, idx) in usageValues" :key="'point-' + idx">
-                    <circle
-                      :cx="getPointX(idx)"
-                      :cy="getPointY(val)"
-                      r="2.5"
-                      fill="white"
-                      stroke="#6366f1"
-                      stroke-width="1.5"
-                      class="hover:r-4! transition-all! cursor-pointer!"
-                    />
-                    <text
-                      :x="getPointX(idx)"
-                      :y="getPointY(val) - 5"
-                      text-anchor="middle"
-                      class="text-[4px]! font-black! fill-slate-800!"
-                    >
-                      {{ val }}
-                    </text>
+                  <g stroke="#f1f5f9" stroke-width="0.2">
+                    <line x1="4" :y1="getPointY(maxUsage * 0.75)" x2="96" :y2="getPointY(maxUsage * 0.75)" />
+                    <line x1="4" :y1="getPointY(maxUsage * 0.5)" x2="96" :y2="getPointY(maxUsage * 0.5)" />
+                    <line x1="4" :y1="getPointY(maxUsage * 0.25)" x2="96" :y2="getPointY(maxUsage * 0.25)" />
+                    <line x1="4" :y1="34" x2="96" y2="34" stroke="#cbd5e1" stroke-width="0.3" />
+                  </g>
+                  <g v-if="avgLineY !== null">
+                    <line x1="4" :y1="avgLineY" x2="96" :y2="avgLineY" stroke="#f59e0b" stroke-width="0.3" stroke-dasharray="1,1" opacity="0.7" />
+                    <text x="95" :y="avgLineY - 0.8" text-anchor="end" class="text-[2.2px]! font-black! fill-amber-600!">RATA²</text>
+                  </g>
+                  <g v-for="b in barChartData" :key="'bar-' + b.idx">
+                    <rect :x="b.barX" :y="b.barY" :width="b.barWidth" :height="b.barHeight" :fill="b.isCurrent ? 'url(#barGradCurrent)' : 'url(#barGrad)'" :opacity="b.hasData ? 1 : 0.25" rx="0.6" />
+                    <text v-if="b.value > 0" :x="b.cx" :y="b.barY - 1.2" text-anchor="middle" class="text-[2.2px]! font-black! fill-slate-700!">{{ formatDecimal(b.value) }}</text>
                   </g>
                 </svg>
-
-                <div class="flex! justify-between! mt-6! px-2!">
+                <div class="flex! justify-between! mt-3! px-1!">
                   <span
-                    v-for="(label, idx) in usageLabels"
+                    v-for="(label, idx) in usageLabelsCompact"
                     :key="'lbl-' + idx"
-                    class="text-[10px]! font-black! text-slate-400! uppercase! tracking-tighter!"
+                    :class="`text-[9px]! font-black! uppercase! ${distributionSeries[idx].isCurrent ? 'text-indigo-600!' : 'text-slate-400!'}`"
                   >
                     {{ label }}
                   </span>
@@ -217,80 +245,99 @@
               </div>
 
               <div
-                v-else-if="viewType === 'pie'"
-                class="relative! w-48! lg:w-52! h-48! lg:h-52! flex-shrink-0!"
+                v-else-if="viewType === 'line'"
+                class="w-full! relative!"
               >
-                <svg viewBox="0 0 100 100" class="w-full! h-full! -rotate-90!">
-                  <circle
-                    cx="50"
-                    cy="50"
-                    r="40"
-                    fill="transparent"
-                    stroke="#f1f5f9"
-                    stroke-width="12"
-                  />
-
-                  <circle
-                    v-for="(val, idx) in usageValues"
-                    :key="'pie-' + idx"
-                    cx="50"
-                    cy="50"
-                    r="40"
-                    fill="transparent"
-                    :stroke="
-                      idx === usageValues.length - 1 ? 'url(#indigoGradient)' : getChartColor(idx)
-                    "
-                    stroke-width="12"
-                    :stroke-dasharray="`${getDashArray(val)} 100`"
-                    :stroke-dashoffset="getDashOffset(idx)"
-                    :class="
-                      idx === usageValues.length - 1
-                        ? 'transition-all! duration-1000! hover:stroke-width-[14!]'
-                        : 'opacity-80!'
-                    "
-                  />
-
+                <svg viewBox="0 0 100 40" class="w-full! h-56! lg:h-64! overflow-visible!">
                   <defs>
-                    <linearGradient id="indigoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                      <stop offset="0%" style="stop-color: #4f46e5; stop-opacity: 1" />
-                      <stop offset="100%" style="stop-color: #06b6d4; stop-opacity: 1" />
+                    <linearGradient id="areaGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                      <stop offset="0%" style="stop-color: #6366f1; stop-opacity: 0.35" />
+                      <stop offset="100%" style="stop-color: #6366f1; stop-opacity: 0" />
                     </linearGradient>
                   </defs>
+                  <path :d="generateAreaPath" fill="url(#areaGradient)" />
+                  <path
+                    :d="generateLinePath"
+                    fill="none"
+                    stroke="#6366f1"
+                    stroke-width="0.5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                  <g v-if="avgLineY !== null">
+                    <line x1="4" :y1="avgLineY" x2="96" :y2="avgLineY" stroke="#f59e0b" stroke-width="0.25" stroke-dasharray="1,1" opacity="0.7" />
+                  </g>
+                  <g v-for="(p, idx) in distributionSeries" :key="'pt-' + idx">
+                    <circle
+                      :cx="getPointX(idx)"
+                      :cy="getPointY(p.usage_m3)"
+                      :r="p.is_current ? 0.9 : 0.6"
+                      :fill="p.is_current ? '#4f46e5' : 'white'"
+                      :stroke="p.is_current ? '#4f46e5' : '#6366f1'"
+                      stroke-width="0.3"
+                    />
+                    <title>{{ p.label }}: {{ formatDecimal(p.usage_m3) }} m³</title>
+                  </g>
                 </svg>
-                <div class="absolute! inset-0! flex! flex-col! items-center! justify-center!">
+                <div class="flex! justify-between! mt-3! px-1!">
                   <span
-                    :class="[
-                      'font-black! text-slate-800! transition-all!',
-                      totalUsage.toString().length > 5 ? 'text-lg!' : 'text-2xl!',
-                    ]"
+                    v-for="(label, idx) in usageLabelsCompact"
+                    :key="'ll-' + idx"
+                    :class="`text-[9px]! font-black! uppercase! ${distributionSeries[idx].is_current ? 'text-indigo-600!' : 'text-slate-400!'}`"
                   >
-                    {{ formatNumber(totalUsage) }}
+                    {{ label }}
                   </span>
-                  <span class="text-[9px]! font-black! text-slate-400! uppercase! tracking-widest!"
-                    >Total m³</span
-                  >
                 </div>
               </div>
+            </div>
 
-              <div class="grid! grid-cols-1! gap-4! w-full! max-w-[240px]!">
+            <!-- Top 3 bulan tertinggi -->
+            <div
+              v-if="usageValues.length > 0 && recordedCount > 0"
+              class="px-5! lg:px-8! pb-8! lg:pb-10! border-t! border-slate-100! pt-5!"
+            >
+              <div class="flex! items-center! justify-between! mb-3!">
+                <h4 class="text-xs! font-black! text-slate-700! uppercase! tracking-widest!">
+                  3 Bulan Pemakaian Tertinggi
+                </h4>
+                <span class="text-[10px]! text-slate-400! font-medium!">
+                  Total {{ formatDecimal(totalUsage) }} m³ / {{ recordedCount }} bulan
+                </span>
+              </div>
+              <div class="grid! grid-cols-1! sm:grid-cols-3! gap-3!">
                 <div
-                  v-for="(val, idx) in usageValues"
-                  :key="idx"
-                  class="flex! items-center! justify-between! p-3! rounded-2xl! hover:bg-slate-50! transition-colors! group!"
+                  v-for="(top, idx) in topMonths"
+                  :key="'top-' + idx"
+                  class="flex! items-center! gap-3! p-3! rounded-2xl! bg-slate-50! border! border-slate-100!"
                 >
-                  <div class="flex! items-center! gap-3!">
-                    <div
-                      class="w-3! h-3! rounded-full!"
-                      :class="idx === usageValues.length - 1 ? 'bg-indigo-600!' : 'bg-indigo-200!'"
-                    ></div>
-                    <span class="text-sm! font-bold! text-slate-600!">{{ usageLabels[idx] }}</span>
+                  <div
+                    :class="`w-9! h-9! rounded-xl! flex! items-center! justify-center! text-xs! font-black! ${idx === 0 ? 'bg-rose-100! text-rose-600!' : idx === 1 ? 'bg-amber-100! text-amber-600!' : 'bg-slate-200! text-slate-600!'}`"
+                  >
+                    #{{ idx + 1 }}
                   </div>
-                  <div class="flex! items-center! gap-2!">
-                    <span class="text-sm! font-black! text-slate-800!">{{ val }} m³</span>
-                    <span class="text-[10px]! font-bold! text-slate-400! w-8! text-right!">
-                      {{ totalUsage > 0 ? Math.round((val / totalUsage) * 100) : 0 }}%
-                    </span>
+                  <div class="flex-1! min-w-0!">
+                    <div class="text-[10px]! font-black! text-slate-400! uppercase! tracking-wide!">
+                      {{ top.label }}
+                    </div>
+                    <div class="text-sm! font-black! text-slate-800!">
+                      {{ formatDecimal(top.value) }} m³
+                    </div>
                   </div>
+                  <span
+                    v-if="top.bill_status === 'paid'"
+                    class="text-[9px]! font-black! text-emerald-600! bg-emerald-50! px-2! py-1! rounded-full! border! border-emerald-100!"
+                    >LUNAS</span
+                  >
+                  <span
+                    v-else-if="top.bill_status === 'unpaid'"
+                    class="text-[9px]! font-black! text-rose-600! bg-rose-50! px-2! py-1! rounded-full! border! border-rose-100!"
+                    >BELUM</span
+                  >
+                  <span
+                    v-else
+                    class="text-[9px]! font-black! text-slate-500! bg-white! px-2! py-1! rounded-full! border! border-slate-100!"
+                    >—</span
+                  >
                 </div>
               </div>
             </div>
@@ -334,9 +381,32 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted, computed } from 'vue'
+import { useRouter } from 'vue-router'
 import ContentCard from '@/presentations/components/ui/ContentCard.vue'
 import BaseButton from '@/presentations/components/ui/BaseButton.vue'
 import pelangganService from '@/services/pelanggan.service'
+import Swal from 'sweetalert2'
+
+const router = useRouter()
+
+const goToBillDetail = () => {
+  const billId = dashboardData.value.latest_bill?.id
+  if (!billId) {
+    Swal.fire({
+      icon: 'info',
+      title: 'Belum Ada Tagihan',
+      text: 'Saat ini belum ada tagihan yang tersedia untuk ditampilkan.',
+      confirmButtonColor: '#4f46e5',
+    })
+    return
+  }
+  router.push({ path: '/app/pelanggan/tagihan-detail', query: { id: billId } })
+}
+
+const MONTH_SHORT = [
+  'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun',
+  'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des',
+]
 
 const viewType = ref('bar')
 
@@ -344,60 +414,82 @@ const dashboardData = ref({
   user: { name: '', customer_code: '' },
   latest_bill: null,
   usage_history: [],
+  distribution: {
+    series: [],
+    months_count: 12,
+    summary: {
+      total_m3: 0,
+      avg_m3: 0,
+      max_m3: 0,
+      min_m3: 0,
+      recorded_months: 0,
+      trend_direction: 'flat',
+      trend_percent: 0,
+      recent_avg_m3: 0,
+      previous_avg_m3: 0,
+    },
+  },
   balance: 0,
 })
 
-const usageLabels = computed(() => {
-  return dashboardData.value.usage_history.map((bill) => {
-    const months = [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'Mei',
-      'Jun',
-      'Jul',
-      'Agu',
-      'Sep',
-      'Okt',
-      'Nov',
-      'Des',
-    ]
-    return months[bill.billing_period_month - 1]
-  })
+const distributionSeries = computed(() => {
+  const series = dashboardData.value.distribution?.series || []
+  return series.map((p) => ({
+    ...p,
+    label: `${MONTH_SHORT[p.month - 1]} ${String(p.year).slice(-2)}`,
+    shortLabel: MONTH_SHORT[p.month - 1],
+  }))
 })
 
-const usageValues = computed(() => {
-  return dashboardData.value.usage_history.map((bill) => parseFloat(bill.usage_m3 || 0))
+const usageValues = computed(() => distributionSeries.value.map((p) => Number(p.usage_m3 || 0)))
+
+const usageLabels = computed(() => distributionSeries.value.map((p) => p.label))
+
+const usageLabelsCompact = computed(() => distributionSeries.value.map((p) => p.shortLabel))
+
+const recordedCount = computed(() =>
+  distributionSeries.value.filter((p) => p.has_reading || p.has_bill).length,
+)
+
+const summary = computed(() => dashboardData.value.distribution?.summary || {})
+
+const totalUsage = computed(() => summary.value.total_m3 || 0)
+const avgUsage = computed(() => summary.value.avg_m3 || 0)
+const maxUsage = computed(() => Math.max(...usageValues.value, 1))
+
+const trend = computed(() => {
+  const dir = summary.value.trend_direction || 'flat'
+  const pct = Math.abs(Number(summary.value.trend_percent || 0))
+  if (dir === 'up') return { icon: 'arrow-up', color: 'text-rose-600', bg: 'bg-rose-50', label: `+${pct}%` }
+  if (dir === 'down') return { icon: 'arrow-down', color: 'text-emerald-600', bg: 'bg-emerald-50', label: `-${pct}%` }
+  return { icon: 'equals', color: 'text-slate-500', bg: 'bg-slate-100', label: 'Stabil' }
 })
 
-const totalUsage = computed(() => {
-  return usageValues.value.reduce((acc, val) => acc + val, 0)
-})
-
-const maxUsage = computed(() => {
-  return Math.max(...usageValues.value, 1)
-})
+// SVG chart geometry (viewBox 100x40)
+const CHART_LEFT = 4
+const CHART_RIGHT = 96
+const CHART_TOP = 4
+const CHART_BOTTOM = 34
 
 const getPointX = (idx) => {
-  if (usageValues.value.length <= 1) return 50
-  return (idx / (usageValues.value.length - 1)) * 100
+  const len = usageValues.value.length
+  if (len <= 1) return (CHART_LEFT + CHART_RIGHT) / 2
+  return CHART_LEFT + (idx / (len - 1)) * (CHART_RIGHT - CHART_LEFT)
 }
 
 const getPointY = (val) => {
-  return 35 - (val / maxUsage.value) * 30
+  const safeMax = Math.max(maxUsage.value, 1)
+  return CHART_BOTTOM - (Number(val) / safeMax) * (CHART_BOTTOM - CHART_TOP)
 }
 
 const generateLinePath = computed(() => {
   if (usageValues.value.length === 0) return ''
   let d = `M ${getPointX(0)} ${getPointY(usageValues.value[0])}`
-
   for (let i = 1; i < usageValues.value.length; i++) {
     const x = getPointX(i)
     const y = getPointY(usageValues.value[i])
     const prevX = getPointX(i - 1)
     const prevY = getPointY(usageValues.value[i - 1])
-
     const cp1x = prevX + (x - prevX) / 2
     d += ` C ${cp1x} ${prevY}, ${cp1x} ${y}, ${x} ${y}`
   }
@@ -407,30 +499,61 @@ const generateLinePath = computed(() => {
 const generateAreaPath = computed(() => {
   const line = generateLinePath.value
   if (!line) return ''
-  return `${line} L ${getPointX(usageValues.value.length - 1)} 40 L ${getPointX(0)} 40 Z`
+  const last = usageValues.value.length - 1
+  return `${line} L ${getPointX(last)} ${CHART_BOTTOM} L ${getPointX(0)} ${CHART_BOTTOM} Z`
 })
 
-const getDashArray = (val) => {
-  if (totalUsage.value === 0) return 0
-  return (val / totalUsage.value) * 100
-}
+const avgLineY = computed(() => {
+  if (avgUsage.value <= 0) return null
+  return getPointY(avgUsage.value)
+})
 
-const getDashOffset = (idx) => {
-  let offset = 0
-  for (let i = 0; i < idx; i++) {
-    offset += (usageValues.value[i] / totalUsage.value) * 100
-  }
-  return -offset
-}
+// Bar chart geometry untuk distribusi per bulan (lebih informatif dari pie)
+const barChartData = computed(() => {
+  const len = distributionSeries.value.length
+  const slotWidth = (CHART_RIGHT - CHART_LEFT) / Math.max(len, 1)
+  const barWidth = Math.max(slotWidth * 0.55, 1.2)
+  return distributionSeries.value.map((p, idx) => {
+    const cx = CHART_LEFT + slotWidth * idx + slotWidth / 2
+    const baseY = CHART_BOTTOM
+    const topY = getPointY(p.usage_m3)
+    return {
+      idx,
+      label: p.shortLabel,
+      value: p.usage_m3,
+      cx,
+      barX: cx - barWidth / 2,
+      barY: Math.min(topY, baseY),
+      barHeight: Math.max(Math.abs(baseY - topY), 0.5),
+      hasData: p.has_reading || p.has_bill,
+      isCurrent: p.is_current,
+    }
+  })
+})
 
-const getChartColor = (idx) => {
-  const colors = ['#c7d2fe', '#a5b4fc', '#818cf8', '#6366f1', '#4f46e5']
-  return colors[idx] || '#6366f1'
-}
+const topMonths = computed(() => {
+  return [...distributionSeries.value]
+    .filter((p) => p.usage_m3 > 0)
+    .sort((a, b) => b.usage_m3 - a.usage_m3)
+    .slice(0, 3)
+})
 
-const formatNumber = (num) => {
-  return new Intl.NumberFormat('id-ID').format(num)
-}
+const totalUsageRupiahEquivalent = computed(() => {
+  const bill = dashboardData.value.latest_bill
+  if (!bill) return null
+  const avg = avgUsage.value
+  if (!avg) return Number(bill.total_amount) || 0
+  // estimasi kasar: skala tagihan terakhir ke rata-rata pemakaian
+  const ratio = avg / Math.max(Number(bill.usage_m3) || 1, 1)
+  return Math.round((Number(bill.total_amount) || 0) * ratio)
+})
+
+const formatNumber = (num) => new Intl.NumberFormat('id-ID').format(Number(num) || 0)
+
+const formatDecimal = (num) =>
+  new Intl.NumberFormat('id-ID', { maximumFractionDigits: 1, minimumFractionDigits: 0 }).format(
+    Number(num) || 0,
+  )
 
 const formatDate = (dateString) => {
   if (!dateString) return '-'
@@ -446,7 +569,10 @@ const fetchDashboardData = async () => {
   try {
     const response = await pelangganService.getDashboardData()
     if (response.success) {
-      dashboardData.value = response.data
+      dashboardData.value = {
+        ...response.data,
+        distribution: response.data.distribution || dashboardData.value.distribution,
+      }
     }
   } catch (error) {
     console.error('Failed to fetch dashboard data:', error)
@@ -454,7 +580,6 @@ const fetchDashboardData = async () => {
 }
 
 const isMobile = ref(false)
-
 const checkMobile = () => {
   isMobile.value = window.innerWidth < 1024
 }

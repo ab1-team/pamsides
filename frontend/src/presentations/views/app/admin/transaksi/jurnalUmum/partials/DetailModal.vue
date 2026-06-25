@@ -18,7 +18,7 @@
               </div>
               <div>
                 <h2 class="text-lg! font-semibold! text-slate-800 leading-tight">
-                  2.1.01.01 - Utang Dividen Pemdes Bulan April 2026
+                  {{ title }}
                 </h2>
               </div>
             </div>
@@ -47,7 +47,12 @@
                   <th
                     class="py-3! px-4! text-xs font-semibold uppercase tracking-wide border-b border-slate-700 whitespace-nowrap"
                   >
-                    Kode Akun
+                    Kode Akun Debet
+                  </th>
+                  <th
+                    class="py-3! px-4! text-xs font-semibold uppercase tracking-wide border-b border-slate-700 whitespace-nowrap"
+                  >
+                    Kode Akun Kredit
                   </th>
                   <th
                     class="py-3! px-4! text-xs font-semibold uppercase tracking-wide border-b border-slate-700 min-w-[200px]"
@@ -82,87 +87,54 @@
                 </tr>
               </thead>
               <tbody class="divide-y divide-slate-200">
-                <tr class="hover:bg-slate-50 transition-colors">
-                  <td class="py-4! px-4! text-center text-slate-600">1</td>
-                  <td class="py-4! px-4! text-slate-700">01/01/2026</td>
-                  <td class="py-4! px-4! font-mono text-xs text-slate-500"></td>
-                  <td class="py-4! px-4! text-slate-700">Komulatif Transaksi Awal Tahun 2026</td>
-                  <td class="py-4! px-4! font-mono text-xs text-slate-500"></td>
-                  <td class="py-4! px-4! text-right font-mono text-slate-700">0.00</td>
-                  <td class="py-4! px-4! text-right font-mono text-slate-700">0.00</td>
-                  <td class="py-4! px-4! text-center font-mono text-slate-700">0.00</td>
-                  <td class="py-4! px-4! text-center">
-                    <div class="flex items-center justify-center gap-2!">
-                      <button
-                        class="w-8! h-8! rounded-lg! bg-blue-50! text-blue-600! hover:bg-blue-100! transition-all active:scale-90"
-                        title="Cetak"
-                      >
-                        <font-awesome-icon icon="print" />
-                      </button>
-                      <button
-                        class="w-8! h-8! rounded-lg! bg-red-50! text-red-600! hover:bg-red-100! transition-all active:scale-90"
-                        title="Hapus"
-                      >
-                        <font-awesome-icon icon="trash" />
-                      </button>
+                <tr v-if="loading">
+                  <td colspan="10" class="py-8 text-center text-slate-500">
+                    <div class="flex justify-center">
+                      <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
                     </div>
                   </td>
                 </tr>
-
-                <tr class="hover:bg-slate-50 transition-colors">
-                  <td class="py-4! px-4! text-center text-slate-600">2</td>
-                  <td class="py-4! px-4! text-slate-700">01/04/2026</td>
-                  <td class="py-4! px-4! font-mono text-xs text-slate-500"></td>
-                  <td class="py-4! px-4! text-slate-700">Komulatif Transaksi s/d Bulan Lalu</td>
-                  <td class="py-4! px-4! font-mono text-xs text-slate-500"></td>
-                  <td class="py-4! px-4! text-right font-mono text-slate-700">0.00</td>
-                  <td class="py-4! px-4! text-right font-mono text-slate-700">0.00</td>
-                  <td class="py-4! px-4! text-center font-mono text-slate-700"></td>
-                  <td class="py-4! px-4! text-center">
-                    <div class="flex items-center justify-center gap-2!">
-                      <button
-                        class="w-8! h-8! rounded-lg! bg-blue-50! text-blue-600! hover:bg-blue-100! transition-all active:scale-90"
-                        title="Cetak"
-                      >
-                        <font-awesome-icon icon="print" />
-                      </button>
-                      <button
-                        class="w-8! h-8! rounded-lg! bg-red-50! text-red-600! hover:bg-red-100! transition-all active:scale-90"
-                        title="Hapus"
-                      >
-                        <font-awesome-icon icon="trash" />
-                      </button>
-                    </div>
+                <tr v-else-if="transactions.length === 0">
+                  <td colspan="10" class="py-8 text-center text-slate-500">
+                    Tidak ada data transaksi ditemukan.
                   </td>
                 </tr>
-
-                <tr class="bg-slate-100">
-                  <td colspan="5" class="py-4! px-6! font-semibold text-slate-800">
-                    Total Transaksi Bulan April 2026
-                  </td>
-                  <td class="py-4! px-4! text-right font-mono text-slate-800">0.00</td>
-                  <td class="py-4! px-4! text-right font-mono text-slate-800">0.00</td>
-                  <td colspan="2"></td>
-                </tr>
-
-                <tr class="bg-white">
-                  <td colspan="5" class="py-4! px-6! font-semibold text-slate-800">
-                    Total Transaksi sampai dengan Bulan April 2026
-                  </td>
-                  <td class="py-4! px-4! text-right font-mono text-slate-800">0.00</td>
-                  <td class="py-4! px-4! text-right font-mono text-slate-800">0.00</td>
-                  <td class="py-4! px-4! text-center font-mono text-slate-800">0.00</td>
-                  <td></td>
-                </tr>
-
-                <tr class="bg-slate-100 border-b border-slate-200">
-                  <td colspan="5" class="py-4! px-6! font-semibold text-slate-800">
-                    Total Transaksi Komulatif sampai dengan Tahun 2026
-                  </td>
-                  <td class="py-4! px-4! text-right font-mono text-slate-800">0.00</td>
-                  <td class="py-4! px-4! text-right font-mono text-slate-800">0.00</td>
-                  <td colspan="2"></td>
-                </tr>
+                <template v-else>
+                  <tr v-for="(trx, index) in transactions" :key="trx.id" class="hover:bg-slate-50 transition-colors">
+                    <td class="py-4! px-4! text-center text-slate-600">{{ index + 1 }}</td>
+                    <td class="py-4! px-4! text-slate-700">{{ formatDate(trx.tgl_transaksi) }}</td>
+                    <td class="py-4! px-4! font-mono text-xs text-slate-500">
+                      {{ trx.account_debet?.kode_akun || trx.account_debet }}
+                      <span v-if="trx.account_debet?.nama_akun" class="text-slate-400 ml-1">({{ trx.account_debet.nama_akun }})</span>
+                    </td>
+                    <td class="py-4! px-4! font-mono text-xs text-slate-500">
+                      {{ trx.account_kredit?.kode_akun || trx.account_kredit }}
+                      <span v-if="trx.account_kredit?.nama_akun" class="text-slate-400 ml-1">({{ trx.account_kredit.nama_akun }})</span>
+                    </td>
+                    <td class="py-4! px-4! text-slate-700">{{ trx.keterangan_transaksi || '-' }}</td>
+                    <td class="py-4! px-4! font-mono text-xs text-slate-500">{{ trx.id }}</td>
+                    <td class="py-4! px-4! text-right font-mono text-slate-700">{{ formatCurrency(trx.saldo) }}</td>
+                    <td class="py-4! px-4! text-right font-mono text-slate-700">{{ formatCurrency(trx.saldo) }}</td>
+                    <td class="py-4! px-4! text-center font-mono text-slate-700">-</td>
+                    <td class="py-4! px-4! text-center">
+                      <div class="flex items-center justify-center gap-2!">
+                        <button
+                          class="w-8! h-8! rounded-lg! bg-blue-50! text-blue-600! hover:bg-blue-100! transition-all active:scale-90"
+                          title="Cetak"
+                        >
+                          <font-awesome-icon icon="print" />
+                        </button>
+                        <button
+                          class="w-8! h-8! rounded-lg! bg-red-50! text-red-600! hover:bg-red-100! transition-all active:scale-90"
+                          title="Hapus"
+                          @click="deleteTransaction(trx.id)"
+                        >
+                          <font-awesome-icon icon="trash" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                </template>
               </tbody>
             </table>
           </div>
@@ -198,9 +170,39 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  transactions: {
+    type: Array,
+    default: () => [],
+  },
+  loading: {
+    type: Boolean,
+    default: false,
+  },
+  title: {
+    type: String,
+    default: 'Detail Transaksi',
+  },
 })
 
-const emit = defineEmits(['close', 'openCetak'])
+const emit = defineEmits(['close', 'openCetak', 'delete'])
+
+const formatDate = (dateString) => {
+  if (!dateString) return '-'
+  const date = new Date(dateString)
+  return date.toLocaleDateString('id-ID', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  })
+}
+
+const formatCurrency = (amount) => {
+  if (!amount) return '0.00'
+  return new Intl.NumberFormat('id-ID', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(amount)
+}
 
 const close = () => {
   emit('close')
@@ -208,6 +210,10 @@ const close = () => {
 
 const openCetak = () => {
   emit('openCetak')
+}
+
+const deleteTransaction = (id) => {
+  emit('delete', id)
 }
 
 const handleKeydown = (e) => {

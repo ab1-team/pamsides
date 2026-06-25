@@ -2,7 +2,7 @@ import { ref, computed, onMounted } from 'vue'
 import { STATUS_TYPES, STATUS_COLORS } from '@/types/pemakaianAir'
 import { billingService } from '@/services/billing.service'
 import { confirmDelete } from '@/utils/deleteHandler'
-import { MySwal } from '@/main'
+import { MySwal } from '@/utils/swal'
 
 export function usePemakaianAir() {
   const bulanOptions = [

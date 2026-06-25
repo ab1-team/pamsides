@@ -32,4 +32,9 @@ class MonthlyBill extends Model
     {
         return $this->hasMany(BillPayment::class, 'bill_id');
     }
+
+    public function transactions()
+    {
+        return $this->morphMany(Transaction::class, 'reverence');
+    }
 }
