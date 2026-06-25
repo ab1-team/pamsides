@@ -30,14 +30,19 @@ class MeterReadingController extends Controller
             'year.required' => 'Filter tahun wajib diisi.',
         ]);
 
-        $readings = MeterReading::with([
+        $query = MeterReading::with([
             'customer.user',
             'customer.ticket',
         ])
             ->where('reading_month', $request->month)
-            ->where('reading_year', $request->year)
-            ->latest()
-            ->get();
+            ->where('reading_year', $request->year);
+
+        // Least-privilege: teknisi hanya melihat catatannya sendiri
+        if (Auth::check() && Auth::user()->role === 'teknisi') {
+            $query->where('recorded_by', Auth::id());
+        }
+
+        $readings = $query->latest()->get();
 
         return response()->json([
             'success' => true,

@@ -26,6 +26,11 @@ class CustomerController extends Controller
             $query->where('status', $request->status);
         }
 
+        // Least-privilege: teknisi hanya melihat tiket yang sudah masuk tahap aktif
+        if (auth()->check() && auth()->user()->role === 'teknisi') {
+            $query->whereIn('status', ['surveyed', 'unpaid', 'processing', 'completed', 'suspended']);
+        }
+
         $tickets = $query->latest()->paginate($request->get('per_page', 10));
 
         $items = $tickets->getCollection()->map(function ($t) {
