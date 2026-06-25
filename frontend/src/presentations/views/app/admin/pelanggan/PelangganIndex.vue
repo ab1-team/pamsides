@@ -95,6 +95,7 @@ const router = useRouter()
 const {
   searchQuery,
   currentPage,
+  perPage,
   tableData,
   filteredData,
   isLoading,

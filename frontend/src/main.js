@@ -149,8 +149,10 @@ import {
   faLightbulb,
   faUserCircle,
   faFolderOpen,
+  faFolder,
   faCirclePlus,
   faCircleInfo,
+  faCircleDot,
   faCalendarDays,
   faCalendarTimes,
   faClockRotateLeft,
@@ -160,6 +162,8 @@ import {
   faUsersSlash,
   faVenusMars,
   faVideo,
+  faSync,
+  faInbox,
 } from '@fortawesome/free-solid-svg-icons'
 
 import { faWhatsapp } from '@fortawesome/free-brands-svg-icons'
@@ -289,8 +293,10 @@ library.add(
   faLightbulb,
   faUserCircle,
   faFolderOpen,
+  faFolder,
   faCirclePlus,
   faCircleInfo,
+  faCircleDot,
   faCalendarDays,
   faCalendarTimes,
   faClockRotateLeft,
@@ -300,6 +306,8 @@ library.add(
   faUsersSlash,
   faVenusMars,
   faVideo,
+  faSync,
+  faInbox,
 )
 
 export { MySwal } from './utils/swal'

@@ -14,14 +14,14 @@
           <BaseButton
             variant="info"
             @click="handleTutupBuku"
-            :disabled="isProcessing"
+            :disabled="isProcessing || !selectedTahun"
             :loading="isProcessing"
             class="w-full! sm:w-auto! h-11! rounded-xl!"
           >
             1. Tutup Buku
           </BaseButton>
           <BaseButton
-            href="/app/transaksi/alokasi-laba"
+            :href="`/app/transaksi/alokasi-laba?tahun=${selectedTahun}`"
             variant="secondary"
             class="w-full! sm:w-auto! h-11! rounded-xl!"
           >
@@ -142,10 +142,24 @@
                     :show-helper="false"
                     size="sm"
                     no-margin
+                    :readonly="bookStatus === 'closed'"
                   />
                 </td>
               </tr>
-              <tr v-if="filteredAkun.length === 0">
+              <tr v-if="isLoadingAkun">
+                <td
+                  colspan="3"
+                  class="text-center! py-6! sm:py-8! text-gray-500! text-xs! sm:text-sm! font-sans!"
+                >
+                  <span class="inline-flex! items-center! gap-2!">
+                    <span
+                      class="w-4! h-4! rounded-full! border-2! border-blue-500! border-t-transparent! animate-spin!"
+                    ></span>
+                    Memuat data akun...
+                  </span>
+                </td>
+              </tr>
+              <tr v-else-if="filteredAkun.length === 0">
                 <td
                   colspan="3"
                   class="text-center! py-6! sm:py-8! text-gray-500! text-xs! sm:text-sm! font-sans!"
@@ -179,36 +193,34 @@
       size="lg"
       class="fixed! bottom-6! right-6! z-50! rounded-full! shadow-2xl! scale-110! sm:scale-100!"
       @click="simpanPerubahanSaldo"
+      :disabled="isSaving || bookStatus === 'closed' || akunList.length === 0"
+      :loading="isSaving"
       v-if="bookStatus !== 'open' || isProcessing"
     >
       <span class="mr-2!">💾</span>
       <span class="hidden! sm:inline!">Simpan Tutup Buku</span>
       <span class="sm:hidden!">Simpan</span>
     </BaseButton>
-
-    <AppNotification
-      v-bind="notificationState"
-      @close="() => {}"
-      @confirm="() => {}"
-      @cancel="() => {}"
-    />
   </div>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
-import { useNotification } from '@/composables/useNotification'
-import AppNotification from '@/presentations/components/ui/AppNotification.vue'
+import { ref, computed, watch } from 'vue'
+import { useUiStore } from '@/stores/uiStore'
 import SelectSearch from '@/presentations/components/SelectSearch.vue'
 import MaksMoneyInput from '@/presentations/components/MaksMoneyInput.vue'
 import ContentCard from '@/presentations/components/ui/ContentCard.vue'
 import BaseButton from '@/presentations/components/ui/BaseButton.vue'
+import { accountingService } from '@/services/accounting.service'
 
-const { notificationState, success, error } = useNotification()
+const uiStore = useUiStore()
 const selectedTahun = ref('')
 const searchQuery = ref('')
 const isProcessing = ref(false)
+const isLoadingAkun = ref(false)
+const isSaving = ref(false)
 const bookStatus = ref('open')
+const akunList = ref([])
 
 const tahunOptions = computed(() => {
   const current = new Date().getFullYear()
@@ -218,79 +230,133 @@ const tahunOptions = computed(() => {
   }))
 })
 
-const akunList = ref([
-  { kode: '1.1.01.00', nama: 'Kas', saldo: 19973500 },
-  { kode: '1.1.02.00', nama: 'Kas Setara Kas', saldo: 0 },
-  { kode: '1.1.03.00', nama: 'Piutang', saldo: 105210000 },
-  { kode: '1.1.04.00', nama: 'Cadangan Kerugian Piutang', saldo: 0 },
-  { kode: '1.1.05.00', nama: 'Rekening antar Kantor', saldo: 0 },
-  { kode: '1.1.06.00', nama: 'Investasi', saldo: 0 },
-  { kode: '1.2.01.00', nama: 'Aktiva Tetap dan Inventaris', saldo: 0 },
-  { kode: '1.2.02.00', nama: 'Akumulasi Penyusutan Aktiva Tetap dan Inventaris', saldo: 0 },
-  { kode: '1.2.03.00', nama: 'Aset Tak Berwujud', saldo: 0 },
-  { kode: '2.1.01.00', nama: 'Hutang Usaha', saldo: 0 },
-  { kode: '2.1.02.00', nama: 'Hutang Pajak', saldo: 0 },
-  { kode: '2.2.01.00', nama: 'Hutang Jangka Panjang', saldo: 0 },
-  { kode: '3.1.01.00', nama: 'Modal Disetor', saldo: 0 },
-  { kode: '3.1.02.00', nama: 'Laba Ditahan', saldo: 0 },
-  { kode: '4.1.01.00', nama: 'Pendapatan Air', saldo: 0 },
-  { kode: '4.1.02.00', nama: 'Pendapatan Sambungan Baru', saldo: 0 },
-  { kode: '5.1.01.00', nama: 'Beban Operasional', saldo: 0 },
-  { kode: '5.1.02.00', nama: 'Beban Gaji', saldo: 0 },
-  { kode: '5.1.03.00', nama: 'Beban Penyusutan', saldo: 0 },
-])
-
 const filteredAkun = computed(() => {
-  const q = searchQuery.value.toLowerCase()
+  const q = searchQuery.value.toLowerCase().trim()
   if (!q) return akunList.value
   return akunList.value.filter(
     (a) => a.kode.toLowerCase().includes(q) || a.nama.toLowerCase().includes(q),
   )
 })
 
-const grandTotal = computed(() => akunList.value.reduce((s, a) => s + a.saldo, 0))
+const grandTotal = computed(() =>
+  akunList.value.reduce((s, a) => s + (Number(a.saldo) || 0), 0),
+)
 
 const formatRp = (val) =>
   'Rp. ' +
-  Number(val).toLocaleString('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+  Number(val || 0).toLocaleString('id-ID', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })
+
+const loadAkunList = async (year) => {
+  if (!year) {
+    akunList.value = []
+    return
+  }
+  isLoadingAkun.value = true
+  try {
+    const res = await accountingService.getAccountsWithSaldo(year)
+    if (res.success && res.data) {
+      akunList.value = (res.data.accounts || []).map((a) => ({
+        account_id: a.account_id,
+        kode: a.kode,
+        nama: a.nama,
+        lev1: a.lev1,
+        lev2: a.lev2,
+        lev3: a.lev3,
+        lev4: a.lev4,
+        jenis_mutasi: a.jenis_mutasi,
+        saldo: Number(a.saldo) || 0,
+      }))
+    } else {
+      akunList.value = []
+    }
+  } catch (e) {
+    console.error('Gagal memuat daftar akun:', e)
+    uiStore.error(e?.response?.data?.message || 'Gagal memuat daftar akun.')
+    akunList.value = []
+  } finally {
+    isLoadingAkun.value = false
+  }
+}
+
+const checkBookStatus = async (year) => {
+  try {
+    const res = await accountingService.checkBookClosed(year)
+    if (res.success && res.data) {
+      return !!res.data.closed
+    }
+    return false
+  } catch (e) {
+    console.error('Gagal cek status buku:', e)
+    return false
+  }
+}
 
 const simpanPerubahanSaldo = async () => {
+  if (!selectedTahun.value) {
+    uiStore.error('Pilih tahun terlebih dahulu.')
+    return
+  }
+  isSaving.value = true
   try {
-    console.log('Menyimpan perubahan saldo:', akunList.value)
-    success('Berhasil!', 'Perubahan saldo berhasil disimpan.')
-  } catch (error) {
-    console.error('Error menyimpan saldo:', error)
-    error('Kesalahan', 'Gagal menyimpan perubahan saldo.')
+    const overrides = akunList.value
+      .filter((a) => Number(a.saldo) !== 0)
+      .map((a) => ({ kode: a.kode, saldo: Number(a.saldo) || 0 }))
+
+    const res = await accountingService.closeBook(selectedTahun.value, { overrides })
+    if (res.success) {
+      bookStatus.value = 'closed'
+      uiStore.success(res.data?.message || `Buku tahun ${selectedTahun.value} berhasil ditutup.`)
+      await loadAkunList(selectedTahun.value)
+    } else {
+      uiStore.error(res.message || 'Gagal menutup buku.')
+    }
+  } catch (e) {
+    console.error('Error simpan tutup buku:', e)
+    uiStore.error(e?.response?.data?.message || 'Gagal menyimpan perubahan saldo.')
+  } finally {
+    isSaving.value = false
   }
 }
 
 const handleTutupBuku = async () => {
+  const yearToClose = Number(selectedTahun.value)
+  if (!yearToClose) {
+    uiStore.error('Pilih tahun terlebih dahulu.')
+    return
+  }
+
   const currentYear = new Date().getFullYear()
-  const yearToClose = selectedTahun.value
-
   if (yearToClose > currentYear) {
-    error('Tidak Valid', 'Tidak dapat menutup buku untuk tahun mendatang!')
+    uiStore.error('Tidak dapat menutup buku untuk tahun mendatang!')
     return
   }
 
-  const isAlreadyClosed = await checkIfBookClosed(yearToClose)
-  if (isAlreadyClosed) {
-    bookStatus.value = 'closed'
-    error('Sudah Ditutup', `Buku untuk tahun ${yearToClose} sudah ditutup!`)
-    return
-  }
-
-  bookStatus.value = 'input'
-}
-
-const checkIfBookClosed = async (year) => {
+  isProcessing.value = true
   try {
-    console.log(`Checking if book for year ${year} is closed...`)
-    await new Promise((resolve) => setTimeout(resolve, 500))
-    return false
-  } catch (error) {
-    console.error('Error checking book status:', error)
-    return false
+    const isClosed = await checkBookStatus(yearToClose)
+    if (isClosed) {
+      bookStatus.value = 'closed'
+      uiStore.warn(`Buku untuk tahun ${yearToClose} sudah ditutup.`)
+    } else {
+      bookStatus.value = 'input'
+      uiStore.info(`Silakan periksa dan simpan saldo akun tahun ${yearToClose}.`)
+    }
+    await loadAkunList(yearToClose)
+  } catch (e) {
+    console.error('Error handleTutupBuku:', e)
+    uiStore.error('Terjadi kesalahan saat memproses tutup buku.')
+  } finally {
+    isProcessing.value = false
   }
 }
+
+watch(selectedTahun, (val) => {
+  if (val) {
+    bookStatus.value = 'open'
+    akunList.value = []
+  }
+})
 </script>

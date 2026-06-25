@@ -45,6 +45,10 @@ const getDashboardRoute = (role) => {
   return routes[role] || '/app'
 }
 
+// NOTE: DashboardHome renders role-specific dashboard via dynamic component,
+// jadi surveyor/pelanggan/admin bisa share path /app. Teknisi pakai route khusus.
+
+
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [

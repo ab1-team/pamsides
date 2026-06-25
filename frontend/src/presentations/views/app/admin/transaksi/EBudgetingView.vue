@@ -1,6 +1,6 @@
 <template>
-  <div class="space-y-6!">
-    <ContentCard variant="bordered" padding="normal" hoverable>
+  <div class="space-y-3!">
+    <ContentCard variant="bordered" padding="small" hoverable>
       <div class="flex! flex-col! lg:flex-row! lg:items-end! lg:justify-between! gap-4!">
         <div class="flex-1">
           <div class="relative w-full max-w-md">
@@ -36,261 +36,145 @@
         </div>
         <div class="flex! flex-col! sm:flex-row! gap-3! lg:ml-4!">
           <BaseButton
-            variant="primary"
-            @click="tampilkanAnggaran"
+            variant="secondary"
+            @click="tampilkanDaftarAkun"
             :disabled="loading"
             class="w-full! sm:w-auto! h-11! rounded-xl!"
           >
-            Lihat Anggaran
+            Tentukan Rencana Anggaran
           </BaseButton>
         </div>
       </div>
     </ContentCard>
 
-    <Transition name="fade-slide">
-      <ContentCard
-        v-if="showTable"
-        variant="default"
-        padding="normal"
-        hoverable
-      >
-        <div class="flex! flex-col! lg:flex-row! lg:items-center! lg:justify-between! gap-4! mb-4!">
-          <div class="flex! items-center! gap-3! text-base! font-semibold! text-gray-900!">
-            <span class="text-lg!">📊</span>
-            <div class="flex! flex-col! gap-1!">
-              <span class="text-base! font-semibold! text-gray-900!">
-                Rencana Anggaran — {{ bulanName }} {{ filter.tahun }}
-              </span>
-            </div>
-          </div>
-        </div>
+    <ContentCard v-if="showTable" variant="default" padding="small" hoverable>
+      <DaftarAkunSaldo
+        ref="daftarAkunRef"
+        :tahun="filter.tahun"
+        :bulan="filter.bulan"
+        :title="`Tentukan Rencana Anggaran — ${bulanName} ${filter.tahun}`"
+      />
+    </ContentCard>
 
-        <div v-if="loading" class="text-center py-12">
-          <div class="animate-spin w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full mx-auto mb-3"></div>
-          <p class="text-slate-500">Memuat data...</p>
-        </div>
+    <BaseButton
+      v-if="showTable"
+      variant="success-gradient"
+      size="lg"
+      class="fixed! bottom-6! right-6! z-50! rounded-full! shadow-2xl!"
+      :disabled="saving || alreadySaved || checkingExisting"
+      :loading="saving || checkingExisting"
+      @click="simpanAnggaran"
+    >
+      <span class="mr-2!">💾</span>
+      <span class="hidden! sm:inline!">
+        {{ checkingExisting ? 'Memeriksa...' : alreadySaved ? 'Sudah Disimpan' : 'Simpan Anggaran' }}
+      </span>
+      <span class="sm:hidden!">
+        {{ checkingExisting ? '...' : alreadySaved ? 'Tersimpan' : 'Simpan' }}
+      </span>
+    </BaseButton>
 
-        <div v-else class="space-y-6">
-          <div v-for="group in groupedAccounts" :key="group.id" class="bg-slate-50 rounded-xl p-4">
-            <div class="flex items-center justify-between mb-3 pb-2 border-b border-slate-200">
-              <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-lg flex items-center justify-center"
-                     :class="group.lev1 === 4 ? 'bg-emerald-100 text-emerald-600' : 'bg-rose-100 text-rose-600'">
-                  <font-awesome-icon :icon="group.lev1 === 4 ? 'arrow-up' : 'arrow-down'" />
-                </div>
-                <div>
-                  <p class="font-bold text-slate-700">{{ group.nama_akun }}</p>
-                  <p class="text-xs text-slate-400">{{ group.kode_akun }}</p>
-                </div>
-              </div>
-              <div class="text-right">
-                <p class="text-sm font-semibold text-slate-400">Subtotal</p>
-                <p class="font-bold" :class="group.lev1 === 4 ? 'text-emerald-600' : 'text-rose-600'">
-                  {{ formatCurrency(group.subtotal) }}
-                </p>
-              </div>
-            </div>
-
-            <div class="space-y-2">
-              <div
-                v-for="child in group.children"
-                :key="child.id"
-                class="flex items-center gap-4 p-2 hover:bg-white rounded-lg transition-colors"
-              >
-                <span class="w-24 text-xs text-slate-500 font-mono">{{ child.kode_akun }}</span>
-                <span class="flex-1 text-sm text-slate-700">{{ child.nama_akun }}</span>
-                <div class="w-48">
-                  <input
-                    v-model.number="child.jumlah"
-                    type="text"
-                    class="w-full h-9 px-3 text-right text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
-                    :placeholder="formatCurrency(0)"
-                    @blur="formatOnBlur(child)"
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="bg-gradient-to-r from-slate-800 to-slate-900 rounded-xl p-6 text-white">
-            <div class="flex items-center justify-between">
-              <div>
-                <p class="text-sm text-slate-300">Total Rencana Anggaran</p>
-                <p class="text-2xl font-black">{{ formatCurrency(totalRencana) }}</p>
-              </div>
-              <BaseButton
-                variant="secondary"
-                size="md"
-                icon="save"
-                @click="simpanRencana"
-              >
-                Simpan
-              </BaseButton>
-            </div>
-          </div>
-        </div>
-      </ContentCard>
-    </Transition>
-
-    <AppNotification
-      v-bind="notificationState"
-      @close="notificationState.show = false"
-      @confirm="notificationState.show = false"
-      @cancel="notificationState.show = false"
+    <AppToast
+      v-model="toastVisible"
+      title="Berhasil!"
+      :message="`Rencana anggaran ${bulanName} ${filter.tahun} berhasil disimpan.`"
     />
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
-import { useNotification } from '@/composables/useNotification'
-import AppNotification from '@/presentations/components/ui/AppNotification.vue'
+import { ref, computed, watch } from 'vue'
 import ContentCard from '@/presentations/components/ui/ContentCard.vue'
 import BaseButton from '@/presentations/components/ui/BaseButton.vue'
+import DaftarAkunSaldo from '@/presentations/components/transaksi/DaftarAkunSaldo.vue'
+import AppToast from '@/presentations/components/ui/AppToast.vue'
 import api from '@/utils/axios'
 
-const { notificationState, success, error } = useNotification()
-
 const loading = ref(false)
+const saving = ref(false)
 const showTable = ref(false)
-const accounts = ref([])
-const ebudgetingData = ref({})
+const daftarAkunRef = ref(null)
+const alreadySaved = ref(false)
+const savedCount = ref(0)
+const toastVisible = ref(false)
+const checkingExisting = ref(false)
+
+const bulanNames = ['', 'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember']
 
 const filter = ref({
   tahun: new Date().getFullYear(),
   bulan: new Date().getMonth() + 1,
 })
 
-const bulanNames = ['', 'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember']
-
 const bulanName = computed(() => bulanNames[filter.value.bulan] || '')
 
-const groupedAccounts = computed(() => {
-  const result = []
-
-  const parentPendapatan = accounts.value.find(acc => acc.lev1 === 4 && acc.lev2 === 0)
-  const parentBeban = accounts.value.find(acc => acc.lev1 === 5 && acc.lev2 === 0)
-
-  if (parentPendapatan) {
-    const childrenPendapatan = accounts.value.filter(acc => acc.lev1 === 4 && acc.lev4 > 0)
-    const childrenData = childrenPendapatan.map(c => ({
-      ...c,
-      jumlah: ebudgetingData.value[c.id] || 0
-    }))
-    result.push({
-      ...parentPendapatan,
-      children: childrenData,
-      subtotal: childrenData.reduce((sum, c) => sum + (c.jumlah || 0), 0)
-    })
-  }
-
-  if (parentBeban) {
-    const childrenBeban = accounts.value.filter(acc => acc.lev1 === 5 && acc.lev4 > 0)
-    const childrenData = childrenBeban.map(c => ({
-      ...c,
-      jumlah: ebudgetingData.value[c.id] || 0
-    }))
-    result.push({
-      ...parentBeban,
-      children: childrenData,
-      subtotal: childrenData.reduce((sum, c) => sum + (c.jumlah || 0), 0)
-    })
-  }
-
-  return result
-})
-
-const totalRencana = computed(() => {
-  let total = 0
-  groupedAccounts.value.forEach(group => {
-    total += group.subtotal
-  })
-  return total
-})
-
-const fetchAccounts = async () => {
+const checkExisting = async () => {
+  if (!filter.value.tahun || !filter.value.bulan) return
+  checkingExisting.value = true
   try {
-    const response = await api.get('/accounts')
-    if (response.data.success) {
-      accounts.value = response.data.data
+    const response = await api.get('/ebudgeting/check-exists', {
+      params: { tahun: filter.value.tahun, bulan: filter.value.bulan },
+    })
+    if (response.data?.success) {
+      alreadySaved.value = !!response.data.exists
+      savedCount.value = response.data.count || 0
     }
   } catch (err) {
-    console.error('Gagal mengambil akun:', err)
+    console.error('Gagal cek ebudgeting existing:', err)
+    alreadySaved.value = false
+    savedCount.value = 0
+  } finally {
+    checkingExisting.value = false
   }
 }
 
-const fetchEbudgeting = async () => {
-  try {
-    const response = await api.get('/ebudgeting', {
-      params: {
-        tahun: filter.value.tahun,
-        bulan: filter.value.bulan
-      }
-    })
-    if (response.data.success) {
-      const data = {}
-      response.data.data.forEach(item => {
-        data[item.account_id] = parseFloat(item.jumlah)
-      })
-      ebudgetingData.value = data
-    }
-  } catch (err) {
-    console.error('Gagal mengambil ebudgeting:', err)
-  }
-}
+watch(() => [filter.value.tahun, filter.value.bulan], () => {
+  checkExisting()
+}, { immediate: true })
 
-const tampilkanAnggaran = async () => {
-  if (!filter.value.tahun || !filter.value.bulan) {
-    error('Tidak Valid', 'Isi tahun dan bulan terlebih dahulu!')
-    return
-  }
-
+const tampilkanDaftarAkun = async () => {
+  if (!filter.value.tahun || !filter.value.bulan) return
   loading.value = true
-  showTable.value = true
   try {
-    await fetchEbudgeting()
+    await checkExisting()
+    if (daftarAkunRef.value?.fetchAccounts) {
+      await daftarAkunRef.value.fetchAccounts()
+    }
+    showTable.value = true
+  } catch (err) {
+    console.error(err)
   } finally {
     loading.value = false
   }
 }
 
-const formatOnBlur = (item) => {
-  if (item.jumlah) {
-    const val = parseInt(String(item.jumlah).replace(/[^\d]/g, '')) || 0
-    item.jumlah = val
-  }
-}
+const simpanAnggaran = async () => {
+  if (alreadySaved.value) return
 
-const simpanRencana = async () => {
+  const items = (daftarAkunRef.value?.items || [])
+    .map((a) => ({
+      account_id: a.account_id,
+      jumlah: Number(a.saldo) || 0,
+    }))
+
+  if (items.length === 0) return
+
+  saving.value = true
   try {
-    for (const group of groupedAccounts.value) {
-      for (const child of group.children) {
-        if (child.jumlah > 0) {
-          await api.post('/ebudgeting', {
-            account_id: child.id,
-            tahun: filter.value.tahun,
-            bulan: filter.value.bulan,
-            jumlah: child.jumlah,
-          })
-        }
-      }
-    }
-    success('Berhasil!', 'Rencana anggaran berhasil disimpan.')
-    fetchEbudgeting()
+    await api.post('/ebudgeting/bulk', {
+      tahun: filter.value.tahun,
+      bulan: filter.value.bulan,
+      items,
+    })
+    alreadySaved.value = true
+    savedCount.value = items.length
+    toastVisible.value = true
   } catch (err) {
-    console.error('Error:', err)
-    error('Kesalahan', 'Gagal menyimpan rencana anggaran.')
+    console.error('Gagal menyimpan anggaran:', err)
+  } finally {
+    saving.value = false
   }
 }
-
-function formatCurrency(amount) {
-  if (!amount) return '0'
-  return new Intl.NumberFormat('id-ID').format(amount)
-}
-
-onMounted(() => {
-  fetchAccounts()
-})
 </script>
 
 <style scoped>

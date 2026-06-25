@@ -812,11 +812,6 @@ const fetchPaymentMode = async () => {
     if (res.data?.success) {
       const raw = res.data.data?.status_pembayaran
       isMustFullyPaid.value = raw === true || raw === 1 || raw === '1'
-      console.log('[Registrasi] payment mode loaded:', {
-        status_pembayaran: raw,
-        type: typeof raw,
-        must_be_fully_paid: isMustFullyPaid.value,
-      })
     }
   } catch (err) {
     console.error('Gagal membaca payment mode dari settings, default bisa dicicil.', err)
@@ -1002,7 +997,10 @@ const handleSubmit = async () => {
     const dd = String(targetDate.getDate()).padStart(2, '0')
     const formattedDate = `${yyyy}-${mm}-${dd}`
 
+    const lastTicket = selectedCustomer.value.tickets[selectedCustomer.value.tickets.length - 1]
+
     const payload = {
+      ticket_id: lastTicket.id,
       package_id: form.value.package_id,
       user_id: form.value.user_id,
       order_date: formattedDate,
@@ -1012,8 +1010,7 @@ const handleSubmit = async () => {
       nominal: Number(String(form.value.nominal ?? 0).replace(',', '.')) || 0,
     }
 
-    const lastTicket = selectedCustomer.value.tickets[selectedCustomer.value.tickets.length - 1]
-    const response = await api.put(`/installation-tickets/${lastTicket.id}/register`, payload)
+    const response = await api.post('/installation-tickets', payload)
 
     const ticketId = response.data?.data?.id || lastTicket.id
 
@@ -1119,8 +1116,14 @@ const onNominalBlur = () => {
     nominalInput.value = formatRupiahDecimal(form.value.nominal)
     return
   }
-  const digits = String(nominalInput.value ?? '').replace(/[^\d]/g, '')
-  form.value.nominal = digits === '' ? 0 : parseInt(digits, 10)
+  const raw = String(nominalInput.value ?? '').replace(/[^\d]/g, '')
+  if (raw === '') {
+    form.value.nominal = 0
+  } else {
+    const cents = parseInt(raw.slice(-2) || '0', 10)
+    const whole = raw.length > 2 ? parseInt(raw.slice(0, -2), 10) : 0
+    form.value.nominal = whole + cents / 100
+  }
   nominalInput.value = formatRupiahDecimal(form.value.nominal)
 }
 

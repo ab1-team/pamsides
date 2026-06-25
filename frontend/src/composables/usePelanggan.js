@@ -2,7 +2,7 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { STATUS_TYPES, STATUS_COLORS } from '@/types/pelanggan'
 import customerService from '@/services/customer.service'
 import { confirmDelete } from '@/utils/deleteHandler'
-import { MySwal } from '@/main.js'
+import { MySwal } from '@/utils/swal'
 
 export function usePelanggan(router = null) {
   // State untuk filter pencarian
@@ -92,7 +92,6 @@ export function usePelanggan(router = null) {
 
   // Fungsi-fungsi penanganan aksi
   const handleEdit = (row) => {
-    console.log('Edit Pelanggan:', row)
     if (router) {
       router.push(`/app/data-pelanggan/edit/${row.id}`)
     }
