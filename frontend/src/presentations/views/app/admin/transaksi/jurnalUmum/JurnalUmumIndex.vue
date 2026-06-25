@@ -143,7 +143,7 @@
       <ContentCard variant="elevated" padding="none" hoverable class="total-saldo-wrapper">
         <div class="total-saldo-card">
           <div class="text-xs text-white/60 font-semibold mb-1 relative z-10">
-            Total Saldo Terkini
+            Total Aset Terkini
           </div>
           <div class="relative z-10 mb-2! flex items-center gap-1 text-white">
             <span class="text-xl font-black tracking-tight">{{ formatSaldo(totalSaldo) }}</span>
@@ -479,9 +479,13 @@ const fetchJenisTransaksi = async () => {
   try {
     const response = await api.get('/jenis-transactions')
     if (response.data.success) {
+      const items = (response.data.data || []).map((jt) => ({
+        id: jt.id,
+        text: jt.nama_jt,
+      }))
       jenisTransaksiOptions.value = [
         { id: '', text: 'Pilih Jenis Transaksi' },
-        ...response.data.data,
+        ...items,
       ]
     }
   } catch (error) {
@@ -493,7 +497,7 @@ const fetchAccounts = async () => {
   try {
     const response = await api.get('/accounts')
     if (response.data.success) {
-      accounts.value = response.data.data
+      accounts.value = response.data.data?.accounts || []
     }
   } catch (error) {
     console.error('Gagal mengambil data akun:', error)
@@ -504,7 +508,7 @@ const fetchTotalSaldo = async () => {
   try {
     const response = await api.get('/amount/total-saldo')
     if (response.data.success) {
-      totalSaldo.value = response.data.data.saldo
+      totalSaldo.value = response.data.data.aset
     }
   } catch (error) {
     console.error('Gagal mengambil total saldo:', error)

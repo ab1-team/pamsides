@@ -1,5 +1,5 @@
 <script setup>
-import { watch } from 'vue'
+import { watch, onMounted, onBeforeUnmount } from 'vue'
 import { RouterView } from 'vue-router'
 import { useUiStore } from '@/stores/uiStore'
 import { useToast } from 'primevue/usetoast'
@@ -16,6 +16,35 @@ watch(
     }
   },
 )
+
+// Fix PrimeVue toast aria-hidden retaining focus issue
+let toastObserver = null
+const fixToastAriaHidden = () => {
+  document.querySelectorAll('.p-toast[aria-hidden="true"]').forEach((el) => {
+    if (el.querySelector(':focus')) {
+      el.removeAttribute('aria-hidden')
+    }
+  })
+}
+const handleFocusIn = (e) => {
+  const toastRoot = e.target?.closest?.('.p-toast')
+  if (toastRoot) {
+    toastRoot.removeAttribute('aria-hidden')
+  }
+}
+onMounted(() => {
+  document.addEventListener('focusin', handleFocusIn)
+  toastObserver = new MutationObserver(fixToastAriaHidden)
+  toastObserver.observe(document.body, {
+    attributes: true,
+    attributeFilter: ['aria-hidden'],
+    subtree: true,
+  })
+})
+onBeforeUnmount(() => {
+  document.removeEventListener('focusin', handleFocusIn)
+  toastObserver?.disconnect()
+})
 </script>
 
 <template>

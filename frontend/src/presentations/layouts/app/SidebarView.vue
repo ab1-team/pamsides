@@ -311,7 +311,7 @@ const menuItems = [
     ],
   },
   {
-    label: 'Tagihan & Pembayaran',
+    label: 'Pencatatan Tagihan',
     icon: 'file-invoice-dollar',
     roles: ['admin'],
     children: [

@@ -9,6 +9,10 @@ export const accountingService = {
     const response = await api.get(`/tutup-buku/check/${year}`)
     return response.data
   },
+  async getAccountsWithSaldo(year) {
+    const response = await api.get(`/tutup-buku/accounts/${year}`)
+    return response.data
+  },
   async closeBook(year, data = {}) {
     const response = await api.post('/tutup-buku/close', { tahun: year, ...data })
     return response.data
@@ -23,6 +27,18 @@ export const accountingService = {
   // Alokasi Laba
   async calculateAllocation(year, totalSaldo) {
     const response = await api.post('/alokasi-laba/calculate', { tahun: year, totalSaldo })
+    return response.data
+  },
+  async checkAllocation(year) {
+    const response = await api.get(`/alokasi-laba/check/${year}`)
+    return response.data
+  },
+  async saveAllocation(year, items) {
+    const response = await api.post('/alokasi-laba/save', { tahun: year, items })
+    return response.data
+  },
+  async getAllocationConfig() {
+    const response = await api.get('/alokasi-laba/config')
     return response.data
   },
 }

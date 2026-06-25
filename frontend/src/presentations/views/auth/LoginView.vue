@@ -115,7 +115,7 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import axios from '@/utils/axios.js'
-import { MySwal } from '@/main.js'
+import { MySwal } from '@/utils/swal'
 import { useUiStore } from '@/stores/uiStore'
 import '@/assets/css/login.css'
 
@@ -136,8 +136,8 @@ const togglePassword = () => {
 
 const getDashboardRoute = (role) => {
   const routes = {
-    surveyor: '/app',
-    teknisi: '/app',
+    surveyor: '/app/surveyor',
+    teknisi: '/app/teknisi',
     pelanggan: '/app',
     admin: '/app',
   }

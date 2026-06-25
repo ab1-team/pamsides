@@ -12,179 +12,219 @@
     </div>
 
     <ContentCard variant="elevated" padding="none" rounded="2xl" class="mt-4! overflow-hidden!">
-      <div class="p-4! md:p-6! overflow-x-auto!">
-        <div id="coa-tree" class="coa-tree-wrapper!"></div>
+      <div class="p-4! md:p-6! relative!">
+        <div
+          v-if="isLoading"
+          class="absolute! inset-0! z-10! flex! items-center! justify-center! bg-white/60! rounded-2xl!"
+        >
+          <i class="pi pi-spin pi-spinner text-cyan-600!" style="font-size: 1.5rem"></i>
+        </div>
+
+        <div
+          v-if="!isLoading && !hasData"
+          class="text-center! py-10! text-slate-500! text-sm!"
+        >
+          Belum ada data akun.
+        </div>
+
+        <div
+          v-show="!isLoading && hasData"
+          ref="treeEl"
+          class="coajs-tree!"
+        ></div>
       </div>
     </ContentCard>
   </div>
 </template>
 
 <script setup>
-import { onMounted } from 'vue'
+import { ref, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import ContentCard from '@/presentations/components/ui/ContentCard.vue'
+import coaService from '@/services/coa.service'
+import $ from 'jquery'
+import 'jstree'
 import 'jstree/dist/themes/default/style.min.css'
 
-onMounted(() => {
-  const loadScript = (src) => {
-    return new Promise((resolve) => {
-      const script = document.createElement('script')
-      script.src = src
-      script.onload = resolve
-      document.head.appendChild(script)
+const isLoading = ref(false)
+const hasData = ref(false)
+const treeEl = ref(null)
+
+const buildNodesFromGroups = (payload) => {
+  const lvl1 = Array.isArray(payload?.level1) ? payload.level1 : []
+  const lvl2 = Array.isArray(payload?.level2) ? payload.level2 : []
+  const lvl3 = Array.isArray(payload?.level3) ? payload.level3 : []
+  const accs = Array.isArray(payload?.accounts) ? payload.accounts : []
+
+  const nodes = []
+
+  for (const r of lvl1) {
+    nodes.push({
+      id: `l1_${r.id}`,
+      parent: '#',
+      type: 'level1',
+      kode_akun: r.kode_akun,
+      nama_akun: r.nama_akun,
+      text: `${r.kode_akun} - ${r.nama_akun}`,
+    })
+  }
+  for (const r of lvl2) {
+    nodes.push({
+      id: `l2_${r.id}`,
+      parent: `l1_${r.parent_id}`,
+      type: 'level2',
+      kode_akun: r.kode_akun,
+      nama_akun: r.nama_akun,
+      text: `${r.kode_akun} - ${r.nama_akun}`,
+    })
+  }
+  for (const r of lvl3) {
+    nodes.push({
+      id: `l3_${r.id}`,
+      parent: `l2_${r.parent_id}`,
+      type: 'level3',
+      kode_akun: r.kode_akun,
+      nama_akun: r.nama_akun,
+      text: `${r.kode_akun} - ${r.nama_akun}`,
+    })
+  }
+  for (const r of accs) {
+    nodes.push({
+      id: `acc_${r.id}`,
+      parent: `l3_${r.parent_id}`,
+      type: 'account',
+      kode_akun: r.kode_akun,
+      nama_akun: r.nama_akun,
+      text: `${r.kode_akun} - ${r.nama_akun}`,
     })
   }
 
-  const initTree = async () => {
-    if (!window.jQuery) {
-      await loadScript('https://code.jquery.com/jquery-3.7.1.min.js')
+  return nodes
+}
+
+const decorateNodes = (rows) => {
+  return (rows || []).map((n) => {
+    const isLeaf = n.type === 'account'
+    return {
+      id: n.id,
+      parent: n.parent || '#',
+      text: n.text,
+      type: isLeaf ? 'leaf' : 'folder',
+      state: { opened: false },
+      a_attr: {
+        class: `coajs-type-${n.type}`,
+        'data-kode': n.kode_akun,
+      },
+      li_attr: {
+        class: `coajs-li-${n.type}`,
+      },
+      icon: isLeaf ? 'jstree-file' : 'jstree-folder',
+    }
+  })
+}
+
+const fetchAccounts = async () => {
+  try {
+    isLoading.value = true
+    const res = await coaService.getAccounts()
+    const payload = res?.data?.data ?? res?.data ?? {}
+    const flat = Array.isArray(payload) ? payload : buildNodesFromGroups(payload)
+    const nodes = decorateNodes(flat)
+    hasData.value = nodes.length > 0
+
+    await nextTick()
+    if (!treeEl.value) return
+
+    if ($(treeEl.value).data('jstree')) {
+      $(treeEl.value).jstree('destroy')
     }
 
-    await loadScript('https://cdnjs.cloudflare.com/ajax/libs/jstree/3.3.12/jstree.min.js')
-
-    const treeData = [
-      {
-        id: '1',
-        text: '1.0.00.00. Aset',
-        children: [
-          {
-            id: '1.1',
-            text: '1.1.00.00. Aset Lancar',
-            children: [
-              {
-                id: '1.1.01',
-                text: '1.1.01.00. Kas dan Setara Kas',
-                children: [
-                  { id: '1.1.01.01', text: '1.1.01.01. Kas Kecil' },
-                  { id: '1.1.01.02', text: '1.1.01.02. Bank Mandiri' },
-                ],
-              },
-              { id: '1.1.02', text: '1.1.02.00. Piutang Usaha' },
-              { id: '1.1.03', text: '1.1.03.00. Persediaan Barang' },
-            ],
-          },
-          {
-            id: '1.2',
-            text: '1.2.00.00. Aset Tetap',
-            children: [
-              { id: '1.2.01', text: '1.2.01.00. Peralatan Kantor' },
-              { id: '1.2.02', text: '1.2.02.00. Kendaraan' },
-            ],
-          },
-        ],
-      },
-      {
-        id: '2',
-        text: '2.0.00.00. Utang',
-        children: [
-          {
-            id: '2.1',
-            text: '2.1.00.00. Utang Jangka Pendek',
-            children: [
-              {
-                id: '2.1.01',
-                text: '2.1.01.00. Utang Dividen',
-                children: [
-                  { id: '2.1.01.01', text: '2.1.01.01. Utang Dividen Pemdes' },
-                  { id: '2.1.01.02', text: '2.1.01.02. Utang Dividen Masy Penyerta Modal' },
-                  { id: '2.1.01.03', text: '2.1.01.03. Bantuan Sosial' },
-                  { id: '2.1.01.04', text: '2.1.01.04. Utang Bonus' },
-                ],
-              },
-              { id: '2.1.02', text: '2.1.02.00. Utang Biaya Operasional' },
-              { id: '2.1.03', text: '2.1.03.00. Utang Pajak' },
-            ],
-          },
-          { id: '2.2', text: '2.2.00.00. Utang Jangka Panjang' },
-        ],
-      },
-      {
-        id: '3',
-        text: '3.0.00.00. Modal',
-        children: [
-          { id: '3.1', text: '3.1.00.00. Modal Desa' },
-          { id: '3.2', text: '3.2.00.00. Laba Ditahan' },
-        ],
-      },
-      {
-        id: '4',
-        text: '4.0.00.00. Pendapatan',
-        children: [
-          { id: '4.1', text: '4.1.00.00. Pendapatan Jasa Air' },
-          {
-            id: '4.2',
-            text: '4.2.00.00. Pendapatan Non-Air',
-            children: [
-              { id: '4.2.01', text: '4.2.01.00. Denda Keterlambatan' },
-              { id: '4.2.02', text: 'Biaya Pasang Baru' },
-            ],
-          },
-        ],
-      },
-      {
-        id: '5',
-        text: '5.0.00.00. Beban',
-        children: [
-          {
-            id: '5.1',
-            text: '5.1.00.00. Beban Operasional',
-            children: [
-              { id: '5.1.01', text: '5.1.01.00. Beban Gaji Karyawan' },
-              { id: '5.1.02', text: '5.1.02.00. Beban Listrik & Air Kantor' },
-            ],
-          },
-          { id: '5.2', text: '5.2.00.00. Beban Administrasi Umum' },
-        ],
-      },
-    ]
-
-    window.jQuery('#coa-tree').jstree({
+    $(treeEl.value).jstree({
       core: {
-        data: treeData,
-        check_callback: true,
+        data: nodes,
+        check_callback: false,
         themes: {
-          name: 'default',
-          responsive: true,
-          variant: 'large',
           dots: true,
           icons: true,
+          stripes: false,
+          responsive: true,
         },
+        multiple: false,
       },
-      plugins: ['types', 'wholerow'],
+      plugins: ['wholerow', 'types'],
+      types: {
+        folder: { icon: 'jstree-folder' },
+        leaf: { icon: 'jstree-file' },
+        default: { icon: 'jstree-folder' },
+      },
     })
-  }
 
-  initTree()
+    $(treeEl.value).on('click.jstree', '.jstree-anchor', function (e) {
+      const inst = $.jstree.reference(this)
+      const node = inst && inst.get_node(this)
+      if (!node) return
+      if (node.children && node.children.length > 0) {
+        inst.toggle_node(node)
+      }
+    })
+  } catch (err) {
+    console.error('[COA] fetch error:', err)
+    hasData.value = false
+  } finally {
+    isLoading.value = false
+  }
+}
+
+onMounted(fetchAccounts)
+
+onBeforeUnmount(() => {
+  if (treeEl.value && $(treeEl.value).data('jstree')) {
+    $(treeEl.value).jstree('destroy')
+  }
 })
 </script>
 
 <style scoped>
 @reference "@/assets/css/main.css";
 
-.coa-tree-wrapper {
-  @apply font-sans text-[13px]!;
+.coajs-tree {
+  @apply min-h-[120px]! text-[13px]! font-sans!;
+}
+</style>
+
+<style>
+.coajs-tree .jstree-anchor {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
 }
 
-:deep(.jstree-default .jstree-node) {
-  @apply ml-4!;
+.coajs-tree .coajs-type-level1 .jstree-anchor {
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #0f172a;
+  font-size: 14px;
 }
 
-:deep(.jstree-default .jstree-ocl) {
-  @apply mr-1!;
+.coajs-tree .coajs-type-level2 .jstree-anchor {
+  font-weight: 700;
+  color: #334155;
 }
 
-:deep(.jstree-default .jstree-anchor) {
-  @apply font-bold! text-slate-700! h-auto! leading-7! transition-colors!;
+.coajs-tree .coajs-type-level3 .jstree-anchor {
+  font-weight: 500;
+  color: #475569;
 }
 
-:deep(.jstree-default .jstree-hovered) {
-  @apply bg-blue-50/50! shadow-none! border-none! rounded-sm!;
+.coajs-tree .coajs-type-account .jstree-anchor {
+  font-weight: 400;
+  color: #64748b;
 }
 
-:deep(.jstree-default .jstree-clicked) {
-  @apply bg-blue-100/50! shadow-none! border-none! rounded-sm!;
-}
-
-:deep(.jstree-default .jstree-icon) {
-  @apply opacity-90!;
+.coajs-tree .jstree-wholerow-clicked,
+.coajs-tree .jstree-wholerow-hovered {
+  background: rgba(99, 102, 241, 0.08) !important;
 }
 </style>
