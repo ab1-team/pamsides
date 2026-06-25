@@ -135,8 +135,11 @@ class MonthlyBillController extends Controller
         $month = $request->get('month', Carbon::now()->month);
         $year = $request->get('year', Carbon::now()->year);
 
+        // Hanya pelanggan yang tiketnya sudah aktif/berjalan (bukan draft/pending)
         $customers = Customer::with(['user', 'ticket.package', 'ticket.village'])
-            ->whereHas('ticket')
+            ->whereHas('ticket', function ($q) {
+                $q->whereIn('status', ['surveyed', 'unpaid', 'processing', 'completed', 'suspended']);
+            })
             ->get();
 
         $items = $customers->map(function ($customer) use ($month, $year) {

@@ -45,6 +45,23 @@ class Transaction extends Model
 
     public function reverence()
     {
-        return $this->morphTo();
+        if (! $this->reverence_type || ! $this->reverence_id) {
+            return null;
+        }
+
+        $known = [
+            'payment'      => \App\Models\Payment::class,
+            'monthly_bill' => \App\Models\MonthlyBill::class,
+            'customer'     => \App\Models\Customer::class,
+        ];
+
+        $type  = $this->reverence_type;
+        $class = \Illuminate\Database\Eloquent\Relations\Relation::getMorphedModel($type) ?? ($known[$type] ?? null);
+
+        if (! $class || ! class_exists($class)) {
+            return null;
+        }
+
+        return $class::find($this->reverence_id);
     }
 }

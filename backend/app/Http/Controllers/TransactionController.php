@@ -9,7 +9,7 @@ class TransactionController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Transaction::with(['user', 'accountDebet', 'accountKredit', 'reverence'])
+        $query = Transaction::with(['user', 'accountDebet', 'accountKredit'])
             ->orderBy('tgl_transaksi', 'desc')
             ->orderBy('urutan');
 
@@ -94,7 +94,7 @@ class TransactionController extends Controller
     {
         return response()->json([
             'success' => true,
-            'data'    => $transaction->load(['user', 'accountDebet', 'accountKredit', 'reverence']),
+            'data'    => $transaction->load(['user', 'accountDebet', 'accountKredit']),
         ]);
     }
 

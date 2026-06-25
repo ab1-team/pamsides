@@ -38,14 +38,15 @@ class EbudgetingController extends Controller
             'bulan' => 'required|integer|between:1,12',
         ]);
 
-        $exists = DB::table('ebudgeting')
+        $count = DB::table('ebudgeting')
             ->where('tahun', $request->tahun)
             ->where('bulan', $request->bulan)
-            ->exists();
+            ->count();
 
         return response()->json([
             'success' => true,
-            'exists' => $exists,
+            'exists'  => $count > 0,
+            'count'   => $count,
         ]);
     }
 
@@ -82,6 +83,42 @@ class EbudgetingController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'E-budgeting berhasil disimpan.',
+        ]);
+    }
+
+    public function bulkStore(Request $request)
+    {
+        $request->validate([
+            'tahun'  => 'required|integer|min:2000|max:2100',
+            'bulan'  => 'required|integer|between:1,12',
+            'items'  => 'required|array|min:1',
+            'items.*.account_id' => 'required|integer|exists:accounts,id',
+            'items.*.jumlah'    => 'required|numeric|min:0',
+        ]);
+
+        $tahun = $request->tahun;
+        $bulan = $request->bulan;
+        $now   = now();
+
+        $payload = collect($request->items)->map(fn ($i) => [
+            'account_id' => $i['account_id'],
+            'tahun'      => $tahun,
+            'bulan'      => $bulan,
+            'jumlah'     => $i['jumlah'],
+            'created_at' => $now,
+            'updated_at' => $now,
+        ])->all();
+
+        DB::table('ebudgeting')->upsert(
+            $payload,
+            ['account_id', 'tahun', 'bulan'],
+            ['jumlah', 'updated_at']
+        );
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Rencana anggaran berhasil disimpan.',
+            'data'    => ['saved' => count($payload)],
         ]);
     }
 

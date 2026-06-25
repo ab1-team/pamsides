@@ -2,10 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Customer;
 use App\Models\InstallationPackage;
 use App\Models\InstallationTicket;
 use App\Models\Payment;
 use App\Models\Setting;
+use App\Models\User;
+use Illuminate\Support\Facades\Hash;
 use App\StateMachines\TicketStateMachine;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -156,33 +159,205 @@ class InstallationTicketController extends Controller
 
     public function store(Request $request)
     {
+        $isRegistration = $request->filled(['package_id', 'village_id', 'lat', 'lng', 'order_date']);
+
+        if ($isRegistration) {
+            $request->validate([
+                'package_id'    => 'required|exists:installation_packages,id',
+                'village_id'    => 'required|exists:villages,id',
+                'lat'           => 'required|numeric|between:-90,90',
+                'lng'           => 'required|numeric|between:-180,180',
+                'order_date'    => 'required|date',
+                'nominal'       => 'nullable|numeric|min:0',
+                'ticket_id'     => 'nullable|exists:installation_tickets,id',
+                'user_id'       => 'nullable|exists:users,id',
+            ], [
+                'package_id.required' => 'Paket instalasi wajib dipilih.',
+                'package_id.exists'   => 'Paket instalasi tidak ditemukan.',
+                'village_id.required' => 'Desa wajib dipilih.',
+                'lat.required'        => 'Koordinat latitude wajib diisi.',
+                'lng.required'        => 'Koordinat longitude wajib diisi.',
+                'order_date.required' => 'Tanggal order wajib diisi.',
+            ]);
+
+            $settings = Setting::first();
+            $mustBeFullyPaid = (bool) ($settings->status_pembayaran ?? false);
+
+            $nominalRaw = $request->input('nominal');
+            $nominalInput = 0.0;
+            if ($nominalRaw !== null && $nominalRaw !== '') {
+                $nominalInput = (float) str_replace(',', '.', (string) $nominalRaw);
+            }
+
+            $packageFee = (float) InstallationPackage::where('id', $request->package_id)->value('installation_fee');
+
+            if ($mustBeFullyPaid) {
+                $paymentAmount = $packageFee;
+                $paymentStatus = 'confirmed';
+            } else {
+                $paymentAmount = max(0, min($nominalInput, $packageFee));
+                $paymentStatus = $paymentAmount >= $packageFee ? 'confirmed' : ($paymentAmount > 0 ? 'pending' : null);
+            }
+
+            $isPartialPayment = ! $mustBeFullyPaid && $paymentAmount > 0 && $paymentAmount < $packageFee;
+
+            try {
+                $userId = auth()->id();
+
+                if ($request->ticket_id) {
+                    $oldTicket = InstallationTicket::findOrFail($request->ticket_id);
+
+                    if ($oldTicket->status !== 'draft') {
+                        $targetTicket = InstallationTicket::create([
+                            'applicant_name' => $oldTicket->applicant_name,
+                            'address'        => $oldTicket->address,
+                            'nik'            => $oldTicket->nik,
+                            'phone'          => $oldTicket->phone,
+                            'gender'         => $oldTicket->gender,
+                            'birth_place'    => $oldTicket->birth_place,
+                            'birth_date'     => $oldTicket->birth_date,
+                            'package_id'     => $request->package_id,
+                            'user_id'        => $request->user_id,
+                            'order_date'     => date('Y-m-d', strtotime($request->order_date)),
+                            'village_id'     => $request->village_id,
+                            'lat'            => $request->lat,
+                            'lng'            => $request->lng,
+                            'status'         => 'pending',
+                            'created_by'     => $userId ?: $oldTicket->created_by,
+                        ]);
+                    } else {
+                        $oldTicket->update([
+                            'package_id' => $request->package_id,
+                            'user_id'    => $request->user_id,
+                            'order_date' => date('Y-m-d', strtotime($request->order_date)),
+                            'village_id' => $request->village_id,
+                            'lat'        => $request->lat,
+                            'lng'        => $request->lng,
+                            'status'     => 'pending',
+                            'created_by' => $userId ?: $oldTicket->created_by,
+                        ]);
+                        $targetTicket = $oldTicket;
+                    }
+                } else {
+                    $request->validate([
+                        'applicant_name' => 'required|string|max:255',
+                        'nik'            => 'required|string|max:20',
+                        'address'        => 'required|string',
+                    ]);
+
+                    $targetTicket = InstallationTicket::create([
+                        'applicant_name' => $request->applicant_name,
+                        'nik'            => $request->nik,
+                        'address'        => $request->address,
+                        'phone'          => $request->phone,
+                        'gender'         => $request->gender,
+                        'birth_place'    => $request->birth_place,
+                        'birth_date'     => $request->birth_date,
+                        'package_id'     => $request->package_id,
+                        'user_id'        => $request->user_id,
+                        'order_date'     => date('Y-m-d', strtotime($request->order_date)),
+                        'village_id'     => $request->village_id,
+                        'lat'            => $request->lat,
+                        'lng'            => $request->lng,
+                        'status'         => 'pending',
+                        'created_by'     => $userId,
+                    ]);
+                }
+
+                if ($paymentAmount > 0) {
+                    Payment::create([
+                        'ticket_id'    => $targetTicket->id,
+                        'amount'       => $paymentAmount,
+                        'type'         => 'installation_fee',
+                        'status'       => $paymentStatus,
+                        'confirmed_by' => $paymentStatus === 'confirmed' ? $userId : null,
+                        'paid_at'      => $paymentStatus === 'confirmed' ? now() : null,
+                    ]);
+                }
+
+                if (! $targetTicket->customer()->exists()) {
+                    $yearMonth = now()->format('Ym');
+                    $latestCustomer = Customer::where('customer_code', 'like', 'PAM-'.$yearMonth.'-%')
+                        ->orderBy('customer_code', 'desc')
+                        ->first();
+                    $nextNumber = $latestCustomer
+                        ? str_pad((int) substr($latestCustomer->customer_code, -4) + 1, 4, '0', STR_PAD_LEFT)
+                        : '0001';
+                    $customerCode = 'PAM-'.$yearMonth.'-'.$nextNumber;
+
+                    $pelanggan = User::where('role', 'pelanggan')
+                        ->where('name', $targetTicket->applicant_name)
+                        ->first();
+
+                    if (! $pelanggan) {
+                        $pelangganEmail = \Illuminate\Support\Str::slug($targetTicket->applicant_name).'_'.$targetTicket->nik.'@pamsides.local';
+                        $pelanggan = User::firstOrCreate(
+                            ['email' => $pelangganEmail],
+                            [
+                                'name'     => $targetTicket->applicant_name,
+                                'password' => Hash::make('password'),
+                                'role'     => 'pelanggan',
+                            ]
+                        );
+                    }
+
+                    Customer::create([
+                        'ticket_id'             => $targetTicket->id,
+                        'user_id'               => $pelanggan->id,
+                        'customer_code'         => $customerCode,
+                        'initial_meter_reading' => 0,
+                        'meter_photo_url'       => null,
+                        'activated_at'          => null,
+                    ]);
+                }
+
+                $responseMsg = $mustBeFullyPaid
+                    ? 'Registrasi berhasil. Pembayaran wajib lunas dicatat (confirmed).'
+                    : ($isPartialPayment
+                        ? 'Registrasi berhasil. Pembayaran sebagian dicatat (pending). Sisa: Rp '.number_format($packageFee - $paymentAmount, 0, ',', '.')
+                        : 'Registrasi tiket berhasil.');
+
+                return response()->json([
+                    'success' => true,
+                    'message' => $responseMsg,
+                    'data'    => $targetTicket->load(['package', 'payments']),
+                ], 200);
+            } catch (\Exception $e) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Gagal memproses data: '.$e->getMessage(),
+                ], 500);
+            }
+        }
+
+        // Draft mode (tanpa data registrasi lengkap)
         $validator = Validator::make($request->all(), [
             'applicant_name' => 'required|string|max:255',
-            'nik' => 'required|string|max:20',
-            'address' => 'required|string',
-            'lat' => 'nullable|numeric|between:-90,90',
-            'lng' => 'nullable|numeric|between:-180,180',
-            'package_id' => 'nullable|exists:installation_packages,id',
-            'village_id' => 'nullable|exists:villages,id',
-            'phone' => 'nullable|string|max:20',
-            'gender' => 'nullable|in:male,female',
-            'birth_place' => 'nullable|string|max:255',
-            'birth_date' => 'nullable|date',
-            'order_date' => 'nullable|date',
+            'nik'            => 'required|string|max:20',
+            'address'        => 'required|string',
+            'lat'            => 'nullable|numeric|between:-90,90',
+            'lng'            => 'nullable|numeric|between:-180,180',
+            'package_id'     => 'nullable|exists:installation_packages,id',
+            'village_id'     => 'nullable|exists:villages,id',
+            'phone'          => 'nullable|string|max:20',
+            'gender'         => 'nullable|in:male,female',
+            'birth_place'    => 'nullable|string|max:255',
+            'birth_date'     => 'nullable|date',
+            'order_date'     => 'nullable|date',
         ]);
 
         if ($validator->fails()) {
             return response()->json([
                 'success' => false,
                 'message' => $validator->errors()->first(),
-                'errors' => $validator->errors(),
+                'errors'  => $validator->errors(),
             ], 422);
         }
 
         $ticket = InstallationTicket::create(array_merge(
             $validator->validated(),
             [
-                'status' => 'draft',
+                'status'     => 'draft',
                 'created_by' => auth()->id(),
             ]
         ));
@@ -190,110 +365,8 @@ class InstallationTicketController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Tiket berhasil dibuat (status: draft).',
-            'data' => $ticket->load('package'),
+            'data'    => $ticket->load('package'),
         ], 201);
-    }
-
-    public function registerInstallation(Request $request, $id)
-    {
-        $request->validate([
-            'package_id' => 'required|exists:installation_packages,id',
-            'village_id' => 'required|exists:villages,id',
-            'lat'        => 'required|numeric|between:-90,90',
-            'lng'        => 'required|numeric|between:-180,180',
-            'order_date' => 'required|date',
-            'nominal'    => 'nullable|numeric|min:0',
-        ], [
-            'package_id.required' => 'Paket instalasi wajib dipilih.',
-            'package_id.exists'   => 'Paket instalasi tidak ditemukan.',
-            'village_id.required' => 'Desa wajib dipilih.',
-            'lat.required'        => 'Koordinat latitude wajib diisi.',
-            'lng.required'        => 'Koordinat longitude wajib diisi.',
-            'order_date.required' => 'Tanggal order wajib diisi.',
-        ]);
-
-        $settings = Setting::first();
-        $mustBeFullyPaid = (bool) ($settings->status_pembayaran ?? false);
-
-        $nominalRaw = $request->input('nominal');
-        $nominalInput = 0.0;
-        if ($nominalRaw !== null && $nominalRaw !== '') {
-            $nominalInput = (float) str_replace(',', '.', (string) $nominalRaw);
-        }
-
-        $packageFee = (float) InstallationPackage::where('id', $request->package_id)->value('installation_fee');
-
-        if ($mustBeFullyPaid) {
-            $paymentAmount = $packageFee;
-            $paymentStatus = 'confirmed';
-        } else {
-            $paymentAmount = max(0, min($nominalInput, $packageFee));
-            $paymentStatus = $paymentAmount > 0 ? 'pending' : null;
-        }
-
-        $isPartialPayment = ! $mustBeFullyPaid && $paymentAmount > 0 && $paymentAmount < $packageFee;
-
-        try {
-            $oldTicket = InstallationTicket::findOrFail($id);
-            $userId = auth()->id() ?: $oldTicket->created_by;
-
-            $ticketData = [
-                'package_id' => $request->package_id,
-                'user_id'    => $request->user_id,
-                'order_date' => date('Y-m-d', strtotime($request->order_date)),
-                'village_id' => $request->village_id,
-                'lat'        => $request->lat,
-                'lng'        => $request->lng,
-                'status'     => 'pending',
-                'created_by' => $userId,
-            ];
-
-            if ($oldTicket->status === 'draft') {
-                $oldTicket->update($ticketData);
-                $targetTicket = $oldTicket;
-            } else {
-                $targetTicket = InstallationTicket::create(array_merge(
-                    [
-                        'applicant_name' => $oldTicket->applicant_name,
-                        'address'        => $oldTicket->address,
-                        'nik'            => $oldTicket->nik,
-                        'phone'          => $oldTicket->phone,
-                        'gender'         => $oldTicket->gender,
-                        'birth_place'    => $oldTicket->birth_place,
-                        'birth_date'     => $oldTicket->birth_date,
-                    ],
-                    $ticketData,
-                ));
-            }
-
-            if ($paymentAmount > 0) {
-                Payment::create([
-                    'ticket_id'    => $targetTicket->id,
-                    'amount'       => $paymentAmount,
-                    'type'         => 'installation_fee',
-                    'status'       => $paymentStatus,
-                    'confirmed_by' => $paymentStatus === 'confirmed' ? $userId : null,
-                    'paid_at'      => $paymentStatus === 'confirmed' ? now() : null,
-                ]);
-            }
-
-            $responseMsg = $mustBeFullyPaid
-                ? 'Registrasi berhasil. Pembayaran wajib lunas dicatat (confirmed).'
-                : ($isPartialPayment
-                    ? 'Registrasi berhasil. Pembayaran sebagian dicatat (pending). Sisa: Rp '.number_format($packageFee - $paymentAmount, 0, ',', '.')
-                    : 'Registrasi tiket berhasil.');
-
-            return response()->json([
-                'success' => true,
-                'message' => $responseMsg,
-                'data'    => $targetTicket->load(['package', 'payments']),
-            ], 200);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Gagal memproses data: '.$e->getMessage(),
-            ], 500);
-        }
     }
 
     public function transition(Request $request, InstallationTicket $installationTicket)
@@ -357,9 +430,25 @@ class InstallationTicketController extends Controller
                 $customerCode = 'PAM-'.$yearMonth.'-'.$nextNumber;
 
                 // INSERT KE TABEL CUSTOMERS
+                $pelanggan = User::where('role', 'pelanggan')
+                    ->where('name', $installationTicket->applicant_name)
+                    ->first();
+
+                if (! $pelanggan) {
+                    $pelangganEmail = \Illuminate\Support\Str::slug($installationTicket->applicant_name).'_'.$installationTicket->nik.'@pamsides.local';
+                    $pelanggan = User::firstOrCreate(
+                        ['email' => $pelangganEmail],
+                        [
+                            'name'     => $installationTicket->applicant_name,
+                            'password' => Hash::make('password'),
+                            'role'     => 'pelanggan',
+                        ]
+                    );
+                }
+
                 Customer::create([
                     'ticket_id' => $installationTicket->id,
-                    'user_id' => $installationTicket->user_id,
+                    'user_id' => $pelanggan->id,
                     'customer_code' => $customerCode,
                     'initial_meter_reading' => $request->initial_meter_reading,
                     'meter_photo_url' => $request->meter_photo_url ?? null,

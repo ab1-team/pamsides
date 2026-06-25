@@ -22,12 +22,14 @@ use App\Http\Controllers\SopController;
 use App\Http\Controllers\SurveyResultController;
 use App\Http\Controllers\TroubleReportController;
 use App\Http\Controllers\TransactionController;
-use App\Http\Controllers\JenisTransactionController;
+use App\Http\Controllers\TutupBukuController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\VillageController;
 use App\Http\Controllers\PelaporanController;
 use App\Http\Controllers\WaterTariffBlockController;
 use App\Http\Controllers\AccountController;
+use App\Http\Controllers\AlokasiLabaController;
+use App\Http\Controllers\KomisiSPSController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -79,10 +81,12 @@ Route::middleware(['auth:sanctum', 'role:admin,teknisi'])->group(function () {
     Route::put('meter-readings/{id}', [MeterReadingController::class, 'update']);
     Route::delete('meter-readings/{id}', [MeterReadingController::class, 'destroy']);
 
+    // Read-only shared: list, search & detail pelanggan (tulis khusus admin)
     Route::get('/customers', [CustomerController::class, 'index']);
     Route::get('/customers/search', [CustomerController::class, 'search']);
     Route::get('/customers/{id}', [CustomerController::class, 'show']);
 
+    // Read-only shared: daftar tagihan & rekap pemakaian (bayar/hapus khusus admin)
     Route::get('monthly-bills', [MonthlyBillController::class, 'index']);
     Route::get('monthly-bills/usage', [MonthlyBillController::class, 'usage']);
 });
@@ -105,23 +109,20 @@ Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
     });
 
     Route::get('amount', [AmountController::class, 'show']);
+    Route::get('accounts-with-saldo', [AmountController::class, 'accountsWithSaldo']);
 
     Route::apiResource('users', UserController::class);
     Route::apiResource('villages', VillageController::class);
 
-    Route::get('/customers/search', [CustomerController::class, 'search']);
-
-    Route::get('/customers', [CustomerController::class, 'index']);
+    // Customer write ops (CRUD) khusus admin
     Route::post('/customers', [CustomerController::class, 'store']);
     Route::put('/customers/{id}', [CustomerController::class, 'update']);
     Route::delete('/customers/{id}', [CustomerController::class, 'destroy']);
-    Route::get('/customers/{id}', [CustomerController::class, 'show']);
 
     Route::apiResource('installation-packages', InstallationPackageController::class);
     Route::apiResource('installation-packages.water-tariff-blocks', WaterTariffBlockController::class);
 
     Route::post('installation-tickets', [InstallationTicketController::class, 'store']);
-    Route::put('installation-tickets/{id}/register', [InstallationTicketController::class, 'registerInstallation']);
     Route::patch('installation-tickets/{installationTicket}/transition', [InstallationTicketController::class, 'transition']);
     Route::get('installation-tickets-unpaid', [InstallationTicketController::class, 'unpaidTickets']);
     Route::post('installation-tickets/{installationTicket}/payment', [PaymentController::class, 'store']);
@@ -144,12 +145,8 @@ Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
     Route::post('bills/generate', [BillingController::class, 'generate']);
     Route::get('bills/{monthlyBill}', [BillingController::class, 'show']);
 
-    // BARU : Rekap riwayat pemakaian air bulanan pelanggan
-    Route::get('monthly-bills/usage', [MonthlyBillController::class, 'usage']);
-
-    Route::get('monthly-bills', [MonthlyBillController::class, 'index']);
+    // Tagihan bulanan — tulis hanya admin (baca sudah di grup admin+teknisi)
     Route::get('monthly-bills/{id}', [MonthlyBillController::class, 'show']);
-
     Route::post('monthly-bills/{id}/pay', [MonthlyBillController::class, 'pay']);
     Route::delete('monthly-bills/{id}', [MonthlyBillController::class, 'destroy']);
     Route::post('monthly-bills/generate', [MonthlyBillController::class, 'generate']);
@@ -168,12 +165,35 @@ Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
     Route::get('jenis-transactions', [JenisTransactionController::class, 'index']);
     Route::post('generate-amount', [GenerateAmountController::class, 'generate']);
     Route::get('accounts', [AccountController::class, 'index']);
+    Route::get('accounts/by-level/{level}', [AccountController::class, 'byLevel']);
     Route::get('amount/total-saldo', [AmountController::class, 'getTotalSaldo']);
 
+    //tutup buku routes
+    Route::get('tutup-buku/check/{year}', [TutupBukuController::class, 'check']);
+    Route::get('tutup-buku/accounts/{year}', [TutupBukuController::class, 'accountsWithSaldo']);
+    Route::post('tutup-buku/close', [TutupBukuController::class, 'close']);
+    Route::get('tutup-buku/history', [TutupBukuController::class, 'history']);
+    Route::get('tutup-buku/config', [TutupBukuController::class, 'getConfig']);
+    Route::post('tutup-buku/config', [TutupBukuController::class, 'saveConfig']);
+
+    //alokasi laba routes
+    Route::get('alokasi-laba/check/{year}', [AlokasiLabaController::class, 'check']);
+    Route::post('alokasi-laba/calculate', [AlokasiLabaController::class, 'calculate']);
+    Route::post('alokasi-laba/save', [AlokasiLabaController::class, 'save']);
+    Route::get('alokasi-laba/config', [AlokasiLabaController::class, 'getConfig']);
+    Route::post('alokasi-laba/config', [AlokasiLabaController::class, 'saveConfig']);
+
     //e-budgeting routes
-    Route::apiResource('ebudgeting', EbudgetingController::class);
+    Route::get('ebudgeting/check-exists', [EbudgetingController::class, 'checkExists']);
+    Route::post('ebudgeting/bulk', [EbudgetingController::class, 'bulkStore']);
+    Route::apiResource('ebudgeting', EbudgetingController::class)->whereNumber('ebudgeting');
 
     Route::apiResource('jenis-transactions', JenisTransactionController::class);
+
+    // Komisi SPS
+    Route::get('komisi-sps/cash-accounts', [KomisiSPSController::class, 'cashAccounts']);
+    Route::get('komisi-sps/unpaid-by-customer', [KomisiSPSController::class, 'unpaidByCustomer']);
+    Route::post('komisi-sps', [KomisiSPSController::class, 'store']);
 
     //
     Route::get('pelaporan/sub-laporan/{file}', [PelaporanController::class, 'subLaporan']);
