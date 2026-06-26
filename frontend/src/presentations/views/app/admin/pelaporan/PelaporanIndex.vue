@@ -288,6 +288,12 @@ const getFilterPayload = () => {
 
 const handlePreview = async () => {
   const payload = getFilterPayload()
+  if (!payload.nama_laporan) {
+    window.dispatchEvent(new CustomEvent('toast', {
+      detail: { type: 'warning', message: 'Pilih nama laporan terlebih dahulu' },
+    }))
+    return
+  }
   const query = new URLSearchParams({
     tahun: payload.tahun || '',
     bulan: payload.bulan || '',
@@ -296,11 +302,8 @@ const handlePreview = async () => {
     nama_sub_laporan: payload.nama_sub_laporan || '',
   }).toString()
 
-  const previewUrl = `${window.location.origin}/pelaporan/preview?${query}`
-  const newTab = window.open(previewUrl, '_blank')
-  if (!newTab) {
-    window.location.href = previewUrl
-  }
+  const previewUrl = `/app/pelaporan/preview?${query}`
+  window.open(previewUrl, '_blank')
 }
 
 const handleExcel = async () => {

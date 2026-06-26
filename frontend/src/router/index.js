@@ -1,4 +1,7 @@
-import { createRouter, createWebHistory } from 'vue-router'
+import {
+  createRouter,
+  createWebHistory
+} from 'vue-router'
 import LoginView from '@/presentations/views/auth/LoginView.vue'
 import MainView from '@/presentations/layouts/app/MainView.vue'
 import DashboardHome from '@/presentations/views/app/DashboardHome.vue'
@@ -29,6 +32,7 @@ import ebudgeting from '@/presentations/views/app/admin/transaksi/EBudgetingView
 import tutupBuku from '@/presentations/views/app/admin/transaksi/tutupBuku.vue'
 import komisiSPS from '@/presentations/views/app/admin/transaksi/komisiSPS.vue'
 import laporan from '@/presentations/views/app/admin/pelaporan/PelaporanIndex.vue'
+import pelaporanPreview from '@/presentations/views/app/admin/pelaporan/PelaporanPreview.vue'
 import profil from '@/presentations/views/app/admin/profil/ProfilIndex.vue'
 import detailPemakaianAir from '@/presentations/views/app/admin/tagihan/partials/detailPemakaianAir.vue'
 import DesaIndex from '@/presentations/views/app/admin/desa/DesaIndex.vue'
@@ -50,9 +54,9 @@ const getDashboardRoute = (role) => {
 
 
 const router = createRouter({
-  history: createWebHistory(import.meta.env.BASE_URL),
-  routes: [
-    {
+  history: createWebHistory(
+    import.meta.env.BASE_URL),
+  routes: [{
       path: '/',
       redirect: '/login',
     },
@@ -65,12 +69,19 @@ const router = createRouter({
       path: '/profil',
       redirect: '/app/profil',
     },
+    /* 1. DI SINI PERUBAHANNYA: 
+      Rute preview dipindahkan ke tingkat paling luar (Top-Level) agar tidak dibungkus MainView (Layout Admin)
+    */
+    {
+      path: '/app/pelaporan/preview',
+      name: 'Pelaporan Preview',
+      component: pelaporanPreview,
+    },
     {
       path: '/app',
       name: 'layout-dashboard',
       component: MainView,
-      children: [
-        {
+      children: [{
           path: '',
           name: 'dashboard',
           component: DashboardHome,
@@ -145,7 +156,6 @@ const router = createRouter({
           name: 'Edit Desa',
           component: DesaEdit,
         },
-
         {
           path: 'dataInstalasi',
           name: 'Data Instalasi',
@@ -164,7 +174,8 @@ const router = createRouter({
         {
           path: 'instalasi/hasil-survey',
           name: 'Hasil Survey',
-          component: () => import('@/presentations/views/app/admin/instalasi/hasilSurvey.vue'),
+          component: () => import(
+            '@/presentations/views/app/admin/instalasi/hasilSurvey.vue'),
         },
         {
           path: 'instalasi/status/permohonan/:id',
@@ -204,7 +215,8 @@ const router = createRouter({
         {
           path: 'instalasi/daftar-tagihan',
           name: 'Daftar Tagihan',
-          component: () => import('@/presentations/views/app/admin/tagihan/daftarTagihan.vue'),
+          component: () => import(
+            '@/presentations/views/app/admin/tagihan/daftarTagihan.vue'),
         },
         {
           path: 'survey/create',
@@ -219,7 +231,8 @@ const router = createRouter({
         {
           path: 'teknisi/hasil-instalasi/:id',
           name: 'Hasil Instalasi',
-          component: () => import('@/presentations/views/app/teknisi/InstallationResult.vue'),
+          component: () => import(
+            '@/presentations/views/app/teknisi/InstallationResult.vue'),
         },
         {
           path: 'pelanggan/tagihan-detail',
@@ -239,7 +252,8 @@ const router = createRouter({
         {
           path: 'pelanggan/lapor-gangguan/form',
           name: 'Form Lapor Gangguan',
-          component: () => import('@/presentations/views/app/pelanggan/LaporGangguanForm.vue'),
+          component: () => import(
+            '@/presentations/views/app/pelanggan/LaporGangguanForm.vue'),
         },
         {
           path: 'instalasi/teknisiPemakaianAir',
@@ -251,7 +265,6 @@ const router = createRouter({
           name: 'Daftar Tagihan Teknisi',
           component: () => import('@/presentations/views/app/teknisi/DaftarTagihan.vue'),
         },
-
         {
           path: 'transaksi/jurnal-umum',
           name: 'transaksi jurnal umum',
@@ -292,6 +305,10 @@ const router = createRouter({
           name: 'Pelaporan',
           component: laporan,
         },
+        /* 2. DI SINI JUGA DIUBAH:
+          Rute pelaporan/preview yang lama di dalam children ini SUDAH DIHAPUS 
+          agar tidak bentrok.
+        */
       ],
     },
     {
@@ -316,7 +333,9 @@ router.beforeEach((to) => {
     localStorage.removeItem('user_role')
     localStorage.removeItem('auth_expires_at')
 
-    return { name: 'login' }
+    return {
+      name: 'login'
+    }
   }
 
   const roleSpecificRoutes = {
@@ -353,22 +372,29 @@ router.beforeEach((to) => {
 
   const isSurveyorOnly = matchesRole('surveyor') && !['surveyor', 'admin'].includes(userRole)
   const isTeknisiOnly = isTeknisiPath && !['teknisi', 'admin'].includes(userRole)
-  const isAdminOnly = matchesRole('admin') && !['admin'].includes(userRole) && !isTeknisiAllowedPath
+  const isAdminOnly = matchesRole('admin') && !['admin'].includes(userRole) && !
+    isTeknisiAllowedPath
   const isPelangganOnly = matchesRole('pelanggan') && !['pelanggan', 'admin'].includes(userRole)
 
   if (isSurveyorOnly || isTeknisiOnly || isAdminOnly || isPelangganOnly) {
-    return { name: 'login' }
+    return {
+      name: 'login'
+    }
   }
 
   if (to.path.startsWith('/app') || to.path === '/') {
     if (!token) {
-      return { name: 'login' }
+      return {
+        name: 'login'
+      }
     }
     return true
   }
 
   if (isAuthPage && token) {
-    return { path: getDashboardRoute(userRole) }
+    return {
+      path: getDashboardRoute(userRole)
+    }
   }
 
   return true
