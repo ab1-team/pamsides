@@ -1,8 +1,18 @@
 import axios from 'axios'
 import { useUiStore } from '@/stores/uiStore'
 
+const baseURL = (() => {
+  if (import.meta.env.VITE_API_BASE_URL) return import.meta.env.VITE_API_BASE_URL
+  if (import.meta.env.VITE_BACKEND_URL) return `${import.meta.env.VITE_BACKEND_URL.replace(/\/$/, '')}/api`
+  if (typeof window !== 'undefined') {
+    const { protocol, hostname } = window.location
+    return `${protocol}//${hostname}/api`
+  }
+  return '/api'
+})()
+
 const axiosInstance = axios.create({
-  baseURL: '/api',
+  baseURL,
   headers: {
     'Content-Type': 'application/json',
     Accept: 'application/json',

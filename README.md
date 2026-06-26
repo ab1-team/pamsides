@@ -78,7 +78,13 @@ cp .env.example .env
 php artisan key:generate
 ```
 
-_Jangan lupa sesuaikan konfigurasi database Anda di file `.env`._
+_Sesuaikan konfigurasi database di `.env` (DB_DATABASE, DB_USERNAME, DB_PASSWORD)._
+
+**Buat database** sesuai `DB_DATABASE` di MySQL, lalu jalankan:
+
+```bash
+php artisan migrate --seed
+```
 
 ### 4. Setup Frontend (Vue.js)
 
@@ -87,7 +93,23 @@ Pindah ke direktori `frontend` dan lakukan instalasi:
 ```bash
 cd ../frontend
 pnpm install
+cp .env.example .env
 ```
+
+**Penting:** Edit `frontend/.env` dan sesuaikan `VITE_BACKEND_URL` dengan path folder Anda.
+Format: `http://localhost/<nama-folder-project>/backend/public`.
+
+Contoh jika folder Anda bernama `pamsides-v2`:
+```env
+VITE_BACKEND_URL=http://localhost/pamsides-v2/backend/public
+```
+
+Contoh jika folder Anda bernama `pamsides`:
+```env
+VITE_BACKEND_URL=http://localhost/pamsides/backend/public
+```
+
+_Nama folder project tidak harus sama dengan aslinya — cukup sesuaikan `VITE_BACKEND_URL` di `.env`._
 
 ---
 
@@ -108,6 +130,17 @@ Jalankan dev server Vite:
 ```bash
 pnpm run dev
 ```
+
+### 🔐 Akun Default (Hasil Seeder)
+
+| Role      | Email                       | Password |
+|-----------|-----------------------------|----------|
+| Admin     | admin@pamsides.test         | password |
+| Surveyor  | surveyor@pamsides.test      | password |
+| Teknisi   | teknisi@pamsides.test       | password |
+| Pelanggan | pelanggan@pamsides.test     | password |
+
+> Password default bisa berbeda — cek `database/seeders/UserSeeder.php` untuk memastikan.
 
 ---
 

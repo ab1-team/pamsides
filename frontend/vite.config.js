@@ -23,11 +23,11 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'http://localhost/pamsides-v2/backend/public',
+        target: process.env.VITE_BACKEND_URL || 'http://localhost/backend/public',
         changeOrigin: true,
       },
       '/storage': {
-        target: 'http://localhost/pamsides-v2/backend/public',
+        target: process.env.VITE_BACKEND_URL || 'http://localhost/backend/public',
         changeOrigin: true,
       },
     },
