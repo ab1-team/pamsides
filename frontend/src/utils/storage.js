@@ -1,4 +1,14 @@
-const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api'
+function detectApiBase() {
+  if (import.meta.env.VITE_API_BASE_URL) return import.meta.env.VITE_API_BASE_URL
+  if (import.meta.env.VITE_BACKEND_URL) return `${import.meta.env.VITE_BACKEND_URL.replace(/\/$/, '')}/api`
+  if (typeof window !== 'undefined') {
+    const { protocol, hostname } = window.location
+    return `${protocol}//${hostname}/api`
+  }
+  return '/api'
+}
+
+export const API_BASE = detectApiBase()
 
 export const storageUrl = (path) => {
   if (!path) return ''
