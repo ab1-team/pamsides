@@ -273,9 +273,13 @@ const fetchData = async () => {
             ? item.meter_readings[0].meter_value
             : item.initial_meter_reading
 
-        // Pemakaian bulan lalu dari MonthlyBill
-        const usageLalu =
-          item.monthly_bills && item.monthly_bills.length > 0 ? item.monthly_bills[0].usage_m3 : 0
+        // Pemakaian bulan lalu: dari MonthlyBill > MeterReading > 0
+        let usageLalu = 0
+        if (item.monthly_bills && item.monthly_bills.length > 0) {
+          usageLalu = item.monthly_bills[0].usage_m3
+        } else if (item.meter_readings && item.meter_readings.length > 0) {
+          usageLalu = Math.max(0, item.meter_readings[0].meter_value - (item.initial_meter_reading || 0))
+        }
 
         const address = item.ticket?.address || ''
         let rtVal = '-'
@@ -340,8 +344,8 @@ const handleSaveMeter = async (payload) => {
     formData.append('customer_id', selectedCustomer.value.id)
     formData.append('meter_value', payload.meterValue)
     formData.append('photo', payload.photo)
-    formData.append('month', monthVal)
-    formData.append('year', yearVal)
+    formData.append('reading_month', monthVal)
+    formData.append('reading_year', yearVal)
 
     await meterService.submitReading(formData)
 
@@ -368,6 +372,11 @@ const tableColumns = [
     title: 'NO.INDUK',
     tdClass: 'text-slate-500! hidden! sm:table-cell!',
     thClass: 'hidden! sm:table-cell!',
+  },
+  {
+    key: 'meterAwal',
+    title: 'METER AWAL',
+    tdClass: 'text-right! w-32! text-slate-500!',
   },
   {
     key: 'usageLalu',

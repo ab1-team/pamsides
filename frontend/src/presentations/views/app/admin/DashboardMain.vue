@@ -1,5 +1,30 @@
 <template>
   <div class="dashboard-container">
+    <div
+      v-if="notification"
+      :class="[
+        'mb-6! rounded-xl! px-5! py-4! flex! items-start! gap-3! border! transition-all!',
+        notification.type === 'success'
+          ? 'bg-emerald-50! border-emerald-200! text-emerald-800!'
+          : 'bg-rose-50! border-rose-200! text-rose-800!',
+      ]"
+    >
+      <font-awesome-icon
+        :icon="notification.type === 'success' ? 'check-circle' : 'exclamation-triangle'"
+        class="text-lg! mt-0.5! shrink-0!"
+      />
+      <div class="flex-1! min-w-0!">
+        <p class="text-sm! font-semibold! leading-snug!">{{ notification.message }}</p>
+        <p class="text-[11px]! opacity-70! mt-1!">{{ formatNotifTime(notification.timestamp) }}</p>
+      </div>
+      <button
+        @click="dismissNotification"
+        class="shrink-0! text-current! opacity-50! hover:opacity-100! transition-opacity! mt-0.5!"
+      >
+        <font-awesome-icon icon="times" class="text-base!" />
+      </button>
+    </div>
+
     <div class="grid! items-start! grid-cols-1! sm:grid-cols-2! lg:grid-cols-4! gap-4! mb-8!">
       <statCard
         label="INSTALASI"
@@ -319,6 +344,40 @@ import PemakaianDetail from './arsipDashbord/ArsipPemakaian.vue'
 import TunggakanDetail from './arsipDashbord/ArsipTunggakan.vue'
 import TagihanDetail from './arsipDashbord/ArsipTagihan.vue'
 
+const notification = ref(null)
+
+const loadNotification = async () => {
+  try {
+    const res = await dashboardService.getNotification()
+    if (res?.success && res?.data) {
+      notification.value = res.data
+    }
+  } catch {
+    // silent
+  }
+}
+
+const dismissNotification = async () => {
+  notification.value = null
+  try {
+    await dashboardService.dismissNotification()
+  } catch {
+    // silent
+  }
+}
+
+const formatNotifTime = (ts) => {
+  if (!ts) return ''
+  const d = new Date(ts)
+  return d.toLocaleString('id-ID', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+}
+
 const activeModal = ref(false)
 const currentDetailType = ref('')
 
@@ -438,7 +497,7 @@ const formatCurrency = (amount) => {
   return new Intl.NumberFormat('id-ID', {
     style: 'currency',
     currency: 'IDR',
-    minimumFractionDigits: 2,
+    minimumFractionDigits: 0,
   }).format(amount)
 }
 
@@ -649,8 +708,7 @@ function trendBadgeClass(value, lowerIsBetter = false) {
 }
 
 onMounted(async () => {
-  await loadStats()
-  await loadFinance()
+  await Promise.all([loadStats(), loadFinance(), loadNotification()])
 })
 </script>
 

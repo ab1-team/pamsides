@@ -551,7 +551,7 @@ const totalUsageRupiahEquivalent = computed(() => {
 const formatNumber = (num) => new Intl.NumberFormat('id-ID').format(Number(num) || 0)
 
 const formatDecimal = (num) =>
-  new Intl.NumberFormat('id-ID', { maximumFractionDigits: 1, minimumFractionDigits: 0 }).format(
+  new Intl.NumberFormat('id-ID', { maximumFractionDigits: 0, minimumFractionDigits: 0 }).format(
     Number(num) || 0,
   )
 

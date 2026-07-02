@@ -361,8 +361,8 @@
                     </div>
 
                     <div class="text-center! text-xs! font-bold! text-slate-600!">
-                      {{ parseFloat(block.usage_min_m3).toFixed(2) }} -
-                      {{ block.usage_max_m3 ? parseFloat(block.usage_max_m3).toFixed(2) : '∞' }}
+                      {{ parseFloat(block.usage_min_m3).toFixed(0) }} -
+                      {{ block.usage_max_m3 ? parseFloat(block.usage_max_m3).toFixed(0) : '∞' }}
                       <span class="text-[10px]! text-slate-400! font-normal!">m³</span>
                     </div>
 
@@ -1092,13 +1092,10 @@ const formatRupiah = (angka) => {
 }
 
 const formatRupiahDecimal = (angka) => {
-  if (angka === null || angka === undefined || angka === '') return '0,00'
-  const num = parseFloat(angka)
-  if (isNaN(num)) return '0,00'
-  const fixed = num.toFixed(2)
-  const [intPart, decPart] = fixed.split('.')
-  const intFormatted = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, '.')
-  return `${intFormatted},${decPart}`
+  if (angka === null || angka === undefined || angka === '') return '0'
+  const num = parseInt(angka)
+  if (isNaN(num)) return '0'
+  return num.toLocaleString('id-ID')
 }
 
 const nominalInput = ref('')

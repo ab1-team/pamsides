@@ -688,10 +688,10 @@ function formatDate(dateString) {
 }
 
 function formatCurrency(amount) {
-  if (!amount) return '0.00'
+  if (!amount) return '0'
   return new Intl.NumberFormat('id-ID', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
   }).format(amount)
 }
 

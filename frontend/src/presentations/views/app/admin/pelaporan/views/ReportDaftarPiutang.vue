@@ -100,10 +100,10 @@
     })
 
     const formatCurrency = (val) => {
-    if (val === null || val === undefined || isNaN(val)) return '0,00'
+    if (val === null || val === undefined || isNaN(val)) return '0'
     return Number(val).toLocaleString('id-ID', {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0
     })
     }
 

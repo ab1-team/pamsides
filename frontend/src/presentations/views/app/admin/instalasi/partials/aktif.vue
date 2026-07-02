@@ -316,7 +316,7 @@ const MONTHS_ID = [
 
 const formatMeter = (val) => {
   const n = Number(val || 0)
-  return n.toLocaleString('id-ID', { minimumFractionDigits: 0, maximumFractionDigits: 2 })
+  return n.toLocaleString('id-ID')
 }
 
 const formatRibuan = (val) => {

@@ -14,7 +14,7 @@
     </div>
 
     <!-- Baris 1: Tanggal Pembayaran -->
-    <div class="grid! grid-cols-1! sm:grid-cols-3! gap-4! mb-5!">
+    <div class="grid! grid-cols-1! sm:grid-cols-3! gap-4! mb-5! items-end!">
       <AppDatePicker
         v-model="tanggalStr"
         label="Tanggal Pembayaran"
@@ -27,7 +27,7 @@
           type="text"
           :value="formatMeter(formData.meterAwal)"
           disabled
-          class="w-full! px-3! py-2! text-sm! font-semibold! text-slate-700! bg-slate-50! border! border-slate-200! rounded-lg! cursor-not-allowed!"
+          class="w-full! px-3! h-11! text-sm! font-semibold! text-slate-700! bg-slate-50! border! border-slate-200! rounded-lg! cursor-not-allowed!"
         />
       </div>
       <div>
@@ -36,20 +36,20 @@
           type="text"
           :value="formatMeter(formData.meterAkhir)"
           disabled
-          class="w-full! px-3! py-2! text-sm! font-semibold! text-slate-700! bg-slate-50! border! border-slate-200! rounded-lg! cursor-not-allowed!"
+          class="w-full! px-3! h-11! text-sm! font-semibold! text-slate-700! bg-slate-50! border! border-slate-200! rounded-lg! cursor-not-allowed!"
         />
       </div>
     </div>
 
     <!-- Baris 2: Pemakaian, Tagihan, Abodemen, Denda -->
-    <div class="grid! grid-cols-2! sm:grid-cols-4! gap-4! mb-5!">
+    <div class="grid! grid-cols-2! sm:grid-cols-4! gap-4! mb-5! items-end!">
       <div>
         <label class="block! text-xs! font-bold! text-slate-500! mb-1.5!">Pemakaian (m³)</label>
         <input
           type="text"
           :value="formatMeter(formData.pemakaian)"
           disabled
-          class="w-full! px-3! py-2! text-sm! font-semibold! text-cyan-700! bg-slate-50! border! border-slate-200! rounded-lg! cursor-not-allowed!"
+          class="w-full! px-3! h-11! text-sm! font-semibold! text-cyan-700! bg-slate-50! border! border-slate-200! rounded-lg! cursor-not-allowed!"
         />
       </div>
       <div>
@@ -58,7 +58,7 @@
           type="text"
           :value="formatRupiah(formData.tagihan)"
           disabled
-          class="w-full! px-3! py-2! text-sm! font-semibold! text-slate-700! bg-slate-50! border! border-slate-200! rounded-lg! cursor-not-allowed!"
+          class="w-full! px-3! h-11! text-sm! font-semibold! text-slate-700! bg-slate-50! border! border-slate-200! rounded-lg! cursor-not-allowed!"
         />
       </div>
       <div>
@@ -67,7 +67,7 @@
           type="text"
           :value="formatRupiah(formData.abodemen)"
           disabled
-          class="w-full! px-3! py-2! text-sm! font-semibold! text-slate-700! bg-slate-50! border! border-slate-200! rounded-lg! cursor-not-allowed!"
+          class="w-full! px-3! h-11! text-sm! font-semibold! text-slate-700! bg-slate-50! border! border-slate-200! rounded-lg! cursor-not-allowed!"
         />
       </div>
       <div>
@@ -76,7 +76,7 @@
           type="text"
           :value="formatRupiah(formData.denda)"
           disabled
-          class="w-full! px-3! py-2! text-sm! font-semibold! text-red-500! bg-slate-50! border! border-slate-200! rounded-lg! cursor-not-allowed!"
+          class="w-full! px-3! h-11! text-sm! font-semibold! text-red-500! bg-slate-50! border! border-slate-200! rounded-lg! cursor-not-allowed!"
         />
       </div>
     </div>
@@ -88,7 +88,7 @@
         type="text"
         :value="formatRupiah(formData.pembayaran)"
         disabled
-        class="w-full! px-3! py-2.5! text-base! font-extrabold! text-cyan-700! bg-cyan-50/50! border! border-cyan-200! rounded-lg! cursor-not-allowed!"
+        class="w-full! px-3! h-11! text-base! font-extrabold! text-cyan-700! bg-cyan-50/50! border! border-cyan-200! rounded-lg! cursor-not-allowed!"
       />
     </div>
 

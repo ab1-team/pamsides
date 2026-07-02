@@ -14,6 +14,16 @@ export const dashboardService = {
     const response = await api.get('/dashboard/statistics', { params })
     return response.data
   },
+
+  async getNotification() {
+    const response = await api.get('/dashboard/notification')
+    return response.data
+  },
+
+  async dismissNotification() {
+    const response = await api.post('/dashboard/notification/dismiss')
+    return response.data
+  },
 }
 
 export default dashboardService
