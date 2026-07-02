@@ -119,76 +119,91 @@
 </script>
 
 <style scoped>
-    .page-header {
+  .page-header {
     text-align: center;
     margin-bottom: 15px;
-    }
-    .page-header h2 {
-    font-size: 11pt;
+  }
+  .page-header h2 {
+    font-size: 14pt;
     font-weight: bold;
-    }
-    .data-table {
+    text-transform: uppercase;
+    color: #000000;
+    margin: 0;
+  }
+
+  .data-table {
     width: 100%;
     border-collapse: collapse;
     margin-top: 15px;
-    }
-    .data-table th {
-    border: 1px solid #1e1e1e;
-    padding: 5px 4px;
-    font-size: 8.5pt;
-    }
+    table-layout: fixed;
+  }
 
-    /* Mengurangi tinggi baris data agar lebih rapat & tidak melar */
-    .data-table td {
-    border: 1px solid #1e1e1e;
-    padding: 2.5px 5px;
-    font-size: 8.5pt;
-    vertical-align: middle;
-    line-height: 1.1;
-    }
-
-    .wilayah-header-gabung td {
-    background-color: #ffffff !important;
-    font-size: 8.5pt;
+  /* Header Utama - Disamakan */
+  .data-table th {
+    border: 1px solid #000000;
+    padding: 4px 4px;
+    font-size: 12px;
     font-weight: bold;
-    padding: 3px 8px;
+    background: #d9d9d9;
+    text-align: center;
+  }
+
+  /* Data Baris Piutang - Disamakan */
+  .data-table td {
+    border: 1px solid #000000;
+    padding: 4px 4px;
+    font-size: 12px;
+    vertical-align: middle;
+    line-height: 1.2;
+    color: #000000;
+    word-wrap: break-word;
+  }
+
+  /* Baris Header Wilayah/Grup */
+  .wilayah-header-gabung td {
+    background-color: #f3f3f3 !important;
+    font-size: 12px;
+    font-weight: bold;
+    padding: 4px 8px;
     text-align: left;
-    border: 1px solid #1e1e1e;
-    }
-    .pembatas-spasi {
+    border: 1px solid #000000;
+  }
+
+  .pembatas-spasi {
     margin-left: 20px;
-    }
-    .text-format-normal {
+  }
+  .text-format-normal {
     text-transform: capitalize;
-    }
-    .text-center {
+  }
+  .text-center {
     text-align: center !important;
-    }
-    .text-right {
+  }
+  .text-right {
     text-align: right !important;
     padding-right: 8px !important;
-    }
-    .badge-kategori {
+  }
+  .badge-kategori {
     font-weight: 500;
-    font-size: 8pt;
+    font-size: 12px; /* Disesuaikan */
     text-transform: uppercase;
-    }
-    .empty-state {
+  }
+  .empty-state {
     text-align: center;
     padding: 20px;
     font-style: italic;
-    font-size: 8.5pt;
-    border: 1px solid #1e1e1e;
-    }
-    .footer-container {
+    font-size: 12px;
+    border: 1px solid #000000;
+  }
+
+  .footer-container {
     width: 100%;
     margin-top: 25px;
     display: flex;
     justify-content: flex-end;
-    }
-    .footer-sign {
+  }
+  .footer-sign {
     width: 30%;
     text-align: center;
-    font-size: 8.5pt;
-    }
+    font-size: 12px;
+  }
 </style>
