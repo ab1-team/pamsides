@@ -74,6 +74,8 @@ Route::middleware(['auth:sanctum', 'role:admin,surveyor'])->group(function () {
 Route::middleware(['auth:sanctum', 'role:admin,teknisi'])->group(function () {
     Route::get('meter-readings/completed', [MeterReadingController::class, 'completed']);
     Route::get('dashboard/statistics', [DashboardController::class, 'statistics']);
+    Route::get('dashboard/notification', [DashboardController::class, 'getNotification']);
+    Route::post('dashboard/notification/dismiss', [DashboardController::class, 'dismissNotification']);
 
     Route::get('meter-readings/pending', [MeterReadingController::class, 'index']);
     Route::post('meter-readings', [MeterReadingController::class, 'store']);

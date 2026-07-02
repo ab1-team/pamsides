@@ -64,14 +64,14 @@ class PelangganPortalController extends Controller
                 ->first();
 
             $usageM3 = $reading?->meter_value !== null
-                ? (float) ($bill?->usage_m3 ?? $this->inferUsageFromReadings($customer->id, $year, $month))
-                : (float) ($bill?->usage_m3 ?? 0);
+                ? (int) ($bill?->usage_m3 ?? $this->inferUsageFromReadings($customer->id, $year, $month))
+                : (int) ($bill?->usage_m3 ?? 0);
 
             $series[] = [
                 'period_key' => $periodKey,
                 'year' => $year,
                 'month' => $month,
-                'usage_m3' => round($usageM3, 2),
+                'usage_m3' => round($usageM3),
                 'bill_amount' => $bill ? (float) $bill->total_amount : 0,
                 'bill_status' => $bill?->status,
                 'has_reading' => $reading !== null,
@@ -111,15 +111,15 @@ class PelangganPortalController extends Controller
                     'series' => $series,
                     'months_count' => 12,
                     'summary' => [
-                        'total_m3' => round($totalUsage, 2),
-                        'avg_m3' => round($avgUsage, 2),
-                        'max_m3' => round($maxUsage, 2),
-                        'min_m3' => round($minUsage, 2),
+                        'total_m3' => round($totalUsage),
+                        'avg_m3' => round($avgUsage),
+                        'max_m3' => round($maxUsage),
+                        'min_m3' => round($minUsage),
                         'recorded_months' => count($nonZero),
                         'trend_direction' => $trendDirection,
                         'trend_percent' => $trendPercent,
-                        'recent_avg_m3' => round($recentAvg, 2),
-                        'previous_avg_m3' => round($previousAvg, 2),
+                        'recent_avg_m3' => round($recentAvg),
+                        'previous_avg_m3' => round($previousAvg),
                     ],
                 ],
                 'balance' => 0
@@ -153,7 +153,7 @@ class PelangganPortalController extends Controller
             ->first();
 
         $baseline = $previous?->meter_value ?? 0;
-        $delta = (float) $current->meter_value - (float) $baseline;
+        $delta = (int) $current->meter_value - (int) $baseline;
 
         return $delta > 0 ? $delta : 0.0;
     }

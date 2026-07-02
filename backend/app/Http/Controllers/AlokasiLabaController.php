@@ -43,7 +43,7 @@ class AlokasiLabaController extends Controller
         $labaDibagikan = [];
         $totalDibagikan = 0;
         foreach ($cfg['dibagikan'] as $item) {
-            $nominal = round($totalLaba * ((float) $item['persen'] / 100), 2);
+            $nominal = round($totalLaba * ((float) $item['persen'] / 100));
             $labaDibagikan[] = [
                 'kode_akun'  => $item['kode_akun'],
                 'nama_akun'  => $item['nama_akun'],
@@ -54,11 +54,11 @@ class AlokasiLabaController extends Controller
             $totalDibagikan += $nominal;
         }
 
-        $sisa = round($totalLaba - $totalDibagikan, 2);
+        $sisa = round($totalLaba - $totalDibagikan);
 
         $labaDitahan = [];
         foreach ($cfg['ditahan'] as $item) {
-            $nominal = round($sisa * ((float) $item['persen'] / 100), 2);
+            $nominal = round($sisa * ((float) $item['persen'] / 100));
             $labaDitahan[] = [
                 'kode_akun'  => $item['kode_akun'],
                 'nama_akun'  => $item['nama_akun'],
@@ -163,7 +163,7 @@ class AlokasiLabaController extends Controller
 
             $urutan = 1;
             foreach ($request->items as $it) {
-                $nominal = round((float) $it['nominal'], 2);
+                $nominal = round((float) $it['nominal']);
                 if ($nominal <= 0) continue;
 
                 $akun = $akunMap[$it['kode_akun']] ?? null;

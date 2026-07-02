@@ -3,10 +3,8 @@
 namespace App\Providers;
 
 use App\Models\Payment;
-use App\Models\BillPayment;
 use App\Models\Transaction;
 use App\Observers\PaymentObserver;
-use App\Observers\BillPaymentObserver;
 use App\Observers\TransactionObserver;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\ServiceProvider;
@@ -29,6 +27,5 @@ class AppServiceProvider extends ServiceProvider
 
         Transaction::observe(TransactionObserver::class);
         Payment::observe(PaymentObserver::class);
-        BillPayment::observe(BillPaymentObserver::class);
     }
 }

@@ -19,7 +19,7 @@ class Ebudgeting extends Model
     protected $casts = [
         'tahun' => 'integer',
         'bulan' => 'integer',
-        'jumlah' => 'decimal:2',
+        'jumlah' => 'decimal:0',
     ];
 
     public function account(): BelongsTo

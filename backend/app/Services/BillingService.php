@@ -41,10 +41,10 @@ class BillingService
             $usageM3
         );
 
-        $abodemen = $customer->ticket->package->monthly_abodemen;
+        $abodemen = round($customer->ticket->package->monthly_abodemen);
         $penaltyAmount = $this->calculatePenalty($customer, $year, $month);
 
-        $totalAmount = $usageCharge + $abodemen + $penaltyAmount;
+        $totalAmount = round($usageCharge + $abodemen + $penaltyAmount);
 
         if ($batasTagihan === null) {
             $settings = Setting::first();
@@ -79,33 +79,41 @@ class BillingService
 
         $remaining = $usageM3;
         $total = 0;
+        $blockIndex = 0;
 
         foreach ($blocks as $block) {
             if ($remaining <= 0) {
                 break;
             }
 
-            $min = (float) $block->usage_min_m3;
-            $max = $block->usage_max_m3 !== null ? (float) $block->usage_max_m3 : PHP_FLOAT_MAX;
+            $min = (int) $block->usage_min_m3;
 
-            $range = max(0, $max - $min);
+            if ($block->usage_max_m3 !== null) {
+                $max = (int) $block->usage_max_m3;
+                // Blok pertama (min=0): range = max - min
+                // Blok selanjutnya: range = max - min + 1 (karena min = prev_max + 1)
+                $range = $blockIndex === 0 ? $max - $min : $max - $min + 1;
+            } else {
+                $range = $remaining;
+            }
+
             $used = min($remaining, $range);
-
-            $total += $used * (float) $block->price_per_m3;
+            $total += round($used * (float) $block->price_per_m3);
             $remaining -= $used;
+            $blockIndex++;
         }
 
-        return $total;
+        return round($total);
     }
 
     public function calculatePenalty(Customer $customer, int $year, int $month): float
     {
-        $twoMonthsAgo = $month <= 2 ? 12 + $month - 2 : $month - 2;
-        $twoMonthsAgoYear = $month <= 2 ? $year - 1 : $year;
+        $prevMonth = $month === 1 ? 12 : $month - 1;
+        $prevMonthYear = $month === 1 ? $year - 1 : $year;
 
         $oldBill = MonthlyBill::where('customer_id', $customer->id)
-            ->where('billing_period_year', $twoMonthsAgoYear)
-            ->where('billing_period_month', $twoMonthsAgo)
+            ->where('billing_period_year', $prevMonthYear)
+            ->where('billing_period_month', $prevMonth)
             ->where('status', 'unpaid')
             ->first();
 
@@ -113,7 +121,7 @@ class BillingService
             return 0;
         }
 
-        return $customer->ticket->package->late_penalty;
+        return round($customer->ticket->package->late_penalty);
     }
 
     public function computeDueDate(int $year, int $month, int $day = 27): string
