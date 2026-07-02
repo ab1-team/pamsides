@@ -139,13 +139,28 @@ const tempat = computed(() => {
 </script>
 
 <style scoped>
+/* Paksa font yang sama di seluruh elemen surat */
+:deep(*) {
+  font-family: Arial, Helvetica, sans-serif !important;
+}
+
 .surat-meta {
   width: 100%;
   border-collapse: collapse;
-  font-size: 12px;
+  font-size: 12px; /* Ukuran font standar */
+  color: #000000;
+  line-height: 1.4; /* Menambah ruang antar baris agar lebih nyaman dibaca */
 }
+
 .surat-meta td {
   vertical-align: top;
-  padding: 2px 4px 2px 0px; 
+  padding: 4px 4px; /* Padding seragam dengan tabel laporan */
+}
+
+/* Memastikan elemen div/ol di dalam surat mengikuti font yang sama */
+.surat-meta div, 
+.surat-meta ol, 
+.surat-meta li {
+  font-size: 12px;
 }
 </style>

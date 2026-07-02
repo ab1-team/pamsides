@@ -132,35 +132,48 @@
     margin-bottom: 15px;
   }
   .page-header h2 {
-    font-size: 11pt;
+    font-size: 14pt; /* Disesuaikan agar seragam */
     font-weight: bold;
+    text-transform: uppercase;
+    color: #000000;
+    margin: 0;
   }
+
   .data-table {
     width: 100%;
     border-collapse: collapse;
     margin-top: 15px;
-  }
-  .data-table th {
-    border: 1px solid #1e1e1e;
-    padding: 5px 4px;
-    font-size: 8.5pt;
+    table-layout: fixed; /* Ditambahkan agar lebar kolom konsisten */
   }
 
-  /* Kolom data dibuat ramping & kecil agar tidak memakan ruang */
+  /* Header Utama - Disamakan dengan Neraca */
+  .data-table th {
+    border: 1px solid #000000;
+    padding: 4px 4px; /* Diseragamkan */
+    font-size: 12px;  /* Diseragamkan */
+    font-weight: bold;
+    background: #d9d9d9;
+    text-align: center;
+  }
+
+  /* Data Baris Tagihan - Disamakan dengan Neraca */
   .data-table td {
-    border: 1px solid #1e1e1e;
-    padding: 2.5px 5px;
-    font-size: 8.5pt;
+    border: 1px solid #000000;
+    padding: 4px 4px; /* Diseragamkan */
+    font-size: 12px;  /* Diseragamkan */
     vertical-align: middle;
-    line-height: 1.1;
+    line-height: 1.2; /* Diseragamkan */
+    color: #000000;
+    word-wrap: break-word;
   }
 
   .wilayah-header-gabung td {
-    background-color: #ffffff !important;
-    font-size: 8.5pt;
-    padding: 3px 8px;
+    background-color: #f3f3f3 !important;
+    font-size: 12px;
+    padding: 4px 8px;
     text-align: left;
-    border: 1px solid #1e1e1e;
+    border: 1px solid #000000;
+    font-weight: bold;
   }
 
   .pembatas-spasi {
@@ -181,13 +194,15 @@
   .uppercase-text {
     text-transform: uppercase;
   }
+
   .empty-state {
     text-align: center;
     padding: 20px;
     font-style: italic;
-    font-size: 8.5pt;
-    border: 1px solid #1e1e1e;
+    font-size: 12px;
+    border: 1px solid #000000;
   }
+
   .footer-container {
     width: 100%;
     margin-top: 25px;
@@ -197,6 +212,6 @@
   .footer-sign {
     width: 30%;
     text-align: center;
-    font-size: 8.5pt;
+    font-size: 12px;
   }
 </style>

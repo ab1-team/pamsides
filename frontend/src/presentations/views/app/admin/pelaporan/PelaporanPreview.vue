@@ -6,22 +6,22 @@
           {{ title }}
         </h3>
       </div>
-      
+
       <div class="page-indicator" v-if="pages.length > 0">
-        <span>Halaman 1 / {{ pages.length }}</span>
+        <span>Halaman {{ activePage + 1 }} / {{ pages.length }}</span>
       </div>
     </div>
 
     <div v-if="errorMsg" class="alert-error">{{ errorMsg }}</div>
 
     <div class="workspace-container">
-      
+
       <div class="thumbnail-sidebar no-print">
-        <div 
-          v-for="(page, i) in pages" 
-          :key="'thumb-' + i" 
+        <div
+          v-for="(page, i) in pages"
+          :key="'thumb-' + i"
           class="thumb-wrapper"
-          :class="[reportConfig?.orientation || 'portrait']"
+          :class="[reportConfig?.orientation || 'portrait', { active: activePage === i }]"
           @click="scrollToPage(i)"
         >
           <div class="thumb-paper">
@@ -39,18 +39,27 @@
         </div>
       </div>
 
-      <div class="preview-stage">
+      <div class="preview-stage" ref="stageEl" @scroll.passive="onStageScroll">
         <div ref="reportRoot" class="report-root">
-          <component
+          <div
             v-if="pages.length > 0"
-            :is="resolvedView"
             v-for="(page, i) in pages"
             :key="i"
-            :id="'report-page-' + i"
-            :payload="page.payload"
-            :meta="page.meta"
-            :ref="(el) => registerPageRef(el, i)"
-          />
+            class="report-page-wrap"
+            :style="{
+              width: pageNaturalWidth(i) + 'px',
+              transform: pageScale(i) < 1 ? 'scale(' + pageScale(i) + ')' : undefined,
+              marginBottom: pageScale(i) < 1 ? (pageNaturalHeight(i) * (pageScale(i) - 1)) + 'px' : '24px',
+            }"
+          >
+            <component
+              :is="resolvedView"
+              :id="'report-page-' + i"
+              :payload="page.payload"
+              :meta="page.meta"
+              :ref="(el) => registerPageRef(el, i)"
+            />
+          </div>
         </div>
       </div>
 
@@ -59,7 +68,7 @@
 </template>
 
 <script setup>
-import { computed, nextTick, onMounted, onUnmounted, ref, shallowRef, watch } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, onBeforeUnmount, ref, shallowRef, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import BaseButton from '@/presentations/components/ui/BaseButton.vue'
 import pelaporanService from '@/services/pelaporan.service.js'
@@ -125,7 +134,44 @@ const errorMsg = ref('')
 const response = ref(null)
 const pages = ref([])
 const reportRoot = ref(null)
+const stageEl = ref(null)
 const pageRefs = shallowRef([])
+const activePage = ref(0)
+const stageWidth = ref(0)
+let resizeObserver = null
+
+const pageDimsMm = (page) => {
+  const cfg = page?.payload?.config || page?.config || {}
+  const isLandscape = cfg.orientation === 'landscape'
+  const w = (cfg.paper_size || 'A4').toUpperCase() === 'F4' ? 215 : 210
+  const h = (cfg.paper_size || 'A4').toUpperCase() === 'F4' ? 330 : 297
+  return isLandscape ? { w: h, h: w } : { w, h }
+}
+
+const PX_PER_MM = 96 / 25.4
+
+const pageNaturalWidth = (i) => {
+  const p = pages.value[i]
+  if (!p) return 0
+  return pageDimsMm(p).w * PX_PER_MM
+}
+
+const pageNaturalHeight = (i) => {
+  const p = pages.value[i]
+  if (!p) return 0
+  return pageDimsMm(p).h * PX_PER_MM
+}
+
+const pageScale = (i) => {
+  if (!stageWidth.value) return 1
+  const natural = pageNaturalWidth(i)
+  if (!natural) return 1
+  const available = stageWidth.value - 48
+  
+  // Jangan biarkan lebih kecil dari 0.8 (80%)
+  // Jika rasio lebih kecil dari 0.8, maka biarkan 0.8 (pengguna bisa scroll)
+  return Math.max(0.9, Math.min(1, available / natural))
+}
 
 // MODIFIKASI: Menyimpan backup path favicon utama aplikasi Anda
 const originalFavicon = '/favicon.ico'
@@ -185,9 +231,8 @@ const buildPages = (res) => {
 
   if (res.view_target === 'cover' || res.view_target === 'surat_pengantar') {
     pages.value = [{ payload: data, meta: baseMeta }]
-  } else if (
-    ['daftar_pelanggan', 'tagihan_pelanggan', 'piutang_pelanggan'].includes(res.view_target)
-  ) {
+  } 
+  else if (['daftar_pelanggan', 'tagihan_pelanggan', 'piutang_pelanggan'].includes(res.view_target)) {
     const items = Array.isArray(data) ? data : data?.items || []
     const chunkSize = 25
 
@@ -205,19 +250,161 @@ const buildPages = (res) => {
         })
       }
     }
-  } else {
+  } 
+  else if (res.view_target === 'neraca_saldo') {
+    const items = Array.isArray(data?.items) ? data.items : []
+    const summary = data?.summary || {}
+    const chunkSize = 30
+
+    if (items.length === 0) {
+      pages.value = [{ payload: { ...data, config: baseConfig, items: [] }, meta: baseMeta }]
+    } else {
+      pages.value = []
+      for (let i = 0; i < items.length; i += chunkSize) {
+        const isLastChunk = i + chunkSize >= items.length
+        pages.value.push({
+          payload: {
+            ...data,
+            config: baseConfig,
+            items: items.slice(i, i + chunkSize),
+            summary: isLastChunk ? summary : null,
+          },
+          meta: baseMeta,
+        })
+      }
+    }
+  } 
+  // === TAMBAHKAN LOGIKA KHUSUS LABA RUGI DI SINI ===
+  else if (res.view_target === 'buku_besar') {
+    const transactions = Array.isArray(data?.transactions) ? data.transactions : []
+    const dataChunkSize = 20
+
+    if (transactions.length === 0) {
+      pages.value = [{ payload: { ...data, config: baseConfig, transactions: [], showHeader: true, showFooter: true }, meta: baseMeta }]
+    } else {
+      pages.value = []
+      const totalChunks = Math.ceil(transactions.length / dataChunkSize)
+      for (let i = 0; i < transactions.length; i += dataChunkSize) {
+        const chunkIndex = Math.floor(i / dataChunkSize)
+        const chunk = transactions.slice(i, i + dataChunkSize)
+        const isLast = chunkIndex === totalChunks - 1
+        pages.value.push({
+          payload: {
+            ...data,
+            config: baseConfig,
+            transactions: chunk,
+            showHeader: true,
+            showFooter: isLast,
+            pageInfo: { current: chunkIndex + 1, total: totalChunks }
+          },
+          meta: baseMeta,
+        })
+      }
+    }
+  } 
+  else if (res.view_target === 'laba_rugi') {
+    const rawGroups = Array.isArray(data?.groups) ? data.groups : []
+    
+    // 1. Bongkar semua grup & items menjadi satu array baris flat
+    let flatRows = []
+    rawGroups.forEach((group) => {
+      // Masukkan baris judul grupnya dulu
+      flatRows.push({
+        isHeader: true,
+        type: group.type,
+        label: group.label
+      })
+      
+      // Masukkan anak-anak akun di dalamnya jika ada
+      if (Array.isArray(group.items)) {
+        group.items.forEach((item) => {
+          flatRows.push({
+            isHeader: false,
+            ...item
+          })
+        })
+      }
+    })
+
+    // 2. Tentukan ukuran baris per halaman (Sesuaikan angka 25 ini jika kurang penuh/kebanyakan)
+    const chunkSize = 40 
+
+    if (flatRows.length === 0) {
+      pages.value = [{ payload: { ...data, config: baseConfig, flatRows: [] }, meta: baseMeta }]
+    } else {
+      pages.value = []
+      for (let i = 0; i < flatRows.length; i += chunkSize) {
+        pages.value.push({
+          payload: {
+            ...data,
+            config: baseConfig,
+            // Kirim potongan baris flat untuk halaman ini
+            flatRows: flatRows.slice(i, i + chunkSize) 
+          },
+          meta: baseMeta,
+        })
+      }
+    }
+  }
+  // ================================================
+  else {
     pages.value = [{ payload: data, meta: baseMeta }]
   }
 }
 
 const registerPageRef = (el, idx) => {
-  if (el) pageRefs.value[idx] = el.$el || el
+  if (!el) return
+  const node = el.$el || el
+  const cfg = pages.value[idx]?.payload?.config || pages.value[idx]?.config || {}
+  node._pdfConfig = cfg
+  pageRefs.value[idx] = node
 }
 
 const scrollToPage = (idx) => {
   const element = document.getElementById(`report-page-${idx}`)
-  if (element) {
+  const stage = stageEl.value || document.querySelector('.preview-stage')
+  if (!element) return
+  if (stage) {
+    const stageRect = stage.getBoundingClientRect()
+    const elRect = element.getBoundingClientRect()
+    const offset = elRect.top - stageRect.top + stage.scrollTop
+    stage.scrollTo({ top: offset, behavior: 'smooth' })
+    activePage.value = idx
+    nextTick(() => scrollThumbIntoView(idx))
+  } else {
     element.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
+}
+
+const scrollThumbIntoView = (idx) => {
+  const thumb = document.querySelectorAll('.thumb-wrapper')[idx]
+  const sidebar = document.querySelector('.thumbnail-sidebar')
+  if (!thumb || !sidebar) return
+  const tRect = thumb.getBoundingClientRect()
+  const sRect = sidebar.getBoundingClientRect()
+  if (tRect.top < sRect.top || tRect.bottom > sRect.bottom) {
+    sidebar.scrollTo({ top: thumb.offsetTop - 24, behavior: 'smooth' })
+  }
+}
+
+const onStageScroll = () => {
+  const stage = stageEl.value
+  if (!stage) return
+  const stageCenter = stage.scrollTop + stage.clientHeight / 2
+  let nearest = 0
+  let nearestDist = Infinity
+  for (let i = 0; i < pages.value.length; i++) {
+    const el = document.getElementById(`report-page-${i}`)
+    if (!el) continue
+    const dist = Math.abs(el.offsetTop - stageCenter)
+    if (dist < nearestDist) {
+      nearestDist = dist
+      nearest = i
+    }
+  }
+  if (activePage.value !== nearest) {
+    activePage.value = nearest
+    nextTick(() => scrollThumbIntoView(nearest))
   }
 }
 
@@ -228,7 +415,23 @@ const collectPageElements = async () => {
   return els
 }
 
-onMounted(fetchPreview)
+onMounted(async () => {
+  await fetchPreview()
+  await nextTick()
+  if (stageEl.value) {
+    stageWidth.value = stageEl.value.clientWidth
+    resizeObserver = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        stageWidth.value = entry.contentRect.width
+      }
+    })
+    resizeObserver.observe(stageEl.value)
+  }
+})
+
+onBeforeUnmount(() => {
+  if (resizeObserver) resizeObserver.disconnect()
+})
 
 onUnmounted(() => {
   const faviconLink = document.querySelector("link[rel~='icon']")
@@ -241,7 +444,8 @@ onUnmounted(() => {
 <style scoped>
 .preview-shell {
   background: #312c2c; 
-  min-height: 100vh;
+  height: 100vh;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
 }
@@ -343,6 +547,15 @@ onUnmounted(() => {
   border-color: #38bdf8;
 }
 
+.thumb-wrapper.active .thumb-paper {
+  border-color: #38bdf8;
+  box-shadow: 0 0 0 2px #38bdf8, 0 4px 10px rgba(0, 0, 0, 0.4);
+}
+
+.thumb-wrapper.active .thumb-number {
+  color: #38bdf8;
+}
+
 .thumb-scale-container {
   position: absolute;
   top: 0;
@@ -375,16 +588,19 @@ onUnmounted(() => {
 }
 
 .preview-stage {
-  flex: 1;
-  overflow: auto; 
-  
-  padding: 5px 5px 5px 5px; 
-  
+  flex: 1 1 0;
+  min-width: 0;
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+
+  padding: 10px 0px 10px;
+
   display: flex;
-  
-  justify-content: flex-start; 
-  align-items: flex-start;
+  flex-direction: column;
+  align-items: center;
   background: #2c2e31;
+  scroll-behavior: smooth;
 }
 .report-root {
   display: flex;
@@ -395,6 +611,18 @@ onUnmounted(() => {
   align-items: center;
 
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+}
+
+.report-page-wrap {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  width: 100%;
+  transform-origin: top center;
+}
+
+.report-page-wrap :deep(.report-page) {
+  margin: 0 auto !important;
 }
 .alert-error {
   background: #fee2e2;

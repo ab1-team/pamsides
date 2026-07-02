@@ -126,10 +126,11 @@
   }
   .main-report-header h2 {
     margin: 0;
-    font-size: 11pt;
+    font-size: 14pt; /* Disesuaikan agar lebih proporsional */
     font-weight: bold;
     color: #000000;
     line-height: 1.2;
+    text-transform: uppercase;
   }
   .data-table {
     width: 100%;
@@ -138,41 +139,38 @@
     table-layout: fixed;
   }
 
-  /* Header Utama */
+  /* Header Utama - Disamakan dengan Neraca */
   .data-table th {
     border: 1px solid #000000;
     color: #000000;
     font-weight: bold;
-    padding: 8px 4px; 
-    font-size: 8.5pt;
+    padding: 4px 4px; /* Diseragamkan */
+    font-size: 12px;
     text-align: center;
+    background: #d9d9d9; /* Warna background disamakan */
   }
 
-  /* Data Baris Pelanggan */
+  /* Data Baris Pelanggan - Disamakan dengan Neraca */
   .data-table td {
-    padding: 2.5px 5px;
+    padding: 4px 4px; /* Diseragamkan (jarak atas-bawah & kiri-kanan) */
     border: 1px solid #000000;
     vertical-align: middle;
-    font-size: 8.5pt;
+    font-size: 12px;
     color: #000000;
     word-wrap: break-word;
-    line-height: 1.1;
+    line-height: 1.2; /* Diseragamkan */
   }
 
-  /* Baris Wilayah (Warna Putih Tetap Sesuai Kode Anda) */
+  /* Baris Wilayah */
   .wilayah-header-gabung td {
-    background-color: #fffcfc !important;
-    font-size: 8.5pt;
-    padding: 2.5px 8px;
+    background-color: #f3f3f3 !important;
+    font-size: 12px;
+    padding: 4px 8px;
     text-align: left;
     border: 1px solid #000000;
+    font-weight: bold;
   }
 
-  .pembatas-spasi {
-    margin-left: 20px; /* Jarak spasi horizontal setelah Desa sebelum teks Dusun */
-  }
-
-  /* Mengubah huruf pertama menjadi Kapital besar */
   .text-format-normal {
     text-transform: capitalize;
   }
@@ -184,12 +182,15 @@
     white-space: normal;
     line-height: 1.2;
   }
+
+  /* Perbaikan typo font-size */
   .empty-state {
     text-align: center;
     padding: 20px;
     font-style: italic;
-    font-size: 8.5pt;
+    font-size: 12px; 
   }
+
   .footer-container {
     width: 100%;
     margin-top: 25px;
@@ -199,7 +200,7 @@
   .footer-sign {
     width: 30%;
     text-align: center;
-    font-size: 8.5pt;
+    font-size: 12px;
   }
   .mt-0 { margin-top: 0px !important; }
   .mb-0 { margin-bottom: 0px !important; }
