@@ -47,7 +47,7 @@
   })
 
   const formatCurrency = (val) => {
-    return new Intl.NumberFormat('id-ID', { minimumFractionDigits: 2 }).format(val || 0)
+    return new Intl.NumberFormat('id-ID', { minimumFractionDigits: 0 }).format(val || 0)
   }
 </script>
 

@@ -93,8 +93,8 @@
               Rp.
               {{
                 Number(row.total_amount || 0).toLocaleString('id-ID', {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
+                  minimumFractionDigits: 0,
+                  maximumFractionDigits: 0,
                 })
               }}
             </span>
@@ -105,8 +105,8 @@
               Termasuk Denda Rp.
               {{
                 Number(row.penalty_amount || 0).toLocaleString('id-ID', {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
+                  minimumFractionDigits: 0,
+                  maximumFractionDigits: 0,
                 })
               }}
             </span>

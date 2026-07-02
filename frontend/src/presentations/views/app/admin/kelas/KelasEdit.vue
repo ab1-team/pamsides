@@ -298,13 +298,13 @@ const updateNextBlockFrom = (index) => {
     }
 
     const increment = currentTo % 1 === 0 ? 1 : 0.01
-    blocks.value[index + 1].from = Number((currentTo + increment).toFixed(2))
+    blocks.value[index + 1].from = Number((currentTo + increment).toFixed(0))
 
     if (
       blocks.value[index + 1].to &&
       Number(blocks.value[index + 1].to) <= Number(blocks.value[index + 1].from)
     ) {
-      blocks.value[index + 1].to = Number((Number(blocks.value[index + 1].from) + 10).toFixed(2))
+      blocks.value[index + 1].to = Number((Number(blocks.value[index + 1].from) + 10).toFixed(0))
     }
     updateNextBlockFrom(index + 1)
   }
@@ -331,7 +331,7 @@ const adjustBlocksAfterDelete = () => {
         blocks.value[i].from = null
       } else {
         const increment = prevTo % 1 === 0 ? 1 : 0.01
-        blocks.value[i].from = Number((prevTo + increment).toFixed(2))
+        blocks.value[i].from = Number((prevTo + increment).toFixed(0))
       }
     }
 
@@ -340,7 +340,7 @@ const adjustBlocksAfterDelete = () => {
       blocks.value[i].from &&
       Number(blocks.value[i].to) <= Number(blocks.value[i].from)
     ) {
-      blocks.value[i].to = Number((Number(blocks.value[i].from) + 10).toFixed(2))
+      blocks.value[i].to = Number((Number(blocks.value[i].from) + 10).toFixed(0))
     }
   }
 }

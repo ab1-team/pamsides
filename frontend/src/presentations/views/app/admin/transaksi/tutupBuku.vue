@@ -245,8 +245,8 @@ const grandTotal = computed(() =>
 const formatRp = (val) =>
   'Rp. ' +
   Number(val || 0).toLocaleString('id-ID', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
   })
 
 const loadAkunList = async (year) => {

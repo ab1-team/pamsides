@@ -34,7 +34,7 @@
 <script setup>
   import BaseReportLayout from '../layouts/BaseReportLayout.vue'
   const props = defineProps({ payload: Object })
-  const formatCurrency = (val) => new Intl.NumberFormat('id-ID', { minimumFractionDigits: 2 }).format(val || 0)
+  const formatCurrency = (val) => new Intl.NumberFormat('id-ID', { minimumFractionDigits: 0 }).format(val || 0)
 </script>
 
 <style scoped>

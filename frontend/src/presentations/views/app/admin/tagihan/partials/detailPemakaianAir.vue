@@ -285,9 +285,13 @@ const fetchData = async () => {
             ? item.meter_readings[0].meter_value
             : item.initial_meter_reading
 
-        // Pemakaian bulan lalu dari MonthlyBill
-        const usageLalu =
-          item.monthly_bills && item.monthly_bills.length > 0 ? item.monthly_bills[0].usage_m3 : 0
+        // Pemakaian bulan lalu: dari MonthlyBill > MeterReading > 0
+        let usageLalu = 0
+        if (item.monthly_bills && item.monthly_bills.length > 0) {
+          usageLalu = item.monthly_bills[0].usage_m3
+        } else if (item.meter_readings && item.meter_readings.length > 0) {
+          usageLalu = Math.max(0, item.meter_readings[0].meter_value - (item.initial_meter_reading || 0))
+        }
 
         const address = item.ticket?.address || ''
         let rtVal = '-'
@@ -401,6 +405,11 @@ const tableColumns = [
     thClass: 'hidden! sm:table-cell!',
   },
   {
+    key: 'meterAwal',
+    title: 'METER AWAL',
+    tdClass: 'text-right! w-32! text-slate-500!',
+  },
+  {
     key: 'usageLalu',
     title: 'PAKAI BULAN LALU',
     tdClass: 'text-right! w-40! text-blue-600! font-bold!',
@@ -414,7 +423,7 @@ const hitungPemakaian = (row) => {
 const formatMeter = (val) => {
   const num = Number(val)
   if (isNaN(num)) return val
-  return Number.isInteger(num) ? num.toString() : num.toFixed(2)
+  return num.toString()
 }
 
 const filteredData = computed(() => {
