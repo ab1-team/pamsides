@@ -90,8 +90,8 @@ class CustomerController extends Controller
             $package = $t->package;
             $tariffBlocks = $package?->waterTariffBlocks?->map(fn ($b) => [
                 'id' => $b->id,
-                'usage_min_m3' => (float) $b->usage_min_m3,
-                'usage_max_m3' => $b->usage_max_m3 !== null ? (float) $b->usage_max_m3 : null,
+                'usage_min_m3' => (int) $b->usage_min_m3,
+                'usage_max_m3' => $b->usage_max_m3 !== null ? (int) $b->usage_max_m3 : null,
                 'price_per_m3' => (float) $b->price_per_m3,
                 'min' => (float) $b->usage_min_m3,
                 'max' => $b->usage_max_m3 !== null ? (float) $b->usage_max_m3 : null,

@@ -140,8 +140,8 @@ class MonthlyBillService
                 break;
             }
 
-            $min = (float) $block->usage_min_m3;
-            $max = $block->usage_max_m3 !== null ? (float) $block->usage_max_m3 : PHP_FLOAT_MAX;
+            $min = (int) $block->usage_min_m3;
+            $max = $block->usage_max_m3 !== null ? (int) $block->usage_max_m3 : PHP_INT_MAX;
 
             $range = max(0, $max - $min);
             $used = min($remaining, $range);

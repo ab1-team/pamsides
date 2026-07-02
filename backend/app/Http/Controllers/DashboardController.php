@@ -7,6 +7,7 @@ use App\Models\InstallationTicket;
 use App\Models\MonthlyBill;
 use App\Models\Transaction;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
@@ -113,6 +114,37 @@ class DashboardController extends Controller
                 'finance_chart'     => $financeChart,
                 'available_years'   => $availableYears,
             ],
+        ]);
+    }
+
+    public function getNotification()
+    {
+        $userId = auth()->id();
+        $dismissed = Cache::get('overdue_gen_dismissed_' . $userId, false);
+
+        if ($dismissed) {
+            return response()->json([
+                'success' => true,
+                'data'    => null,
+            ]);
+        }
+
+        $notification = Cache::get('overdue_gen_notification');
+
+        return response()->json([
+            'success' => true,
+            'data'    => $notification,
+        ]);
+    }
+
+    public function dismissNotification()
+    {
+        $userId = auth()->id();
+        Cache::put('overdue_gen_dismissed_' . $userId, true, now()->addDays(7));
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Notifikasi ditutup',
         ]);
     }
 }

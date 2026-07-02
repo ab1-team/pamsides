@@ -61,7 +61,21 @@ class MeterReadingController extends Controller
         $bulan = $request->month;
         $tahun = $request->year;
 
-        $customers = Customer::with(['user', 'ticket.village'])
+        $prevMonth = $bulan === 1 ? 12 : $bulan - 1;
+        $prevYear = $bulan === 1 ? $tahun - 1 : $tahun;
+
+        $customers = Customer::with([
+            'user',
+            'ticket.village',
+            'meterReadings' => function ($query) use ($prevMonth, $prevYear) {
+                $query->where('reading_month', $prevMonth)
+                    ->where('reading_year', $prevYear);
+            },
+            'monthlyBills' => function ($query) use ($prevMonth, $prevYear) {
+                $query->where('billing_period_month', $prevMonth)
+                    ->where('billing_period_year', $prevYear);
+            },
+        ])
             ->whereDoesntHave('meterReadings', function ($query) use ($bulan, $tahun) {
                 $query->where('reading_month', $bulan)
                     ->where('reading_year', $tahun);
@@ -83,14 +97,14 @@ class MeterReadingController extends Controller
     {
         $request->validate([
             'customer_id' => 'required|exists:customers,id',
-            'meter_value' => 'required|numeric|min:0|max:99999999.99',
+            'meter_value' => 'required|integer|min:0|max:99999999',
             'photo' => 'required|image|max:2048',
             'reading_month' => 'required|integer|between:1,12',
             'reading_year' => 'required|integer|min:2000',
         ]);
 
-        $bulan = (int) ($request->reading_month ?? $request->month);
-        $tahun = (int) ($request->reading_year ?? $request->year);
+        $bulan = (int) $request->reading_month;
+        $tahun = (int) $request->reading_year;
 
         $exists = MeterReading::where('customer_id', $request->customer_id)
             ->where('reading_month', $bulan)
@@ -205,7 +219,7 @@ class MeterReadingController extends Controller
         }
 
         $request->validate([
-            'meter_value' => 'required|numeric|min:0|max:99999999.99',
+            'meter_value' => 'required|integer|min:0|max:99999999',
             'photo' => 'nullable|image|max:2048',
         ]);
 

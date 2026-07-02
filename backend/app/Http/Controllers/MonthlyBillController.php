@@ -6,11 +6,13 @@ use App\Models\BillPayment;
 use App\Models\Customer;
 use App\Models\MonthlyBill;
 use App\Models\Setting;
+use App\Models\Transaction;
 use App\Services\BillingService;
 use App\Services\MonthlyBillService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class MonthlyBillController extends Controller
 {
@@ -207,14 +209,77 @@ class MonthlyBillController extends Controller
             ], 400);
         }
 
-        $bill->update(['status' => 'paid']);
+        $bill->load('customer');
 
-        $payment = BillPayment::create([
-            'bill_id' => $bill->id,
-            'amount_paid' => $request->amount_paid ?? $bill->total_amount,
-            'confirmed_by' => Auth::id(),
-            'paid_at' => now(),
-        ]);
+        $abodemen = (float) ($bill->abodemen ?? 0);
+        $usageCharge = (float) ($bill->usage_charge ?? 0);
+        $denda = (float) ($bill->penalty_amount ?? 0);
+        $isTunggakan = $denda > 0;
+        $relasi = $bill->customer?->customer_code ?? 'Bill #' . $bill->id;
+        $userId = Auth::id();
+
+        DB::transaction(function () use ($bill, $request, $abodemen, $usageCharge, $denda, $isTunggakan, $relasi, $userId) {
+            $bill->update(['status' => 'paid']);
+
+            $payment = BillPayment::create([
+                'bill_id' => $bill->id,
+                'amount_paid' => $request->amount_paid ?? $bill->total_amount,
+                'confirmed_by' => $userId,
+                'paid_at' => now(),
+            ]);
+
+            // ── Jurnal Pembayaran ──
+            // Abodemen
+            if ($abodemen > 0) {
+                $trx = Transaction::create([
+                    'tgl_transaksi'        => $payment->paid_at,
+                    'account_debet'        => '1.1.01.01',
+                    'account_kredit'       => $isTunggakan ? '1.1.03.01' : '4.1.01.02',
+                    'transaction_group'    => null,
+                    'reverence_type'       => 'bill_payment',
+                    'reverence_id'         => $payment->id,
+                    'keterangan_transaksi' => 'Abodemen - ' . $relasi,
+                    'relasi'               => $relasi,
+                    'saldo'                => $abodemen,
+                    'id_user'              => $userId,
+                ]);
+                $trx->update(['urutan' => $trx->id]);
+            }
+
+            // Tagihan Pemakaian
+            if ($usageCharge > 0) {
+                $trx = Transaction::create([
+                    'tgl_transaksi'        => $payment->paid_at,
+                    'account_debet'        => '1.1.01.01',
+                    'account_kredit'       => $isTunggakan ? '1.1.03.01' : '4.1.01.03',
+                    'transaction_group'    => null,
+                    'reverence_type'       => 'bill_payment',
+                    'reverence_id'         => $payment->id,
+                    'keterangan_transaksi' => 'Tagihan Pemakaian - ' . $relasi,
+                    'relasi'               => $relasi,
+                    'saldo'                => $usageCharge,
+                    'id_user'              => $userId,
+                ]);
+                $trx->update(['urutan' => $trx->id]);
+            }
+
+            // Denda (hanya tunggakan)
+            if ($denda > 0) {
+                $trx = Transaction::create([
+                    'tgl_transaksi'        => $payment->paid_at,
+                    'account_debet'        => '1.1.01.01',
+                    'account_kredit'       => '4.1.01.04',
+                    'transaction_group'    => null,
+                    'reverence_type'       => 'bill_payment',
+                    'reverence_id'         => $payment->id,
+                    'keterangan_transaksi' => 'Denda - ' . $relasi,
+                    'relasi'               => $relasi,
+                    'saldo'                => $denda,
+                    'id_user'              => $userId,
+                ]);
+                $trx->update(['urutan' => $trx->id]);
+            }
+        });
 
         $bill->load('customer.user', 'customer.ticket.package');
 
@@ -223,7 +288,6 @@ class MonthlyBillController extends Controller
             'message' => 'Pembayaran berhasil dikonfirmasi',
             'data' => [
                 'bill' => $bill,
-                'payment' => $payment,
             ],
         ]);
     }
@@ -295,9 +359,21 @@ class MonthlyBillController extends Controller
             ], 400);
         }
 
-        $bill->update(['status' => 'unpaid']);
+        DB::transaction(function () use ($bill) {
+            // Hapus transaksi jurnal terkait pembayaran bill ini
+            $paymentIds = $bill->billPayments()->pluck('id');
+            if ($paymentIds->isNotEmpty()) {
+                Transaction::where('reverence_type', 'bill_payment')
+                    ->whereIn('reverence_id', $paymentIds)
+                    ->delete();
+            }
 
-        BillPayment::where('bill_id', $bill->id)->delete();
+            // Hapus pembayaran
+            BillPayment::where('bill_id', $bill->id)->delete();
+
+            // Kembalikan status ke unpaid
+            $bill->update(['status' => 'unpaid']);
+        });
 
         return response()->json([
             'success' => true,
