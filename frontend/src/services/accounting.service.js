@@ -41,6 +41,10 @@ export const accountingService = {
     const response = await api.get('/alokasi-laba/config')
     return response.data
   },
+  async getAccountsForAllocation() {
+    const response = await api.get('/alokasi-laba/accounts')
+    return response.data
+  },
 }
 
 export default accountingService

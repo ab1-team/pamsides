@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\Account;
-use App\Models\Transaction;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
@@ -19,13 +18,12 @@ class AlokasiLabaController extends Controller
 
         $tahun = (int) $request->tahun;
 
-        $closing = DB::table('transactions')
-            ->where('reverence_type', 'tutup_buku')
-            ->where('reverence_id', $tahun)
-            ->whereNull('deleted_at')
+        $isClosed = DB::table('amount')
+            ->where('tahun', $tahun)
+            ->where('bulan', '13')
             ->exists();
 
-        if (! $closing) {
+        if (! $isClosed) {
             return response()->json([
                 'success' => false,
                 'message' => "Buku tahun {$tahun} belum ditutup. Tutup buku terlebih dahulu.",
@@ -38,47 +36,40 @@ class AlokasiLabaController extends Controller
             $totalLaba = $this->getLabaRugi($tahun);
         }
 
-        $cfg = $this->getAlokasiConfig();
+        $accountsDibagihkan = Account::where('kode_akun', 'like', '2.1.01.%')
+            ->whereNull('tgl_nonaktif')
+            ->orderBy('kode_akun')
+            ->get(['id', 'kode_akun', 'nama_akun', 'jenis_mutasi']);
 
-        $labaDibagikan = [];
-        $totalDibagikan = 0;
-        foreach ($cfg['dibagikan'] as $item) {
-            $nominal = round($totalLaba * ((float) $item['persen'] / 100));
-            $labaDibagikan[] = [
-                'kode_akun'  => $item['kode_akun'],
-                'nama_akun'  => $item['nama_akun'],
-                'kategori'   => $item['kategori'],
-                'persen'     => (float) $item['persen'],
-                'nominal'    => $nominal,
-            ];
-            $totalDibagikan += $nominal;
-        }
-
-        $sisa = round($totalLaba - $totalDibagikan);
-
-        $labaDitahan = [];
-        foreach ($cfg['ditahan'] as $item) {
-            $nominal = round($sisa * ((float) $item['persen'] / 100));
-            $labaDitahan[] = [
-                'kode_akun'  => $item['kode_akun'],
-                'nama_akun'  => $item['nama_akun'],
-                'kategori'   => $item['kategori'],
-                'persen'     => (float) $item['persen'],
-                'nominal'    => $nominal,
+        $labaDibagihkan = [];
+        foreach ($accountsDibagihkan as $acc) {
+            $labaDibagihkan[] = [
+                'kode_akun'   => $acc->kode_akun,
+                'nama_akun'   => $acc->nama_akun,
+                'jenis_mutasi' => $acc->jenis_mutasi,
+                'persen'      => 0,
+                'nominal'     => 0,
             ];
         }
+
+        $labaDitahan = [
+            [
+                'kode_akun'   => null,
+                'nama_akun'   => 'Pemupukan Modal',
+                'jenis_mutasi' => 'kredit',
+                'persen'      => 0,
+                'nominal'     => 0,
+            ],
+        ];
 
         return response()->json([
             'success' => true,
             'data'    => [
-                'tahun'             => $tahun,
-                'total_laba'        => $totalLaba,
-                'laba_dibagikan'    => $labaDibagikan,
-                'laba_ditahan'      => $labaDitahan,
-                'total_dibagikan'   => $totalDibagikan,
-                'sisa_ditahan'      => $sisa,
-                'config'            => $cfg,
-                'closed'            => true,
+                'tahun'           => $tahun,
+                'total_laba'      => $totalLaba,
+                'laba_dibagihkan' => $labaDibagihkan,
+                'laba_ditahan'    => $labaDitahan,
+                'closed'          => true,
             ],
         ]);
     }
@@ -88,122 +79,111 @@ class AlokasiLabaController extends Controller
         $request->validate([
             'tahun'      => 'required|integer|min:2000',
             'items'      => 'required|array|min:1',
-            'items.*.kode_akun'   => 'required|string|exists:accounts,kode_akun',
+            'items.*.kode_akun'   => 'nullable|string|exists:accounts,kode_akun',
             'items.*.nominal'     => 'required|numeric',
         ]);
 
         $tahun = (int) $request->tahun;
 
-        $closing = DB::table('transactions')
-            ->where('reverence_type', 'tutup_buku')
-            ->where('reverence_id', $tahun)
-            ->whereNull('deleted_at')
+        $isClosed = DB::table('amount')
+            ->where('tahun', $tahun)
+            ->where('bulan', '13')
             ->exists();
 
-        if (! $closing) {
+        if (! $isClosed) {
             return response()->json([
                 'success' => false,
                 'message' => "Buku tahun {$tahun} belum ditutup.",
             ], 422);
         }
 
-        $existing = DB::table('transactions')
-            ->where('reverence_type', 'alokasi_laba')
-            ->where('reverence_id', $tahun)
-            ->whereNull('deleted_at')
-            ->exists();
+        $totalLaba = $this->getLabaRugi($tahun);
 
-        if ($existing) {
+        $totalNominal = 0;
+        $kodeList = [];
+        foreach ($request->items as $it) {
+            $totalNominal += (float) $it['nominal'];
+            if (!empty($it['kode_akun'])) {
+                $kodeList[$it['kode_akun']] = true;
+            }
+        }
+
+        if (abs($totalLaba - $totalNominal) >= 0.01) {
             return response()->json([
                 'success' => false,
-                'message' => "Alokasi laba untuk tahun {$tahun} sudah pernah disimpan.",
+                'message' => "Total nominal alokasi (Rp " . number_format($totalNominal, 0, ',', '.') .
+                    ") tidak sama dengan total laba (Rp " . number_format($totalLaba, 0, ',', '.') . ").",
             ], 422);
         }
 
-        $akunLabaDitahan = $this->getClosingConfig()['akun_laba_ditahan'];
+        $akunMap = Account::whereIn('kode_akun', array_keys($kodeList))
+            ->get()
+            ->keyBy('kode_akun');
+
+        $akunLabaDitahan = Account::where('kode_akun', '3.2.01.01')->first();
+        if (! $akunLabaDitahan) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Akun 3.2.01.01 (Laba Ditahan) tidak ditemukan.',
+            ], 422);
+        }
 
         DB::beginTransaction();
         try {
-            $userId = $request->user()->id ?? null;
+            $userId = $request->user()->id ?? 1;
+            $now = now();
             $tglAlokasi = $tahun . '-12-31';
             $group = (int) (microtime(true) * 1000);
-            $now = now();
 
-            $totalLaba = $this->getLabaRugi($tahun);
-            $totalNominal = 0;
-            foreach ($request->items as $it) {
-                $totalNominal += (float) $it['nominal'];
+            $existingTx = DB::table('transactions')
+                ->where('reverence_type', 'alokasi_laba')
+                ->where('reverence_id', $tahun)
+                ->whereNull('deleted_at')
+                ->exists();
+
+            if ($existingTx) {
+                return response()->json([
+                    'success' => false,
+                    'message' => "Alokasi laba untuk tahun {$tahun} sudah pernah disimpan.",
+                ], 422);
             }
 
-            $kodeList = [];
-            foreach ($request->items as $it) {
-                if (!empty($it['kode_akun'])) {
-                    $kodeList[$it['kode_akun']] = true;
-                }
-            }
-            $akunMap = Account::whereIn('kode_akun', array_keys($kodeList))
-                ->get()
-                ->keyBy('kode_akun');
-
-            $rows = [];
-            $rows[] = [
-                'tgl_transaksi'        => $tglAlokasi,
-                'account_debet'        => $akunLabaDitahan,
-                'account_kredit'       => $akunLabaDitahan,
-                'transaction_group'    => $group,
-                'reverence_type'       => 'alokasi_laba',
-                'reverence_id'         => $tahun,
-                'keterangan_transaksi' => "Alokasi Laba Tahun {$tahun} - Pembukaan saldo laba ditahan untuk distribusi",
-                'saldo'                => $totalLaba,
-                'urutan'               => 0,
-                'id_user'              => $userId,
-                'created_at'           => $now,
-                'updated_at'           => $now,
-            ];
-
+            $trxRows = [];
             $urutan = 1;
+
             foreach ($request->items as $it) {
                 $nominal = round((float) $it['nominal']);
-                if ($nominal <= 0) continue;
+                if (abs($nominal) < 0.01) $nominal = 0;
+
+                if (empty($it['kode_akun'])) {
+                    continue;
+                }
+
+                if ($it['kode_akun'] === '3.2.01.01') {
+                    continue;
+                }
 
                 $akun = $akunMap[$it['kode_akun']] ?? null;
                 if (! $akun) continue;
 
-                if ($akun->jenis_mutasi === 'kredit') {
-                    $rows[] = [
-                        'tgl_transaksi'        => $tglAlokasi,
-                        'account_debet'        => $akunLabaDitahan,
-                        'account_kredit'       => $akun->kode_akun,
-                        'transaction_group'    => $group,
-                        'reverence_type'       => 'alokasi_laba',
-                        'reverence_id'         => $tahun,
-                        'keterangan_transaksi' => "Alokasi Laba {$tahun} - {$akun->nama_akun}",
-                        'saldo'                => $nominal,
-                        'urutan'               => $urutan++,
-                        'id_user'              => $userId,
-                        'created_at'           => $now,
-                        'updated_at'           => $now,
-                    ];
-                } else {
-                    $rows[] = [
-                        'tgl_transaksi'        => $tglAlokasi,
-                        'account_debet'        => $akun->kode_akun,
-                        'account_kredit'       => $akunLabaDitahan,
-                        'transaction_group'    => $group,
-                        'reverence_type'       => 'alokasi_laba',
-                        'reverence_id'         => $tahun,
-                        'keterangan_transaksi' => "Alokasi Laba {$tahun} - {$akun->nama_akun}",
-                        'saldo'                => $nominal,
-                        'urutan'               => $urutan++,
-                        'id_user'              => $userId,
-                        'created_at'           => $now,
-                        'updated_at'           => $now,
-                    ];
-                }
+                $trxRows[] = [
+                    'tgl_transaksi'        => $tglAlokasi,
+                    'account_debet'        => '3.2.01.01',
+                    'account_kredit'       => $akun->kode_akun,
+                    'transaction_group'    => $group,
+                    'reverence_type'       => 'alokasi_laba',
+                    'reverence_id'         => $tahun,
+                    'keterangan_transaksi' => "Alokasi Laba {$tahun} - {$akun->nama_akun}",
+                    'saldo'                => $nominal,
+                    'urutan'               => $urutan++,
+                    'id_user'              => $userId,
+                    'created_at'           => $now,
+                    'updated_at'           => $now,
+                ];
             }
 
-            if (!empty($rows)) {
-                DB::table('transactions')->insert($rows);
+            if (!empty($trxRows)) {
+                DB::table('transactions')->insert($trxRows);
             }
 
             DB::commit();
@@ -211,10 +191,10 @@ class AlokasiLabaController extends Controller
             return response()->json([
                 'success' => true,
                 'data'    => [
-                    'message'         => "Alokasi laba tahun {$tahun} berhasil disimpan.",
-                    'tahun'           => $tahun,
+                    'message'           => "Alokasi laba tahun {$tahun} berhasil disimpan.",
+                    'tahun'             => $tahun,
                     'total_dialokasikan' => $totalNominal,
-                    'group'           => $group,
+                    'total_laba'        => $totalLaba,
                 ],
             ]);
         } catch (\Throwable $e) {
@@ -286,50 +266,94 @@ class AlokasiLabaController extends Controller
         ]);
     }
 
+    public function accountsForAllocation()
+    {
+        $accounts = Account::where(function ($q) {
+            $q->where('kode_akun', 'like', '1.1.01.%')
+              ->orWhere('kode_akun', 'like', '1.1.02.%')
+              ->orWhere('kode_akun', 'like', '1.1.03.%')
+              ->orWhere('kode_akun', 'like', '1.1.99.%')
+              ->orWhere('kode_akun', 'like', '2.1.01.%')
+              ->orWhere('kode_akun', 'like', '2.1.02.%')
+              ->orWhere('kode_akun', 'like', '2.1.03.%')
+              ->orWhere('kode_akun', 'like', '2.1.04.%')
+              ->orWhere('kode_akun', 'like', '2.1.99.%')
+              ->orWhere('kode_akun', 'like', '2.2.01.%')
+              ->orWhere('kode_akun', 'like', '2.2.02.%')
+              ->orWhere('kode_akun', 'like', '2.2.03.%')
+              ->orWhere('kode_akun', 'like', '2.2.04.%')
+              ->orWhere('kode_akun', 'like', '2.2.05.%')
+              ->orWhere('kode_akun', 'like', '2.2.99.%')
+              ->orWhere('kode_akun', 'like', '3.1.01.%')
+              ->orWhere('kode_akun', 'like', '3.1.02.%')
+              ->orWhere('kode_akun', 'like', '3.1.03.%')
+              ->orWhere('kode_akun', 'like', '3.1.99.%')
+              ->orWhere('kode_akun', 'like', '3.2.01.%')
+              ->orWhere('kode_akun', 'like', '3.2.99.%');
+        })
+            ->whereNull('tgl_nonaktif')
+            ->orderBy('kode_akun')
+            ->get(['id', 'kode_akun', 'nama_akun', 'jenis_mutasi', 'lev1', 'lev2', 'lev3', 'lev4']);
+
+        return response()->json([
+            'success' => true,
+            'data'    => $accounts,
+        ]);
+    }
+
     public function check($year)
     {
         $year = (int) $year;
 
-        $exists = DB::table('transactions')
-            ->where('reverence_type', 'alokasi_laba')
-            ->where('reverence_id', $year)
-            ->whereNull('deleted_at')
+        $closed = DB::table('amount')
+            ->where('tahun', $year)
+            ->where('bulan', '13')
             ->exists();
 
-        $closed = DB::table('transactions')
-            ->where('reverence_type', 'tutup_buku')
-            ->where('reverence_id', $year)
-            ->whereNull('deleted_at')
+        $akunLabaRugi = $this->getClosingConfig()['akun_laba_rugi_berjalan'];
+        $alokasiSaved = DB::table('amount')
+            ->where('tahun', $year)
+            ->where('bulan', '13')
+            ->where('account_id', function ($q) use ($akunLabaRugi) {
+                $q->select('id')->from('accounts')->where('kode_akun', $akunLabaRugi);
+            })
+            ->where('kredit', '>', 0)
             ->exists();
+
+        $totalLaba = $closed ? $this->getLabaRugi($year) : 0;
 
         return response()->json([
             'success' => true,
             'data'    => [
                 'tahun'        => $year,
                 'tutup_buku'   => $closed,
-                'alokasi_saved' => $exists,
+                'alokasi_saved' => $alokasiSaved,
+                'total_laba'   => $totalLaba,
             ],
         ]);
     }
 
     private function getLabaRugi(int $tahun): float
     {
-        $akunLR = $this->getClosingConfig()['akun_laba_rugi_berjalan'];
-        $start = "{$tahun}-01-01";
-        $end   = "{$tahun}-12-31";
+        $pendapatan = DB::table('amount as a')
+            ->join('accounts as ac', 'a.account_id', '=', 'ac.id')
+            ->where('a.tahun', $tahun)
+            ->where('a.bulan', '13')
+            ->where('ac.kode_akun', 'like', '4.%')
+            ->whereNull('ac.tgl_nonaktif')
+            ->selectRaw('COALESCE(SUM(a.kredit - a.debit), 0) as total')
+            ->value('total');
 
-        $row = DB::table('transactions')
-            ->selectRaw('COALESCE(SUM(CASE WHEN account_debet = ? THEN saldo ELSE 0 END), 0) as debit', [$akunLR])
-            ->selectRaw('COALESCE(SUM(CASE WHEN account_kredit = ? THEN saldo ELSE 0 END), 0) as kredit', [$akunLR])
-            ->whereNull('deleted_at')
-            ->whereBetween('tgl_transaksi', [$start, $end])
-            ->where(function ($q) use ($akunLR) {
-                $q->where('account_debet', $akunLR)
-                    ->orWhere('account_kredit', $akunLR);
-            })
-            ->first();
+        $biaya = DB::table('amount as a')
+            ->join('accounts as ac', 'a.account_id', '=', 'ac.id')
+            ->where('a.tahun', $tahun)
+            ->where('a.bulan', '13')
+            ->where('ac.kode_akun', 'like', '5.%')
+            ->whereNull('ac.tgl_nonaktif')
+            ->selectRaw('COALESCE(SUM(a.debit - a.kredit), 0) as total')
+            ->value('total');
 
-        return (float)($row->kredit ?? 0) - (float)($row->debit ?? 0);
+        return (float) $pendapatan - (float) $biaya;
     }
 
     private function getClosingConfig(): array
@@ -354,14 +378,14 @@ class AlokasiLabaController extends Controller
     {
         $default = [
             'dibagikan' => [
-                ['kode_akun' => '2.1.01.01', 'nama_akun' => 'Utang Dividen Pemdes',                'kategori' => 'Utang Dividen Pemdes (45%)',      'persen' => 45],
-                ['kode_akun' => '2.1.01.02', 'nama_akun' => 'Utang Dividen Masy Penyerta Modal',  'kategori' => 'Utang Dividen Masyarakat (40%)', 'persen' => 40],
-                ['kode_akun' => '2.1.01.03', 'nama_akun' => 'Bantuan Sosial',                       'kategori' => 'Bantuan Sosial (5%)',            'persen' => 5],
-                ['kode_akun' => '2.1.01.04', 'nama_akun' => 'Utang Bonus',                          'kategori' => 'Bonus Karyawan (5%)',            'persen' => 5],
+                ['kode_akun' => '2.2.01.01', 'nama_akun' => 'Utang Bank 1',                       'kategori' => 'Utang Bank (45%)',            'persen' => 45],
+                ['kode_akun' => '2.2.01.02', 'nama_akun' => 'Utang Bank 2',                       'kategori' => 'Utang Bank (40%)',            'persen' => 40],
+                ['kode_akun' => '2.2.02.01', 'nama_akun' => 'Utang Jangka Panjang Lainnya',        'kategori' => 'Utang Jangka Panjang (5%)',   'persen' => 5],
+                ['kode_akun' => '2.2.99.01', 'nama_akun' => 'Cadangan Dividen',                    'kategori' => 'Cadangan Dividen (5%)',       'persen' => 5],
             ],
             'ditahan' => [
-                ['kode_akun' => '3.1.01.01', 'nama_akun' => 'Modal Pemdes',                         'kategori' => 'Pemupukan Modal (3%)',           'persen' => 60],
-                ['kode_akun' => '3.1.02.01', 'nama_akun' => 'Modal Lain-lain',                      'kategori' => 'Cadangan Umum (2%)',             'persen' => 40],
+                ['kode_akun' => '3.1.01.01', 'nama_akun' => 'Modal Pemdes',                         'kategori' => 'Pemupukan Modal (60%)',       'persen' => 60],
+                ['kode_akun' => '3.1.02.01', 'nama_akun' => 'Modal Lain-lain',                      'kategori' => 'Cadangan Umum (40%)',         'persen' => 40],
             ],
         ];
 
@@ -376,4 +400,3 @@ class AlokasiLabaController extends Controller
         return $default;
     }
 }
-
