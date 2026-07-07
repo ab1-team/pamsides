@@ -184,6 +184,7 @@ Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
     Route::post('alokasi-laba/save', [AlokasiLabaController::class, 'save']);
     Route::get('alokasi-laba/config', [AlokasiLabaController::class, 'getConfig']);
     Route::post('alokasi-laba/config', [AlokasiLabaController::class, 'saveConfig']);
+    Route::get('alokasi-laba/accounts', [AlokasiLabaController::class, 'accountsForAllocation']);
 
     //e-budgeting routes
     Route::get('ebudgeting/check-exists', [EbudgetingController::class, 'checkExists']);

@@ -38,41 +38,47 @@
       v-if="bookStatus !== 'open' || isProcessing"
     >
       <div class="flex! flex-col! lg:flex-row! lg:items-center! lg:justify-between! gap-4! mb-4!">
-        <div
-          class="flex! items-center! gap-3! text-base! font-semibold! text-gray-900!"
-          v-if="bookStatus !== 'open' || isProcessing"
-        >
-          <span class="text-lg!">📊</span>
-          <div class="flex! flex-col! gap-1!">
-            <span class="text-base! font-semibold! text-gray-900!"
-              >Daftar Akun — Tahun {{ selectedTahun }}</span
-            >
-            <span
-              v-if="isProcessing || bookStatus === 'closed'"
-              class="text-xs! font-semibold! px-2.5! py-1! rounded-full! inline-flex! items-center! gap-1.5! transition-all! duration-300!"
-              :class="
-                isProcessing
-                  ? 'bg-amber-100! text-amber-700! border! border-amber-200! animate-pulse!'
-                  : bookStatus === 'closed'
-                    ? 'bg-emerald-100! text-emerald-700! border! border-emerald-200!'
-                    : ''
-              "
-            >
+          <div
+            class="flex! items-center! gap-3! text-base! font-semibold! text-gray-900!"
+            v-if="bookStatus !== 'open' || isProcessing"
+          >
+            <span class="text-lg!">📊</span>
+            <div class="flex! flex-col! gap-1!">
+              <span class="text-base! font-semibold! text-gray-900!"
+                >Daftar Akun — Tahun {{ selectedTahun }}</span
+              >
               <span
-                v-if="isProcessing"
-                class="w-1.5! h-1.5! rounded-full! bg-amber-500! animate-ping!"
-              ></span>
-              <span v-else>✅</span>
-              {{
-                isProcessing
-                  ? 'Sedang Memproses...'
-                  : bookStatus === 'closed'
-                    ? 'Buku Sudah Ditutup'
-                    : ''
-              }}
-            </span>
+                v-if="isProcessing || bookStatus === 'closed'"
+                class="text-xs! font-semibold! px-2.5! py-1! rounded-full! inline-flex! items-center! gap-1.5! transition-all! duration-300!"
+                :class="
+                  isProcessing
+                    ? 'bg-amber-100! text-amber-700! border! border-amber-200! animate-pulse!'
+                    : bookStatus === 'closed'
+                      ? 'bg-emerald-100! text-emerald-700! border! border-emerald-200!'
+                      : ''
+                "
+              >
+                <span
+                  v-if="isProcessing"
+                  class="w-1.5! h-1.5! rounded-full! bg-amber-500! animate-ping!"
+                ></span>
+                <span v-else>✅</span>
+                {{
+                  isProcessing
+                    ? 'Sedang Memproses...'
+                    : bookStatus === 'closed'
+                      ? 'Buku Ditutup (Bulan 13 Tersimpan)'
+                      : ''
+                }}
+              </span>
+              <span
+                v-if="bookStatus === 'closed' && tahunDepanInfo"
+                class="text-xs! text-blue-600! font-medium!"
+              >
+                💡 Saldo bulan 00 untuk {{ tahunDepanInfo }} sudah ditambahkan
+              </span>
+            </div>
           </div>
-        </div>
         <div class="w-full! lg:w-auto!">
           <div class="relative!">
             <span class="absolute! left-3! top-1/2! -translate-y-1/2! text-sm!">🔍</span>
@@ -142,7 +148,7 @@
                     :show-helper="false"
                     size="sm"
                     no-margin
-                    :readonly="bookStatus === 'closed'"
+                    readonly
                   />
                 </td>
               </tr>
@@ -221,6 +227,7 @@ const isLoadingAkun = ref(false)
 const isSaving = ref(false)
 const bookStatus = ref('open')
 const akunList = ref([])
+const tahunDepanInfo = ref(null)
 
 const tahunOptions = computed(() => {
   const current = new Date().getFullYear()
@@ -308,7 +315,8 @@ const simpanPerubahanSaldo = async () => {
     const res = await accountingService.closeBook(selectedTahun.value, { overrides })
     if (res.success) {
       bookStatus.value = 'closed'
-      uiStore.success(res.data?.message || `Buku tahun ${selectedTahun.value} berhasil ditutup.`)
+      tahunDepanInfo.value = res.data?.tahun_depan || (Number(selectedTahun.value) + 1)
+      uiStore.success(res.data?.message || `Buku tahun ${selectedTahun.value} berhasil ditutup. Saldo bulan 00 untuk ${tahunDepanInfo.value} sudah ditambahkan.`)
       await loadAkunList(selectedTahun.value)
     } else {
       uiStore.error(res.message || 'Gagal menutup buku.')
@@ -357,6 +365,7 @@ watch(selectedTahun, (val) => {
   if (val) {
     bookStatus.value = 'open'
     akunList.value = []
+    tahunDepanInfo.value = null
   }
 })
 </script>
