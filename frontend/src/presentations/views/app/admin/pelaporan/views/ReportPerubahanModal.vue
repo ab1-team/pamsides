@@ -36,18 +36,7 @@
       </tbody>
     </table>
 
-    <div class="footer-container">
-      <div class="footer-sign">
-        <p>Diperiksa oleh,</p>
-        <p style="margin-bottom: 50px;">Direktur</p>
-        <p>( ........................... )</p>
-      </div>
-      <div class="footer-sign">
-        <p>Kedung, {{ tanggalCetak }}</p>
-        <p style="margin-bottom: 50px;">Dilaporkan oleh,</p>
-        <p>( ........................... )</p>
-      </div>
-    </div>
+    
 
   </BaseReportLayout>
 </template>

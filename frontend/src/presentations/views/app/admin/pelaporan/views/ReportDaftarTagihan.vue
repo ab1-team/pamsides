@@ -9,7 +9,7 @@
       </h2>
     </div>
 
-    <table class="data-table" v-if="rawItems.length > 0">
+    <table class="data-table">
       <thead>
         <tr style="background-color: rgb(230, 230, 230); font-weight: bold; text-align: center;">
           <th width="4%" class="t l b" rowspan="2" align="center" style="text-align: center; vertical-align: middle;">No</th>
@@ -27,47 +27,42 @@
         </tr>
       </thead>
       <tbody>
-        <template v-for="(dusunGroup, namaDesa) in hierarchicalRows" :key="namaDesa">
-          <template v-for="(customers, namaDusun) in dusunGroup" :key="namaDusun">
-            
-            <tr class="wilayah-header-gabung">
-              <td colspan="9">
-                <span class="text-format-normal"><b>Desa {{ namaDesa.toLowerCase() }} Dusun {{ namaDusun.toLowerCase() }}</b></span>
-              </td>
-            </tr>
+        <template v-if="rawItems.length > 0">
+          <template v-for="(dusunGroup, namaDesa) in hierarchicalRows" :key="namaDesa">
+            <template v-for="(customers, namaDusun) in dusunGroup" :key="namaDusun">
 
-            <tr v-for="(row, idx) in customers" :key="row.id ?? idx">
-              <td class="text-center">{{ idx + 1 }}</td>
-              <td>{{ row.name }}</td>
-              <td class="text-center">{{ row.customer_code }}</td>
-              <td class="text-center">{{ row.activated_at }}</td>
-              <td class="text-right">{{ formatCurrency(row.bulan_lalu) }}</td>
-              <td class="text-right">{{ formatCurrency(row.bulan_ini) }}</td>
-              <td class="text-right" style="font-weight: 500;">{{ formatCurrency(row.sampai_bulan_ini) }}</td>
-              <td class="text-right">{{ formatCurrency(row.dibayar) }}</td>
-              <td class="text-center">
-                <span class="uppercase-text">
-                  {{ row.status || '-' }}
-                </span>
-              </td>
-            </tr>
+              <tr class="wilayah-header-gabung">
+                <td colspan="9">
+                  <span class="text-format-normal"><b>Desa {{ namaDesa.toLowerCase() }} Dusun {{ namaDusun.toLowerCase() }}</b></span>
+                </td>
+              </tr>
 
+              <tr v-for="(row, idx) in customers" :key="row.id ?? idx">
+                <td class="text-center">{{ idx + 1 }}</td>
+                <td>{{ row.name }}</td>
+                <td class="text-center">{{ row.customer_code }}</td>
+                <td class="text-center">{{ row.activated_at }}</td>
+                <td class="text-right">{{ formatCurrency(row.bulan_lalu) }}</td>
+                <td class="text-right">{{ formatCurrency(row.bulan_ini) }}</td>
+                <td class="text-right" style="font-weight: 500;">{{ formatCurrency(row.sampai_bulan_ini) }}</td>
+                <td class="text-right">{{ formatCurrency(row.dibayar) }}</td>
+                <td class="text-center">
+                  <span class="uppercase-text">
+                    {{ row.status || '-' }}
+                  </span>
+                </td>
+              </tr>
+
+            </template>
           </template>
         </template>
+        <tr v-else>
+          <td colspan="9" class="empty-state">Tidak ada data tagihan pelanggan pada periode ini.</td>
+        </tr>
       </tbody>
     </table>
 
-    <div v-if="rawItems.length === 0" class="empty-state">
-      Tidak ada data tagihan pelanggan pada periode ini.
-    </div>
-
-    <div class="footer-container">
-      <div class="footer-sign">
-        <p>{{ tempat }}, {{ tanggalCetak }}</p>
-        <p style="margin-bottom: 55px;">Petugas,</p>
-        <p><b>( ........................... )</b></p>
-      </div>
-    </div>
+    
   </BaseReportLayout>
 </template>
 
@@ -108,10 +103,10 @@
 
 
   const formatCurrency = (val) => {
-    if (val === null || val === undefined || isNaN(val)) return '0'
+    if (val === null || val === undefined || isNaN(val)) return '0,00'
     return Number(val).toLocaleString('id-ID', {
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
     })
   }
 
