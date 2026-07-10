@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 
 class AkunLevel3 extends Model
 {
@@ -38,6 +39,16 @@ class AkunLevel3 extends Model
 
     public function accounts(): HasMany
     {
-        return $this->hasMany(Account::class, 'lev3', 'lev3');
+        return $this->hasMany(Account::class, 'parent_id');
+    }
+
+    public function accountParent(): HasMany
+    {
+        return $this->hasMany(Account::class, 'parent_id');
+    }
+
+    public function amount(): HasManyThrough
+    {
+        return $this->hasManyThrough(Amount::class, Account::class, 'lev3', 'account_id', 'lev3', 'id');
     }
 }

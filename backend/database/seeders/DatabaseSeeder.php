@@ -11,16 +11,17 @@ class DatabaseSeeder extends Seeder
         $this->call([
             UserSeeder::class,
             InstallationPackageSeeder::class,
-            InstallationTicketSeeder::class, 
+            InstallationTicketSeeder::class,
             CustomerSeeder::class,
             SettingsSeeder::class,
-            AccountsTableSeeder::class,   
+            AccountsTableSeeder::class,
             AkunLevel1Seeder::class,
             AkunLevel2Seeder::class,
             AkunLevel3Seeder::class,
             EbudgetingSeeder::class,
             JenisTransactionsSeeder::class,
             MasterArusKasSeeder::class,
+            InventorySampleSeeder::class,
         ]);
     }
 }
