@@ -23,6 +23,7 @@ class AppServiceProvider extends ServiceProvider
             'monthly_bill' => \App\Models\MonthlyBill::class,
             'customer'     => \App\Models\Customer::class,
             'user'         => \App\Models\User::class,
+            'bill_payment' => \App\Models\BillPayment::class,
         ]);
 
         Transaction::observe(TransactionObserver::class);

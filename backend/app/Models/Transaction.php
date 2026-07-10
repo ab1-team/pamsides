@@ -66,4 +66,7 @@ class Transaction extends Model
 
         return $class::find($this->reverence_id);
     }
+    public function bill() {
+        return $this->belongsTo(MonthlyBill::class, 'reverence_id', 'id');
+    }
 }

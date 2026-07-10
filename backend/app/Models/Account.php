@@ -4,6 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Account extends Model
 {
@@ -40,5 +42,22 @@ class Account extends Model
     public function akunLevel3(): BelongsTo
     {
         return $this->belongsTo(AkunLevel3::class, 'lev3', 'lev3');
+    }
+    public function amount(): HasMany
+    {
+        return $this->hasMany(Amount::class, 'account_id');
+    }
+
+    public function oneAmount(): HasOne
+    {
+        return $this->hasOne(Amount::class, 'account_id');
+    }
+    public function eb()
+    {
+        return $this->hasMany(Ebudgeting::class, 'account_id', 'id');
+    }
+public function inventory(): HasMany
+    {
+        return $this->hasMany(Inventory::class, 'jenis', 'lev3');
     }
 }
