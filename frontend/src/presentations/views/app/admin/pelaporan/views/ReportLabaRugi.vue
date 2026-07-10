@@ -60,10 +60,10 @@
     })
 
     const rows = computed(() => {
-        if (Array.isArray(props.payload ? .flatRows) && props.payload.flatRows.length > 0) {
+        if (Array.isArray(props.payload?.flatRows) && props.payload.flatRows.length > 0) {
             return props.payload.flatRows
         }
-        if (Array.isArray(props.payload ? .groups)) {
+        if (Array.isArray(props.payload?.groups)) {
             const out = []
             props.payload.groups.forEach((g) => {
                 out.push({
@@ -81,7 +81,7 @@
     })
 
     const periodeText = computed(() => {
-        const p = props.payload ? .periode || {}
+        const p = props.payload?.periode || {}
         return p.periode_text || `01 ${p.bulan_name?.toUpperCase() || ''} ${p.tahun || ''} S.D ${p.tahun || ''}`
     })
 
@@ -94,7 +94,7 @@
     }
 </script>
 
-<style scoped>
+<style>
     .report-table {
         width: 100%;
         border-collapse: collapse;

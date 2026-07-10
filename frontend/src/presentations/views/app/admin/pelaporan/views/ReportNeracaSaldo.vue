@@ -154,7 +154,7 @@
     })
 
     const periodeText = computed(() => {
-        const p = props.payload ? .periode || {}
+        const p = props.payload?.periode || {}
 
         return `${(p.bulan_name || '').toUpperCase()} ${p.tahun || ''}`
     })

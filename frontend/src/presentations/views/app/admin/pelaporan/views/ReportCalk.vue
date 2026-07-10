@@ -199,20 +199,20 @@
     })
 
     const isFirstPage = computed(() => {
-        const info = props.payload ? .pageInfo
+        const info = props.payload?.pageInfo
         if (info) return info.current === 1
-        return props.payload ? .isFirstPage !== false
+        return props.payload?.isFirstPage !== false
     })
 
     const isLastPage = computed(() => {
-        const info = props.payload ? .pageInfo
+        const info = props.payload?.pageInfo
         if (info) return info.current === info.total
-        return props.payload ? .isLastPage !== false
+        return props.payload?.isLastPage !== false
     })
 
     const lastDay = computed(() => {
-        const bulan = props.payload ? .periode ? .bulan
-        const tahun = props.payload ? .periode ? .tahun
+        const bulan = props.payload?.periode?.bulan
+        const tahun = props.payload?.periode?.tahun
         if (!bulan || !tahun) return ''
         return new Date(tahun, bulan, 0).getDate()
     })
@@ -231,7 +231,7 @@
     const rows = computed(() => {
         const out = []
         let detailIndex = 0
-        const items = props.payload ? .rows || []
+        const items = props.payload?.rows || []
 
         items.forEach((row, idx) => {
             if (row.type === 'lev1') {
@@ -263,7 +263,7 @@
         return out
     })
 
-    const showTableHeader = computed(() => props.payload ? .showTableHeader !== false)
+    const showTableHeader = computed(() => props.payload?.showTableHeader !== false)
 </script>
 
 <style scoped>
