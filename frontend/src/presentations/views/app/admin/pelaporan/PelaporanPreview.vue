@@ -99,6 +99,11 @@ import AsetTetapView from '@/presentations/views/app/admin/pelaporan/views/Repor
 import AsetTakBerwujudView from '@/presentations/views/app/admin/pelaporan/views/ReportAsetTakBerwujud.vue'
 import EbudgetingView from '@/presentations/views/app/admin/pelaporan/views/ReportEbudgeting.vue'
 import AwalTahunView from '@/presentations/views/app/admin/pelaporan/views/ReportAwalTahun.vue'
+import TutupBukuAlokasiLabaView from '@/presentations/views/app/admin/pelaporan/views/ReportTutupBukuAlokasiLaba.vue'
+import TutupBukuNeracaView from '@/presentations/views/app/admin/pelaporan/views/ReportTutupBukuNeraca.vue'
+import TutupBukuLabaRugiView from '@/presentations/views/app/admin/pelaporan/views/ReportTutupBukuLabaRugi.vue'
+import TutupBukuJurnalView from '@/presentations/views/app/admin/pelaporan/views/ReportTutupBukuJurnal.vue'
+import TutupBukuCalkView from '@/presentations/views/app/admin/pelaporan/views/ReportTutupBukuCalk.vue'
 
 
 
@@ -118,11 +123,17 @@ const reportComponents = {
   'laba_rugi': LabaRugiView,
   'arus_kas': ArusKasView,
   'perubahan_modal': PerubahanModalView,
+  'calk': CalkView,
   'calkk': CalkView,
   'ati': AsetTetapView,
   'atb': AsetTakBerwujudView,
   'e_budgeting': EbudgetingView,
-  'tutup_buku': AwalTahunView
+  'tutup_buku': AwalTahunView,
+  'tutup_buku_alokasi_laba': TutupBukuAlokasiLabaView,
+  'tutup_buku_neraca': TutupBukuNeracaView,
+  'tutup_buku_laba_rugi': TutupBukuLabaRugiView,
+  'tutup_buku_jurnal': TutupBukuJurnalView,
+  'tutup_buku_calk': TutupBukuCalkView
 };
 
 const router = useRouter()
@@ -232,6 +243,38 @@ const buildPages = (res) => {
   if (res.view_target === 'cover' || res.view_target === 'surat_pengantar') {
     pages.value = [{ payload: data, meta: baseMeta }]
   } 
+  else if (res.view_target === 'calk' || res.view_target === 'calkk' || res.view_target === 'tutup_buku_calk') {
+    const rows = Array.isArray(data?.rows) ? data.rows : []
+    const calkContent = data?.calk_content || ''
+    const totalSaldo = data?.total_saldo || 0
+    const chunkSize = 35
+
+    if (rows.length === 0) {
+      pages.value = [{ payload: { ...data, config: baseConfig, rows: [], pageInfo: { current: 1, total: 1 }, isFirstPage: true, isLastPage: true }, meta: baseMeta }]
+    } else {
+      pages.value = []
+      const totalChunks = Math.ceil(rows.length / chunkSize)
+      for (let i = 0; i < rows.length; i += chunkSize) {
+        const chunkIndex = Math.floor(i / chunkSize)
+        const isFirst = chunkIndex === 0
+        const isLast = chunkIndex === totalChunks - 1
+        pages.value.push({
+          payload: {
+            ...data,
+            config: baseConfig,
+            rows: rows.slice(i, i + chunkSize),
+            calk_content: calkContent,
+            total_saldo: totalSaldo,
+            pageInfo: { current: chunkIndex + 1, total: totalChunks },
+            isFirstPage: isFirst,
+            isLastPage: isLast,
+            showTableHeader: isFirst,
+          },
+          meta: baseMeta,
+        })
+      }
+    }
+  } 
   else if (['daftar_pelanggan', 'tagihan_pelanggan', 'piutang_pelanggan'].includes(res.view_target)) {
     const items = Array.isArray(data) ? data : data?.items || []
     const chunkSize = 25
@@ -274,7 +317,6 @@ const buildPages = (res) => {
       }
     }
   } 
-  // === TAMBAHKAN LOGIKA KHUSUS LABA RUGI DI SINI ===
   else if (res.view_target === 'buku_besar') {
     const transactions = Array.isArray(data?.transactions) ? data.transactions : []
     const dataChunkSize = 20
@@ -302,6 +344,26 @@ const buildPages = (res) => {
       }
     }
   } 
+  else if (res.view_target === 'e_budgeting') {
+    const items = Array.isArray(data?.items) ? data.items : [];
+    const chunkSize = 25; // Sesuaikan jumlah baris per halaman agar tidak terpotong
+
+    if (items.length === 0) {
+      pages.value = [{ payload: { ...data, config: baseConfig, items: [] }, meta: baseMeta }];
+    } else {
+      pages.value = [];
+      for (let i = 0; i < items.length; i += chunkSize) {
+        pages.value.push({
+          payload: {
+            ...data,
+            config: baseConfig,
+            items: items.slice(i, i + chunkSize), // Potong data per halaman
+          },
+          meta: baseMeta,
+        });
+      }
+    }
+  }
   else if (res.view_target === 'laba_rugi') {
     const rawGroups = Array.isArray(data?.groups) ? data.groups : []
     
@@ -346,7 +408,85 @@ const buildPages = (res) => {
       }
     }
   }
-  // ================================================
+  else if (res.view_target === 'jurnal_transaksi') {
+    const transactions = Array.isArray(data?.transactions) ? data.transactions : [];
+    const chunkSize = 20; // Sesuaikan jumlah baris per halaman
+
+    if (transactions.length === 0) {
+      pages.value = [{ 
+        payload: { ...data, config: baseConfig, transactions: [], showHeader: true, showFooter: true }, 
+        meta: baseMeta 
+      }];
+    } else {
+      pages.value = [];
+      const totalChunks = Math.ceil(transactions.length / chunkSize);
+      
+      for (let i = 0; i < transactions.length; i += chunkSize) {
+        const chunkIndex = Math.floor(i / chunkSize);
+        const isLast = chunkIndex === totalChunks - 1;
+        
+        pages.value.push({
+          payload: {
+            ...data,
+            config: baseConfig,
+            transactions: transactions.slice(i, i + chunkSize),
+            showHeader: true,
+            showFooter: isLast, // Footer (Total/Tanda tangan) hanya muncul di halaman terakhir
+            pageInfo: { current: chunkIndex + 1, total: totalChunks }
+          },
+          meta: baseMeta,
+        });
+      }
+    }
+  }
+  else if (res.view_target === 'piutang_komisi') {
+    const items = Array.isArray(data?.items) ? data.items : [];
+    const chunkSize = 25; // Sesuaikan dengan tinggi tabel Anda
+
+    if (items.length === 0) {
+      pages.value = [{ 
+        payload: { ...data, config: baseConfig, items: [] }, 
+        meta: baseMeta 
+      }];
+    } else {
+      pages.value = [];
+      for (let i = 0; i < items.length; i += chunkSize) {
+        pages.value.push({
+          payload: {
+            ...data,
+            config: baseConfig,
+            items: items.slice(i, i + chunkSize),
+            // Opsional: tambahkan flag jika perlu membedakan halaman awal/akhir
+            isFirstPage: i === 0,
+            isLastPage: (i + chunkSize) >= items.length
+          },
+          meta: baseMeta,
+        });
+      }
+    }
+  }
+  else if (res.view_target === 'ati' || res.view_target === 'atb') {
+    const groups = Array.isArray(data?.items) ? data.items : []
+
+    if (groups.length === 0) {
+      pages.value = [{ payload: { ...data, config: baseConfig, items: [] }, meta: baseMeta }]
+    } else {
+      pages.value = []
+      groups.forEach((group, idx) => {
+        pages.value.push({
+          payload: {
+            ...data,
+            config: baseConfig,
+            items: [group],
+            pageInfo: { current: idx + 1, total: groups.length },
+            isFirstPage: idx === 0,
+            isLastPage: idx === groups.length - 1,
+          },
+          meta: baseMeta,
+        })
+      })
+    }
+  }
   else {
     pages.value = [{ payload: data, meta: baseMeta }]
   }
