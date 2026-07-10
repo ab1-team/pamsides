@@ -66,7 +66,7 @@
     }
 
     const totalAlokasi = computed(() => {
-        return props.payload.alokasi ? .reduce((sum, item) => sum + hitungSaldo(item), 0) || 0
+        return props.payload.alokasi?.reduce((sum, item) => sum + hitungSaldo(item), 0) || 0
     })
 
     const labaDitahan = computed(() => {

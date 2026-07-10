@@ -64,23 +64,21 @@
 </template>
 
 <script setup>
-    import {
-        computed
-    } from 'vue'
+    import { computed } from 'vue'
     import BaseReportLayout from '../layouts/BaseReportLayout.vue'
 
     const props = defineProps({
         payload: Object
     })
 
-    // Menentukan teks periode berdasarkan bulan
+    // Perbaikan spasi pada optional chaining
     const getPeriodeText = computed(() => {
-        const bulan = props.payload ? .periode ? .bulan
-        const tahun = props.payload ? .periode ? .tahun
+        const bulan = props.payload?.periode?.bulan
+        const tahun = props.payload?.periode?.tahun
         if (bulan === '0') return 'TAHUN ' + tahun
 
         const lastDay = new Date(tahun, bulan, 0).getDate()
-        return 'PER ' + lastDay + ' ' + props.payload ? .periode ? .bulan_name + ' ' + tahun
+        return 'PER ' + lastDay + ' ' + props.payload?.periode?.bulan_name + ' ' + tahun
     })
 
     const formatCurrency = (val) => {
@@ -97,9 +95,11 @@
     const rows = computed(() => {
         const out = []
         let detailIndex = 0
-        const items = props.payload ? .items || []
+        // Perbaikan spasi pada optional chaining
+        const items = props.payload?.items || []
 
         items.forEach((lev1, i1) => {
+            // ... (kode lainnya tetap sama)
             const k1 = `L1-${i1}`
             out.push({
                 type: 'header',

@@ -122,13 +122,13 @@
         return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()}`
     }
 
-    const isKredit = computed(() => String(props.payload ? .jenis_mutasi || '').toLowerCase() === 'kredit')
+    const isKredit = computed(() => String(props.payload?.jenis_mutasi || '').toLowerCase() === 'kredit')
 
-    const showHeader = computed(() => props.payload ? .showHeader !== false)
-    const showFooter = computed(() => props.payload ? .showFooter !== false)
+    const showHeader = computed(() => props.payload?.showHeader !== false)
+    const showFooter = computed(() => props.payload?.showFooter !== false)
 
     const saldoAwalTahun = computed(() => {
-        const data = props.payload ? .saldo_awal_tahun || {
+        const data = props.payload?.saldo_awal_tahun || {
             debit: 0,
             kredit: 0
         }
@@ -143,7 +143,7 @@
     })
 
     const saldoBulanLalu = computed(() => {
-        const data = props.payload ? .saldo_bulan_lalu || {
+        const data = props.payload?.saldo_bulan_lalu || {
             debit: 0,
             kredit: 0
         }
@@ -159,15 +159,15 @@
 
     // Logika: Jika bulan Januari (1), pakai saldo awal tahun. Jika bukan, pakai saldo bulan lalu.
     const initialSaldo = computed(() => {
-        const bln = Number(props.payload ? .periode ? .bulan || 1)
+        const bln = Number(props.payload?.periode?.bulan || 1)
         return bln === 1 ? saldoAwalTahun.value.saldo : saldoBulanLalu.value.saldo
     })
 
     const tableData = computed(() => {
         let currentSaldo = initialSaldo.value
-        const kodeAkun = String(props.payload ? .kode_akun || '')
+        const kodeAkun = String(props.payload?.kode_akun || '')
 
-        return (props.payload ? .transactions || []).map((trx) => {
+        return (props.payload?.transactions || []).map((trx) => {
             const isDebitSide = String(trx.account_debet) === kodeAkun
             const nominal = Number(trx.saldo || trx.jumlah || 0)
             const debit = isDebitSide ? nominal : 0

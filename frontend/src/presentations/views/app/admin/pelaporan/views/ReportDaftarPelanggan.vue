@@ -82,7 +82,7 @@
     })
 
     const rawItems = computed(() => {
-        return props.payload ? .items || []
+        return props.payload?.items || []
     })
 
     const hierarchicalRows = computed(() => {

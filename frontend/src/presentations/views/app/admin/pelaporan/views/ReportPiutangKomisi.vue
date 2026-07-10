@@ -57,7 +57,7 @@
         },
     })
 
-    const rawItems = computed(() => props.payload ? .items || [])
+    const rawItems = computed(() => props.payload?.items || [])
 
     const formatCurrency = (val) => {
         if (val === null || val === undefined || isNaN(val)) return '0,00'
