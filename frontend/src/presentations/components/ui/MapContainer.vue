@@ -7,7 +7,7 @@
       <button
         @click="toggleMapType"
         class="map-control-btn shadow-lg"
-        :title="isSatellite ? 'Switch to Roadmap' : 'Switch to Satellite'"
+        :title="isSatellite ? 'Beralih ke Peta' : 'Beralih ke Satelit'"
       >
         <font-awesome-icon :icon="isSatellite ? 'map' : 'satellite'" />
         <span>{{ isSatellite ? 'Peta' : 'Satelit' }}</span>
@@ -17,7 +17,7 @@
     <!-- Info Overlay -->
     <div v-if="loading" class="map-loading">
       <font-awesome-icon icon="spinner" spin />
-      <span>Loading Maps...</span>
+      <span>Memuat Peta...</span>
     </div>
   </div>
 </template>

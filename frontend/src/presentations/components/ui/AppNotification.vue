@@ -14,7 +14,7 @@
             <span v-else>ℹ️</span>
           </div>
           <h3 class="notification-title">{{ title }}</h3>
-          <button class="notification-close" @click="handleClose" aria-label="Close notification">
+          <button class="notification-close" @click="handleClose" aria-label="Tutup notifikasi">
             ✕
           </button>
         </div>

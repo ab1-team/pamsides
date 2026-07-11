@@ -153,9 +153,9 @@
           class="bg-sky-50/50! border-sky-100!"
         >
           <div class="flex! flex-col! gap-2!">
-            <h4 class="text-sm! font-bold! text-slate-700!">Aquifer Health</h4>
+            <h4 class="text-sm! font-bold! text-slate-700!">Kondisi Air Tanah</h4>
             <p class="text-[11px]! text-slate-500! leading-relaxed!">
-              Current system sustainability index is optimal.
+              Indeks keberlanjutan sistem saat ini dalam kondisi optimal.
             </p>
             <div class="mt-2! w-full! h-1.5! bg-sky-100! rounded-full! overflow-hidden!">
               <div class="h-full! bg-sky-500! rounded-full!" style="width: 85%"></div>
@@ -324,7 +324,7 @@
               @click="closeDetailModal"
               class="px-6! py-2! text-sm! font-medium! text-slate-700! bg-white! border! border-slate-300! rounded-lg! hover:bg-slate-50! transition-colors!"
             >
-              Close
+              Tutup
             </button>
           </div>
         </div>

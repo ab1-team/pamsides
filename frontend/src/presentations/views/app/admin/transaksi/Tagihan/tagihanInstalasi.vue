@@ -10,7 +10,7 @@
         </h1>
         <p class="text-sm! text-slate-500! mt-1! max-w-2xl!">
           Kelola tagihan biaya pasang baru pelanggan. Mendukung pembayaran sebagian (cicilan) dan
-          pelunasan. Status tiket akan otomatis lanjut ke Processing ketika sudah lunas.
+          pelunasan. Status tiket akan otomatis lanjut ke Diproses ketika sudah lunas.
         </p>
       </div>
 
@@ -21,7 +21,7 @@
           <div class="w-2! h-2! rounded-full! bg-amber-500!"></div>
           <div>
             <div class="text-[10px]! font-bold! text-slate-400! uppercase! tracking-wider!">
-              Surveyed
+              Disurvei
             </div>
             <div class="text-sm! font-extrabold! text-amber-600!">{{ counts.surveyed }}</div>
           </div>
@@ -32,7 +32,7 @@
           <div class="w-2! h-2! rounded-full! bg-orange-500! animate-pulse!"></div>
           <div>
             <div class="text-[10px]! font-bold! text-slate-400! uppercase! tracking-wider!">
-              Unpaid
+              Belum Bayar
             </div>
             <div class="text-sm! font-extrabold! text-orange-600!">{{ counts.unpaid }}</div>
           </div>
@@ -67,7 +67,7 @@
             class="text-[10px]! font-bold! text-slate-500! hover:text-sky-600! flex! items-center! gap-1! uppercase! tracking-wider!"
           >
             <font-awesome-icon icon="sync" :class="loading ? 'animate-spin!' : ''" />
-            Refresh
+            Segarkan
           </button>
         </div>
 
@@ -134,7 +134,7 @@
                     : 'bg-orange-100! text-orange-700!'
                 "
               >
-                {{ t.status === 'surveyed' ? 'Surveyed' : 'Unpaid' }}
+                {{ t.status === 'surveyed' ? 'Disurvei' : 'Belum Bayar' }}
               </span>
             </div>
 
@@ -296,7 +296,7 @@
                 <font-awesome-icon icon="check" class="text-emerald-600! text-2xl!" />
               </div>
               <p class="text-sm! font-bold! text-emerald-700!">Tagihan sudah lunas</p>
-              <p class="text-xs! text-slate-500! mt-1!">Tiket ini sudah lanjut ke tahap Processing.</p>
+              <p class="text-xs! text-slate-500! mt-1!">Tiket ini sudah lanjut ke tahap Diproses.</p>
             </div>
 
             <div v-else class="space-y-4!">
@@ -355,7 +355,7 @@
                   <p class="font-bold!">Pembayaran Sebagian</p>
                   <p class="mt-0.5!">
                     Setelah ini, status tiket tetap
-                    <strong>Unpaid</strong> dan masih ada sisa
+                    <strong>Belum Bayar</strong> dan masih ada sisa
                     <strong>Rp {{ formatRibuan(selectedTicket.remaining - form.amount) }}</strong>
                     yang harus dilunasi.
                   </p>
@@ -369,7 +369,7 @@
                 <font-awesome-icon icon="check-circle" class="text-emerald-600! mt-0.5!" />
                 <div class="text-[11px]! text-emerald-800!">
                   <p class="font-bold!">Pelunasan</p>
-                  <p class="mt-0.5!">Setelah konfirmasi, tiket otomatis lanjut ke tahap <strong>Processing</strong>.</p>
+                  <p class="mt-0.5!">Setelah konfirmasi, tiket otomatis lanjut ke tahap <strong>Diproses</strong>.</p>
                 </div>
               </div>
 
@@ -390,7 +390,7 @@
                     submitting
                       ? 'Menyimpan...'
                       : form.amount >= selectedTicket.remaining
-                        ? 'Pelunasan & Lanjut Processing'
+                        ? 'Pelunasan & Lanjut Diproses'
                         : 'Simpan Pembayaran'
                   }}
                 </button>
@@ -448,7 +448,7 @@
                       : 'bg-amber-100! text-amber-700!'
                   "
                 >
-                  {{ p.status === 'confirmed' ? 'Confirmed' : 'Pending' }}
+                  {{ p.status === 'confirmed' ? 'Dikonfirmasi' : 'Menunggu' }}
                 </span>
               </div>
             </div>
@@ -631,10 +631,10 @@ const handleSubmit = async () => {
         ${
           !isLunas
             ? `<div style="background:#fef3c7; padding:8px 10px; border-radius:6px; font-size:11px; color:#92400e; margin-top:6px;">
-                Sisa setelah bayar: <strong>Rp ${formatRibuan(selectedTicket.value.remaining - form.amount)}</strong> — status tiket tetap <strong>Unpaid</strong>
+                Sisa setelah bayar: <strong>Rp ${formatRibuan(selectedTicket.value.remaining - form.amount)}</strong> — status tiket tetap <strong>Belum Bayar</strong>
               </div>`
             : `<div style="background:#d1fae5; padding:8px 10px; border-radius:6px; font-size:11px; color:#065f46; margin-top:6px;">
-                Status tiket akan otomatis lanjut ke <strong>Processing</strong>
+                Status tiket akan otomatis lanjut ke <strong>Diproses</strong>
               </div>`
         }
       </div>
@@ -662,14 +662,14 @@ const handleSubmit = async () => {
     if (isPaidOff) {
       const choice = await Swal.fire({
         title: 'Pelunasan Berhasil!',
-        html: `<p style="font-size:13px;">Tiket telah lunas dan otomatis lanjut ke tahap <strong>Processing</strong>.</p>`,
+        html: `<p style="font-size:13px;">Tiket telah lunas dan otomatis lanjut ke tahap <strong>Diproses</strong>.</p>`,
         icon: 'success',
         showDenyButton: true,
         showCancelButton: false,
         showConfirmButton: true,
         allowEscapeKey: false,
         allowOutsideClick: false,
-        confirmButtonText: 'Lihat Detail Processing',
+        confirmButtonText: 'Lihat Detail Diproses',
         denyButtonText: 'Lanjut Tagihan Instalasi',
         buttonsStyling: true,
         confirmButtonColor: '#0284c7',

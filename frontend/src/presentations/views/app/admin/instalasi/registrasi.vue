@@ -71,9 +71,9 @@
                 >
                   <font-awesome-icon icon="users" class="w-6! h-6! text-slate-300!" />
                 </div>
-                <p class="text-sm! font-bold! text-slate-600! mb-1!">No customers found</p>
+                <p class="text-sm! font-bold! text-slate-600! mb-1!">Pelanggan tidak ditemukan</p>
                 <p class="text-xs! text-slate-400! leading-relaxed!">
-                  We couldn't find any customers matching your search query or filter.
+                  Tidak ada pelanggan yang cocok dengan pencarian atau filter Anda.
                 </p>
               </div>
               <BaseButton

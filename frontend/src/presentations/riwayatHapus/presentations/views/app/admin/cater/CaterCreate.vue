@@ -119,7 +119,7 @@ const genderOptions = [
 
 const handleSave = () => {
   if (!form.value.nama || !form.value.username) {
-    Swal.fire('Error', 'Nama dan Username harus diisi!', 'error')
+    Swal.fire('Kesalahan', 'Nama dan Username harus diisi!', 'error')
     return
   }
 

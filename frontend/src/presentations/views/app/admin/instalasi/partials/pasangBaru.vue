@@ -11,7 +11,7 @@
           </div>
           <div class="flex-1! min-w-0!">
             <p class="text-[10px]! font-bold! text-sky-500! uppercase! tracking-widest!">
-              Customer Profile
+              Profil Pelanggan
             </p>
             <h1 class="text-lg! font-bold! text-slate-800! truncate!">
               {{ customer.name }}
@@ -53,7 +53,7 @@
           v-if="customer.ticketId"
           class="mt-3! pt-3! border-t! border-slate-100! flex! items-center! justify-between!"
         >
-          <span class="text-[9px]! font-bold! text-slate-400! uppercase! tracking-widest!">Ticket</span>
+          <span class="text-[9px]! font-bold! text-slate-400! uppercase! tracking-widest!">Tiket</span>
           <span class="text-[10px]! text-slate-600! font-mono! font-semibold!">
             {{ customer.ticketId }}
           </span>
@@ -506,7 +506,7 @@ const clearInstallPhoto = () => {
 
 const submitInstallationResult = async () => {
   if (!customer.value.ticketId) {
-    Swal.fire('Gagal', 'Ticket ID tidak ditemukan.', 'error')
+    Swal.fire('Gagal', 'ID Tiket tidak ditemukan.', 'error')
     return
   }
   if (!installForm.initial_meter_reading) {
@@ -528,7 +528,7 @@ const submitInstallationResult = async () => {
       await Swal.fire({
         icon: 'success',
         title: 'Pemasangan Aktif!',
-        html: `Hasil pemasangan tersimpan & status tiket kini <strong>Completed</strong>.<br/>Kode Pelanggan: <strong style="color:#0284c7;">${customerCode || '-'}</strong>`,
+        html: `Hasil pemasangan tersimpan & status tiket kini <strong>Selesai</strong>.<br/>Kode Pelanggan: <strong style="color:#0284c7;">${customerCode || '-'}</strong>`,
         confirmButtonColor: '#0284c7',
         confirmButtonText: 'Lihat Detail Aktif',
       })
@@ -626,11 +626,11 @@ const customer = computed(() => {
 const statusBadge = computed(() => {
   switch (customer.value.rawStatus) {
     case 'surveyed':
-      return { label: 'Surveyed', class: 'bg-amber-100! text-amber-700!' }
+      return { label: 'Disurvei', class: 'bg-amber-100! text-amber-700!' }
     case 'unpaid':
-      return { label: 'Unpaid', class: 'bg-orange-100! text-orange-700!' }
+      return { label: 'Belum Bayar', class: 'bg-orange-100! text-orange-700!' }
     case 'processing':
-      return { label: 'Processing', class: 'bg-blue-100! text-blue-700!' }
+      return { label: 'Diproses', class: 'bg-blue-100! text-blue-700!' }
     default:
       return { label: 'Pasang Baru', class: 'bg-sky-100! text-sky-700!' }
   }
@@ -700,7 +700,7 @@ const steps = computed(() => {
   const order = ['surveyed', 'unpaid', 'processing']
   const currentIdx = order.indexOf(customer.value.rawStatus)
   const stepDefs = [
-    { key: 'surveyed', label: 'Surveyed', icon: 'clipboard-check' },
+    { key: 'surveyed', label: 'Disurvei', icon: 'clipboard-check' },
     { key: 'unpaid', label: 'Pembayaran', icon: 'money-bill-wave' },
     { key: 'processing', label: 'Pemasangan', icon: 'tools' },
   ]

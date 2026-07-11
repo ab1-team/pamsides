@@ -99,7 +99,7 @@
                       <h4 class="text-[11px]! font-black! text-slate-700! uppercase! truncate!">
                         Pilih Galeri
                       </h4>
-                      <p class="text-xs! text-slate-400! font-bold! truncate!">Upload file</p>
+                      <p class="text-xs! text-slate-400! font-bold! truncate!">Unggah file</p>
                     </div>
                   </div>
                 </div>

@@ -145,7 +145,7 @@
                   size="sm"
                   @click.stop="handleRowClick(row)"
                   class="w-8! h-8! p-0! rounded-full! border! border-slate-100! hover:border-blue-200! hover:bg-blue-50! text-slate-600! hover:text-blue-600! shadow-sm!"
-                  title="View Detail"
+                  title="Lihat Detail"
                   icon="chevron-right"
                 />
               </div>

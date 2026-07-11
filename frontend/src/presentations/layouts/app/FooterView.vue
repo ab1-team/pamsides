@@ -1,12 +1,12 @@
 <template>
   <footer class="dashboard-footer">
-    <span class="footer-copy">© 2024 PAMSIMAS MATA AIR. THE LIVING AQUIFER SYSTEM.</span>
+    <span class="footer-copy">© 2024 PAMSIMAS MATA AIR. Sistem Air Tanah Berkelanjutan.</span>
     <div class="footer-links">
-      <a href="#" class="footer-link">Privacy Policy</a>
-      <a href="#" class="footer-link">Terms of Service</a>
+      <a href="#" class="footer-link">Kebijakan Privasi</a>
+      <a href="#" class="footer-link">Ketentuan Layanan</a>
       <div class="footer-status">
         <span class="footer-status-dot"></span>
-        System Status
+        Status Sistem
       </div>
     </div>
   </footer>

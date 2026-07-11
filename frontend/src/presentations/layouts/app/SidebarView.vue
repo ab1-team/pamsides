@@ -168,13 +168,13 @@ const roleTitle = computed(() => {
   }
   switch (uiStore.userRole) {
     case 'surveyor':
-      return 'Surveyor Portal'
+      return 'Portal Surveyor'
     case 'teknisi':
-      return 'Technician Hub'
+      return 'Pusat Teknisi'
     case 'pelanggan':
-      return 'Customer App'
+      return 'Aplikasi Pelanggan'
     default:
-      return 'Admin Portal'
+      return 'Portal Admin'
   }
 })
 
@@ -184,13 +184,13 @@ const roleSubtitle = computed(() => {
   }
   switch (uiStore.userRole) {
     case 'surveyor':
-      return 'FIELD OPERATIONS'
+      return 'OPERASI LAPANGAN'
     case 'teknisi':
-      return 'TECHNICAL SUITE'
+      return 'PUSAT TEKNIS'
     case 'pelanggan':
-      return 'USER SERVICE'
+      return 'LAYANAN PELANGGAN'
     default:
-      return 'MANAGEMENT SUITE'
+      return 'PUSAT MANAJEMEN'
   }
 })
 
@@ -250,24 +250,24 @@ function syncOpenSubmenus() {
 
 const menuItems = [
   {
-    label: 'Dashboard',
+    label: 'Beranda',
     icon: 'home',
     to: '/app',
     roles: ['admin', 'surveyor', 'teknisi', 'pelanggan'],
   },
   {
-    label: 'Create Survey Baru',
+    label: 'Buat Survey Baru',
     icon: 'plus-circle',
     to: '/app/survey/create',
     roles: ['surveyor'],
   },
   {
-    label: 'Settings',
+    label: 'Pengaturan',
     icon: 'cog',
     roles: ['admin'],
     children: [
-      { label: 'Personalisasi SOP', to: '/app/settings/personalisasi-sop' },
-      { label: 'Chart of Account COA', to: '/app/settings/coa' },
+      { label: 'Personalisasi (SOP)', to: '/app/settings/personalisasi-sop' },
+      { label: 'Chart of Account (CoA)', to: '/app/settings/coa' },
       { label: 'Paket & Tarif Layanan', to: '/app/kelas-biaya' },
     ],
   },
@@ -280,7 +280,7 @@ const menuItems = [
         label: 'Pelanggan',
         icon: 'users',
         children: [
-          { label: 'Create Pelanggan', to: '/app/data-pelanggan/tambah' },
+          { label: 'Tambah Pelanggan', to: '/app/data-pelanggan/tambah' },
           { label: 'Data Pelanggan', to: '/app/data-pelanggan' },
         ],
       },
@@ -288,7 +288,7 @@ const menuItems = [
         label: 'Desa',
         icon: 'map-marker-alt',
         children: [
-          { label: 'Create Desa', to: '/app/data-desa/tambah' },
+          { label: 'Tambah Desa', to: '/app/data-desa/tambah' },
           { label: 'Data Desa', to: '/app/data-desa' },
         ],
       },
@@ -300,7 +300,7 @@ const menuItems = [
     icon: 'chart-bar',
     roles: ['admin', 'teknisi'],
     children: [
-      { label: 'Register Instalasi', to: '/app/instalasi/register', roles: ['admin'] },
+      { label: 'Registrasi Instalasi', to: '/app/instalasi/register', roles: ['admin'] },
       { label: 'Status Instalasi', to: '/app/instalasi/status', roles: ['admin'] },
       { label: 'Hasil Survey', to: '/app/instalasi/hasil-survey', roles: ['admin'] },
       {
