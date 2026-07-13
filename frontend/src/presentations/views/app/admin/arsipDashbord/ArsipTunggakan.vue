@@ -13,21 +13,24 @@
       :show-entries="false"
       :no-card="true"
     >
-      <template #column-jumlahTunggakan="{ row }">
+      <template #column-tagihan="{ row }">
         <span class="font-semibold text-slate-700">
-          {{ formatCurrency(row.jumlahTunggakan) }}
+          {{ formatCurrency(row.tagihan) }}
         </span>
       </template>
-
-      <template #column-status="{ row }">
+      <template #column-denda="{ row }">
         <span
-          class="px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider rounded-md"
-          :class="{
-            'bg-rose-50 text-rose-600 border border-rose-200': row.status === 'Belum Bayar',
-            'bg-amber-50 text-amber-600 border border-amber-200': row.status === 'Sebagian',
-          }"
+          :class="[
+            'font-semibold',
+            row.denda > 0 ? 'text-rose-600' : 'text-slate-400',
+          ]"
         >
-          {{ row.status }}
+          {{ formatCurrency(row.denda) }}
+        </span>
+      </template>
+      <template #column-total="{ row }">
+        <span class="font-bold text-slate-800">
+          {{ formatCurrency(row.total) }}
         </span>
       </template>
     </DataTable>
@@ -56,9 +59,9 @@ const columns = [
   { key: 'nomorInduk', title: 'Nomor Induk' },
   { key: 'customer', title: 'Customer' },
   { key: 'alamat', title: 'Alamat' },
-  { key: 'paket', title: 'Paket' },
-  { key: 'jumlahTunggakan', title: 'Jumlah Tunggakan' },
-  { key: 'status', title: 'Status' },
+  { key: 'tagihan', title: 'Tagihan' },
+  { key: 'denda', title: 'Denda' },
+  { key: 'total', title: 'Total Tunggakan' },
 ]
 
 const itemsList = ref([])
@@ -70,14 +73,17 @@ const fetchUnpaidBills = async () => {
     if (response?.success && response?.data?.bills) {
       itemsList.value = response.data.bills.map((bill) => {
         const ticket = bill.customer?.ticket
+        const total = Number(bill.total_amount) || 0
+        const denda = Number(bill.penalty_amount) || 0
+        const tagihan = Math.max(0, total - denda)
         return {
           id: bill.id,
           nomorInduk: bill.customer?.customer_code || '-',
           customer: ticket?.applicant_name || '-',
           alamat: ticket?.address || '-',
-          paket: ticket?.package?.name || '-',
-          jumlahTunggakan: Number(bill.total_amount) || 0,
-          status: bill.status === 'unpaid' ? 'Belum Bayar' : 'Sebagian',
+          tagihan,
+          denda,
+          total,
         }
       })
     }

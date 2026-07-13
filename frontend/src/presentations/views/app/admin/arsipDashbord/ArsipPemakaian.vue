@@ -11,7 +11,13 @@
       :total-entries="filteredData.length"
       :show-entries="false"
       :no-card="true"
-    />
+    >
+      <template #column-nominal="{ row }">
+        <span class="font-semibold text-[12px] text-slate-700 font-mono whitespace-nowrap">
+          {{ row.nominal }}
+        </span>
+      </template>
+    </DataTable>
   </div>
 </template>
 
@@ -25,11 +31,17 @@ const currentPage = ref(1)
 const perPage = ref(8)
 const loading = ref(false)
 
+const formatRupiah = (value) => {
+  const n = Number(value) || 0
+  return `Rp ${n.toLocaleString('id-ID')}`
+}
+
 const columns = [
   { key: 'nomorInduk', title: 'Nomor Induk' },
   { key: 'customer', title: 'Customer' },
   { key: 'alamat', title: 'Alamat' },
   { key: 'paket', title: 'Paket' },
+  { key: 'nominal', title: 'Nominal' },
 ]
 
 const itemsList = ref([])
@@ -47,6 +59,8 @@ const fetchActiveCustomers = async () => {
           customer: ticket.applicant_name || '-',
           alamat: ticket.address || '-',
           paket: ticket.package?.name || '-',
+          nominal: formatRupiah(ticket.package?.installation_fee || 0),
+          nominalValue: Number(ticket.package?.installation_fee || 0),
         }
       })
     }
