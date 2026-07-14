@@ -164,7 +164,7 @@
         <h1 class="text-2xl! font-extrabold! text-blue-800! tracking-tight! leading-none! mb-1!">
           Input Data Pemakaian Air
         </h1>
-        <p class="text-slate-400! italic! text-sm!">Water Management Editorial Control</p>
+        <p class="text-slate-400! italic! text-sm!">Kontrol Pencatatan Pemakaian Air</p>
       </div>
 
       <div class="mobile-form! flex! flex-col! gap-6!">

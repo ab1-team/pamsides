@@ -9,7 +9,7 @@
       />
       <div>
         <h1 class="text-3xl font-extrabold text-slate-900! tracking-tight mb-0.5!">
-          Edit Petugas Cater
+          Ubah Petugas Cater
         </h1>
         <p class="text-sm font-medium text-slate-500! leading-relaxed">
           Perbarui informasi petugas pencatat meter di bawah ini.
@@ -134,7 +134,7 @@ onMounted(() => {
 
 const handleSave = () => {
   if (!form.value.nama || !form.value.username) {
-    Swal.fire('Error', 'Nama dan Username harus diisi!', 'error')
+    Swal.fire('Kesalahan', 'Nama dan Username harus diisi!', 'error')
     return
   }
 

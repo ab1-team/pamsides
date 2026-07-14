@@ -110,7 +110,7 @@
               <font-awesome-icon icon="eye" class="text-white! text-lg!" />
             </div>
             <div>
-              <h3 class="font-bold! text-slate-800!">Quick Preview</h3>
+              <h3 class="font-bold! text-slate-800!">Pratinjau Cepat</h3>
               <p class="text-sm! text-slate-500!">Lihat ringkasan laporan</p>
             </div>
           </div>
@@ -131,7 +131,7 @@
               <font-awesome-icon icon="file-export" class="text-white! text-lg!" />
             </div>
             <div>
-              <h3 class="font-bold! text-slate-800!">Export Data</h3>
+              <h3 class="font-bold! text-slate-800!">Ekspor Data</h3>
               <p class="text-sm! text-slate-500!">Download format Excel</p>
             </div>
           </div>
@@ -152,7 +152,7 @@
               <font-awesome-icon icon="save" class="text-white! text-lg!" />
             </div>
             <div>
-              <h3 class="font-bold! text-slate-800!">Save Balance</h3>
+              <h3 class="font-bold! text-slate-800!">Simpan Saldo</h3>
               <p class="text-sm! text-slate-500!">Simpan saldo akhir</p>
             </div>
           </div>

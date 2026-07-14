@@ -153,7 +153,7 @@
               @click="close"
               class="bg-white border border-slate-300 hover:bg-slate-100 text-slate-700 px-6! py-3! font-semibold transition-all active:scale-95 rounded-lg!"
             >
-              Close
+              Tutup
             </button>
           </div>
         </div>

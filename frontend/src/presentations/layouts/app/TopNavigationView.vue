@@ -19,8 +19,8 @@
       </div>
 
       <div class="topnav-links">
-        <a href="#" class="topnav-link active">Dashboard</a>
-        <a href="#" class="topnav-link">Reports</a>
+        <a href="#" class="topnav-link active">Beranda</a>
+        <a href="#" class="topnav-link">Laporan</a>
       </div>
 
       <div class="topnav-right">
@@ -35,7 +35,7 @@
           <font-awesome-icon icon="search" width="12" height="12" />
           <input
             type="text"
-            placeholder="Search data..."
+            placeholder="Cari data..."
             :value="searchQuery"
             @input="$emit('search', $event)"
           />
@@ -97,7 +97,7 @@
         <button
           class="mobile-search-close-btn"
           @click="$emit('close-mobile-search')"
-          aria-label="Close search"
+          aria-label="Tutup pencarian"
         >
           <font-awesome-icon icon="times" />
         </button>
@@ -163,13 +163,13 @@ const userRoleLabel = computed(() => {
   }
   switch (uiStore.userRole) {
     case 'surveyor':
-      return 'Field Surveyor'
+      return 'Surveyor Lapangan'
     case 'teknisi':
-      return 'Technical Staff'
+      return 'Staf Teknisi'
     case 'pelanggan':
-      return 'Customer User'
+      return 'Pelanggan'
     default:
-      return 'System Administrator'
+      return 'Administrator Sistem'
   }
 })
 

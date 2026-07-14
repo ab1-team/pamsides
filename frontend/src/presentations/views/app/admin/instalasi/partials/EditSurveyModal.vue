@@ -18,7 +18,7 @@
               </div>
               <div>
                 <h2 class="text-lg! font-semibold! text-slate-800 leading-tight">
-                  Edit Hasil Survey
+                  Ubah Hasil Survey
                 </h2>
                 <p class="text-xs! text-slate-500! font-medium!">
                   {{ survey?.ticket?.applicant_name || '-' }}

@@ -10,7 +10,7 @@
             class="inline-flex! items-center! gap-1! px-2.5! py-1! rounded-full! text-[10px]! font-bold! uppercase! tracking-wider! bg-indigo-100! text-indigo-700!"
           >
             <span class="w-1.5! h-1.5! rounded-full! bg-current! opacity-60!"></span>
-            Pending
+            Menunggu
           </span>
         </div>
         <h1 class="text-lg! font-bold! text-slate-800! truncate! mb-1!">{{ customer.name }}</h1>

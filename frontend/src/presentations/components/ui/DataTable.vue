@@ -15,7 +15,7 @@
 
         <!-- Tampilkan Entri -->
         <div v-if="showEntries" class="flex! items-center! gap-2! text-xs! text-slate-500!">
-          <span class="whitespace-nowrap!">Show</span>
+          <span class="whitespace-nowrap!">Tampilkan</span>
           <select
             :value="effectivePerPage"
             @change="effectivePerPage = parseInt($event.target.value)"
@@ -26,7 +26,7 @@
             <option :value="50">50</option>
             <option :value="100">100</option>
           </select>
-          <span class="whitespace-nowrap!">entries</span>
+          <span class="whitespace-nowrap!">data</span>
         </div>
 
         <slot name="toolbar-actions"></slot>
@@ -267,7 +267,7 @@ const props = defineProps({
   },
   searchPlaceholder: {
     type: String,
-    default: 'Find subscriber name...',
+    default: 'Cari nama pelanggan...',
   },
   modelValue: {
     type: String,
