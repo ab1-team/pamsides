@@ -27,7 +27,7 @@
 
     <div class="grid! items-start! grid-cols-1! sm:grid-cols-2! lg:grid-cols-4! gap-4! mb-8!">
       <statCard
-        label="INSTALASI"
+        label="PERMOHONAN"
         :value="statsSummary.instalasi"
         :link="null"
         :progress="statsSummaryProgress.instalasi"
@@ -449,11 +449,15 @@ const statsSummary = computed(() => {
   const tickets = data?.tickets_by_status || {}
   const bills = data?.bills_this_month || {}
 
-  const totalTickets = Object.values(tickets).reduce((a, b) => a + Number(b), 0)
+  const instalasiStatuses = ['draft', 'pending', 'surveyed', 'unpaid', 'processing']
+  const instalasiCount = instalasiStatuses.reduce(
+    (sum, key) => sum + Number(tickets[key] || 0),
+    0,
+  )
   const totalBills = (Number(bills.paid) || 0) + (Number(bills.unpaid) || 0)
 
   return {
-    instalasi: totalTickets,
+    instalasi: instalasiCount,
     pemakaian: data?.total_customers || 0,
     tunggakan: bills.unpaid || 0,
     tagihan: totalBills,

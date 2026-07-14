@@ -71,7 +71,7 @@ const handleCardClick = () => {
 const statCardClasses = computed(() => {
   const labelLower = props.label.toLowerCase()
 
-  if (labelLower.includes('instalasi')) {
+  if (labelLower.includes('instalasi') || labelLower.includes('permohonan')) {
     return 'stat-card stat-card--instalasi'
   } else if (labelLower.includes('pemakaian')) {
     return 'stat-card stat-card--pemakaian'
