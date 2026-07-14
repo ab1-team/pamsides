@@ -302,7 +302,6 @@ const menuItems = [
     children: [
       { label: 'Register Instalasi', to: '/app/instalasi/register', roles: ['admin'] },
       { label: 'Status Instalasi', to: '/app/instalasi/status', roles: ['admin'] },
-      { label: 'Hasil Survey', to: '/app/instalasi/hasil-survey', roles: ['admin'] },
       {
         label: 'Input Pemakaian Air',
         to: '/app/instalasi/teknisiPemakaianAir',

@@ -55,53 +55,64 @@
         </div>
       </ContentCard>
 
+
       <ContentCard variant="bordered" padding="normal" rounded="2xl">
-        <div class="flex! items-center! gap-2! mb-4!">
-          <div class="w-7! h-7! rounded-lg! bg-emerald-100! flex! items-center! justify-center!">
-            <font-awesome-icon icon="tachometer-alt" class="text-emerald-600! text-xs!" />
+        <div class="flex! items-center! gap-2! mb-3!">
+          <div class="w-7! h-7! rounded-lg! bg-orange-100! flex! items-center! justify-center!">
+            <font-awesome-icon icon="clipboard-check" class="text-orange-600! text-xs!" />
           </div>
-          <h3 class="text-sm! font-bold! text-slate-800!">Informasi Meter</h3>
+          <h3 class="text-sm! font-bold! text-slate-800!">Hasil Survey</h3>
         </div>
 
-        <div class="grid! grid-cols-3! gap-2! mb-4!">
-          <div class="text-center! p-3! rounded-xl! bg-emerald-50! border! border-emerald-100!">
-            <p class="text-[9px]! font-bold! text-emerald-700! uppercase! tracking-wider! mb-1!">
-              Meter Awal
-            </p>
-            <p class="text-xl! font-black! text-emerald-700!">{{ formatMeter(customer.meterAwal) }}</p>
-            <p class="text-[9px]! text-slate-400! mt-0.5!">m³</p>
-          </div>
-          <div class="text-center! p-3! rounded-xl! bg-slate-50! border! border-slate-100!">
-            <p class="text-[9px]! font-bold! text-slate-500! uppercase! tracking-wider! mb-1!">
-              Meter Terakhir
-            </p>
-            <p class="text-xl! font-black! text-slate-800!">{{ formatMeter(customer.meterAkhir) }}</p>
-            <p class="text-[9px]! text-slate-400! mt-0.5!">m³</p>
-          </div>
-          <div class="text-center! p-3! rounded-xl! bg-blue-50! border! border-blue-100!">
-            <p class="text-[9px]! font-bold! text-blue-700! uppercase! tracking-wider! mb-1!">
-              Total Pakai
-            </p>
-            <p class="text-xl! font-black! text-blue-700!">{{ formatMeter(customer.totalPemakaian) }}</p>
-            <p class="text-[9px]! text-slate-400! mt-0.5!">m³</p>
-          </div>
+        <div v-if="loadingSurvey" class="text-center! py-4! text-xs! text-slate-400!">
+          Memuat data survey...
         </div>
-
-        <div v-if="customer.meterPhoto" class="flex! items-start! gap-3! pt-3! border-t! border-slate-100!">
-          <img
-            :src="customer.meterPhoto"
-            alt="Foto Meter"
-            class="w-20! h-20! rounded-lg! object-cover! border! border-slate-200! shrink-0!"
-            @error="(e) => (e.target.style.display = 'none')"
-          />
-          <div class="flex-1! min-w-0!">
-            <p class="text-[10px]! font-bold! text-slate-500! uppercase! tracking-wider! mb-1!">
-              Foto Meter Awal
-            </p>
-            <p class="text-[11px]! text-slate-600! leading-relaxed!">
-              Foto meteran saat aktivasi pertama kali. Diambil sebagai dasar perhitungan tagihan
-              bulanan.
-            </p>
+        <div v-else-if="surveys.length === 0" class="text-center! py-4! text-xs! text-slate-400!">
+          Belum ada data survey untuk pelanggan ini.
+        </div>
+        <div v-else class="space-y-2!">
+          <div
+            v-for="(s, idx) in surveys"
+            :key="idx"
+            class="flex! items-center! justify-between! gap-3! px-3! py-2! rounded-lg! bg-slate-50! border! border-slate-100!"
+          >
+            <div class="flex! items-center! gap-3! min-w-0! flex-1!">
+              <img
+                v-if="s.photo_url"
+                :src="resolvePhotoUrl(s.photo_url)"
+                alt="Foto Survey"
+                class="w-12! h-12! rounded-lg! object-cover! border! border-slate-200! shrink-0!"
+                @error="(e) => (e.target.style.display = 'none')"
+              />
+              <div
+                v-else
+                class="w-12! h-12! rounded-lg! bg-orange-100! flex! items-center! justify-center! shrink-0!"
+              >
+                <font-awesome-icon icon="camera" class="text-orange-500! text-sm!" />
+              </div>
+              <div class="min-w-0! flex-1!">
+                <div class="flex! items-center! gap-2!">
+                  <span class="text-[11px]! font-bold! text-slate-700!">
+                    {{ s.distance_to_pipe_m || 0 }} m
+                  </span>
+                  <span class="text-[10px]! text-slate-400!">•</span>
+                  <span class="text-[10px]! text-slate-500!">{{ formatDate(s.surveyed_at) }}</span>
+                </div>
+                <p class="text-[10px]! text-slate-500! truncate! mt-0.5!">
+                  {{ s.surveyor?.name || 'Tanpa surveyor' }}
+                </p>
+                <p v-if="s.material_notes" class="text-[10px]! text-slate-400! truncate! mt-0.5!">
+                  {{ s.material_notes }}
+                </p>
+              </div>
+            </div>
+            <button
+              @click="openEditSurvey(s)"
+              class="w-8! h-8! flex! items-center! justify-center! rounded-lg! border! border-slate-100! hover:border-orange-200! hover:bg-orange-50! text-slate-600! hover:text-orange-600! shrink-0!"
+              title="Edit Survey"
+            >
+              <font-awesome-icon icon="edit" class="text-xs!" />
+            </button>
           </div>
         </div>
       </ContentCard>
@@ -291,23 +302,102 @@
         </div>
       </ContentCard>
     </div>
+
+    <EditSurveyModal
+      :show="showEditSurvey"
+      :survey="selectedSurvey"
+      @close="showEditSurvey = false"
+      @save="handleSaveSurvey"
+    />
   </div>
 </template>
 
 <script setup>
 defineOptions({ name: 'AktifDetail' })
-import { computed, onMounted } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useInstalasiStatus } from '@/composables/useInstalasiStatus'
 import { useInstalasiActions } from '@/composables/useInstalasiActions'
 import { storageUrl } from '@/utils/storage'
+import { useUiStore } from '@/stores/uiStore'
+import ticketService from '@/services/ticket.service'
 import ContentCard from '@/presentations/components/ui/ContentCard.vue'
+import EditSurveyModal from './EditSurveyModal.vue'
 
 const route = useRoute()
 const router = useRouter()
+const uiStore = useUiStore()
 const { dataMap, fetchData } = useInstalasiStatus()
 const { transitionStatus, printDetail } = useInstalasiActions()
 const id = decodeURIComponent(route.params.id)
+
+const surveys = ref([])
+const loadingSurvey = ref(false)
+const showEditSurvey = ref(false)
+const selectedSurvey = ref(null)
+
+const resolvePhotoUrl = (url) => {
+  if (!url) return null
+  if (/^https?:\/\//i.test(url)) return url
+  return storageUrl(`storage/survey-photos/${url}`)
+}
+
+const loadSurveys = async () => {
+  const ticketId = customer.value?.ticketId
+  if (!ticketId) {
+    surveys.value = []
+    return
+  }
+  loadingSurvey.value = true
+  try {
+    const res = await ticketService.getSurveyResults({
+      ticket_id: ticketId,
+      per_page: 100,
+    })
+    const list = res?.data?.data
+    surveys.value = Array.isArray(list) ? list : []
+  } catch (err) {
+    console.error('Gagal memuat survey:', err)
+    surveys.value = []
+  } finally {
+    loadingSurvey.value = false
+  }
+}
+
+const openEditSurvey = (s) => {
+  selectedSurvey.value = {
+    id: s.id,
+    ticket_id: s.ticket_id,
+    ticket: s.ticket,
+    surveyor: s.surveyor,
+    distance_to_pipe_m: s.distance_to_pipe_m || 0,
+    material_notes: s.material_notes || '',
+    photo_url: s.photo_url,
+  }
+  showEditSurvey.value = true
+}
+
+const handleSaveSurvey = async (updatedData) => {
+  try {
+    uiStore.setLoading(true)
+    const formData = new FormData()
+    formData.append('distance_to_pipe_m', updatedData.distance_to_pipe_m)
+    formData.append('material_notes', updatedData.material_notes)
+    formData.append('_method', 'PUT')
+    if (updatedData.photo) {
+      formData.append('photo', updatedData.photo)
+    }
+    await ticketService.updateSurvey(updatedData.id, formData)
+    uiStore.success('Survey berhasil diupdate')
+    showEditSurvey.value = false
+    await loadSurveys()
+  } catch (err) {
+    console.error(err)
+    uiStore.error('Gagal update survey')
+  } finally {
+    uiStore.setLoading(false)
+  }
+}
 
 const MONTHS_ID = [
   'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
@@ -521,7 +611,13 @@ const handlePrint = () => {
 
 onMounted(async () => {
   await fetchData()
+  await loadSurveys()
 })
+
+watch(
+  () => customer.value?.ticketId,
+  () => loadSurveys(),
+)
 </script>
 
 <style scoped>
