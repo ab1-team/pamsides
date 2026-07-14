@@ -228,7 +228,9 @@ watch(
       formData.material_notes = newSurvey.material_notes || ''
       const url = newSurvey.photo_url
       if (url) {
-        photoPreview.value = /^https?:\/\//i.test(url) ? url : storageUrl(`storage/survey-photos/${url}`)
+        photoPreview.value = /^https?:\/\//i.test(url)
+          ? url
+          : storageUrl(`storage/survey-photos/${url}`)
       } else {
         photoPreview.value = null
       }

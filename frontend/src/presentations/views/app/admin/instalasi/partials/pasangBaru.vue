@@ -17,7 +17,10 @@
               {{ customer.name }}
             </h1>
             <div class="flex! items-center! gap-1.5! text-slate-500!">
-              <font-awesome-icon icon="map-marker-alt" class="text-sky-400! text-[10px]! shrink-0!" />
+              <font-awesome-icon
+                icon="map-marker-alt"
+                class="text-sky-400! text-[10px]! shrink-0!"
+              />
               <p class="text-[11px]! truncate!">{{ customer.address }}</p>
             </div>
           </div>
@@ -53,7 +56,9 @@
           v-if="customer.ticketId"
           class="mt-3! pt-3! border-t! border-slate-100! flex! items-center! justify-between!"
         >
-          <span class="text-[9px]! font-bold! text-slate-400! uppercase! tracking-widest!">Tiket</span>
+          <span class="text-[9px]! font-bold! text-slate-400! uppercase! tracking-widest!"
+            >Tiket</span
+          >
           <span class="text-[10px]! text-slate-600! font-mono! font-semibold!">
             {{ customer.ticketId }}
           </span>
@@ -70,7 +75,9 @@
             Cetak
           </button>
           <button
-            @click="$router.push({ path: '/app/instalasi/status', query: { filter: 'pasang_baru' } })"
+            @click="
+              $router.push({ path: '/app/instalasi/status', query: { filter: 'pasang_baru' } })
+            "
             class="flex! items-center! justify-center! gap-2! bg-slate-100! hover:bg-slate-200! text-slate-600! font-semibold! py-2.5! rounded-lg! text-sm! transition-all!"
           >
             <font-awesome-icon icon="arrow-left" />
@@ -123,8 +130,15 @@
 
       <ContentCard variant="bordered" padding="normal" rounded="2xl">
         <div class="flex! items-center! gap-2! mb-4!">
-          <div class="w-7! h-7! rounded-lg! flex! items-center! justify-center!" :class="stagePanel.iconBg">
-            <font-awesome-icon :icon="stagePanel.icon" class="text-xs!" :class="stagePanel.iconColor" />
+          <div
+            class="w-7! h-7! rounded-lg! flex! items-center! justify-center!"
+            :class="stagePanel.iconBg"
+          >
+            <font-awesome-icon
+              :icon="stagePanel.icon"
+              class="text-xs!"
+              :class="stagePanel.iconColor"
+            />
           </div>
           <h3 class="text-sm! font-bold! text-slate-800!">{{ stagePanel.title }}</h3>
         </div>
@@ -176,13 +190,18 @@
               <div
                 class="flex! items-center! justify-between! text-xs! pt-2! border-t! border-slate-200!"
               >
-                <span class="font-bold! uppercase! tracking-wide!"
-                  :class="customer.paymentInfo.remaining > 0 ? 'text-orange-700!' : 'text-emerald-700!'"
+                <span
+                  class="font-bold! uppercase! tracking-wide!"
+                  :class="
+                    customer.paymentInfo.remaining > 0 ? 'text-orange-700!' : 'text-emerald-700!'
+                  "
                   >Sisa Tagihan</span
                 >
                 <span
                   class="font-extrabold!"
-                  :class="customer.paymentInfo.remaining > 0 ? 'text-orange-700!' : 'text-emerald-700!'"
+                  :class="
+                    customer.paymentInfo.remaining > 0 ? 'text-orange-700!' : 'text-emerald-700!'
+                  "
                 >
                   {{
                     customer.paymentInfo.remaining > 0
@@ -193,8 +212,12 @@
               </div>
             </div>
 
-            <div class="flex! items-center! gap-3! p-3! bg-slate-50! border! border-slate-100! rounded-xl!">
-              <div class="w-10! h-10! rounded-full! bg-amber-500! text-white! flex! items-center! justify-center! shrink-0!">
+            <div
+              class="flex! items-center! gap-3! p-3! bg-slate-50! border! border-slate-100! rounded-xl!"
+            >
+              <div
+                class="w-10! h-10! rounded-full! bg-amber-500! text-white! flex! items-center! justify-center! shrink-0!"
+              >
                 <font-awesome-icon icon="clipboard-check" />
               </div>
               <div class="flex-1! min-w-0!">
@@ -218,11 +241,16 @@
               :disabled="!customer.ticketId || isAdvancing"
               class="w-full! flex! items-center! justify-center! gap-2! bg-gradient-to-r! from-sky-500! to-blue-600! hover:from-sky-600! hover:to-blue-700! text-white! font-bold! py-2.5! rounded-xl! shadow-lg! shadow-sky-200/50! transition-all! active:scale-95! disabled:opacity-50! disabled:cursor-not-allowed!"
             >
-              <font-awesome-icon :icon="isAdvancing ? 'spinner' : 'arrow-right'" :class="isAdvancing ? 'animate-spin!' : ''" />
+              <font-awesome-icon
+                :icon="isAdvancing ? 'spinner' : 'arrow-right'"
+                :class="isAdvancing ? 'animate-spin!' : ''"
+              />
               {{ isAdvancing ? 'Memproses...' : 'Lanjut ke Tahap Berikutnya' }}
             </button>
           </div>
-          <div v-else class="text-center! py-6! text-xs! text-slate-400!">Belum ada data survey.</div>
+          <div v-else class="text-center! py-6! text-xs! text-slate-400!">
+            Belum ada data survey.
+          </div>
         </div>
 
         <div v-else-if="customer.rawStatus === 'unpaid'">
@@ -230,36 +258,68 @@
             <div class="rounded-xl! border! border-orange-200! bg-orange-50! p-3! space-y-2!">
               <div class="flex! items-center! justify-between! text-xs!">
                 <span class="text-slate-600! font-semibold!">Total Biaya</span>
-                <span class="font-bold! text-slate-800!">Rp {{ formatRupiah(customer.paymentInfo.total_fee) }}</span>
+                <span class="font-bold! text-slate-800!"
+                  >Rp {{ formatRupiah(customer.paymentInfo.total_fee) }}</span
+                >
               </div>
               <div>
                 <div class="flex! items-center! justify-between! text-xs!">
                   <span class="text-emerald-700! font-semibold!">Sudah Dibayar</span>
-                  <span class="font-bold! text-emerald-700!">Rp {{ formatRupiah(customer.paymentInfo.paid + customer.paymentInfo.pending) }}</span>
+                  <span class="font-bold! text-emerald-700!"
+                    >Rp
+                    {{
+                      formatRupiah(customer.paymentInfo.paid + customer.paymentInfo.pending)
+                    }}</span
+                  >
                 </div>
-                <div v-if="customer.paymentInfo.has_pending" class="flex! items-center! justify-between! text-[10px]! mt-1! pl-2!">
+                <div
+                  v-if="customer.paymentInfo.has_pending"
+                  class="flex! items-center! justify-between! text-[10px]! mt-1! pl-2!"
+                >
                   <span class="text-slate-500! flex! items-center! gap-1!">
                     <span class="w-1.5! h-1.5! rounded-full! bg-emerald-500!"></span>
                     Confirmed
                   </span>
-                  <span class="text-slate-600! font-medium!">Rp {{ formatRupiah(customer.paymentInfo.paid) }}</span>
+                  <span class="text-slate-600! font-medium!"
+                    >Rp {{ formatRupiah(customer.paymentInfo.paid) }}</span
+                  >
                 </div>
-                <div v-if="customer.paymentInfo.has_pending" class="flex! items-center! justify-between! text-[10px]! mt-0.5! pl-2!">
+                <div
+                  v-if="customer.paymentInfo.has_pending"
+                  class="flex! items-center! justify-between! text-[10px]! mt-0.5! pl-2!"
+                >
                   <span class="text-slate-500! flex! items-center! gap-1!">
                     <span class="w-1.5! h-1.5! rounded-full! bg-amber-500!"></span>
                     Menunggu Konfirmasi
                   </span>
-                  <span class="text-slate-600! font-medium!">Rp {{ formatRupiah(customer.paymentInfo.pending) }}</span>
+                  <span class="text-slate-600! font-medium!"
+                    >Rp {{ formatRupiah(customer.paymentInfo.pending) }}</span
+                  >
                 </div>
               </div>
-              <div class="flex! items-center! justify-between! text-xs! pt-2! border-t! border-orange-200!">
-                <span class="font-bold! uppercase! tracking-wide! text-orange-700!">Sisa Tagihan</span>
-                <span class="font-extrabold!" :class="customer.paymentInfo.remaining > 0 ? 'text-orange-700!' : 'text-emerald-700!'">
-                  {{ customer.paymentInfo.remaining > 0 ? `Rp ${formatRupiah(customer.paymentInfo.remaining)}` : 'LUNAS' }}
+              <div
+                class="flex! items-center! justify-between! text-xs! pt-2! border-t! border-orange-200!"
+              >
+                <span class="font-bold! uppercase! tracking-wide! text-orange-700!"
+                  >Sisa Tagihan</span
+                >
+                <span
+                  class="font-extrabold!"
+                  :class="
+                    customer.paymentInfo.remaining > 0 ? 'text-orange-700!' : 'text-emerald-700!'
+                  "
+                >
+                  {{
+                    customer.paymentInfo.remaining > 0
+                      ? `Rp ${formatRupiah(customer.paymentInfo.remaining)}`
+                      : 'LUNAS'
+                  }}
                 </span>
               </div>
             </div>
-            <div class="bg-rose-50! border! border-rose-200! rounded-xl! p-3! flex! items-start! gap-2!">
+            <div
+              class="bg-rose-50! border! border-rose-200! rounded-xl! p-3! flex! items-start! gap-2!"
+            >
               <font-awesome-icon icon="lock" class="text-rose-600! mt-0.5! shrink-0!" />
               <p class="text-[11px]! text-rose-800! leading-relaxed!">
                 Tidak dapat lanjut ke tahap Pemasangan sebelum tagihan lunas.
@@ -273,7 +333,9 @@
               Bayar / Lunasi di Tagihan Instalasi
             </button>
           </div>
-          <div v-else class="text-center! py-6! text-xs! text-slate-400!">Belum ada data tagihan.</div>
+          <div v-else class="text-center! py-6! text-xs! text-slate-400!">
+            Belum ada data tagihan.
+          </div>
         </div>
 
         <div v-else-if="customer.rawStatus === 'processing'">
@@ -330,7 +392,9 @@
                     </div>
                   </template>
 
-                  <template v-if="installForm.photoPreview && installForm.photoSource === 'gallery'">
+                  <template
+                    v-if="installForm.photoPreview && installForm.photoSource === 'gallery'"
+                  >
                     <div class="preview-slot">
                       <img :src="installForm.photoPreview" class="preview-img" />
                       <button @click="clearInstallPhoto" class="remove-btn">
@@ -367,11 +431,22 @@
 
             <button
               @click="submitInstallationResult"
-              :disabled="!installForm.initial_meter_reading || !installForm.photoFile || isSubmittingInstall"
+              :disabled="
+                !installForm.initial_meter_reading || !installForm.photoFile || isSubmittingInstall
+              "
               class="w-full! flex! items-center! justify-center! gap-2! bg-gradient-to-r! from-sky-500! to-blue-600! hover:from-sky-600! hover:to-blue-700! text-white! font-bold! py-2.5! rounded-xl! shadow-lg! shadow-sky-200/50! transition-all! active:scale-95! disabled:opacity-50! disabled:cursor-not-allowed!"
             >
-              <font-awesome-icon :icon="isSubmittingInstall ? 'spinner' : 'save'" :class="isSubmittingInstall ? 'animate-spin!' : ''" />
-              {{ isSubmittingInstall ? 'Menyimpan...' : (installationResult ? 'Update Hasil Pemasangan' : 'Aktifkan Pemasangan') }}
+              <font-awesome-icon
+                :icon="isSubmittingInstall ? 'spinner' : 'save'"
+                :class="isSubmittingInstall ? 'animate-spin!' : ''"
+              />
+              {{
+                isSubmittingInstall
+                  ? 'Menyimpan...'
+                  : installationResult
+                    ? 'Update Hasil Pemasangan'
+                    : 'Aktifkan Pemasangan'
+              }}
             </button>
           </div>
         </div>
@@ -405,7 +480,7 @@ const route = useRoute()
 const router = useRouter()
 const uiStore = useUiStore()
 const { dataMap, fetchData } = useInstalasiStatus()
-const { transitionStatus, printDetail } = useInstalasiActions()
+const { printDetail } = useInstalasiActions()
 
 const decodeId = (raw) => {
   let prev = raw
@@ -423,7 +498,6 @@ const decodeId = (raw) => {
 }
 const id = decodeId(String(route.params.id))
 
-const isProcessing = ref(false)
 const isAdvancing = ref(false)
 const isSubmittingInstall = ref(false)
 const showSurveyModal = ref(false)
@@ -559,9 +633,7 @@ const formatInduk = (val) => {
 }
 
 const customer = computed(() => {
-  const found = dataMap.value.pasang_baru?.find(
-    (r) => r.id === id || String(r.ticketId) === id,
-  )
+  const found = dataMap.value.pasang_baru?.find((r) => r.id === id || String(r.ticketId) === id)
   if (!found)
     return {
       name: 'Tidak Ditemukan',
@@ -715,95 +787,6 @@ const goToTagihanInstalasi = () => {
     path: '/app/transaksi/tagihan-instalasi',
     query: { ticket: customer.value.ticketId },
   })
-}
-
-const handleAdvance = async () => {
-  if (!customer.value.ticketId) return
-
-  const confirm = await Swal.fire({
-    title: 'Lanjut ke Tahap Berikutnya?',
-    html: `
-      <div style="text-align:left; font-family:system-ui,-apple-system,sans-serif; font-size:13px; color:#475569; line-height:1.6;">
-        <div style="display:flex; align-items:center; gap:8px; padding:8px 10px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; margin-bottom:6px;">
-          <span style="display:inline-block; width:8px; height:8px; border-radius:999px; background:#10b981; flex-shrink:0;"></span>
-          <span>Sudah <b style="color:#0f172a;">lunas</b> &rarr; lanjut ke <b style="color:#0f172a;">Pemasangan</b></span>
-        </div>
-        <div style="display:flex; align-items:center; gap:8px; padding:8px 10px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; margin-bottom:6px;">
-          <span style="display:inline-block; width:8px; height:8px; border-radius:999px; background:#f59e0b; flex-shrink:0;"></span>
-          <span>Masih <b style="color:#0f172a;">pending</b> &rarr; masuk ke <b style="color:#0f172a;">Pembayaran</b></span>
-        </div>
-        <div style="display:flex; align-items:center; gap:8px; padding:8px 10px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px;">
-          <span style="display:inline-block; width:8px; height:8px; border-radius:999px; background:#ef4444; flex-shrink:0;"></span>
-          <span>Belum ada &rarr; proses <b style="color:#0f172a;">dibatalkan</b></span>
-        </div>
-      </div>
-    `,
-    icon: 'question',
-    showCancelButton: true,
-    confirmButtonColor: '#0284c7',
-    cancelButtonColor: '#64748b',
-    confirmButtonText: 'Ya, Lanjutkan',
-    cancelButtonText: 'Batal',
-    reverseButtons: true,
-    customClass: {
-      popup: 'rounded-2xl !font-sans',
-      title: '!text-base !font-bold !text-slate-900 !pb-2',
-      htmlContainer: '!mt-2 !pt-0',
-      confirmButton: '!rounded-lg !px-4 !py-2 !text-sm !font-semibold',
-      cancelButton: '!rounded-lg !px-4 !py-2 !text-sm !font-semibold',
-      actions: '!gap-2',
-    },
-    buttonsStyling: true,
-    width: 440,
-  })
-  if (!confirm.isConfirmed) return
-
-  isAdvancing.value = true
-  try {
-    const res = await ticketService.advanceStage(customer.value.ticketId)
-    if (res?.success) {
-      await fetchData()
-      await Swal.fire({
-        title: 'Berhasil!',
-        text: res.message,
-        icon: 'success',
-        confirmButtonColor: '#0284c7',
-        confirmButtonText: 'OK',
-      })
-      const nextStatus = res?.data?.status || res?.status
-      if (nextStatus === 'processing') {
-        router.push({
-          name: 'Detail Pasang Baru',
-          params: { id: encodeURIComponent(customer.value.kodeInstalasi) },
-        })
-      } else {
-        router.push({
-          path: '/app/transaksi/tagihan-instalasi',
-          query: { ticket: customer.value.ticketId },
-        })
-      }
-    }
-  } catch (err) {
-    const msg = err.response?.data?.message || 'Gagal memproses tahap.'
-    await Swal.fire({ title: 'Gagal!', text: msg, icon: 'error', confirmButtonColor: '#ef4444' })
-  } finally {
-    isAdvancing.value = false
-  }
-}
-
-const handleFinalize = async () => {
-  if (!customer.value.ticketId) return
-  const result = await transitionStatus(
-    customer.value.ticketId,
-    'completed',
-    'Tandai instalasi selesai?',
-  )
-  if (result?.success) {
-    await fetchData()
-    router.push({
-      path: `/app/instalasi/status/aktif/${encodeURIComponent(customer.value.kodeInstalasi)}`,
-    })
-  }
 }
 
 const handlePrint = () => {

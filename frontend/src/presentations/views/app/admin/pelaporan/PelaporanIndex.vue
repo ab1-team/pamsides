@@ -81,7 +81,6 @@
               size="md"
               @click="handlePreview"
               class="px-5! rounded-xl! shadow-lg! shadow-blue-500/20! font-bold! tracking-wide!"
-              
             >
               Preview
             </BaseButton>
@@ -159,13 +158,12 @@
         </ContentCard>
       </div>
     </div>
-
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted, watch } from 'vue'
-import pelaporanService from '@/services/pelaporan.service.js' 
+import pelaporanService from '@/services/pelaporan.service.js'
 import ContentCard from '@/presentations/components/ui/ContentCard.vue'
 import SelectSearch from '@/presentations/components/SelectSearch.vue'
 import BaseButton from '@/presentations/components/ui/BaseButton.vue'
@@ -178,7 +176,7 @@ const selectedNamaSubLaporan = ref('')
 
 const tahunOptions = ref([])
 const namaLaporanOptions = ref([])
-const namaSubLaporanOptions = ref([]) 
+const namaSubLaporanOptions = ref([])
 
 const bulanOptions = ref([
   { id: '01', text: '01. JANUARI' },
@@ -200,25 +198,25 @@ const tanggalOptions = ref([
   ...Array.from({ length: 31 }, (_, i) => ({
     id: String(i + 1).padStart(2, '0'),
     text: String(i + 1),
-  }))
+  })),
 ])
 
 const fetchMasterFilterPelaporan = async () => {
   try {
-    const res = await pelaporanService.getMasterFilter() 
-    
+    const res = await pelaporanService.getMasterFilter()
+
     if (res.success) {
       namaLaporanOptions.value = res.data.laporan
       selectedNamaLaporan.value = ''
 
       const thnAwal = res.data.tahun_awal ? parseInt(res.data.tahun_awal) : new Date().getFullYear()
-      const thnSekarang = new Date().getFullYear() 
-      
+      const thnSekarang = new Date().getFullYear()
+
       const listTahun = []
       for (let i = thnSekarang; i >= thnAwal; i--) {
-        listTahun.push({ 
+        listTahun.push({
           id: String(i), // Disinkronkan dalam tipe data String agar dibaca komponen Select
-          text: String(i) 
+          text: String(i),
         })
       }
       tahunOptions.value = listTahun
@@ -231,9 +229,7 @@ const fetchMasterFilterPelaporan = async () => {
 
 const fetchSubLaporanDinamis = async (fileJenisLaporan) => {
   if (!fileJenisLaporan || fileJenisLaporan === '') {
-    namaSubLaporanOptions.value = [
-      { id: '', text: '---' }
-    ]
+    namaSubLaporanOptions.value = [{ id: '', text: '---' }]
     selectedNamaSubLaporan.value = ''
     return
   }
@@ -242,15 +238,13 @@ const fetchSubLaporanDinamis = async (fileJenisLaporan) => {
     const res = await pelaporanService.getSubLaporan(fileJenisLaporan)
     if (res.success) {
       if (res.data && res.data.length > 0) {
-        namaSubLaporanOptions.value = res.data.map(sub => ({
+        namaSubLaporanOptions.value = res.data.map((sub) => ({
           id: String(sub.value),
-          text: sub.title
+          text: sub.title,
         }))
         selectedNamaSubLaporan.value = namaSubLaporanOptions.value[0].id
       } else {
-        namaSubLaporanOptions.value = [
-          { id: '', text: '---' }
-        ]
+        namaSubLaporanOptions.value = [{ id: '', text: '---' }]
         selectedNamaSubLaporan.value = ''
       }
     }
@@ -265,10 +259,8 @@ watch(selectedNamaLaporan, (newFile) => {
 
 onMounted(() => {
   fetchMasterFilterPelaporan()
-  
-  namaSubLaporanOptions.value = [
-    { id: '', text: '---' }
-  ]
+
+  namaSubLaporanOptions.value = [{ id: '', text: '---' }]
   selectedNamaSubLaporan.value = ''
   selectedTanggal.value = ''
 
@@ -289,9 +281,11 @@ const getFilterPayload = () => {
 const handlePreview = async () => {
   const payload = getFilterPayload()
   if (!payload.nama_laporan) {
-    window.dispatchEvent(new CustomEvent('toast', {
-      detail: { type: 'warning', message: 'Pilih nama laporan terlebih dahulu' },
-    }))
+    window.dispatchEvent(
+      new CustomEvent('toast', {
+        detail: { type: 'warning', message: 'Pilih nama laporan terlebih dahulu' },
+      }),
+    )
     return
   }
   const query = new URLSearchParams({
@@ -310,11 +304,14 @@ const handleExcel = async () => {
   try {
     const payload = getFilterPayload()
     const blobData = await pelaporanService.exportExcel(payload)
-    
+
     const url = window.URL.createObjectURL(new Blob([blobData]))
     const link = document.createElement('a')
     link.href = url
-    link.setAttribute('download', `Laporan_${selectedNamaLaporan.value}_${selectedTahun.value}.xlsx`)
+    link.setAttribute(
+      'download',
+      `Laporan_${selectedNamaLaporan.value}_${selectedTahun.value}.xlsx`,
+    )
     document.body.appendChild(link)
     link.click()
     link.remove()
@@ -327,7 +324,7 @@ const handleSimpanSaldo = async () => {
   try {
     const payload = getFilterPayload()
     const res = await pelaporanService.simpanSaldo(payload)
-    
+
     if (res.success) {
       console.log('Saldo akhir berhasil disimpan ke database:', res.message)
     }

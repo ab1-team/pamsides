@@ -186,18 +186,18 @@
                 </select>
               </div>
               <div class="flex! items-center! gap-4!">
-              <div class="flex! items-center! gap-2! text-[10px]! font-bold! text-slate-500!">
-                <div class="w-2.5! h-2.5! rounded-full! bg-blue-500!"></div>
-                Pendapatan
-              </div>
-              <div class="flex! items-center! gap-2! text-[10px]! font-bold! text-slate-500!">
-                <div class="w-2.5! h-2.5! rounded-full! bg-slate-700!"></div>
-                Beban
-              </div>
-              <div class="flex! items-center! gap-2! text-[10px]! font-bold! text-slate-500!">
-                <div class="w-2.5! h-2.5! rounded-full! bg-amber-500!"></div>
-                Surplus
-              </div>
+                <div class="flex! items-center! gap-2! text-[10px]! font-bold! text-slate-500!">
+                  <div class="w-2.5! h-2.5! rounded-full! bg-blue-500!"></div>
+                  Pendapatan
+                </div>
+                <div class="flex! items-center! gap-2! text-[10px]! font-bold! text-slate-500!">
+                  <div class="w-2.5! h-2.5! rounded-full! bg-slate-700!"></div>
+                  Beban
+                </div>
+                <div class="flex! items-center! gap-2! text-[10px]! font-bold! text-slate-500!">
+                  <div class="w-2.5! h-2.5! rounded-full! bg-amber-500!"></div>
+                  Surplus
+                </div>
               </div>
             </div>
           </div>
@@ -220,24 +220,38 @@
               </defs>
 
               <line
-                :x1="chartGeometry.padL" y1="20"
-                :x2="chartGeometry.padL" :y2="chartGeometry.padT + chartGeometry.innerH"
-                stroke="#e2e8f0" stroke-width="1"
+                :x1="chartGeometry.padL"
+                y1="20"
+                :x2="chartGeometry.padL"
+                :y2="chartGeometry.padT + chartGeometry.innerH"
+                stroke="#e2e8f0"
+                stroke-width="1"
               />
               <line
-                :x1="chartGeometry.padL" :y1="chartGeometry.padT + chartGeometry.innerH"
+                :x1="chartGeometry.padL"
+                :y1="chartGeometry.padT + chartGeometry.innerH"
                 :x2="chartGeometry.width - chartGeometry.padR"
                 :y2="chartGeometry.padT + chartGeometry.innerH"
-                stroke="#e2e8f0" stroke-width="1"
+                stroke="#e2e8f0"
+                stroke-width="1"
               />
 
               <g v-for="(t, idx) in chartGeometry.ticks" :key="idx">
                 <line
-                  :x1="chartGeometry.padL" :x2="chartGeometry.width - chartGeometry.padR"
-                  :y1="t.y" :y2="t.y"
-                  stroke="#e2e8f0" stroke-dasharray="4 4"
+                  :x1="chartGeometry.padL"
+                  :x2="chartGeometry.width - chartGeometry.padR"
+                  :y1="t.y"
+                  :y2="t.y"
+                  stroke="#e2e8f0"
+                  stroke-dasharray="4 4"
                 />
-                <text :x="chartGeometry.padL - 8" :y="t.y + 3" fill="#94a3b8" font-size="10" text-anchor="end">
+                <text
+                  :x="chartGeometry.padL - 8"
+                  :y="t.y + 3"
+                  fill="#94a3b8"
+                  font-size="10"
+                  text-anchor="end"
+                >
                   {{ t.label }}
                 </text>
               </g>
@@ -245,8 +259,11 @@
               <g v-for="(lbl, idx) in chartGeometry.xLabels" :key="`xl-${idx}`">
                 <text
                   v-if="lbl.label"
-                  :x="lbl.x" :y="chartGeometry.height - 10"
-                  fill="#94a3b8" font-size="10" text-anchor="middle"
+                  :x="lbl.x"
+                  :y="chartGeometry.height - 10"
+                  fill="#94a3b8"
+                  font-size="10"
+                  text-anchor="middle"
                 >
                   {{ lbl.label }}
                 </text>
@@ -257,15 +274,25 @@
 
               <path
                 :d="chartGeometry.pathP"
-                fill="none" stroke="#3b82f6" stroke-width="2.5" stroke-linecap="round"
+                fill="none"
+                stroke="#3b82f6"
+                stroke-width="2.5"
+                stroke-linecap="round"
               />
               <path
                 :d="chartGeometry.pathB"
-                fill="none" stroke="#334155" stroke-width="2.5" stroke-linecap="round"
+                fill="none"
+                stroke="#334155"
+                stroke-width="2.5"
+                stroke-linecap="round"
               />
               <path
                 :d="chartGeometry.pathS"
-                fill="none" stroke="#f59e0b" stroke-width="2.5" stroke-linecap="round" stroke-dasharray="6 4"
+                fill="none"
+                stroke="#f59e0b"
+                stroke-width="2.5"
+                stroke-linecap="round"
+                stroke-dasharray="6 4"
               />
 
               <g v-for="(p, idx) in chartGeometry.pointsP" :key="`pp-${idx}`">
@@ -450,10 +477,7 @@ const statsSummary = computed(() => {
   const bills = data?.bills_this_month || {}
 
   const instalasiStatuses = ['draft', 'pending', 'surveyed', 'unpaid', 'processing']
-  const instalasiCount = instalasiStatuses.reduce(
-    (sum, key) => sum + Number(tickets[key] || 0),
-    0,
-  )
+  const instalasiCount = instalasiStatuses.reduce((sum, key) => sum + Number(tickets[key] || 0), 0)
   const totalBills = (Number(bills.paid) || 0) + (Number(bills.unpaid) || 0)
 
   return {
@@ -506,8 +530,21 @@ const formatCurrency = (amount) => {
 }
 
 const monthLabel = (m) =>
-  ['', 'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
-    'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'][m] || ''
+  [
+    '',
+    'Januari',
+    'Februari',
+    'Maret',
+    'April',
+    'Mei',
+    'Juni',
+    'Juli',
+    'Agustus',
+    'September',
+    'Oktober',
+    'November',
+    'Desember',
+  ][m] || ''
 
 const chartGeometry = computed(() => {
   const data = chartData.value
@@ -522,10 +559,7 @@ const chartGeometry = computed(() => {
   const innerW = width - padL - padR
   const innerH = height - padT - padB
 
-  const maxVal = Math.max(
-    ...data.flatMap((d) => [d.pendapatan, d.beban, d.surplus]),
-    1
-  )
+  const maxVal = Math.max(...data.flatMap((d) => [d.pendapatan, d.beban, d.surplus]), 1)
   const niceMax = Math.max(Math.ceil(maxVal / 1e6) * 1e6, 1e6)
 
   const stepX = data.length > 1 ? innerW / (data.length - 1) : 0
@@ -555,11 +589,12 @@ const chartGeometry = computed(() => {
 
   const xLabels = data.map((d, i) => ({
     x: pointAt(i),
-    label: data.length <= 6
-      ? monthLabel(d.month).slice(0, 3)
-      : (i === 0 || i === data.length - 1 || i % Math.ceil(data.length / 6) === 0)
+    label:
+      data.length <= 6
         ? monthLabel(d.month).slice(0, 3)
-        : '',
+        : i === 0 || i === data.length - 1 || i % Math.ceil(data.length / 6) === 0
+          ? monthLabel(d.month).slice(0, 3)
+          : '',
   }))
 
   return {
@@ -579,7 +614,11 @@ const chartGeometry = computed(() => {
     pointsP: data.map((d, i) => ({ x: pointAt(i), y: yToPx(d.pendapatan) })),
     pointsB: data.map((d, i) => ({ x: pointAt(i), y: yToPx(d.beban) })),
     pointsS: data.map((d, i) => ({ x: pointAt(i), y: yToPx(d.surplus) })),
-    ticks: tickValues.map((v) => ({ y: yToPx(v), label: v >= 1e6 ? `${(v / 1e6).toFixed(0)}jt` : v >= 1e3 ? `${(v / 1e3).toFixed(0)}rb` : `${v}` })),
+    ticks: tickValues.map((v) => ({
+      y: yToPx(v),
+      label:
+        v >= 1e6 ? `${(v / 1e6).toFixed(0)}jt` : v >= 1e3 ? `${(v / 1e3).toFixed(0)}rb` : `${v}`,
+    })),
     xLabels,
   }
 })
@@ -590,14 +629,17 @@ const loadStats = async () => {
     if (response?.success && response?.data) {
       statsData.value = response.data
 
-      const yrs = Array.isArray(response.data.available_years) && response.data.available_years.length
-        ? response.data.available_years
-        : [new Date().getFullYear()]
+      const yrs =
+        Array.isArray(response.data.available_years) && response.data.available_years.length
+          ? response.data.available_years
+          : [new Date().getFullYear()]
       availableYears.value = yrs
       if (!yrs.includes(selectedYear.value)) {
         suppressWatch.value = true
         selectedYear.value = yrs[yrs.length - 1]
-        queueMicrotask(() => { suppressWatch.value = false })
+        queueMicrotask(() => {
+          suppressWatch.value = false
+        })
       }
     }
   } catch (error) {
@@ -619,15 +661,16 @@ const loadFinance = async () => {
         financialData.value = {
           pendapatan: p,
           beban: b,
-          surplus: Number(fin.surplus ?? (p - b)),
+          surplus: Number(fin.surplus ?? p - b),
         }
       } else {
         financialData.value = { pendapatan: 0, beban: 0, surplus: 0 }
       }
 
-      const yrs = Array.isArray(response.data.available_years) && response.data.available_years.length
-        ? response.data.available_years
-        : [selectedYear.value]
+      const yrs =
+        Array.isArray(response.data.available_years) && response.data.available_years.length
+          ? response.data.available_years
+          : [selectedYear.value]
       availableYears.value = yrs
 
       chartData.value = Array.isArray(response.data.finance_chart)
@@ -640,7 +683,10 @@ const loadFinance = async () => {
           }))
         : []
 
-      const prevMonth = await prevMonthFinance(selectedYear.value, fin?.month ?? new Date().getMonth() + 1)
+      const prevMonth = await prevMonthFinance(
+        selectedYear.value,
+        fin?.month ?? new Date().getMonth() + 1,
+      )
       financeTrend.value = {
         pendapatan: pctChange(prevMonth.pendapatan, financialData.value.pendapatan),
         beban: pctChange(prevMonth.beban, financialData.value.beban),
@@ -673,7 +719,7 @@ async function prevMonthFinance(year, month) {
     return {
       pendapatan: p,
       beban: b,
-      surplus: Number(f.surplus ?? (p - b)),
+      surplus: Number(f.surplus ?? p - b),
     }
   } catch {
     return { pendapatan: 0, beban: 0, surplus: 0 }
@@ -706,9 +752,7 @@ function trendBadgeClass(value, lowerIsBetter = false) {
   if (!value) return 'bg-slate-100! text-slate-500!'
   const positive = value > 0
   const good = lowerIsBetter ? !positive : positive
-  return good
-    ? 'bg-emerald-50! text-emerald-600!'
-    : 'bg-rose-50! text-rose-600!'
+  return good ? 'bg-emerald-50! text-emerald-600!' : 'bg-rose-50! text-rose-600!'
 }
 
 onMounted(async () => {

@@ -110,8 +110,12 @@
                   </td>
                   <td class="py-4! px-4! text-center text-slate-600">{{ item.no }}</td>
                   <td class="py-4! px-4! text-slate-700">{{ item.tanggal }}</td>
-                  <td class="py-4! px-4! font-mono text-xs text-slate-500">{{ item.kodeAkunDebet }}</td>
-                  <td class="py-4! px-4! font-mono text-xs text-slate-500">{{ item.kodeAkunKredit }}</td>
+                  <td class="py-4! px-4! font-mono text-xs text-slate-500">
+                    {{ item.kodeAkunDebet }}
+                  </td>
+                  <td class="py-4! px-4! font-mono text-xs text-slate-500">
+                    {{ item.kodeAkunKredit }}
+                  </td>
                   <td class="py-4! px-4! text-slate-700">{{ item.keterangan }}</td>
                   <td class="py-4! px-4! font-mono text-xs text-slate-500">{{ item.idTrx }}</td>
                   <td class="py-4! px-4! text-right font-mono text-slate-700">{{ item.debit }}</td>
@@ -140,8 +144,12 @@
                   <td colspan="8" class="py-4! px-6! font-semibold text-slate-800">
                     Total Transaksi
                   </td>
-                  <td class="py-4! px-4! text-right font-mono text-slate-800">{{ formatCurrency(totalDebit) }}</td>
-                  <td class="py-4! px-4! text-right font-mono text-slate-800">{{ formatCurrency(totalKredit) }}</td>
+                  <td class="py-4! px-4! text-right font-mono text-slate-800">
+                    {{ formatCurrency(totalDebit) }}
+                  </td>
+                  <td class="py-4! px-4! text-right font-mono text-slate-800">
+                    {{ formatCurrency(totalKredit) }}
+                  </td>
                   <td></td>
                 </tr>
               </tbody>
@@ -171,7 +179,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { computed, onMounted, onUnmounted, watch } from 'vue'
 
 const props = defineProps({
   show: {
@@ -198,8 +206,12 @@ const items = computed(() => {
   return props.transactions.map((trx, index) => ({
     no: index + 1,
     tanggal: formatDate(trx.tgl_transaksi),
-    kodeAkunDebet: (trx.account_debet?.kode_akun || trx.account_debet) + (trx.account_debet?.nama_akun ? ` (${trx.account_debet.nama_akun})` : ''),
-    kodeAkunKredit: (trx.account_kredit?.kode_akun || trx.account_kredit) + (trx.account_kredit?.nama_akun ? ` (${trx.account_kredit.nama_akun})` : ''),
+    kodeAkunDebet:
+      (trx.account_debet?.kode_akun || trx.account_debet) +
+      (trx.account_debet?.nama_akun ? ` (${trx.account_debet.nama_akun})` : ''),
+    kodeAkunKredit:
+      (trx.account_kredit?.kode_akun || trx.account_kredit) +
+      (trx.account_kredit?.nama_akun ? ` (${trx.account_kredit.nama_akun})` : ''),
     keterangan: trx.keterangan_transaksi || '-',
     idTrx: trx.id,
     debit: formatCurrency(trx.saldo),

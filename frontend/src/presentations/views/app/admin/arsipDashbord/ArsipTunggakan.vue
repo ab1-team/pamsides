@@ -19,12 +19,7 @@
         </span>
       </template>
       <template #column-denda="{ row }">
-        <span
-          :class="[
-            'font-semibold',
-            row.denda > 0 ? 'text-rose-600' : 'text-slate-400',
-          ]"
-        >
+        <span :class="['font-semibold', row.denda > 0 ? 'text-rose-600' : 'text-slate-400']">
           {{ formatCurrency(row.denda) }}
         </span>
       </template>

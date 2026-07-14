@@ -304,8 +304,8 @@
                       <div class="text-xs! sm:text-sm! font-bold! text-white!">
                         {{ billingStore.selectedCustomer?.village || '-' }},
                         {{ billingStore.selectedCustomer?.hamlet || '-' }}, RT{{
-                          billingStore.selectedCustomer?.rt || '-' }}/RW{{
-                          billingStore.selectedCustomer?.rw || '-' }}
+                          billingStore.selectedCustomer?.rt || '-'
+                        }}/RW{{ billingStore.selectedCustomer?.rw || '-' }}
                       </div>
                     </div>
                   </div>
