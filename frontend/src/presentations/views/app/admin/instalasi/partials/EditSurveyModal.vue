@@ -18,7 +18,7 @@
               </div>
               <div>
                 <h2 class="text-lg! font-semibold! text-slate-800 leading-tight">
-                  Edit Hasil Survey
+                  Ubah Hasil Survey
                 </h2>
                 <p class="text-xs! text-slate-500! font-medium!">
                   {{ survey?.ticket?.applicant_name || '-' }}
@@ -228,7 +228,9 @@ watch(
       formData.material_notes = newSurvey.material_notes || ''
       const url = newSurvey.photo_url
       if (url) {
-        photoPreview.value = /^https?:\/\//i.test(url) ? url : storageUrl(`storage/survey-photos/${url}`)
+        photoPreview.value = /^https?:\/\//i.test(url)
+          ? url
+          : storageUrl(`storage/survey-photos/${url}`)
       } else {
         photoPreview.value = null
       }

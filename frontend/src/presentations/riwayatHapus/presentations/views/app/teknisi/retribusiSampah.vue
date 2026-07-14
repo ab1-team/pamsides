@@ -80,7 +80,7 @@
           <button
             @click="refreshData"
             class="w-14! h-14! rounded-2xl! bg-white! border! border-slate-100! text-slate-400! hover:text-cyan-600! hover:border-cyan-200! shadow-sm! transition-all! flex! items-center! justify-center! active:scale-90!"
-            title="Refresh Data"
+            title="Segarkan Data"
           >
             <font-awesome-icon icon="redo-alt" />
           </button>
@@ -113,7 +113,7 @@
             <div class="hidden lg:flex! items-center! gap-2! pr-2!">
               <kbd
                 class="px-2! py-1! bg-white! border! border-slate-200! rounded-lg! text-[10px]! font-black! text-slate-400!"
-                >ESC TO CLEAR</kbd
+                >ESC UNTUK HAPUS</kbd
               >
             </div>
           </div>

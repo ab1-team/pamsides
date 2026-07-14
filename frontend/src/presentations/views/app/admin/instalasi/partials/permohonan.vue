@@ -10,12 +10,15 @@
             class="inline-flex! items-center! gap-1! px-2.5! py-1! rounded-full! text-[10px]! font-bold! uppercase! tracking-wider! bg-indigo-100! text-indigo-700!"
           >
             <span class="w-1.5! h-1.5! rounded-full! bg-current! opacity-60!"></span>
-            Pending
+            Menunggu
           </span>
         </div>
         <h1 class="text-lg! font-bold! text-slate-800! truncate! mb-1!">{{ customer.name }}</h1>
         <div class="flex! items-center! gap-1.5! text-slate-500!">
-          <font-awesome-icon icon="map-marker-alt" class="text-indigo-400! text-[10px]! shrink-0!" />
+          <font-awesome-icon
+            icon="map-marker-alt"
+            class="text-indigo-400! text-[10px]! shrink-0!"
+          />
           <p class="text-[11px]! truncate!">{{ customer.address }}, {{ customer.region }}</p>
         </div>
 
@@ -55,7 +58,9 @@
             Cetak
           </button>
           <button
-            @click="$router.push({ path: '/app/instalasi/status', query: { filter: 'permohonan' } })"
+            @click="
+              $router.push({ path: '/app/instalasi/status', query: { filter: 'permohonan' } })
+            "
             class="flex! items-center! justify-center! gap-2! border! border-slate-200! hover:bg-slate-50! text-slate-600! font-semibold! py-2.5! rounded-xl! text-sm! transition-all! bg-white!"
           >
             <font-awesome-icon icon="arrow-left" />

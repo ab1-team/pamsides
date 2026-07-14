@@ -1,7 +1,9 @@
 <template>
   <div class="registrasi-root! px-3! sm:px-0!">
     <div class="mb-3! sm:mb-2!">
-      <h1 class="text-xl! sm:text-2xl! font-bold! text-slate-800! tracking-tight!">Register Instalasi</h1>
+      <h1 class="text-xl! sm:text-2xl! font-bold! text-slate-800! tracking-tight!">
+        Register Instalasi
+      </h1>
       <p class="text-xs! sm:text-sm! text-slate-500! mt-1!">
         Buat koneksi layanan baru untuk pelanggan yang telah divalidasi.
       </p>
@@ -71,9 +73,9 @@
                 >
                   <font-awesome-icon icon="users" class="w-6! h-6! text-slate-300!" />
                 </div>
-                <p class="text-sm! font-bold! text-slate-600! mb-1!">No customers found</p>
+                <p class="text-sm! font-bold! text-slate-600! mb-1!">Pelanggan tidak ditemukan</p>
                 <p class="text-xs! text-slate-400! leading-relaxed!">
-                  We couldn't find any customers matching your search query or filter.
+                  Tidak ada pelanggan yang cocok dengan pencarian atau filter Anda.
                 </p>
               </div>
               <BaseButton
@@ -178,7 +180,9 @@
               <span class="hidden! sm:inline!">·</span>
               <span class="truncate!">
                 Status:
-                <span class="font-bold! text-white!">{{ selectedCustomer.statusLabel || '-' }}</span>
+                <span class="font-bold! text-white!">{{
+                  selectedCustomer.statusLabel || '-'
+                }}</span>
               </span>
             </div>
           </div>
@@ -258,9 +262,9 @@
         >
           <template v-if="selectedCustomer.status === 'Suspended'">
             Pelanggan <strong>{{ selectedCustomer.name }}</strong> masih memiliki
-            <strong>tagihan tertunggak</strong>. Formulir pendaftaran instalasi baru
-            dikunci. Mohon <strong>lunasi tagihan lama</strong> terlebih dahulu, kemudian
-            status akan dibuka kembali.
+            <strong>tagihan tertunggak</strong>. Formulir pendaftaran instalasi baru dikunci. Mohon
+            <strong>lunasi tagihan lama</strong> terlebih dahulu, kemudian status akan dibuka
+            kembali.
           </template>
           <template v-else>
             Pelanggan <strong>{{ selectedCustomer.name }}</strong> sudah dalam status
@@ -445,7 +449,11 @@
                           inputmode="numeric"
                           placeholder="0,00"
                           class="w-full! px-3! py-2.5! text-sm! font-extrabold! text-right! border-none! focus:outline-none! bg-transparent!"
-                          :class="isMustFullyPaid ? 'text-slate-500! cursor-not-allowed!' : 'text-blue-600!'"
+                          :class="
+                            isMustFullyPaid
+                              ? 'text-slate-500! cursor-not-allowed!'
+                              : 'text-blue-600!'
+                          "
                         />
                       </div>
                     </div>
@@ -560,7 +568,10 @@
                   <div
                     class="w-10! h-10! sm:w-12! sm:h-12! rounded-full! bg-white/80! border-2! border-dashed! border-slate-300! flex! items-center! justify-center! mx-auto! mb-2!"
                   >
-                    <font-awesome-icon icon="map-marker-alt" class="w-4! h-4! sm:w-5! sm:h-5! text-slate-400!" />
+                    <font-awesome-icon
+                      icon="map-marker-alt"
+                      class="w-4! h-4! sm:w-5! sm:h-5! text-slate-400!"
+                    />
                   </div>
                   <p class="text-[11px]! sm:text-xs! text-slate-400! font-medium!">
                     Masukkan koordinat untuk preview
@@ -603,8 +614,12 @@
       </div>
     </ContentCard>
 
-    <div class="mt-6! sm:mt-10! flex! flex-col! sm:flex-row! items-stretch! sm:items-center! justify-between! gap-3! sm:gap-5!">
-      <div class="flex! items-start! sm:items-center! gap-2! text-xs! text-slate-400! opacity-80! order-2! sm:order-1!">
+    <div
+      class="mt-6! sm:mt-10! flex! flex-col! sm:flex-row! items-stretch! sm:items-center! justify-between! gap-3! sm:gap-5!"
+    >
+      <div
+        class="flex! items-start! sm:items-center! gap-2! text-xs! text-slate-400! opacity-80! order-2! sm:order-1!"
+      >
         <div
           class="w-4! h-4! rounded-full! bg-blue-50! flex! items-center! justify-center! shrink-0! mt-0.5! sm:mt-0!"
         >

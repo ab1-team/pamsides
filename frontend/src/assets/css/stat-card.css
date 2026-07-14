@@ -34,7 +34,7 @@
 }
 
 .stat-card--instalasi:hover {
-  background: #14b5ff !important;
+  background: #028ccb !important;
   transform: translateY(-4px) scale(1.02);
 }
 
@@ -59,12 +59,12 @@
 }
 
 .stat-card--tagihan {
-  background: #35d351 !important;
+  background: #36cd6d !important;
   border: none !important;
 }
 
 .stat-card--tagihan:hover {
-  background: #35b464 !important;
+  background: #278a4b !important;
   transform: translateY(-4px) scale(1.02);
 }
 

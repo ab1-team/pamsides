@@ -75,7 +75,7 @@
                         PAMSIDES <span class="text-indigo-400!">DIGITAL</span>
                       </h2>
                       <p class="text-[9px]! font-black! opacity-40! tracking-widest! uppercase!">
-                        Official Invoice
+                        Invoice Resmi
                       </p>
                     </div>
                   </div>
@@ -84,12 +84,12 @@
                     <span
                       v-if="bill.status === 'unpaid'"
                       class="px-3! py-1! bg-red-500/20! text-red-300! rounded-full! text-[9px]! font-black! border! border-red-500/30! tracking-widest!"
-                      >UNPAID</span
+                      >BELUM LUNAS</span
                     >
                     <span
                       v-else
                       class="px-3! py-1! bg-emerald-500/20! text-emerald-300! rounded-full! text-[9px]! font-black! border! border-emerald-500/30! tracking-widest!"
-                      >PAID</span
+                      >LUNAS</span
                     >
                     <h1 class="text-3xl! lg:text-5xl! font-black! tracking-tighter! mt-3!">
                       Rp. {{ formatNumber(bill.total_amount) }}
@@ -111,7 +111,7 @@
                       <p
                         class="text-[9px]! lg:text-xs! font-bold! opacity-40! tracking-widest! uppercase!"
                       >
-                        Invoice Number
+                        Nomor Invoice
                       </p>
                       <p class="text-xs! lg:text-sm! font-black!">
                         #INV/{{ bill.billing_period_year }}/{{ bill.billing_period_month }}/{{
@@ -143,7 +143,7 @@
                         <p
                           class="text-[8px]! lg:text-[10px]! font-black! opacity-40! tracking-widest! uppercase!"
                         >
-                          Customer
+                          Pelanggan
                         </p>
                         <p class="text-xs! lg:text-sm! font-black!">{{ customer.name }}</p>
                       </div>
@@ -351,7 +351,7 @@ const shareInvoice = async () => {
   const customerName = customer.value.name
 
   const textMessage =
-    `*PAMSIDES DIGITAL - INVOICE OFFICIAL*\n\n` +
+    `*PAMSIDES DIGITAL - INVOICE RESMI*\n\n` +
     `Tagihan an. *${customerName}*\n` +
     `Periode: ${period}\n` +
     `Total: *${amount}*\n` +

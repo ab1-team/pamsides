@@ -6,7 +6,7 @@
       <div class="relative!">
         <CustomSearch
           v-model="billingStore.searchQuery"
-          placeholder="Search customer name, ID, or installation code..."
+          placeholder="Cari nama, ID, atau kode instalasi pelanggan..."
           button-text="Detail Transaksi"
           @input="billingStore.searchCustomers($event)"
           @search="handleSearch"
@@ -199,10 +199,10 @@
                   <div class="text-[10px]! sm:text-[11px]! text-slate-400! font-medium!">
                     {{
                       period.type === 'overdue'
-                        ? 'Amount Due'
+                        ? 'Jumlah Tagihan'
                         : period.type === 'processing'
-                          ? 'Amount Processing'
-                          : 'Paid Amount'
+                          ? 'Jumlah Diproses'
+                          : 'Jumlah Dibayar'
                     }}
                   </div>
                   <div
@@ -286,7 +286,7 @@
                       <font-awesome-icon icon="id-card" class="text-white! text-xs!" />
                     </div>
                     <div class="flex-1! min-w-0!">
-                      <div class="text-xs! text-white/70!">Customer ID</div>
+                      <div class="text-xs! text-white/70!">ID Pelanggan</div>
                       <div class="text-xs! sm:text-sm! font-bold! text-white! truncate!">
                         {{ billingStore.selectedCustomer?.id || '-' }}
                       </div>
@@ -304,8 +304,8 @@
                       <div class="text-xs! sm:text-sm! font-bold! text-white!">
                         {{ billingStore.selectedCustomer?.village || '-' }},
                         {{ billingStore.selectedCustomer?.hamlet || '-' }}, RT{{
-                          billingStore.selectedCustomer?.rt || '-' }}/RW{{
-                          billingStore.selectedCustomer?.rw || '-' }}
+                          billingStore.selectedCustomer?.rt || '-'
+                        }}/RW{{ billingStore.selectedCustomer?.rw || '-' }}
                       </div>
                     </div>
                   </div>

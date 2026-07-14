@@ -10,7 +10,7 @@
         </h1>
         <p class="text-sm! text-slate-500! mt-1! max-w-2xl!">
           Kelola tagihan biaya pasang baru pelanggan. Mendukung pembayaran sebagian (cicilan) dan
-          pelunasan. Status tiket akan otomatis lanjut ke Processing ketika sudah lunas.
+          pelunasan. Status tiket akan otomatis lanjut ke Diproses ketika sudah lunas.
         </p>
       </div>
 
@@ -21,7 +21,7 @@
           <div class="w-2! h-2! rounded-full! bg-amber-500!"></div>
           <div>
             <div class="text-[10px]! font-bold! text-slate-400! uppercase! tracking-wider!">
-              Surveyed
+              Disurvei
             </div>
             <div class="text-sm! font-extrabold! text-amber-600!">{{ counts.surveyed }}</div>
           </div>
@@ -32,7 +32,7 @@
           <div class="w-2! h-2! rounded-full! bg-orange-500! animate-pulse!"></div>
           <div>
             <div class="text-[10px]! font-bold! text-slate-400! uppercase! tracking-wider!">
-              Unpaid
+              Belum Bayar
             </div>
             <div class="text-sm! font-extrabold! text-orange-600!">{{ counts.unpaid }}</div>
           </div>
@@ -54,8 +54,15 @@
     </div>
 
     <div class="grid! grid-cols-1! xl:grid-cols-5! gap-4! lg:gap-6!">
-      <ContentCard variant="bordered" padding="none" rounded="2xl" class="xl:col-span-2! overflow-hidden!">
-        <div class="px-4! py-3! border-b! border-slate-100! bg-slate-50/50! flex! items-center! justify-between!">
+      <ContentCard
+        variant="bordered"
+        padding="none"
+        rounded="2xl"
+        class="xl:col-span-2! overflow-hidden!"
+      >
+        <div
+          class="px-4! py-3! border-b! border-slate-100! bg-slate-50/50! flex! items-center! justify-between!"
+        >
           <div class="flex! items-center! gap-2!">
             <div class="w-7! h-7! rounded-lg! bg-sky-100! flex! items-center! justify-center!">
               <font-awesome-icon icon="list" class="text-sky-600! text-xs!" />
@@ -67,7 +74,7 @@
             class="text-[10px]! font-bold! text-slate-500! hover:text-sky-600! flex! items-center! gap-1! uppercase! tracking-wider!"
           >
             <font-awesome-icon icon="sync" :class="loading ? 'animate-spin!' : ''" />
-            Refresh
+            Segarkan
           </button>
         </div>
 
@@ -134,42 +141,45 @@
                     : 'bg-orange-100! text-orange-700!'
                 "
               >
-                {{ t.status === 'surveyed' ? 'Surveyed' : 'Unpaid' }}
+                {{ t.status === 'surveyed' ? 'Disurvei' : 'Belum Bayar' }}
               </span>
             </div>
 
-                <div class="mt-2!">
-                  <div class="flex! items-center! justify-between! text-[10px]! mb-1!">
-                    <span class="text-slate-500! font-medium!">{{ t.package }}</span>
-                    <span class="text-slate-700! font-bold!">
-                      {{ formatRibuan(Number(t.total_paid) || 0) }} / {{ formatRibuan(t.total_fee) }}
-                    </span>
-                  </div>
-                  <div class="h-1.5! rounded-full! bg-slate-200! overflow-hidden!">
-                    <div
-                      class="h-full! rounded-full! transition-all!"
-                      :class="t.is_paid_off ? 'bg-emerald-500!' : 'bg-gradient-to-r! from-orange-400! to-orange-500!'"
-                      :style="{ width: `${getProgress(t)}%` }"
-                    ></div>
-                  </div>
-                  <div class="flex! items-center! justify-between! mt-1!">
-                    <span class="text-[10px]! text-slate-400!">{{ getProgress(t).toFixed(0) }}% terbayar</span>
-                    <span
-                      v-if="!t.is_paid_off"
-                      class="text-[10px]! font-bold! text-orange-600!"
-                    >
-                      Sisa: Rp {{ formatRibuan(t.remaining) }}
-                    </span>
-                    <span v-else class="text-[10px]! font-bold! text-emerald-600!">LUNAS</span>
-                  </div>
-                  <div
-                    v-if="hasPendingPayments(t)"
-                    class="mt-1! text-[10px]! font-bold! text-amber-600! flex! items-center! gap-1!"
-                  >
-                    <font-awesome-icon icon="clock" />
-                    {{ pendingCount(t) }} pembayaran menunggu konfirmasi
-                  </div>
-                </div>
+            <div class="mt-2!">
+              <div class="flex! items-center! justify-between! text-[10px]! mb-1!">
+                <span class="text-slate-500! font-medium!">{{ t.package }}</span>
+                <span class="text-slate-700! font-bold!">
+                  {{ formatRibuan(Number(t.total_paid) || 0) }} / {{ formatRibuan(t.total_fee) }}
+                </span>
+              </div>
+              <div class="h-1.5! rounded-full! bg-slate-200! overflow-hidden!">
+                <div
+                  class="h-full! rounded-full! transition-all!"
+                  :class="
+                    t.is_paid_off
+                      ? 'bg-emerald-500!'
+                      : 'bg-gradient-to-r! from-orange-400! to-orange-500!'
+                  "
+                  :style="{ width: `${getProgress(t)}%` }"
+                ></div>
+              </div>
+              <div class="flex! items-center! justify-between! mt-1!">
+                <span class="text-[10px]! text-slate-400!"
+                  >{{ getProgress(t).toFixed(0) }}% terbayar</span
+                >
+                <span v-if="!t.is_paid_off" class="text-[10px]! font-bold! text-orange-600!">
+                  Sisa: Rp {{ formatRibuan(t.remaining) }}
+                </span>
+                <span v-else class="text-[10px]! font-bold! text-emerald-600!">LUNAS</span>
+              </div>
+              <div
+                v-if="hasPendingPayments(t)"
+                class="mt-1! text-[10px]! font-bold! text-amber-600! flex! items-center! gap-1!"
+              >
+                <font-awesome-icon icon="clock" />
+                {{ pendingCount(t) }} pembayaran menunggu konfirmasi
+              </div>
+            </div>
           </button>
         </div>
       </ContentCard>
@@ -205,7 +215,9 @@
           >
             <div
               class="absolute! -top-20! -right-20! w-60! h-60! rounded-full!"
-              style="background: radial-gradient(circle, rgba(56, 189, 248, 0.15) 0%, transparent 70%)"
+              style="
+                background: radial-gradient(circle, rgba(56, 189, 248, 0.15) 0%, transparent 70%);
+              "
             ></div>
 
             <div class="relative! z-10!">
@@ -219,10 +231,14 @@
                   <h2 class="text-xl! font-extrabold! tracking-tight!">
                     {{ selectedTicket.applicant_name }}
                   </h2>
-                  <div class="flex! flex-wrap! items-center! gap-x-3! gap-y-1! mt-1! text-[11px]! text-white/70!">
+                  <div
+                    class="flex! flex-wrap! items-center! gap-x-3! gap-y-1! mt-1! text-[11px]! text-white/70!"
+                  >
                     <span>NIK: {{ selectedTicket.nik }}</span>
                     <span class="text-white/30!">•</span>
-                    <span class="font-mono!">#INS-{{ String(selectedTicket.id).padStart(4, '0') }}</span>
+                    <span class="font-mono!"
+                      >#INS-{{ String(selectedTicket.id).padStart(4, '0') }}</span
+                    >
                     <span class="text-white/30!">•</span>
                     <span>{{ selectedTicket.package }}</span>
                   </div>
@@ -235,7 +251,13 @@
                       : 'bg-orange-500/20! text-orange-300! border! border-orange-400/30!'
                   "
                 >
-                  {{ selectedTicket.is_paid_off ? 'LUNAS' : selectedTicket.status === 'surveyed' ? 'SURVEYED' : 'UNPAID' }}
+                  {{
+                    selectedTicket.is_paid_off
+                      ? 'LUNAS'
+                      : selectedTicket.status === 'surveyed'
+                        ? 'SURVEYED'
+                        : 'UNPAID'
+                  }}
                 </span>
               </div>
 
@@ -248,7 +270,9 @@
                     Rp {{ formatRibuan(selectedTicket.total_fee) }}
                   </div>
                 </div>
-                <div class="bg-emerald-500/10! backdrop-blur-sm! rounded-lg! p-3! border! border-emerald-400/20!">
+                <div
+                  class="bg-emerald-500/10! backdrop-blur-sm! rounded-lg! p-3! border! border-emerald-400/20!"
+                >
                   <div class="text-[10px]! text-emerald-300! uppercase! font-bold! tracking-wider!">
                     Sudah Dibayar
                   </div>
@@ -296,19 +320,25 @@
                 <font-awesome-icon icon="check" class="text-emerald-600! text-2xl!" />
               </div>
               <p class="text-sm! font-bold! text-emerald-700!">Tagihan sudah lunas</p>
-              <p class="text-xs! text-slate-500! mt-1!">Tiket ini sudah lanjut ke tahap Processing.</p>
+              <p class="text-xs! text-slate-500! mt-1!">
+                Tiket ini sudah lanjut ke tahap Diproses.
+              </p>
             </div>
 
             <div v-else class="space-y-4!">
               <div>
-                <label class="text-[11px]! font-bold! text-slate-500! uppercase! tracking-wider! mb-1.5! block!">
+                <label
+                  class="text-[11px]! font-bold! text-slate-500! uppercase! tracking-wider! mb-1.5! block!"
+                >
                   Tanggal Pembayaran
                 </label>
                 <AppDatePicker v-model="form.tanggalBayar" placeholder="Pilih tanggal" />
               </div>
 
               <div>
-                <label class="text-[11px]! font-bold! text-slate-500! uppercase! tracking-wider! mb-1.5! block!">
+                <label
+                  class="text-[11px]! font-bold! text-slate-500! uppercase! tracking-wider! mb-1.5! block!"
+                >
                   Nominal Pembayaran
                 </label>
                 <div class="flex! gap-2! mb-2!">
@@ -342,7 +372,9 @@
                 </div>
                 <div class="flex! items-center! justify-between! mt-1.5! text-[11px]!">
                   <span class="text-slate-500!">Sisa tagihan:</span>
-                  <span class="font-bold! text-orange-600!">Rp {{ formatRibuan(selectedTicket.remaining) }}</span>
+                  <span class="font-bold! text-orange-600!"
+                    >Rp {{ formatRibuan(selectedTicket.remaining) }}</span
+                  >
                 </div>
               </div>
 
@@ -355,7 +387,7 @@
                   <p class="font-bold!">Pembayaran Sebagian</p>
                   <p class="mt-0.5!">
                     Setelah ini, status tiket tetap
-                    <strong>Unpaid</strong> dan masih ada sisa
+                    <strong>Belum Bayar</strong> dan masih ada sisa
                     <strong>Rp {{ formatRibuan(selectedTicket.remaining - form.amount) }}</strong>
                     yang harus dilunasi.
                   </p>
@@ -369,14 +401,18 @@
                 <font-awesome-icon icon="check-circle" class="text-emerald-600! mt-0.5!" />
                 <div class="text-[11px]! text-emerald-800!">
                   <p class="font-bold!">Pelunasan</p>
-                  <p class="mt-0.5!">Setelah konfirmasi, tiket otomatis lanjut ke tahap <strong>Processing</strong>.</p>
+                  <p class="mt-0.5!">
+                    Setelah konfirmasi, tiket otomatis lanjut ke tahap <strong>Diproses</strong>.
+                  </p>
                 </div>
               </div>
 
               <div class="flex! gap-2! pt-2!">
                 <button
                   @click="handleSubmit"
-                  :disabled="submitting || form.amount <= 0 || form.amount > selectedTicket.remaining"
+                  :disabled="
+                    submitting || form.amount <= 0 || form.amount > selectedTicket.remaining
+                  "
                   class="flex-1! py-2.5! rounded-lg! font-bold! text-sm! flex! items-center! justify-center! gap-2! transition-all! disabled:opacity-50! disabled:cursor-not-allowed!"
                   :class="
                     form.amount >= selectedTicket.remaining
@@ -385,12 +421,17 @@
                   "
                 >
                   <font-awesome-icon v-if="submitting" icon="spinner" spin />
-                  <font-awesome-icon v-else :icon="form.amount >= selectedTicket.remaining ? 'check-circle' : 'money-bill-wave'" />
+                  <font-awesome-icon
+                    v-else
+                    :icon="
+                      form.amount >= selectedTicket.remaining ? 'check-circle' : 'money-bill-wave'
+                    "
+                  />
                   {{
                     submitting
                       ? 'Menyimpan...'
                       : form.amount >= selectedTicket.remaining
-                        ? 'Pelunasan & Lanjut Processing'
+                        ? 'Pelunasan & Lanjut Diproses'
                         : 'Simpan Pembayaran'
                   }}
                 </button>
@@ -406,7 +447,10 @@
               <h3 class="text-sm! font-bold! text-slate-800!">Riwayat Pembayaran</h3>
             </div>
 
-            <div v-if="selectedTicket.payments.length === 0" class="text-center! py-6! text-xs! text-slate-400!">
+            <div
+              v-if="selectedTicket.payments.length === 0"
+              class="text-center! py-6! text-xs! text-slate-400!"
+            >
               Belum ada pembayaran
             </div>
             <div v-else class="space-y-2!">
@@ -436,7 +480,9 @@
                       Rp {{ formatRibuan(p.amount) }}
                     </div>
                     <div class="text-[10px]! text-slate-400!">
-                      {{ p.paid_at ? new Date(p.paid_at).toLocaleString('id-ID') : 'Belum dibayar' }}
+                      {{
+                        p.paid_at ? new Date(p.paid_at).toLocaleString('id-ID') : 'Belum dibayar'
+                      }}
                     </div>
                   </div>
                 </div>
@@ -448,7 +494,7 @@
                       : 'bg-amber-100! text-amber-700!'
                   "
                 >
-                  {{ p.status === 'confirmed' ? 'Confirmed' : 'Pending' }}
+                  {{ p.status === 'confirmed' ? 'Dikonfirmasi' : 'Menunggu' }}
                 </span>
               </div>
             </div>
@@ -631,10 +677,10 @@ const handleSubmit = async () => {
         ${
           !isLunas
             ? `<div style="background:#fef3c7; padding:8px 10px; border-radius:6px; font-size:11px; color:#92400e; margin-top:6px;">
-                Sisa setelah bayar: <strong>Rp ${formatRibuan(selectedTicket.value.remaining - form.amount)}</strong> — status tiket tetap <strong>Unpaid</strong>
+                Sisa setelah bayar: <strong>Rp ${formatRibuan(selectedTicket.value.remaining - form.amount)}</strong> — status tiket tetap <strong>Belum Bayar</strong>
               </div>`
             : `<div style="background:#d1fae5; padding:8px 10px; border-radius:6px; font-size:11px; color:#065f46; margin-top:6px;">
-                Status tiket akan otomatis lanjut ke <strong>Processing</strong>
+                Status tiket akan otomatis lanjut ke <strong>Diproses</strong>
               </div>`
         }
       </div>
@@ -657,19 +703,21 @@ const handleSubmit = async () => {
     const newRemaining = Number(data.remaining ?? 0)
     const isPaidOff = !!data.is_paid_off
 
-    const kode = selectedTicket.value?.customer_code || `#INS-${String(selectedTicket.value.id).padStart(4, '0')}`
+    const kode =
+      selectedTicket.value?.customer_code ||
+      `#INS-${String(selectedTicket.value.id).padStart(4, '0')}`
 
     if (isPaidOff) {
       const choice = await Swal.fire({
         title: 'Pelunasan Berhasil!',
-        html: `<p style="font-size:13px;">Tiket telah lunas dan otomatis lanjut ke tahap <strong>Processing</strong>.</p>`,
+        html: `<p style="font-size:13px;">Tiket telah lunas dan otomatis lanjut ke tahap <strong>Diproses</strong>.</p>`,
         icon: 'success',
         showDenyButton: true,
         showCancelButton: false,
         showConfirmButton: true,
         allowEscapeKey: false,
         allowOutsideClick: false,
-        confirmButtonText: 'Lihat Detail Processing',
+        confirmButtonText: 'Lihat Detail Diproses',
         denyButtonText: 'Lanjut Tagihan Instalasi',
         buttonsStyling: true,
         confirmButtonColor: '#0284c7',

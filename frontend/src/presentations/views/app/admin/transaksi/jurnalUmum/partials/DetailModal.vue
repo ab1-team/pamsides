@@ -90,7 +90,9 @@
                 <tr v-if="loading">
                   <td colspan="10" class="py-8 text-center text-slate-500">
                     <div class="flex justify-center">
-                      <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+                      <div
+                        class="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"
+                      ></div>
                     </div>
                   </td>
                 </tr>
@@ -100,21 +102,35 @@
                   </td>
                 </tr>
                 <template v-else>
-                  <tr v-for="(trx, index) in transactions" :key="trx.id" class="hover:bg-slate-50 transition-colors">
+                  <tr
+                    v-for="(trx, index) in transactions"
+                    :key="trx.id"
+                    class="hover:bg-slate-50 transition-colors"
+                  >
                     <td class="py-4! px-4! text-center text-slate-600">{{ index + 1 }}</td>
                     <td class="py-4! px-4! text-slate-700">{{ formatDate(trx.tgl_transaksi) }}</td>
                     <td class="py-4! px-4! font-mono text-xs text-slate-500">
                       {{ trx.account_debet?.kode_akun || trx.account_debet }}
-                      <span v-if="trx.account_debet?.nama_akun" class="text-slate-400 ml-1">({{ trx.account_debet.nama_akun }})</span>
+                      <span v-if="trx.account_debet?.nama_akun" class="text-slate-400 ml-1"
+                        >({{ trx.account_debet.nama_akun }})</span
+                      >
                     </td>
                     <td class="py-4! px-4! font-mono text-xs text-slate-500">
                       {{ trx.account_kredit?.kode_akun || trx.account_kredit }}
-                      <span v-if="trx.account_kredit?.nama_akun" class="text-slate-400 ml-1">({{ trx.account_kredit.nama_akun }})</span>
+                      <span v-if="trx.account_kredit?.nama_akun" class="text-slate-400 ml-1"
+                        >({{ trx.account_kredit.nama_akun }})</span
+                      >
                     </td>
-                    <td class="py-4! px-4! text-slate-700">{{ trx.keterangan_transaksi || '-' }}</td>
+                    <td class="py-4! px-4! text-slate-700">
+                      {{ trx.keterangan_transaksi || '-' }}
+                    </td>
                     <td class="py-4! px-4! font-mono text-xs text-slate-500">{{ trx.id }}</td>
-                    <td class="py-4! px-4! text-right font-mono text-slate-700">{{ formatCurrency(trx.saldo) }}</td>
-                    <td class="py-4! px-4! text-right font-mono text-slate-700">{{ formatCurrency(trx.saldo) }}</td>
+                    <td class="py-4! px-4! text-right font-mono text-slate-700">
+                      {{ formatCurrency(trx.saldo) }}
+                    </td>
+                    <td class="py-4! px-4! text-right font-mono text-slate-700">
+                      {{ formatCurrency(trx.saldo) }}
+                    </td>
                     <td class="py-4! px-4! text-center font-mono text-slate-700">-</td>
                     <td class="py-4! px-4! text-center">
                       <div class="flex items-center justify-center gap-2!">
@@ -153,7 +169,7 @@
               @click="close"
               class="bg-white border border-slate-300 hover:bg-slate-100 text-slate-700 px-6! py-3! font-semibold transition-all active:scale-95 rounded-lg!"
             >
-              Close
+              Tutup
             </button>
           </div>
         </div>

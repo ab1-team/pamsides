@@ -19,7 +19,7 @@
           >
             <span class="w-2! h-2! bg-orange-500! rounded-full! animate-pulse!"></span>
             <span class="text-xs! font-black! text-orange-400! uppercase! tracking-widest!"
-              >Field Operations Live</span
+              >Operasi Lapangan Aktif</span
             >
           </div>
           <h1
@@ -139,7 +139,7 @@
               <p
                 class="text-[10px]! font-bold! text-slate-400! uppercase! tracking-widest! mt-0.5!"
               >
-                Prioritas Waktu
+                Berdasarkan Waktu
               </p>
             </div>
             <div class="flex! items-center! gap-2!">
@@ -332,7 +332,7 @@ const fetchDashboardData = async () => {
     }
 
     doughnutData.value = {
-      labels: ['Survey Selesai', 'Ditolak', 'Pending'],
+      labels: ['Survey Selesai', 'Ditolak', 'Menunggu'],
       datasets: [
         {
           data: [totalSurveyed, 0, totalPending],
@@ -466,7 +466,7 @@ const barChartOptions = ref({
 })
 
 const doughnutData = ref({
-  labels: ['Survey Selesai', 'Ditolak', 'Pending'],
+  labels: ['Survey Selesai', 'Ditolak', 'Menunggu'],
   datasets: [
     {
       data: [0, 0, 0],

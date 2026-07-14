@@ -56,7 +56,7 @@
               <input
                 type="text"
                 v-model="searchQuery"
-                placeholder="Search ..."
+                placeholder="Cari ..."
                 class="block w-full pl-9! pr-4! py-2! bg-white border border-slate-200 rounded-lg! text-sm! focus:outline-none focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 transition-all shadow-sm!"
               />
             </div>
@@ -175,7 +175,7 @@
               class="flex items-center! gap-2! bg-white! border! border-slate-300! hover:bg-slate-100! text-slate-700! px-6! py-2.5! font-semibold! transition-all active:scale-95 rounded-lg! shadow-sm!"
             >
               <font-awesome-icon icon="times" />
-              Close
+              Tutup
             </button>
             <button
               class="flex items-center! gap-2! bg-amber-500! hover:bg-amber-600! text-white! px-6! py-2.5! font-semibold! transition-all active:scale-95 rounded-lg! shadow-md! shadow-amber-200!"
