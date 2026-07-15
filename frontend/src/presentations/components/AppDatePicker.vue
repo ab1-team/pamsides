@@ -118,11 +118,32 @@ const formatDate = (date) => {
   @apply w-full;
 }
 
-:deep(.p-inputtext) {
-  @apply w-full h-11 px-4 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-700 transition-all duration-300;
-  @apply placeholder:text-slate-400 placeholder:font-normal;
-  @apply hover:border-blue-400 hover:bg-white hover:shadow-md hover:shadow-blue-500/5;
-  @apply focus:outline-none focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 focus:shadow-lg focus:shadow-blue-500/5;
+:deep(.p-datepicker-input) {
+  width: 100% !important;
+  height: 2.75rem !important;
+  padding: 0 1rem !important;
+  background-color: #f8fafc !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 0.75rem !important;
+  font-size: 0.875rem !important;
+  color: #334155 !important;
+  transition: all 0.3s !important;
+  outline: none !important;
+}
+:deep(.p-datepicker-input::placeholder) {
+  color: #94a3b8 !important;
+  font-weight: 400 !important;
+}
+:deep(.p-datepicker-input:hover) {
+  border-color: #60a5fa !important;
+  background-color: #ffffff !important;
+  box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.05) !important;
+}
+:deep(.p-datepicker-input:focus),
+:deep(.p-datepicker.p-focus > .p-datepicker-input) {
+  border-color: #3b82f6 !important;
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1), 0 10px 15px -3px rgba(59, 130, 246, 0.05) !important;
+  background-color: #ffffff !important;
 }
 
 /* Fix untuk Warna Text di Dropdown Bulan/Tahun */
