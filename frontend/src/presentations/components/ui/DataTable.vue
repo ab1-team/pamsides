@@ -160,17 +160,17 @@
     <Transition name="fade">
       <div
         v-if="selectable && selection.length > 0"
-        class="fixed! bottom-8! left-1/2! -translate-x-1/2! bg-slate-900! text-white! px-6! py-4! rounded-2xl! shadow-2xl! flex! items-center! gap-8! z-50! border! border-white/10!"
+        class="fixed! bottom-14! left-1/2! -translate-x-1/2! bg-slate-900! text-white! px-5! py-2! rounded-xl! shadow-2xl! flex! items-center! gap-6! z-50! border! border-white/10!"
       >
         <div class="flex! items-center! gap-3!">
           <div
-            class="w-8! h-8! bg-blue-600! rounded-full! flex! items-center! justify-center! font-bold! text-xs!"
+            class="w-6! h-6! bg-blue-600! rounded-full! flex! items-center! justify-center! font-bold! text-[10px]!"
           >
             {{ selection.length }}
           </div>
           <span class="text-sm! font-bold!">Data terpilih</span>
         </div>
-        <div class="h-6! w-[1px]! bg-white/10!"></div>
+        <div class="h-4! w-[1px]! bg-white/10!"></div>
         <div class="flex! items-center! gap-4!">
           <slot name="bulk-actions" :selection="selection">
             <!-- Default bulk actions if none provided -->

@@ -44,6 +44,7 @@ import {
   faChevronRight,
   faUsers,
   faHome,
+  faFileSignature,
   faBuilding,
   faArchive,
   faDollarSign,
@@ -188,6 +189,7 @@ library.add(
   faChevronRight,
   faUsers,
   faHome,
+  faFileSignature,
   faBuilding,
   faArchive,
   faDollarSign,
@@ -308,6 +310,7 @@ library.add(
   faVideo,
   faSync,
   faInbox,
+  faFileSignature,
 )
 
 export { MySwal } from './utils/swal'

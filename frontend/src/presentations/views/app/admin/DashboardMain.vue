@@ -33,7 +33,7 @@
         :progress="statsSummaryProgress.instalasi"
         @detail-click="openDetailModal('instalasi')"
       >
-        <font-awesome-icon icon="home" />
+        <font-awesome-icon icon="file-signature" />
       </statCard>
 
       <statCard
@@ -43,7 +43,7 @@
         :progress="statsSummaryProgress.pemakaian"
         @detail-click="openDetailModal('pemakaian')"
       >
-        <font-awesome-icon icon="tint" />
+        <font-awesome-icon icon="faucet" />
       </statCard>
 
       <statCard
@@ -53,7 +53,7 @@
         :progress="statsSummaryProgress.tunggakan"
         @detail-click="openDetailModal('tunggakan')"
       >
-        <font-awesome-icon icon="balance-scale" />
+        <font-awesome-icon icon="clock" />
       </statCard>
 
       <statCard
@@ -63,7 +63,7 @@
         :progress="statsSummaryProgress.tagihan"
         @detail-click="openDetailModal('tagihan')"
       >
-        <font-awesome-icon icon="file-invoice" />
+        <font-awesome-icon icon="paper-plane" />
       </statCard>
     </div>
     <div class="grid! grid-cols-1! lg:grid-cols-12! gap-6!">
@@ -273,6 +273,7 @@
               <path :d="chartGeometry.areaB" fill="url(#gradB)" />
 
               <path
+                v-if="chartData.length >= 2"
                 :d="chartGeometry.pathP"
                 fill="none"
                 stroke="#3b82f6"
@@ -280,6 +281,7 @@
                 stroke-linecap="round"
               />
               <path
+                v-if="chartData.length >= 2"
                 :d="chartGeometry.pathB"
                 fill="none"
                 stroke="#334155"
@@ -287,6 +289,7 @@
                 stroke-linecap="round"
               />
               <path
+                v-if="chartData.length >= 2"
                 :d="chartGeometry.pathS"
                 fill="none"
                 stroke="#f59e0b"
@@ -346,13 +349,29 @@
             <component :is="activeComponent" />
           </div>
 
-          <div class="px-6! py-4! border-t! border-slate-100! flex! justify-end! bg-white!">
-            <button
-              @click="closeDetailModal"
-              class="px-6! py-2! text-sm! font-medium! text-slate-700! bg-white! border! border-slate-300! rounded-lg! hover:bg-slate-50! transition-colors!"
-            >
-              Tutup
-            </button>
+          <div class="px-6! py-4! border-t! border-slate-100! flex! items-center! justify-between! bg-white!">
+            <div class="text-xs! text-slate-500! font-medium!">
+              <template v-if="currentDetailType === 'tagihan' && tagihanSelection.length > 0">
+                {{ tagihanSelection.length }} data tagihan dipilih
+              </template>
+            </div>
+            <div class="flex! items-center! gap-2!">
+              <button
+                v-if="currentDetailType === 'tagihan'"
+                :disabled="tagihanSelection.length === 0"
+                @click="handleSendMessage"
+                class="px-5! py-2! text-sm! font-semibold! text-white! bg-blue-600! hover:bg-blue-700! disabled:bg-slate-300! disabled:cursor-not-allowed! rounded-lg! flex! items-center! gap-2! transition-colors!"
+              >
+                <font-awesome-icon icon="paper-plane" />
+                Kirim Pesan
+              </button>
+              <button
+                @click="closeDetailModal"
+                class="px-6! py-2! text-sm! font-medium! text-slate-700! bg-white! border! border-slate-300! rounded-lg! hover:bg-slate-50! transition-colors!"
+              >
+                Tutup
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -361,7 +380,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, watch, provide } from 'vue'
 import statCard from '@/presentations/components/stat-card.vue'
 import ContentCard from '@/presentations/components/ui/ContentCard.vue'
 import dashboardService from '@/services/dashboard.service'
@@ -407,18 +426,28 @@ const formatNotifTime = (ts) => {
 
 const activeModal = ref(false)
 const currentDetailType = ref('')
+const tagihanSelection = ref([])
 
 const openDetailModal = (type) => {
   currentDetailType.value = type
   activeModal.value = true
+  tagihanSelection.value = []
 }
 
 const closeDetailModal = () => {
   activeModal.value = false
   setTimeout(() => {
     currentDetailType.value = ''
+    tagihanSelection.value = []
   }, 300)
 }
+
+const handleSendMessage = () => {
+  // ponytail: handler placeholder, wire ke WhatsApp/email gateway saat fitur siap
+  console.log('Kirim pesan ke:', tagihanSelection.value)
+}
+
+provide('tagihanSelection', tagihanSelection)
 
 const activeComponent = computed(() => {
   switch (currentDetailType.value) {
@@ -438,13 +467,13 @@ const activeComponent = computed(() => {
 const modalTitle = computed(() => {
   switch (currentDetailType.value) {
     case 'instalasi':
-      return 'Instalasi'
+      return 'Permohonan Instalasi'
     case 'pemakaian':
-      return 'Pemakaian'
+      return 'Pemakaian Air'
     case 'tunggakan':
       return 'Tunggakan'
     case 'tagihan':
-      return 'Tagihan Khusus'
+      return 'Tagihan'
     default:
       return 'Detail'
   }
@@ -453,13 +482,13 @@ const modalTitle = computed(() => {
 const modalIcon = computed(() => {
   switch (currentDetailType.value) {
     case 'instalasi':
-      return 'home'
+      return 'file-signature'
     case 'pemakaian':
-      return 'tint'
+      return 'faucet'
     case 'tunggakan':
-      return 'balance-scale'
+      return 'clock'
     case 'tagihan':
-      return 'file-invoice'
+      return 'paper-plane'
     default:
       return 'info-circle'
   }
@@ -476,15 +505,14 @@ const statsSummary = computed(() => {
   const tickets = data?.tickets_by_status || {}
   const bills = data?.bills_this_month || {}
 
-  const instalasiStatuses = ['draft', 'pending', 'surveyed', 'unpaid', 'processing']
+  const instalasiStatuses = ['draft', 'pending', 'surveyed', 'unpaid']
   const instalasiCount = instalasiStatuses.reduce((sum, key) => sum + Number(tickets[key] || 0), 0)
-  const totalBills = (Number(bills.paid) || 0) + (Number(bills.unpaid) || 0)
 
   return {
     instalasi: instalasiCount,
-    pemakaian: data?.total_customers || 0,
-    tunggakan: bills.unpaid || 0,
-    tagihan: totalBills,
+    pemakaian: data?.pemakaian_count ?? 0,
+    tunggakan: data?.tunggakan_total ?? bills.unpaid ?? 0,
+    tagihan: bills.unpaid ?? 0,
   }
 })
 
@@ -682,6 +710,21 @@ const loadFinance = async () => {
             surplus: Number(r.surplus) || 0,
           }))
         : []
+
+      if (chartData.value.length) {
+        const map = new Map(chartData.value.map((d) => [`${d.year}-${d.month}`, d]))
+        const filled = []
+        const yr = selectedYear.value
+        for (let m = 1; m <= 12; m++) {
+          const key = `${yr}-${m}`
+          if (map.has(key)) {
+            filled.push(map.get(key))
+          } else {
+            filled.push({ year: yr, month: m, pendapatan: 0, beban: 0, surplus: 0 })
+          }
+        }
+        chartData.value = filled
+      }
 
       const prevMonth = await prevMonthFinance(
         selectedYear.value,
