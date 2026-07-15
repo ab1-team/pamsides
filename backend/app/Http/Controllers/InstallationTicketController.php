@@ -276,14 +276,14 @@ class InstallationTicketController extends Controller
                 }
 
                 if (! $targetTicket->customer()->exists()) {
-                    $yearMonth = now()->format('Ym');
-                    $latestCustomer = Customer::where('customer_code', 'like', 'PAM-'.$yearMonth.'-%')
+                    $year = now()->format('Y');
+                    $latestCustomer = Customer::where('customer_code', 'like', 'PAM-'.$year.'-%')
                         ->orderBy('customer_code', 'desc')
                         ->first();
                     $nextNumber = $latestCustomer
                         ? str_pad((int) substr($latestCustomer->customer_code, -4) + 1, 4, '0', STR_PAD_LEFT)
                         : '0001';
-                    $customerCode = 'PAM-'.$yearMonth.'-'.$nextNumber;
+                    $customerCode = 'PAM-'.$year.'-'.$nextNumber;
 
                     $pelanggan = User::where('role', 'pelanggan')
                         ->where('name', $targetTicket->applicant_name)
@@ -416,10 +416,10 @@ class InstallationTicketController extends Controller
                     ], 422);
                 }
 
-                // GENERATE CUSTOMER CODE (PAM-YYYYMM-0001)
-                $yearMonth = now()->format('Ym');
+                // GENERATE CUSTOMER CODE (PAM-YYYY-0001)
+                $year = now()->format('Y');
 
-                $latestCustomer = Customer::where('customer_code', 'like', 'PAM-'.$yearMonth.'-%')
+                $latestCustomer = Customer::where('customer_code', 'like', 'PAM-'.$year.'-%')
                     ->orderBy('customer_code', 'desc')
                     ->first();
 
@@ -427,7 +427,7 @@ class InstallationTicketController extends Controller
                     ? str_pad((int) substr($latestCustomer->customer_code, -4) + 1, 4, '0', STR_PAD_LEFT)
                     : '0001';
 
-                $customerCode = 'PAM-'.$yearMonth.'-'.$nextNumber;
+                $customerCode = 'PAM-'.$year.'-'.$nextNumber;
 
                 // INSERT KE TABEL CUSTOMERS
                 $pelanggan = User::where('role', 'pelanggan')

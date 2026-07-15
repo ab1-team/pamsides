@@ -36,12 +36,11 @@ class InstallationResultController extends Controller
 
         DB::beginTransaction();
         try {
-            // Update atau buat record customer
             $customer = Customer::where('ticket_id', $installationTicket->id)->first();
 
             if (! $customer) {
-                $yearMonth = now()->format('Ym');
-                $latestCustomer = Customer::where('customer_code', 'like', 'PAM-'.$yearMonth.'-%')
+                $year = now()->format('Y');
+                $latestCustomer = Customer::where('customer_code', 'like', 'PAM-'.$year.'-%')
                     ->orderBy('customer_code', 'desc')
                     ->first();
 
@@ -49,7 +48,7 @@ class InstallationResultController extends Controller
                     ? str_pad((int) substr($latestCustomer->customer_code, -4) + 1, 4, '0', STR_PAD_LEFT)
                     : '0001';
 
-                $customerCode = 'PAM-'.$yearMonth.'-'.$nextNumber;
+                $customerCode = 'PAM-'.$year.'-'.$nextNumber;
 
                 $customer = Customer::create([
                     'ticket_id' => $installationTicket->id,
@@ -63,6 +62,7 @@ class InstallationResultController extends Controller
                 $customer->update([
                     'initial_meter_reading' => $request->initial_meter_reading,
                     'meter_photo_url' => $photoUrl,
+                    'activated_at' => now(),
                 ]);
             }
 
