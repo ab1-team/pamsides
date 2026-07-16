@@ -8,11 +8,6 @@
     @keydown.space.prevent="handleCardClick"
   >
     <div class="stat-card-header">
-      <div class="stat-card-title">{{ label }}</div>
-    </div>
-
-    <div class="stat-card-content">
-      <div class="stat-card-value">{{ value }}</div>
       <div class="stat-card-icon">
         <template v-if="!!$slots.default">
           <slot />
@@ -21,6 +16,11 @@
           <font-awesome-icon icon="building-user" style="color: #0ea5e9" />
         </template>
       </div>
+      <div class="stat-card-title">{{ label }}</div>
+    </div>
+
+    <div class="stat-card-content">
+      <div class="stat-card-value">{{ value }}</div>
     </div>
 
     <div class="stat-card-footer">

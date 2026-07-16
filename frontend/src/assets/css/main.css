@@ -1275,7 +1275,8 @@ utilities;
   .stat-card-header {
     display: flex;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-start;
+    gap: 0.5rem;
     margin-bottom: 0.5rem;
     width: 100%;
   }
@@ -1292,7 +1293,7 @@ utilities;
   .stat-card-content {
     display: flex;
     align-items: flex-end;
-    justify-content: space-between;
+    justify-content: flex-start;
     margin-top: auto;
     padding-bottom: 2.25rem;
   }
@@ -1482,7 +1483,8 @@ utilities;
   .stat-card-header {
     display: flex;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-start;
+    gap: 0.5rem;
     margin-bottom: 0.5rem;
     width: 100%;
   }
@@ -1499,7 +1501,7 @@ utilities;
   .stat-card-content {
     display: flex;
     align-items: flex-end;
-    justify-content: space-between;
+    justify-content: flex-start;
     margin-top: auto;
     padding-bottom: 2.25rem;
   }

@@ -28,6 +28,13 @@
           {{ formatCurrency(row.total) }}
         </span>
       </template>
+      <template #column-status="{ row }">
+        <span
+          class="px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider rounded-md bg-rose-50 text-rose-600"
+        >
+          Belum Lunas
+        </span>
+      </template>
     </DataTable>
   </div>
 </template>
@@ -54,9 +61,16 @@ const columns = [
   { key: 'nomorInduk', title: 'Nomor Induk' },
   { key: 'customer', title: 'Customer' },
   { key: 'alamat', title: 'Alamat' },
+  { key: 'periodeLabel', title: 'Periode' },
   { key: 'tagihan', title: 'Tagihan' },
   { key: 'denda', title: 'Denda' },
   { key: 'total', title: 'Total Tunggakan' },
+  { key: 'status', title: 'Status' },
+]
+
+const monthNames = [
+  '', 'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+  'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember',
 ]
 
 const itemsList = ref([])
@@ -66,7 +80,9 @@ const fetchUnpaidBills = async () => {
     loading.value = true
     const response = await billingService.getBills({ status: 'unpaid' })
     if (response?.success && response?.data?.bills) {
-      itemsList.value = response.data.bills.map((bill) => {
+      itemsList.value = response.data.bills
+        .filter((bill) => Number(bill.penalty_amount) > 0)
+        .map((bill) => {
         const ticket = bill.customer?.ticket
         const total = Number(bill.total_amount) || 0
         const denda = Number(bill.penalty_amount) || 0
@@ -76,6 +92,9 @@ const fetchUnpaidBills = async () => {
           nomorInduk: bill.customer?.customer_code || '-',
           customer: ticket?.applicant_name || '-',
           alamat: ticket?.address || '-',
+          periodeLabel: bill.billing_period_month
+            ? `${monthNames[bill.billing_period_month]} ${bill.billing_period_year}`
+            : '-',
           tagihan,
           denda,
           total,
