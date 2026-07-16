@@ -24,12 +24,10 @@ class ActivationController extends Controller
             ], 422);
         }
 
-        // 3. Gunakan user yang sudah ada saat registrasi awal
-        $user = $installationTicket->user; // Relasi ke User
+        $user = $installationTicket->user;
 
-        // 4. Buat customer_code sequence per bulan (PAM-YYYYMM-XXXX)
-        $yearMonth = now()->format('Ym');
-        $latestCustomer = Customer::where('customer_code', 'like', 'PAM-'.$yearMonth.'-%')
+        $year = now()->format('Y');
+        $latestCustomer = Customer::where('customer_code', 'like', 'PAM-'.$year.'-%')
             ->orderBy('customer_code', 'desc')
             ->first();
 
@@ -37,18 +35,16 @@ class ActivationController extends Controller
             ? str_pad((int) substr($latestCustomer->customer_code, -4) + 1, 4, '0', STR_PAD_LEFT)
             : '0001';
 
-        $customerCode = 'PAM-'.$yearMonth.'-'.$nextNumber;
+        $customerCode = 'PAM-'.$year.'-'.$nextNumber;
 
-        // 5. Buat record customer
-        $customer = Customer::updateOrCreate(
-            ['ticket_id' => $installationTicket->id, 'user_id' => $user->id],
-            [
-                'customer_code' => $customerCode,
-                'initial_meter_reading' => $installationResult['initial_meter_reading'] ?? 0,
-                'meter_photo_url' => $installationResult['meter_photo_url'] ?? null,
-                'activated_at' => now(),
-            ]
-        );
+        $customer = Customer::create([
+            'ticket_id'             => $installationTicket->id,
+            'user_id'               => $user->id,
+            'customer_code'         => $customerCode,
+            'initial_meter_reading' => $installationResult['initial_meter_reading'] ?? 0,
+            'meter_photo_url'       => $installationResult['meter_photo_url'] ?? null,
+            'activated_at'          => now(),
+        ]);
 
         // 6. Update status tiket ke completed
         $installationTicket->update(['status' => 'completed']);

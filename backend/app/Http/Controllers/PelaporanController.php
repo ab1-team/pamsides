@@ -10,6 +10,7 @@ use App\Models\InstallationTicket;
 use App\Models\JenisLaporan;
 use App\Models\SubLaporan;
 use App\Models\Account;
+use App\Models\BillPayment;
 use App\Models\Setting;
 use App\Models\Amount;
 use App\Models\Calk;
@@ -1146,44 +1147,59 @@ class PelaporanController extends Controller
         $periodeText = ' (' . $data['bulan_name'] . ' ' . $tahun . ')';
 
         $accKodeKomisi = '2.1.02.02';
+        $accKodeBebanKomisi = '5.1.02.04';
 
-        $bills = MonthlyBill::with([
-                'customer.user',
-                'billPayments.transactions' => function ($q) use ($accKodeKomisi) {
-                    $q->where(function ($w) use ($accKodeKomisi) {
-                        $w->where('account_kredit', $accKodeKomisi)
-                          ->orWhere('account_debet', $accKodeKomisi);
-                    });
-                },
-                'customer.transactions' => function ($q) use ($accKodeKomisi) {
-                    $q->where(function ($w) use ($accKodeKomisi) {
-                        $w->where('account_kredit', $accKodeKomisi)
-                          ->orWhere('account_debet', $accKodeKomisi);
-                    });
-                },
+        $billPayments = BillPayment::with([
+                'transactions',
+                'bill.customer.user',
+                'bill.customer.ticket',
             ])
-            ->where('billing_period_year', $tahun)
-            ->where('billing_period_month', $bulan)
-            ->where('status', 'paid')
+            ->whereHas('bill', function ($q) {
+                $q->where('status', 'paid');
+            })
+            ->whereYear('paid_at', $tahun)
+            ->whereMonth('paid_at', $bulan)
             ->get();
 
-        $items = $bills->map(function ($b) {
-            $tagihan = (float) $b->total_amount;
+        $penerimaIds = $billPayments->map(fn ($bp) => $bp->transactions->pluck('penerima_komisi_id'))
+            ->flatten()
+            ->filter()
+            ->unique()
+            ->values();
+        $penerimaMap = User::whereIn('id', $penerimaIds)->get()->keyBy('id');
 
-            $komisi = (float) $b->billPayments->flatMap->transactions
+        $items = $billPayments->map(function ($bp) use ($accKodeKomisi, $accKodeBebanKomisi, $penerimaMap) {
+            $bill = $bp->bill;
+            $tagihan = (float) ($bill->total_amount ?? 0);
+            $transactions = $bp->transactions ?? collect();
+
+            $komisi = $transactions
+                ->filter(fn ($t) => $t->account_debet === $accKodeBebanKomisi)
                 ->sum(fn ($t) => (float) $t->saldo);
 
-            $dibayar = (float) $b->customer?->transactions
-                ->sum(fn ($t) => (float) $t->saldo) ?? 0.0;
+            $dibayar = $transactions
+                ->filter(fn ($t) => $t->account_kredit === $accKodeKomisi)
+                ->sum(fn ($t) => (float) $t->saldo);
+
+            $penerimaId = $transactions->first()?->penerima_komisi_id;
+            $namaPelanggan = optional($bill?->customer?->user)->name
+                ?? optional($bill?->customer?->ticket)->applicant_name
+                ?? '-';
 
             return [
-                'nama_pelanggan' => $b->customer?->user?->name ?? '-',
-                'kode_pelanggan' => $b->customer?->customer_code ?? '-',
-                'total_tagihan'  => $tagihan,
-                'komisi_total'   => $komisi,
-                'dibayar'        => $dibayar,
+                'nama_pelanggan'  => $namaPelanggan,
+                'kode_pelanggan'  => $bill?->customer?->customer_code ?? '-',
+                'bill_id'         => $bill?->id,
+                'bill_payment_id' => $bp->id,
+                'total_tagihan'   => $tagihan,
+                'komisi_total'    => $komisi,
+                'dibayar'         => $dibayar,
+                'penerima_komisi_id'   => $penerimaId,
+                'penerima_komisi_name' => optional($penerimaMap->get($penerimaId))->name,
             ];
-        })->values();
+        })
+        ->filter(fn ($item) => $item['komisi_total'] > 0 || $item['dibayar'] > 0 || $item['penerima_komisi_id'])
+        ->values();
 
         return response()->json([
             'success' => true,

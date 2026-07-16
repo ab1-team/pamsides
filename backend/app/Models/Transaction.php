@@ -16,6 +16,7 @@ class Transaction extends Model
         'transaction_group',
         'reverence_type',
         'reverence_id',
+        'penerima_komisi_id',
         'keterangan_transaksi',
         'relasi',
         'saldo',
@@ -31,6 +32,11 @@ class Transaction extends Model
     public function user()
     {
         return $this->belongsTo(User::class, 'id_user');
+    }
+
+    public function penerimaKomisi()
+    {
+        return $this->belongsTo(User::class, 'penerima_komisi_id');
     }
 
     public function accountDebet()

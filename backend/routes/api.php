@@ -195,6 +195,8 @@ Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
 
     // Komisi SPS
     Route::get('komisi-sps/cash-accounts', [KomisiSPSController::class, 'cashAccounts']);
+    Route::get('komisi-sps/penerima-komisi', [KomisiSPSController::class, 'penerimaKomisi']);
+    Route::get('komisi-sps/pelanggan-unpaid', [KomisiSPSController::class, 'pelangganWithUnpaid']);
     Route::get('komisi-sps/unpaid-by-customer', [KomisiSPSController::class, 'unpaidByCustomer']);
     Route::post('komisi-sps', [KomisiSPSController::class, 'store']);
 
