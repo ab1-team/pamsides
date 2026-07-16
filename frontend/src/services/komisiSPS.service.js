@@ -6,6 +6,16 @@ export const komisiSPSService = {
     return response.data
   },
 
+  async getPenerimaKomisi(params = {}) {
+    const response = await api.get('/komisi-sps/penerima-komisi', { params })
+    return response.data
+  },
+
+  async getPelangganWithUnpaid(params = {}) {
+    const response = await api.get('/komisi-sps/pelanggan-unpaid', { params })
+    return response.data
+  },
+
   async getUnpaidByCustomer(customerId) {
     const response = await api.get('/komisi-sps/unpaid-by-customer', {
       params: { customer_id: customerId },

@@ -9,19 +9,45 @@
         class="select-display"
         :class="{
           'select-display--active': isOpen,
+          'select-display--selected': multiple && selectedOptions.length > 0,
           'select-display--error': error,
           'select-display--disabled': disabled,
+          'select-display--multiple': multiple,
         }"
         @click="toggleDropdown"
       >
         <div class="select-content">
           <font-awesome-icon v-if="icon" :icon="icon" class="select-content-icon" />
-          <span v-if="!selectedOption" class="placeholder">
-            {{ placeholder }}
-          </span>
-          <span v-else class="selected-text" :class="{ 'has-icon': icon }">
-            {{ getLabel(selectedOption) }}
-          </span>
+          <template v-if="multiple">
+            <div v-if="selectedOptions.length === 0" class="placeholder">
+              {{ placeholder }}
+            </div>
+            <div v-else class="flex! flex-wrap! gap-1! items-center!">
+              <span
+                v-for="opt in selectedOptions"
+                :key="getValue(opt)"
+                class="chip-tag"
+                @click.stop
+              >
+                {{ getLabel(opt) }}
+                <button
+                  type="button"
+                  class="chip-remove"
+                  @click.stop="removeOption(opt)"
+                >
+                  <font-awesome-icon icon="times" />
+                </button>
+              </span>
+            </div>
+          </template>
+          <template v-else>
+            <span v-if="!selectedOption" class="placeholder">
+              {{ placeholder }}
+            </span>
+            <span v-else class="selected-text" :class="{ 'has-icon': icon }">
+              {{ getLabel(selectedOption) }}
+            </span>
+          </template>
         </div>
         <font-awesome-icon
           icon="chevron-down"
@@ -58,12 +84,24 @@
               :class="{ 'option-item--selected': isSelected(option) }"
               @click="selectOption(option)"
             >
-              <div class="option-label">
-                {{ getLabel(option) }}
-              </div>
-              <div v-if="isSelected(option)" class="selected-indicator">
-                <font-awesome-icon icon="check" />
-              </div>
+              <template v-if="multiple">
+                <label class="option-checkbox" @click.stop>
+                  <input
+                    type="checkbox"
+                    :checked="isSelected(option)"
+                    @change="selectOption(option)"
+                  />
+                  <span>{{ getLabel(option) }}</span>
+                </label>
+              </template>
+              <template v-else>
+                <div class="option-label">
+                  {{ getLabel(option) }}
+                </div>
+                <div v-if="isSelected(option)" class="selected-indicator">
+                  <font-awesome-icon icon="check" />
+                </div>
+              </template>
             </div>
 
             <!-- Empty State -->
@@ -87,7 +125,7 @@ import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 
 const props = defineProps({
   modelValue: {
-    type: [String, Number, Object],
+    type: [String, Number, Object, Array],
     default: null,
   },
   options: {
@@ -109,6 +147,10 @@ const props = defineProps({
   searchable: {
     type: Boolean,
     default: true,
+  },
+  multiple: {
+    type: Boolean,
+    default: false,
   },
   searchPlaceholder: {
     type: String,
@@ -150,10 +192,17 @@ const searchInput = ref(null)
 
 // Komputasi
 const selectedOption = computed(() => {
+  if (props.multiple) return null
   if (props.modelValue === null || props.modelValue === undefined) return null
   return (
     props.options.find((opt) => getValue(opt) === getValue(props.modelValue)) || props.modelValue
   )
+})
+
+const selectedOptions = computed(() => {
+  if (!props.multiple) return []
+  const values = Array.isArray(props.modelValue) ? props.modelValue : []
+  return props.options.filter((opt) => values.includes(getValue(opt)))
 })
 
 const filteredOptions = computed(() => {
@@ -182,7 +231,11 @@ const getValue = (opt) => {
 }
 
 const isSelected = (opt) => {
-  return getValue(opt) === getValue(props.modelValue)
+  const v = getValue(opt)
+  if (props.multiple) {
+    return Array.isArray(props.modelValue) && props.modelValue.includes(v)
+  }
+  return v === getValue(props.modelValue)
 }
 
 const toggleDropdown = () => {
@@ -196,9 +249,29 @@ const closeDropdown = () => {
 }
 
 const selectOption = (opt) => {
-  emit('update:modelValue', getValue(opt))
-  emit('change', opt)
-  closeDropdown()
+  const v = getValue(opt)
+  if (props.multiple) {
+    const current = Array.isArray(props.modelValue) ? [...props.modelValue] : []
+    const idx = current.indexOf(v)
+    if (idx >= 0) current.splice(idx, 1)
+    else current.push(v)
+    emit('update:modelValue', current)
+    emit('change', props.options.filter((o) => current.includes(getValue(o))))
+  } else {
+    emit('update:modelValue', v)
+    emit('change', opt)
+    closeDropdown()
+  }
+}
+
+const removeOption = (opt) => {
+  if (!props.multiple) return
+  const v = getValue(opt)
+  const current = Array.isArray(props.modelValue) ? [...props.modelValue] : []
+  const idx = current.indexOf(v)
+  if (idx >= 0) current.splice(idx, 1)
+  emit('update:modelValue', current)
+  emit('change', props.options.filter((o) => current.includes(getValue(o))))
 }
 
 // Penanganan klik di luar elemen
@@ -250,12 +323,78 @@ onUnmounted(() => {
   @apply bg-white border-blue-500 ring-4 ring-blue-500/10 shadow-lg shadow-blue-500/5;
 }
 
+.select-display--selected {
+  @apply bg-blue-50 border-blue-300 border-l-4 border-l-blue-600 text-blue-900;
+}
+
+.select-display--selected:hover {
+  @apply bg-blue-50 border-blue-400 shadow-none;
+}
+
 .select-display--error {
   @apply border-red-300 bg-red-50/30;
 }
 
 .select-display--disabled {
   @apply bg-slate-100 text-slate-400 cursor-not-allowed border-slate-200 shadow-none hover:shadow-none;
+}
+
+.select-display--multiple {
+  @apply min-h-[44px] h-auto py-1.5 items-start;
+}
+
+.chip-tag {
+  @apply inline-flex items-center gap-1 px-2.5 py-1 bg-white text-blue-900 text-xs font-semibold rounded-md border border-blue-200;
+}
+
+.chip-remove {
+  @apply inline-flex items-center justify-center w-4 h-4 text-blue-500 hover:text-white hover:bg-blue-600 rounded;
+}
+
+.option-checkbox {
+  @apply flex items-center gap-2 text-sm text-slate-700 cursor-pointer w-full;
+}
+
+.option-checkbox span {
+  @apply text-slate-700;
+}
+
+.option-item--selected .option-checkbox span {
+  @apply text-blue-900 font-semibold;
+}
+
+.option-checkbox input[type='checkbox'] {
+  @apply w-4 h-4 rounded cursor-pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  background-color: #fff;
+  border: 2px solid #cbd5e1;
+  transition: all 0.15s ease;
+}
+
+.option-checkbox input[type='checkbox']:hover {
+  border-color: #60a5fa;
+}
+
+.option-checkbox input[type='checkbox']:checked {
+  background-color: #2563eb;
+  border-color: #2563eb;
+}
+
+.option-checkbox input[type='checkbox']:checked::after {
+  content: '';
+  display: block;
+  width: 5px;
+  height: 9px;
+  margin: 1px auto 0;
+  border-right: 2px solid #fff;
+  border-bottom: 2px solid #fff;
+  transform: rotate(45deg);
+}
+
+.option-checkbox input[type='checkbox']:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
 }
 
 .select-content {
@@ -317,7 +456,10 @@ onUnmounted(() => {
 }
 
 .option-item--selected {
-  @apply bg-blue-600 text-white hover:bg-blue-600 hover:text-white! shadow-md shadow-blue-200;
+  @apply bg-blue-50! border-l-4 border-blue-600 text-blue-900 font-semibold;
+}
+.option-item--selected:hover {
+  @apply bg-blue-100! text-blue-900;
 }
 
 .option-label {

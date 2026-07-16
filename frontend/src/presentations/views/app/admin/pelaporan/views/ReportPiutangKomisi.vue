@@ -10,26 +10,34 @@
             <thead>
                 <tr>
                     <th width="4%" style="text-align: center; vertical-align: middle;">No</th>
-                    <th width="24%" style="text-align: center; vertical-align: middle;">Nama Pelanggan</th>
-                    <th width="16%" style="text-align: center; vertical-align: middle;">No. Induk</th>
-                    <th width="20%" style="text-align: center; vertical-align: middle;">Jumlah Tagihan</th>
-                    <th width="18%" style="text-align: center; vertical-align: middle;">Komisi</th>
-                    <th width="18%" style="text-align: center; vertical-align: middle;">Dibayar</th>
+                    <th width="18%" style="text-align: center; vertical-align: middle;">Nama Pelanggan</th>
+                    <th width="12%" style="text-align: center; vertical-align: middle;">No. Induk</th>
+                    <th width="16%" style="text-align: center; vertical-align: middle;">Penerima Komisi</th>
+                    <th width="18%" style="text-align: center; vertical-align: middle;">Jumlah Tagihan</th>
+                    <th width="10%" style="text-align: center; vertical-align: middle;">Komisi</th>
+                    <th width="10%" style="text-align: center; vertical-align: middle;">Dibayar</th>
                 </tr>
             </thead>
             <tbody>
                 <template v-if="rawItems.length > 0">
-                    <tr v-for="(item, index) in rawItems" :key="index">
+                    <tr v-for="(item, index) in rawItems" :key="item.bill_payment_id || index">
                         <td class="text-center">{{ index + 1 }}</td>
                         <td>{{ item.nama_pelanggan }}</td>
                         <td class="text-center">{{ item.kode_pelanggan }}</td>
+                        <td>{{ item.penerima_komisi_name || '-' }}</td>
                         <td class="text-right">{{ formatCurrency(item.total_tagihan) }}</td>
                         <td class="text-right">{{ formatCurrency(item.komisi_total) }}</td>
                         <td class="text-right">{{ formatCurrency(item.dibayar) }}</td>
                     </tr>
+                    <tr class="summary-row">
+                        <td colspan="4" class="text-center font-bold">TOTAL</td>
+                        <td class="text-right font-bold">{{ formatCurrency(totalTagihan) }}</td>
+                        <td class="text-right font-bold">{{ formatCurrency(totalKomisi) }}</td>
+                        <td class="text-right font-bold">{{ formatCurrency(totalDibayar) }}</td>
+                    </tr>
                 </template>
                 <tr v-else>
-                    <td colspan="6" class="empty-state">Tidak ada data piutang komisi pada periode ini.</td>
+                    <td colspan="7" class="empty-state">Tidak ada data piutang komisi pada periode ini.</td>
                 </tr>
             </tbody>
         </table>
@@ -57,7 +65,17 @@
         },
     })
 
-    const rawItems = computed(() => props.payload?.items || [])
+    const rawItems = computed(() => props.payload ? .items || [])
+
+    const totalTagihan = computed(() =>
+        rawItems.value.reduce((sum, item) => sum + Number(item.total_tagihan || 0), 0)
+    )
+    const totalKomisi = computed(() =>
+        rawItems.value.reduce((sum, item) => sum + Number(item.komisi_total || 0), 0)
+    )
+    const totalDibayar = computed(() =>
+        rawItems.value.reduce((sum, item) => sum + Number(item.dibayar || 0), 0)
+    )
 
     const formatCurrency = (val) => {
         if (val === null || val === undefined || isNaN(val)) return '0,00'
@@ -141,6 +159,12 @@
         font-style: italic;
         font-size: 12px;
         border: 1px solid #000000;
+    }
+
+    .summary-row td {
+        background: #e8e8e8 !important;
+        font-weight: bold;
+        border-top: 1px solid #000000;
     }
 
     .footer-container {

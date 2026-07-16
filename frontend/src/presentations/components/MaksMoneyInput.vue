@@ -2,7 +2,7 @@
   <div class="currency-input" :class="{ 'mb-2': !noMargin }">
     <label v-if="label" class="currency-label">{{ label }}</label>
     <div class="currency-input-wrapper">
-      <span class="currency-prefix">Rp.</span>
+      <span v-if="!hidePrefix" class="currency-prefix">Rp.</span>
       <InputNumber
         v-model="internalValue"
         :placeholder="placeholder"
@@ -39,6 +39,7 @@ const props = defineProps({
   helperText: { type: String, default: '' },
   noMargin: { type: Boolean, default: false },
   size: { type: String, default: 'normal', validator: (v) => ['normal', 'sm'].includes(v) },
+  hidePrefix: { type: Boolean, default: false },
 })
 
 const emit = defineEmits(['update:modelValue', 'change'])
@@ -93,16 +94,42 @@ function handleFocus() {}
   @apply absolute left-4 text-slate-400 text-sm font-medium z-10;
 }
 
+.currency-input-wrapper:not(:has(.currency-prefix)) :deep(.p-inputnumber-input) {
+  padding-left: 1rem !important;
+}
+
 :deep(.p-inputnumber) {
   @apply w-full;
 }
 
 :deep(.p-inputnumber-input) {
-  @apply block w-full pl-10 pr-4 bg-slate-50 border border-slate-200 rounded-xl text-sm font-normal! text-slate-700 transition-all duration-300!;
+  display: block !important;
+  width: 100% !important;
+  padding: 0 1rem !important;
+  background-color: #f8fafc !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 0.75rem !important;
+  font-size: 0.875rem !important;
+  font-weight: 400 !important;
+  color: #334155 !important;
+  transition: all 0.3s !important;
+  outline: none !important;
   height: v-bind('size === "sm" ? "2.25rem" : "2.75rem"');
-  @apply placeholder:text-slate-400 placeholder:font-normal!;
-  @apply hover:border-blue-400 hover:bg-white hover:shadow-md hover:shadow-blue-500/5!;
-  @apply focus:outline-none focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 focus:shadow-lg focus:shadow-blue-500/5!;
+}
+:deep(.p-inputnumber-input::placeholder) {
+  color: #94a3b8 !important;
+  font-weight: 400 !important;
+}
+:deep(.p-inputnumber-input:hover) {
+  border-color: #60a5fa !important;
+  background-color: #ffffff !important;
+  box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.05) !important;
+}
+:deep(.p-inputnumber-input:focus),
+:deep(.p-inputnumber.p-focus > .p-inputnumber-input) {
+  border-color: #3b82f6 !important;
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1), 0 10px 15px -3px rgba(59, 130, 246, 0.05) !important;
+  background-color: #ffffff !important;
 }
 
 :deep(.p-inputnumber-input:disabled) {
