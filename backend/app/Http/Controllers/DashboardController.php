@@ -32,12 +32,19 @@ class DashboardController extends Controller
             ->where('status', 'paid')
             ->sum('total_amount');
 
-        // Tagihan bulan ini
-        $billsThisMonth = MonthlyBill::where('billing_period_year', $year)
-            ->where('billing_period_month', $month)
+        // Tagihan bulan ini (semua status unpaid, semua periode)
+        $billsThisMonth = MonthlyBill::where('status', 'unpaid')
             ->selectRaw('status, count(*) as total')
             ->groupBy('status')
             ->pluck('total', 'status');
+
+        // Pemakaian bulan ini = total tiket completed
+        $pemakaianThisMonth = InstallationTicket::where('status', 'completed')->count();
+
+        // Tunggakan total = tagihan unpaid yang punya denda (penalty_amount > 0)
+        $tunggakanTotal = MonthlyBill::where('status', 'unpaid')
+            ->where('penalty_amount', '>', 0)
+            ->count();
 
         // Tiket terbaru
         $latestTickets = InstallationTicket::with('package')
@@ -102,6 +109,8 @@ class DashboardController extends Controller
                 'tickets_by_status' => $ticketsByStatus,
                 'revenue_this_month'=> $revenueThisMonth,
                 'bills_this_month'  => $billsThisMonth,
+                'pemakaian_count'   => $pemakaianThisMonth,
+                'tunggakan_total'   => $tunggakanTotal,
                 'latest_tickets'    => $latestTickets,
                 'overdue_bills'     => $overdueBills,
                 'finance'           => [
