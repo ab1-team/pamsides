@@ -1,5 +1,5 @@
 <template>
-    <BaseReportLayout :config="payload?.config">
+    <BaseReportLayout :lembaga="payload?.lembaga" :config="payload?.config">
         <div class="page-header">
             <h2>DAFTAR UTANG KOMISI SPS</h2>
             <h3 class="mt-1 mb-0 leading-tight uppercase">BULAN {{ payload?.periode?.bulan_name }}
@@ -65,7 +65,7 @@
         },
     })
 
-    const rawItems = computed(() => props.payload ? .items || [])
+    const rawItems = computed(() => props.payload?.items || [])
 
     const totalTagihan = computed(() =>
         rawItems.value.reduce((sum, item) => sum + Number(item.total_tagihan || 0), 0)

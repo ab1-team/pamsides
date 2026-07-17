@@ -1,5 +1,5 @@
 <template>
-    <BaseReportLayout :config="payload?.config">
+    <BaseReportLayout :lembaga="payload?.lembaga" :config="payload?.config">
         <div class="header-section"
             style="text-align: center; margin-bottom: 15px; font-family: sans-serif; color: #000;">
             <h2 style="margin: 0; font-size: 13pt; font-weight: bold; text-transform: uppercase; color: #000;">

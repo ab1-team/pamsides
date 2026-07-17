@@ -2,6 +2,9 @@
   <div class="preview-shell" :class="[reportConfig?.orientation || 'portrait']">
     <div class="preview-toolbar no-print">
       <div class="toolbar-left">
+        <button class="toolbar-menu-btn" @click="showSidebar = !showSidebar" title="Tampilkan / sembunyikan thumbnail">
+          <span></span><span></span><span></span>
+        </button>
         <h3 class="title">
           {{ title }}
         </h3>
@@ -16,7 +19,7 @@
 
     <div class="workspace-container">
 
-      <div class="thumbnail-sidebar no-print">
+      <div class="thumbnail-sidebar no-print" v-show="showSidebar">
         <div
           v-for="(page, i) in pages"
           :key="'thumb-' + i"
@@ -142,6 +145,7 @@ const { isGenerating, downloadPdf, bulanNama } = usePdfReport()
 
 const loading = ref(true)
 const errorMsg = ref('')
+const showSidebar = ref(true)
 const response = ref(null)
 const pages = ref([])
 const reportRoot = ref(null)
@@ -239,6 +243,7 @@ const buildPages = (res) => {
   const data = res?.payload || {}
   const baseMeta = res?.meta || meta.value
   const baseConfig = data?.config || {}
+  const baseLembaga = data?.lembaga || null
 
   if (res.view_target === 'cover' || res.view_target === 'surat_pengantar') {
     pages.value = [{ payload: data, meta: baseMeta }]
@@ -490,6 +495,14 @@ const buildPages = (res) => {
   else {
     pages.value = [{ payload: data, meta: baseMeta }]
   }
+
+  pages.value = pages.value.map((p) => ({
+    ...p,
+    payload: {
+      ...p.payload,
+      lembaga: p.payload?.lembaga || baseLembaga,
+    },
+  }))
 }
 
 const registerPageRef = (el, idx) => {
@@ -608,6 +621,33 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   padding-left: 8px; 
+}
+
+.toolbar-menu-btn {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+  width: 34px;
+  height: 34px;
+  padding: 8px;
+  margin-right: 12px;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.toolbar-menu-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.toolbar-menu-btn span {
+  display: block;
+  height: 2px;
+  width: 100%;
+  background: #f8fafc;
+  border-radius: 2px;
 }
 
 .title {

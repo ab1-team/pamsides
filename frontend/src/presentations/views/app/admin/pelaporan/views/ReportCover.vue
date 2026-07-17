@@ -1,27 +1,27 @@
 <template>
-  <div class="report-page cover-page" ref="rootEl">
+  <div class="cover-page" ref="rootEl">
     <div class="cover-border">
-      <div class="cover-inner">
-        <div class="cover-logo-wrap">
-          <img
-            v-if="lembaga?.logo"
-            :src="logoUrl"
-            class="cover-logo"
-            alt="logo"
-            crossorigin="anonymous"
-          />
-          <div v-else class="cover-logo-fallback">
-            {{ initials }}
-          </div>
-        </div>
-
+      <div class="cover-header">
         <h1 class="cover-jenis">LAPORAN KEUANGAN</h1>
         <h2 class="cover-periode">{{ periodeLabel }}</h2>
+      </div>
 
-        <div class="cover-divider"></div>
+      <div class="cover-inner">
+        <div class="cover-logo-wrap">
+          <img v-if="lembaga?.logo" :src="logoUrl" class="cover-logo" alt="logo" crossorigin="anonymous" />
+          <div v-else class="cover-logo-fallback">{{ initials }}</div>
+        </div>
+      </div>
 
-        <h3 class="cover-lembaga">{{ lembaga?.nama || 'PAMSIMAS' }}</h3>
-        <p class="cover-alamat">{{ lembaga?.alamat || '-' }}</p>
+      <div class="cover-footer">
+        <div class="cover-footer-name">{{ (lembaga?.nama || 'UNIT PERDAGANGAN').toUpperCase() }}</div>
+        <div class="cover-footer-kab"><b>{{ (lembaga?.alamat || '-').toUpperCase() }}</b></div>
+        <div class="cover-footer-sub">SK Kemenkumham RI No.-</div>
+        <div class="cover-footer-sub" v-if="lembaga?.telepon">
+          <i>Telp.{{ lembaga.telepon }}</i>
+        </div>
+        <div class="cover-footer-sub" v-if="lembaga?.email">{{ lembaga.email }}</div>
+        <div class="cover-footer-year"><i>Tahun {{ periode.tahun || '' }}</i></div>
       </div>
     </div>
   </div>
@@ -76,19 +76,27 @@ const logoUrl = computed(() => {
 .cover-border {
   width: 100%;
   height: 261mm;
-  /* MENGGANTI: Garis bingkai luar menjadi hitam */
-  border: 2px solid #000000; 
+  border: 2px solid #8d8d8d;
+  position: relative;
+  padding: 0;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 24mm 18mm;
+  flex-direction: column;
+}
+
+.cover-header {
+  position: absolute;
+  top: 24mm;
+width: 100%;  text-align: center;
 }
 
 .cover-inner {
+  width: 100%;
+  height: 100%;
   text-align: center;
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   gap: 14px;
 }
 
@@ -111,7 +119,6 @@ const logoUrl = computed(() => {
   width: 110px;
   height: 110px;
   border-radius: 50%;
-  /* MENGGANTI: Gradasi fallback logo menggunakan hitam-abu gelap agar tetap elegan */
   background: linear-gradient(135deg, #0f172a, #5790e0);
   color: white;
   font-size: 38px;
@@ -124,39 +131,72 @@ const logoUrl = computed(() => {
 }
 
 .cover-jenis {
-  font-size: 32pt;
-  font-weight: 800;
-  margin: 0;
+  font-size: 20pt;
+  font-weight: 700;
+  margin: 0; /* Tetap 0 */
   letter-spacing: 1px;
   color: #000000;
 }
 
 .cover-periode {
-  font-size: 16pt;
+  font-size: 18pt;
   font-weight: 500;
-  margin: 4px 0 12px;
-  color: #1f2937;
+  /* Ubah margin-top dari 4px menjadi 0 atau angka negatif */
+  margin: -5px 0 0; 
+  color: #000000;
 }
 
 .cover-divider {
   width: 60%;
   height: 2px;
-  /* MENGGANTI: Garis pembatas tengah menjadi hitam */
   background: #000000;
   margin: 14px 0;
 }
 
-.cover-lembaga {
-  font-size: 14pt;
-  font-weight: 700;
-  margin: 0;
-  /* MENGGANTI: Warna teks nama lembaga menjadi hitam teks */
-  color: #0f172a;
-}
+
 
 .cover-alamat {
   font-size: 10pt;
   margin: 0;
   color: #475569;
+}
+
+.cover-footer {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  text-align: center;
+  padding: 10px 12px 14px;
+  border-top: 2px solid #8d8d8d;
+  box-sizing: border-box;
+}
+
+.cover-footer-name {
+  font-size: 13px;
+  text-transform: uppercase;
+  line-height: 1.2;
+  color: #000000;
+}
+
+.cover-footer-kab {
+  font-size: 13px;
+  text-transform: uppercase;
+  line-height: 1.2;
+  color: #000000;
+  margin-top: 1px;
+}
+
+.cover-footer-sub {
+  font-size: 11px;
+  color: #000000;
+  line-height: 1.2;
+  margin-top: 1px;
+}
+
+.cover-footer-year {
+  font-size: 11px;
+  color: #000000;
+  margin-top: 10px;
 }
 </style> 

@@ -1,5 +1,5 @@
 <template>
-  <BaseReportLayout :config="payload?.config">
+  <BaseReportLayout :lembaga="payload?.lembaga" :config="payload?.config">
     <div style="text-align: center; margin-bottom: 20px;">
       <h2 style="margin: 0; text-transform: uppercase;">ARUS KAS</h2>
       <h3 style="margin: 0;">BULAN {{ payload?.periode?.bulan_name || '' }} {{ payload?.periode?.tahun || '' }}</h3>
