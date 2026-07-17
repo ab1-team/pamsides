@@ -212,7 +212,9 @@ class PelaporanController extends Controller
         ];
 
         if (array_key_exists($file, $handlerMap) && method_exists($this, $handlerMap[$file])) {
-            return $this->{$handlerMap[$file]}($data);
+            $response = $this->{$handlerMap[$file]}($data);
+
+            return $this->injectLembaga($response);
         }
 
         $lembaga = Setting::first();
@@ -238,6 +240,34 @@ class PelaporanController extends Controller
     public function exportExcel(Request $request)
     {
         return response()->json(['message' => 'Proses export spreadsheet dijalankan']);
+    }
+
+    private function injectLembaga($response)
+    {
+        if (! $response instanceof \Illuminate\Http\JsonResponse) {
+            return $response;
+        }
+
+        $body = $response->getData(true);
+
+        if (! isset($body['payload']) || ! is_array($body['payload'])) {
+            return $response;
+        }
+
+        if (empty($body['payload']['lembaga'])) {
+            $lembaga = Setting::first();
+            $body['payload']['lembaga'] = $lembaga ? [
+                'nama' => $lembaga->nama,
+                'alamat' => $lembaga->alamat,
+                'telepon' => $lembaga->telepon,
+                'email' => $lembaga->email,
+                'logo' => $lembaga->logo,
+            ] : null;
+
+            $response->setData($body);
+        }
+
+        return $response;
     }
 
     public function simpanSaldo(Request $request)

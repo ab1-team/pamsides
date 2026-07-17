@@ -55,6 +55,7 @@ class SopController extends Controller
             ]);
 
             $s = Setting::firstOrNew([]);
+            $s->key = $s->key ?: 'sop';
             $s->fill($data);
             $s->save();
 
@@ -72,6 +73,7 @@ class SopController extends Controller
             ]);
 
             $s = Setting::firstOrNew([]);
+            $s->key = $s->key ?: 'sop';
             $s->status_pembayaran = (bool) $data['statusPembayaran'];
             $s->save();
 
@@ -90,6 +92,7 @@ class SopController extends Controller
             ]);
 
             $s = Setting::firstOrNew([]);
+            $s->key = $s->key ?: 'sop';
             $s->batas_tagihan = (int) $data['batasTagihan'];
             $s->toleransi_tunggakan = (int) $data['toleransiTunggakan'];
             $s->save();
@@ -108,6 +111,7 @@ class SopController extends Controller
             ]);
 
             $s = Setting::firstOrNew([]);
+            $s->key = $s->key ?: 'sop';
 
             if ($s->logo) {
                 $oldPath = 'sop/logo/'.$s->logo;
@@ -144,6 +148,7 @@ class SopController extends Controller
             ]);
 
             $s = Setting::firstOrNew([]);
+            $s->key = $s->key ?: 'sop';
             $s->pesan_tagihan = $data['templateTagihan'] ?? null;
             $s->pesan_pembayaran = $data['templatePembayaran'] ?? null;
             $s->save();
