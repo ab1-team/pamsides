@@ -1,5 +1,5 @@
 <template>
-  <BaseReportLayout :config="payload?.config">
+  <BaseReportLayout :lembaga="payload?.lembaga" :config="payload?.config">
     <div class="page-header">
         <h2>
             PIUTANG PELANGGAN 

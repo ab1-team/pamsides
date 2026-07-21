@@ -26,13 +26,11 @@
               {{ lembaga?.nama || 'UNIT USAHA ALIRAN AIR MASA DEPAN' }}
             </div>
             <div class="kop-nama-kec">
-              <b>{{ lembaga?.alamat_kab || 'KEDUNG KABUPATEN JEPARA' }}</b>
+              <b>{{ lembaga?.alamat_kab || 'MULO WONOSARI' }}</b>
             </div>
+           
             <div class="kop-info-sub">
-              SK Kemenkumham RI No.AHU-00360.AH.01.35TAHUN 2023
-            </div>
-            <div class="kop-info-sub">
-              <i>{{ lembaga?.alamat || 'Ds SUKOSONO RT 15 RW 4 KEC. KEDUNG KAB. JEPARA' }}<span v-if="lembaga?.telepon">, Telp.{{ lembaga.telepon }}</span></i>
+              <i>{{ lembaga?.alamat || '' }}<span v-if="lembaga?.telepon">, Telp.{{ lembaga.telepon }}</span></i>
             </div>
           </td>
         </tr>
@@ -75,7 +73,9 @@ const logoUrl = computed(() => {
   const logo = props.lembaga?.logo
   if (!logo) return ''
   if (logo.startsWith('http')) return logo
-  const base = import.meta.env.VITE_API_STORAGE_URL || 'http://localhost:8000/storage'
+  const base =
+    import.meta.env.VITE_API_STORAGE_URL ||
+    (import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000/api').replace(/\/api\/?$/, '') + '/storage'
   return `${base}/sop/logo/${logo}`
 })
 </script>
@@ -165,7 +165,7 @@ const logoUrl = computed(() => {
    /* Cari bagian ini di file Base Style Anda */
 
     .kop-nama-usaha {
-      font-size: 13px; /* Atur ukuran di sini (misal: 18px) */
+      font-size: 12px; /* Atur ukuran di sini (misal: 18px) */
       text-transform: uppercase;
       line-height: 1.2;
     }
@@ -186,7 +186,7 @@ const logoUrl = computed(() => {
     .kop-single-divider {
       border: 0;
       border-top: 2.5px solid #888888;
-      margin-top: 4px;
+      margin-top: 0.1px;
       margin-bottom: 15px;
       width: 100%;
     }
