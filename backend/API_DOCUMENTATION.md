@@ -202,14 +202,159 @@
 | PUT | `/api/jenis-transactions/{id}` | JenisTransactionController | Update jenis transaksi |
 | DELETE | `/api/jenis-transactions/{id}` | JenisTransactionController | Hapus jenis transaksi |
 
-#### Pelaporan (sebagian besar masih stub)
+#### Inventaris (CRUD)
+| Method | Endpoint | Controller | Respons |
+|--------|----------|------------|---------|
+| GET | `/api/inventaris` | InventoryController | List inventaris (filter: `kategori`, `jenis`, `status`, `q`, `tgl_dari`, `tgl_sampai`, `per_page`) |
+| GET | `/api/inventaris/{id}` | InventoryController | Detail inventaris |
+| POST | `/api/inventaris` | InventoryController | Buat inventaris |
+| PUT | `/api/inventaris/{id}` | InventoryController | Perbarui inventaris |
+| DELETE | `/api/inventaris/{id}` | InventoryController | Hapus inventaris |
+
+**Body `POST /api/inventaris`:**
+```json
+{
+  "nama_barang": "Laptop Asus ROG",
+  "tgl_beli": "2026-07-01",
+  "unit": 1,
+  "harsat": 10000000,
+  "umur_ekonomis": 48,
+  "jenis": "1",
+  "kategori": "4",
+  "status": "Baik",
+  "tgl_validasi": null
+}
+```
+
+#### Jurnal Umum - Form Dispatch & Inventaris
+| Method | Endpoint | Controller | Respons |
+|--------|----------|------------|---------|
+| GET | `/api/transaksi/jurnal-umum/form` | JurnalUmumController | Dispatch form (4 skenario: inventaris pembelian, hapus inventaris, auto-susut, jurnal biasa) |
+| POST | `/api/transaksi/inventaris` | JurnalUmumController | Pembelian inventaris (insert `transactions` + `inventories`) |
+| POST | `/api/transaksi/inventaris/{inventory}/hapus` | JurnalUmumController | Hapus/jual/revaluasi/rusak/hilang inventaris |
+
+**Query `GET /api/transaksi/jurnal-umum/form`:**
+- `tgl_transaksi` (required, date)
+- `jenis_transaksi` (required, integer)
+- `sumber_dana` (required, kode akun)
+- `disimpan_ke` (required, kode akun)
+
+**Response skenario (berdasarkan kombinasi sumber_dana + disimpan_ke + jenis_transaksi):**
+- Pembelian (disimpan_ke di `1.2.01.*` atau `1.2.03.*`):
+  ```json
+  {
+    "success": true,
+    "data": {
+      "form_type": "inventaris",
+      "fields": ["nama_barang", "jumlah", "harga_satuan", "umur_ekonomis", "relasi"]
+    }
+  }
+  ```
+- Hapus/Jual/Revaluasi (sumber_dana `1.2.01.*`/`1.2.02.*` + disimpan_ke `5.3.02.01` + jenis_transaksi=2):
+  ```json
+  {
+    "success": true,
+    "data": {
+      "form_type": "hapus_inventaris",
+      "fields": ["inventory_id", "alasan", "unit", "harsat", "harga_jual"],
+      "inventaris_list": [
+        {"id": 12, "nama_barang": "Laptop", "unit": 3, "harsat": 10000000, "nilai_buku": 8500000}
+      ]
+    }
+  }
+  ```
+- Auto-susut (disimpan_ke di `5.1.07.08/09/10`):
+  ```json
+  {
+    "success": true,
+    "data": {
+      "form_type": "nominal",
+      "fields": ["keterangan", "nominal", "relasi"],
+      "prefill": {"nominal": 250000}
+    }
+  }
+  ```
+- Default:
+  ```json
+  {
+    "success": true,
+    "data": {
+      "form_type": "nominal",
+      "fields": ["keterangan", "nominal", "relasi"]
+    }
+  }
+  ```
+
+**Body `POST /api/transaksi/inventaris` (pembelian):**
+```json
+{
+  "tgl_transaksi": "2026-07-01",
+  "jenis_transaksi": 1,
+  "sumber_dana": "1.1.01.01",
+  "disimpan_ke": "1.2.01.04",
+  "nama_barang": "Laptop Asus",
+  "jumlah": 3,
+  "harga_satuan": 10000000,
+  "umur_ekonomis": 48,
+  "relasi": "Toko ABC"
+}
+```
+Response:
+```json
+{
+  "success": true,
+  "message": "Pembelian inventaris berhasil disimpan.",
+  "data": {"transaksi_id": 1245, "inventory_id": 28, "total": 30000000}
+}
+```
+
+**Body `POST /api/transaksi/inventaris/{id}/hapus`:**
+```json
+{
+  "tgl_transaksi": "2026-07-15",
+  "sumber_dana": "1.2.01.04",
+  "disimpan_ke": "5.3.02.01",
+  "alasan": "dijual",
+  "unit": 1,
+  "harsat": 1000000,
+  "harga_jual": 800000
+}
+```
+`alasan` ∈ `['hapus', 'dijual', 'revaluasi', 'rusak', 'hilang']`. Response:
+```json
+{
+  "success": true,
+  "message": "Penjualan 1 unit Laptop Asus",
+  "data": {"transaksi_ids": [1246, 1247], "inventory_id": 28, "sisa_unit": 2}
+}
+```
+
+#### Pelaporan
 | Method | Endpoint | Controller | Respons |
 |--------|----------|------------|---------|
 | GET | `/api/pelaporan` | PelaporanController | Daftar jenis laporan |
 | GET | `/api/pelaporan/sub-laporan/{file}` | PelaporanController | Daftar sub laporan |
 | POST | `/api/pelaporan/preview` | PelaporanController | Preview PDF (stub) |
 | POST | `/api/pelaporan/excel` | PelaporanController | Ekspor Excel (stub) |
-| POST | `/api/pelaporan/simpan-saldo` | PelaporanController | Simpan saldo (stub) |
+| POST | `/api/pelaporan/simpan-saldo` | PelaporanController | Rekalibrasi amount 1-12 (delegasi ke `GenerateAmountController::generate`) |
+
+**Body `POST /api/pelaporan/simpan-saldo`:**
+```json
+{
+  "tahun": 2026,
+  "bulan": "05"
+}
+```
+- `bulan` opsional: kosong → rekalk semua bulan 1-12 untuk tahun tsb; `01`-`12` → rekalk bulan tertentu.
+
+Response:
+```json
+{
+  "success": true,
+  "message": "Saldo periode berhasil direkalibrasi.",
+  "data": {"tahun": 2026, "bulan": ["05"], "jumlah_rekord": 5}
+}
+```
 
 #### Pengaturan/SOP
 | Method | Endpoint | Controller | Respons |
@@ -266,9 +411,8 @@
 
 - [x] **`ebudgeting`** - Entri e-budgeting (account_id, tahun, bulan, jumlah)
   - Model: `Ebudgeting.php` (relasi: belongsTo Account)
-  - Controller: - (belum ada)
+  - Controller: `EbudgetingController` (CRUD lengkap + bulkStore)
   - Migration ada: `2026_06_18_020404_create_ebudgeting_table.php`
-  - Direferensikan di `PelaporanController` (subLaporan: opsi e_budgeting yang di-hardcode)
 
 - [x] **`jenis_transactions`** - Master jenis transaksi (nama_jt)
   - Model: `JenisTransaction.php`
@@ -280,18 +424,22 @@
   - Controller: - (belum ada)
   - Migration ada: `2026_06_18_021550_create_master_arus_kas_table.php`
 
-### YANG HILANG/TIDAK LENGKAP
+- [x] **`inventories`** - Inventaris barang (nama_barang, tgl_beli, unit, harsat, umur_ekonomis, jenis, kategori, status, tgl_validasi)
+  - Model: `Inventory.php` (HasFactory)
+  - Controller: `InventoryController` (CRUD lengkap)
+  - Service: `InventoryService` (hitungBulan, hitungItemSatuan, hitungPenyusutan)
+  - Integrasi jurnal umum: `JurnalUmumController` (form dispatch + 4 skenario: pembelian, hapus, jual, revaluasi, rusak, hilang, auto-susut)
+  - Seeder: `InventorySampleSeeder`
 
-- [ ] **Model `Calk`** - Direferensikan di `PelaporanController.php:12` tapi file TIDAK ADA
-  - Berpotensi menyebabkan error runtime saat memuat PelaporanController
-  - Perbaikan: Buat `app/Models/Calk.php`
+### YANG HILANG/TIDAK LENGKAP
 
 - [ ] **`PelaporanController::preview()`** - Mengembalikan view template PDF yang tidak ada
   - `resources/views/pelaporan/pdf_template.blade.php` tidak ditemukan
 
 - [ ] **View Pelaporan** - Direktori `resources/views/pelaporan/` tidak ada
-  - Method: `preview()`, `exportExcel()`, `simpanSaldo()` mengembalikan stub
-  - Method private: `daftar_pelanggan`, `tagihan_pelanggan`, `piutang_pelanggan`, `cover`, `surat_pengantar`, `jurnal_transaksi`, `neraca_saldo`, `neraca`, `laba_rugi` - semuanya mengembalikan respons stub
+  - Method: `preview()`, `exportExcel()` masih stub
+  - Method private: `cover`, `surat_pengantar`, `jurnal_transaksi`, `neraca_saldo`, `neraca`, `laba_rugi`, `e_budgeting`, `tutup_buku_*`, `buku_besar`, `calkk`, `LPM`, `arus_kas`, `ati`, `atb`, `piutang_komisi` - semua implementasi ada di controller (return JSON view_target, FE yang render)
+  - `simpanSaldo()` SUDAH diimplementasi (delegasi rekalk amount 1-12)
 
 ### TABEL FRAMEWORK LARAVEL (dikelola otomatis)
 
@@ -327,8 +475,9 @@
 - [x] `akun_level_1` - model AkunLevel1 (relasi: hasMany AkunLevel2, accounts)
 - [x] `akun_level_2` - model AkunLevel2 (relasi: belongsTo AkunLevel1, hasMany AkunLevel3, accounts)
 - [x] `akun_level_3` - model AkunLevel3 (relasi: belongsTo AkunLevel2, hasMany accounts)
-- [x] `ebudgeting` - model Ebudgeting (relasi: belongsTo Account)
+- [x] `ebudgeting` - EbudgetingController + model Ebudgeting
 - [x] `master_arus_kas` - model MasterArusKas (relasi: hasMany children, belongsTo parent)
+- [x] `inventories` - InventoryController + JurnalUmumController + model Inventory + InventoryService
 
 ---
 
@@ -336,10 +485,34 @@
 
 | Kategori | Jumlah |
 |----------|--------|
-| Total tabel di DB | 33 |
-| Tabel dengan model | 26 |
-| Tabel dengan controller | 20 |
-| Tabel dengan rute API | 20 |
-| **Tabel tanpa model** | **1** (`amount`) |
-| **Tabel tanpa controller/rute** | **6** (`accounts`, `amount`, `akun_level_1/2/3`, `ebudgeting`, `master_arus_kas`) |
-| **Masalah kritis** | **2** (model `Calk` hilang, view pelaporan hilang) |
+| Total tabel di DB | 34 |
+| Tabel dengan model | 27 |
+| Tabel dengan controller | 22 |
+| Tabel dengan rute API | 22 |
+| **Tabel tanpa model** | **1** (`amount` — diakses via DB::table) |
+| **Tabel tanpa controller/rute** | **5** (`accounts` read-only via `AccountController`, `akun_level_1/2/3`, `master_arus_kas`) |
+| **Masalah kritis** | **1** (view `resources/views/pelaporan/pdf_template.blade.php` hilang — `preview()` masih stub) |
+
+---
+
+## 3. Changelog
+
+### v1.1 (2026-07-24) — Fitur Tutup Buku, Simpan Saldo, Inventaris Jurnal Umum
+
+**Baru:**
+- `GET /api/transaksi/jurnal-umum/form` — Form dispatch polymorphic (4 skenario: inventaris/hapus/auto-susut/nominal)
+- `POST /api/transaksi/inventaris` — Pembelian inventaris (insert `transactions` + `inventories`)
+- `POST /api/transaksi/inventaris/{id}/hapus` — Hapus/jual/revaluasi/rusak/hilang
+- `GET /api/inventaris` — List inventaris (filter: kategori, jenis, status, q, tgl_dari, tgl_sampai, per_page)
+- `GET /api/inventaris/{id}` — Detail inventaris
+- `POST /api/inventaris` — Buat inventaris
+- `PUT /api/inventaris/{id}` — Perbarui inventaris
+- `DELETE /api/inventaris/{id}` — Hapus inventaris
+
+**Diubah:**
+- `POST /api/pelaporan/simpan-saldo` — **Tidak lagi stub**. Sekarang delegasi rekalk `amount` bulan 1-12 untuk tahun tertentu (single bulan atau semua bulan). Body: `{tahun, bulan?}`. Response: `{success, message, data: {tahun, bulan, jumlah_rekord}}`
+
+**Catatan migrasi:**
+- Tidak ada migration baru
+- `Inventory` model tambah `HasFactory` trait
+- `phpunit.xml` set `DB_DATABASE=pamsides` (sebelumnya `pamsides_test`) — karena user DB `pamsides` tidak punya hak GRANT ke DB baru. Test sekarang pakai DB dev yang sama dengan `migrate:fresh` per test class.
