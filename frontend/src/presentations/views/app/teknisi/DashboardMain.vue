@@ -84,13 +84,30 @@
           @click="$router.push('/app/teknisi/daftar-tagihan')"
           class="group! cursor-pointer! bg-white! border! border-slate-100! p-6! rounded-3xl! shadow-sm! relative! overflow-hidden! transition-all! hover:-translate-y-1! hover:border-rose-200! hover:shadow-xl! hover:shadow-rose-500/10!"
         >
-          <div
-            class="w-12! h-12! bg-rose-50! rounded-xl! flex! items-center! justify-center! text-rose-500! text-xl! mb-4! group-hover:scale-110! transition-transform!"
-          >
-            <font-awesome-icon icon="file-invoice-dollar" />
+          <div class="flex! items-start! justify-between! mb-4!">
+            <div
+              class="w-12! h-12! bg-rose-50! rounded-xl! flex! items-center! justify-center! text-rose-500! text-xl! group-hover:scale-110! transition-transform!"
+            >
+              <font-awesome-icon icon="file-invoice-dollar" />
+            </div>
+            <div
+              class="px-2.5! py-1! rounded-full! text-[10px]! font-black! uppercase! tracking-widest!"
+              :class="unpaidBillsCount > 0 ? 'bg-rose-100! text-rose-600!' : 'bg-emerald-100! text-emerald-600!'"
+            >
+              {{ unpaidBillsCount > 0 ? `${unpaidBillsCount} Tunggakan` : 'Lunas' }}
+            </div>
           </div>
           <h3 class="text-lg! font-black! text-slate-800! mb-1!">Daftar Tagihan</h3>
-          <p class="text-xs! text-slate-500! font-medium!">Lihat tagihan tertunggak pelanggan</p>
+          <p class="text-xs! text-slate-500! font-medium!">Tagihan pelanggan yang belum dilunasi</p>
+          <div
+            class="mt-4! flex! items-center! gap-2! text-rose-500! text-[10px]! font-bold! uppercase! tracking-widest!"
+          >
+            Buka Daftar
+            <font-awesome-icon
+              icon="arrow-right"
+              class="group-hover:translate-x-1! transition-transform!"
+            />
+          </div>
         </div>
 
         <!-- Stats: Target Pencatatan -->
@@ -134,12 +151,12 @@
 
       <!-- Main Content Grid -->
       <div class="grid! grid-cols-1! lg:grid-cols-3! gap-8!">
-        <!-- Priority Tasks (Left, takes 2 cols) -->
+        <!-- Tugas Teknisi (Instalasi + Suspended) -->
         <div class="lg:col-span-2! space-y-6!">
           <div class="flex! items-center! justify-between!">
             <h2 class="text-base! font-black! text-slate-800! flex! items-center! gap-2!">
               <font-awesome-icon icon="clipboard-list" class="text-cyan-500! text-sm!" /> Tugas
-              Instalasi & Pemasangan
+              Teknisi
             </h2>
             <button
               v-if="priorityTasks.length > 3"
@@ -154,15 +171,15 @@
             class="space-y-4! pr-2 custom-scrollbar!"
             :class="{ 'max-h-[420px]! overflow-y-auto!': isExpanded && priorityTasks.length > 3 }"
           >
-            <!-- Empty State -->
+            <!-- Empty State Instalasi -->
             <div
               v-if="displayedTasks.length === 0"
               class="text-center! py-10! bg-slate-50! rounded-2xl! border! border-dashed! border-slate-200!"
             >
-              <p class="text-sm! font-bold! text-slate-400!">Tidak ada tugas prioritas saat ini.</p>
+              <p class="text-sm! font-bold! text-slate-400!">Tidak ada tugas instalasi saat ini.</p>
             </div>
 
-            <!-- Task Item -->
+            <!-- Task Instalasi -->
             <div
               v-for="(task, idx) in displayedTasks"
               :key="idx"
@@ -209,6 +226,94 @@
                   class="w-full! sm:w-auto! text-[10px]! font-black! uppercase!"
                   >Tindak Lanjut</BaseButton
                 >
+              </div>
+            </div>
+          </div>
+
+          <!-- Sub-section: Pelanggan Suspended -->
+          <div class="pt-2!">
+            <div class="flex! items-center! justify-between! mb-3!">
+              <h3 class="text-sm! font-black! text-slate-700! flex! items-center! gap-2!">
+                <font-awesome-icon icon="ban" class="text-rose-500! text-xs!" /> Pelanggan
+                Suspended
+              </h3>
+              <span
+                class="px-2.5! py-1! rounded-full! text-[9px]! font-black! uppercase! tracking-widest!"
+                :class="suspendedList.length > 0 ? 'bg-rose-100! text-rose-700!' : 'bg-emerald-100! text-emerald-700!'"
+              >
+                {{ suspendedList.length }} Aktif
+              </span>
+            </div>
+
+            <div
+              v-if="suspendedList.length === 0"
+              class="p-6! text-center! bg-emerald-50/50! border! border-dashed! border-emerald-200! rounded-2xl!"
+            >
+              <font-awesome-icon
+                icon="check-circle"
+                class="text-emerald-500! text-xl! mb-1!"
+              />
+              <p class="text-xs! font-black! text-slate-600!">Tidak ada pelanggan suspended</p>
+            </div>
+
+            <div v-else class="space-y-2.5!">
+              <div
+                v-for="cust in suspendedList"
+                :key="cust.id"
+                class="bg-white! p-4! rounded-2xl! shadow-sm! border! border-rose-100! flex! items-center! gap-3! transition-all! hover:shadow-md! hover:border-rose-200!"
+              >
+                <div
+                  class="w-10! h-10! rounded-xl! bg-rose-100! text-rose-600! flex! items-center! justify-center! shrink-0! font-black! text-sm!"
+                >
+                  {{ (cust.name || '?').charAt(0).toUpperCase() }}
+                </div>
+                <div class="min-w-0! flex-1!">
+                  <div class="flex! items-center! gap-2!">
+                    <h4 class="text-sm! font-black! text-slate-800! truncate!">{{ cust.name }}</h4>
+                    <span
+                      class="text-[9px]! font-black! uppercase! px-1.5! py-0.5! rounded! bg-slate-100! text-slate-500! font-mono! shrink-0!"
+                      >{{ cust.customer_code }}</span
+                    >
+                  </div>
+                  <div
+                    class="flex! items-center! gap-2! mt-1! text-[10px]! font-bold! flex-wrap!"
+                  >
+                    <span class="text-rose-600!">
+                      {{ cust.unpaid_count }} tagihan
+                    </span>
+                    <span class="text-slate-300!">•</span>
+                    <span class="text-slate-700! font-mono!">
+                      Rp.
+                      {{
+                        Number(cust.total_unpaid || 0).toLocaleString('id-ID', {
+                          minimumFractionDigits: 0,
+                        })
+                      }}
+                    </span>
+                  </div>
+                </div>
+                <button
+                  @click="handleRestore(cust)"
+                  :disabled="restoringId === cust.id || cust.unpaid_count > 0"
+                  class="px-3! py-2! rounded-xl! text-[10px]! font-black! uppercase! tracking-wider! transition-all! active:scale-95! flex! items-center! gap-1.5! shadow-sm! shrink-0!"
+                  :class="
+                    cust.unpaid_count > 0
+                      ? 'bg-slate-100! text-slate-400! cursor-not-allowed!'
+                      : 'bg-emerald-500! hover:bg-emerald-600! text-white! shadow-emerald-200!'
+                  "
+                >
+                  <font-awesome-icon
+                    :icon="restoringId === cust.id ? 'spinner' : 'undo'"
+                    :spin="restoringId === cust.id"
+                  />
+                  {{
+                    restoringId === cust.id
+                      ? '…'
+                      : cust.unpaid_count > 0
+                        ? 'Tunggu Admin'
+                        : 'Aktifkan'
+                  }}
+                </button>
               </div>
             </div>
           </div>
@@ -261,12 +366,17 @@
 import { ref, computed, onMounted } from 'vue'
 import api from '@/utils/axios'
 import { meterService } from '@/services/meter.service'
+import { billingService } from '@/services/billing.service'
 import ContentCard from '@/presentations/components/ui/ContentCard.vue'
 import BaseButton from '@/presentations/components/ui/BaseButton.vue'
+import { MySwal } from '@/utils/swal'
 
 const isLoading = ref(true)
 const dashboardData = ref(null)
 const pendingReadingsCount = ref(0)
+const unpaidBillsCount = ref(0)
+const suspendedList = ref([])
+const restoringId = ref(null)
 const isExpanded = ref(false)
 
 const userData = JSON.parse(localStorage.getItem('user_data') || '{}')
@@ -291,6 +401,58 @@ const currentMonth = computed(() => {
   return `${months[now.getMonth()]} ${now.getFullYear()}`
 })
 
+const fetchSuspended = async () => {
+  try {
+    const res = await billingService.getSuspendedCustomers()
+    suspendedList.value = res?.data || []
+  } catch (err) {
+    console.error('Gagal memuat pelanggan suspended:', err)
+    suspendedList.value = []
+  }
+}
+
+const handleRestore = async (cust) => {
+  if (cust.unpaid_count > 0 || restoringId.value) return
+
+  const ok = await MySwal.fire({
+    icon: 'question',
+    title: `Kembalikan ${cust.name}?`,
+    text: 'Pastikan pelanggan telah melunasi seluruh tagihan. Status akan dikembalikan ke Aktif.',
+    showCancelButton: true,
+    confirmButtonText: 'Ya, Kembalikan',
+    cancelButtonText: 'Batal',
+    confirmButtonColor: '#10b981',
+    customClass: {
+      popup: 'rounded-2xl!',
+      confirmButton: 'rounded-xl! px-5! py-2.5! font-bold!',
+      cancelButton: 'rounded-xl! px-5! py-2.5! font-bold!',
+    },
+  })
+  if (!ok.isConfirmed) return
+
+  try {
+    restoringId.value = cust.id
+    await billingService.restoreCustomer(cust.id)
+    await MySwal.fire({
+      icon: 'success',
+      title: 'Berhasil Diaktifkan',
+      text: `${cust.name} telah dikembalikan ke status aktif.`,
+      confirmButtonColor: '#10b981',
+      customClass: { popup: 'rounded-2xl!', confirmButton: 'rounded-xl! px-5! py-2.5! font-bold!' },
+    })
+    await fetchSuspended()
+  } catch (err) {
+    MySwal.fire({
+      icon: 'error',
+      title: 'Gagal',
+      text: err.response?.data?.message || 'Tidak dapat mengembalikan status pelanggan.',
+      confirmButtonColor: '#ef4444',
+    })
+  } finally {
+    restoringId.value = null
+  }
+}
+
 const fetchDashboardData = async () => {
   try {
     isLoading.value = true
@@ -300,20 +462,23 @@ const fetchDashboardData = async () => {
     const currentYear = now.getFullYear()
 
     // Gunakan Promise.all agar request berjalan paralel secara efisien
-    const [statsRes, pendingRes] = await Promise.all([
+    const [statsRes, pendingRes, unpaidRes] = await Promise.all([
       api.get('/dashboard/statistics'),
       meterService.getPendingReadings({ month: currentMonthNum, year: currentYear }),
+      billingService.getBills({ status: 'unpaid', per_page: 1 }).catch(() => null),
     ])
 
     dashboardData.value = statsRes.data.data || {}
 
-    // Ambil total_customers dari response pending (ini adalah total customer aktif)
     const totalActive = pendingRes.total_customers || 0
     const belumDicatat = pendingRes.data?.length || 0
 
-    // Set ke dashboardData
     dashboardData.value.total_customers = totalActive
     pendingReadingsCount.value = belumDicatat
+    unpaidBillsCount.value =
+      unpaidRes?.data?.total ?? unpaidRes?.data?.bills?.length ?? unpaidRes?.total ?? 0
+
+    await fetchSuspended()
   } catch (error) {
     console.error('Error fetching dashboard data:', error)
   } finally {
@@ -383,6 +548,13 @@ const techStats = computed(() => {
       icon: 'clock',
       color: 'text-orange-600',
       bg: 'bg-orange-100',
+    },
+    {
+      label: 'Tagihan Tunggakan',
+      value: unpaidBillsCount.value.toString(),
+      icon: 'file-invoice-dollar',
+      color: 'text-rose-600',
+      bg: 'bg-rose-100',
     },
     {
       label: 'Instalasi Selesai',

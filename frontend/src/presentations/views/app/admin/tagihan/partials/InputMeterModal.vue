@@ -36,95 +36,46 @@
         </div>
 
         <div class="p-4! md:p-5! overflow-y-auto! flex-1! md:max-h-[75vh]!">
-          <div class="bg-white/50! rounded-3xl! mb-6!">
-            <div class="grid! grid-cols-1! md:grid-cols-3! gap-3!">
-              <div
-                class="flex! items-center! gap-3! p-3! rounded-2xl! bg-slate-50! border! border-slate-100!"
-              >
-                <div
-                  class="w-8! h-8! rounded-lg! bg-slate-100! flex! items-center! justify-center! text-slate-400!"
-                >
-                  <font-awesome-icon icon="id-card" />
-                </div>
-                <div>
-                  <label
-                    class="block! text-[9px]! font-black! text-slate-400! uppercase! tracking-widest! leading-none! mb-1!"
-                    >No. Induk</label
-                  >
-                  <span class="text-xs! font-bold! text-slate-600!">{{ customer.noInduk }}</span>
-                </div>
-              </div>
-              <div
-                class="flex! items-center! gap-3! p-3! rounded-2xl! bg-white! border! border-blue-100! shadow-sm! md:col-span-1!"
-              >
-                <div
-                  class="w-8! h-8! rounded-lg! bg-blue-50! flex! items-center! justify-center! text-blue-500!"
-                >
-                  <font-awesome-icon icon="user" />
-                </div>
-                <div>
-                  <label
-                    class="block! text-[9px]! font-black! text-slate-400! uppercase! tracking-widest! leading-none! mb-1!"
-                    >Nama Pelanggan</label
-                  >
-                  <span class="text-xs! font-black! text-slate-900!">{{ customer.nama }}</span>
-                </div>
-              </div>
-              <div
-                class="flex! items-center! gap-3! p-3! rounded-2xl! bg-slate-50! border! border-slate-100!"
-              >
-                <div
-                  class="w-8! h-8! rounded-lg! bg-slate-100! flex! items-center! justify-center! text-slate-400!"
-                >
-                  <font-awesome-icon icon="map-marker-alt" />
-                </div>
-                <div>
-                  <label
-                    class="block! text-[9px]! font-black! text-slate-400! uppercase! tracking-widest! leading-none! mb-1!"
-                    >Dusun / Lokasi</label
-                  >
-                  <span class="text-xs! font-bold! text-slate-600!">{{ customer.dusun }}</span>
-                </div>
-              </div>
+          <div
+            class="flex! items-center! gap-2! p-2.5! rounded-2xl! bg-gradient-to-r! from-slate-50! to-blue-50/50! border! border-slate-100! mb-4!"
+          >
+            <div
+              class="w-8! h-8! rounded-lg! bg-white! flex! items-center! justify-center! text-slate-400! shrink-0!"
+            >
+              <font-awesome-icon icon="id-card" />
             </div>
+            <span class="text-xs! font-bold! text-slate-600! font-mono!">{{ customer.noInduk }}</span>
+            <span class="text-slate-300!">•</span>
+            <span class="text-xs! font-black! text-slate-900! truncate! flex-1!">{{ customer.nama }}</span>
+            <span class="hidden! sm:inline! text-slate-300!">•</span>
+            <span class="hidden! sm:inline! text-xs! font-bold! text-slate-500!">{{ customer.dusun }}</span>
           </div>
 
-          <div class="grid! grid-cols-1! md:grid-cols-12! gap-6! items-start!">
-            <div class="md:col-span-6! space-y-5!">
+          <div class="grid! grid-cols-1! md:grid-cols-2! gap-4!">
+            <div class="space-y-4!">
               <div>
-                <div class="flex! items-center! gap-2! mb-2!">
-                  <div class="w-1.5! h-4! bg-slate-200! rounded-full!"></div>
+                <div class="flex! items-center! gap-2! mb-1.5!">
+                  <div class="w-1! h-3! bg-slate-300! rounded-full!"></div>
                   <label
-                    class="block! text-[10px]! font-black! text-slate-400! uppercase! tracking-widest! mb-0!"
+                    class="text-[9px]! font-black! text-slate-400! uppercase! tracking-widest!"
                     >Meter Awal (Bulan Lalu)</label
                   >
                 </div>
                 <div
-                  class="flex! items-center! bg-slate-100/50! border-2! border-transparent! rounded-2xl! px-4! py-3! opacity-60! cursor-not-allowed!"
+                  class="flex! items-center! bg-slate-100/60! border-2! border-transparent! rounded-xl! px-4! py-2.5! opacity-70!"
                 >
-                  <input
-                    type="text"
-                    inputmode="numeric"
-                    :value="customer.meterAwal"
-                    disabled
-                    class="w-full! bg-transparent! border-none! outline-none! text-sm! font-bold! text-slate-800! placeholder-slate-200! text-slate-400!"
-                  />
-                  <div class="flex! items-center! gap-1! bg-slate-200/50! px-2! py-1! rounded-lg!">
-                    <span class="text-[9px]! font-black! text-slate-500!">M³</span>
-                  </div>
+                  <span class="flex-1! text-sm! font-bold! text-slate-500! font-mono!">{{ customer.meterAwal }}</span>
+                  <span class="text-[9px]! font-black! text-slate-400! bg-slate-200/60! px-1.5! py-0.5! rounded!">M³</span>
                 </div>
               </div>
 
               <div>
-                <div class="flex! items-center! gap-2! mb-2!">
-                  <div class="w-1.5! h-4! bg-cyan-500! rounded-full!"></div>
-                  <label
-                    class="block! text-[10px]! font-black! text-slate-700! uppercase! tracking-widest! mb-0!"
-                    >Meter Akhir (Bulan Ini)</label
-                  >
+                <div class="flex! items-center! gap-2! mb-1.5!">
+                  <div class="w-1! h-3! bg-cyan-500! rounded-full!"></div>
+                  <label class="text-[9px]! font-black! text-slate-700! uppercase! tracking-widest!">Meter Akhir (Bulan Ini)</label>
                 </div>
                 <div
-                  class="flex! items-center! bg-white! border-2! border-slate-200! rounded-2xl! px-4! py-3! shadow-sm! focus-within:border-cyan-500! focus-within:ring-4! focus-within:ring-cyan-500/10! transition-all! group!"
+                  class="flex! items-center! bg-white! border-2! border-slate-200! rounded-xl! px-4! py-2.5! shadow-sm! focus-within:border-cyan-500! focus-within:ring-4! focus-within:ring-cyan-500/10! transition-all!"
                 >
                   <input
                     type="text"
@@ -133,32 +84,75 @@
                     ref="meterInput"
                     placeholder="0000"
                     onkeypress="return /[0-9]/.test(event.key)"
-                    class="w-full! bg-transparent! border-none! outline-none! text-sm! font-bold! text-slate-800! placeholder-slate-200! group-focus-within:text-cyan-600!"
+                    class="flex-1! bg-transparent! border-none! outline-none! text-base! font-black! text-slate-800! placeholder-slate-200! focus:text-cyan-600! font-mono!"
                   />
-                  <div class="flex! items-center! gap-1! bg-cyan-50! px-2! py-1! rounded-lg!">
-                    <span class="text-[9px]! font-black! text-cyan-600!">M³</span>
+                  <span class="text-[9px]! font-black! text-cyan-600! bg-cyan-50! px-1.5! py-0.5! rounded!">M³</span>
+                </div>
+                <p class="text-[10px] text-slate-400 italic mt-1.5! flex items-center gap-1.5!">
+                  <font-awesome-icon v-if="isScanning" icon="spinner" spin class="text-indigo-500" />
+                  <font-awesome-icon v-else-if="ocrStatus === 'ok'" icon="check-circle" class="text-emerald-500" />
+                  <font-awesome-icon v-else-if="ocrStatus === 'fail'" icon="exclamation-circle" class="text-amber-500" />
+                  <span v-if="isScanning">Membaca angka…</span>
+                  <span v-else-if="ocrStatus === 'ok'">Terdeteksi otomatis. Periksa sebelum simpan.</span>
+                  <span v-else-if="ocrStatus === 'fail'">Gagal membaca, ketik manual.</span>
+                  <span v-else>* Masukkan angka meteran</span>
+                </p>
+              </div>
+
+              <div>
+                <div class="flex! items-center! gap-2! mb-1.5!">
+                  <div class="w-1! h-3! bg-indigo-500! rounded-full!"></div>
+                  <label class="text-[9px]! font-black! text-slate-700! uppercase! tracking-widest!">Scan Meteran (Otomatis)</label>
+                </div>
+                <div
+                  class="relative! flex! items-center! bg-slate-900! border-2! border-slate-800! rounded-xl! overflow-hidden!"
+                  style="height: 60px;"
+                >
+                  <video
+                    ref="scanVideoRef"
+                    class="absolute! inset-0! w-full! h-full! object-cover! z-0!"
+                    autoplay
+                    playsinline
+                    muted
+                  ></video>
+                  <div
+                    class="absolute! inset-0! flex! items-center! justify-center! pointer-events-none! z-10!"
+                  >
+                    <div
+                      class="border-2! border-emerald-400! rounded-md! shadow-[0_0_0_9999px_rgba(0,0,0,0.55)]!"
+                      style="width: 75%; height: 75%;"
+                    >
+                      <div
+                        class="absolute! top-0! left-0! w-full! h-0.5! bg-emerald-400! shadow-[0_0_10px_rgba(16,185,129,0.9)]! animate-[scan_2s_infinite]!"
+                      ></div>
+                    </div>
+                  </div>
+                  <div
+                    class="absolute! bottom-0.5! inset-x-0! flex! justify-center! z-20!"
+                  >
+                    <span
+                      class="px-2! py-0.5! rounded-full! bg-black/60! text-emerald-300! text-[8px]! font-black! uppercase! tracking-widest! flex! items-center! gap-1!"
+                    >
+                      <font-awesome-icon :icon="isScanning ? 'spinner' : 'magic'" :spin="isScanning" class="text-[8px]!" />
+                      {{ isScanning ? 'Membaca…' : (autoScanAttempts > 0 ? 'Coba ulang…' : 'Arahkan angka ke kotak') }}
+                    </span>
                   </div>
                 </div>
-                <p class="text-[10px]! text-slate-400! mt-2! italic!">
-                  * Masukkan angka meteran yang tertera pada alat saat ini
-                </p>
+                <canvas ref="scanCanvasRef" class="hidden!"></canvas>
               </div>
             </div>
 
-            <div class="md:col-span-6!">
-              <div class="flex! items-center! gap-3! mb-4!">
-                <div class="w-1.5! h-4! bg-emerald-500! rounded-full!"></div>
-                <label
-                  class="mb-0! text-[10px]! font-black! text-slate-400! uppercase! tracking-widest!"
-                  >Bukti Foto Meteran</label
-                >
+            <div>
+              <div class="flex! items-center! gap-2! mb-1.5!">
+                <div class="w-1! h-3! bg-emerald-500! rounded-full!"></div>
+                <label class="text-[9px]! font-black! text-slate-400! uppercase! tracking-widest!">Bukti Foto Meteran</label>
               </div>
 
               <div>
                 <!-- LIVE CAMERA VIEW -->
                 <div
                   v-if="isCameraOpen"
-                  class="relative! overflow-hidden! rounded-2xl! border-4! border-slate-800! bg-black! shadow-2xl! h-64! w-full!"
+                  class="relative! overflow-hidden! rounded-xl! border-2! border-slate-800! bg-black! shadow-md! w-full! aspect-square!"
                 >
                   <video
                     ref="videoRef"
@@ -205,7 +199,7 @@
                 >
                   <img
                     :src="photoPreview"
-                    class="w-full! h-64! object-cover! group-hover:scale-105! transition-transform! duration-700!"
+                    class="w-full! aspect-square! object-cover! group-hover:scale-105! transition-transform! duration-700!"
                   />
                   <div
                     class="absolute! inset-0! bg-gradient-to-t! from-slate-900/60! via-transparent! to-transparent!"
@@ -245,15 +239,15 @@
                 <!-- EMPTY STATE (SELECT METHOD) -->
                 <div
                   v-else
-                  class="group! relative! border-2! border-dashed! border-slate-200! rounded-2xl! p-6! text-center! hover:border-cyan-500! transition-all!"
+                  class="group! relative! border-2! border-dashed! border-slate-200! rounded-xl! p-4! text-center! hover:border-cyan-500! transition-all! aspect-square! flex! flex-col! items-center! justify-center!"
                 >
                   <div
-                    class="w-14! h-14! bg-slate-50! rounded-2xl! flex! items-center! justify-center! mx-auto! mb-4! text-slate-300! group-hover:text-cyan-500! transition-all! group-hover:rotate-6!"
+                    class="w-12! h-12! bg-slate-50! rounded-xl! flex! items-center! justify-center! mb-3! text-slate-300! group-hover:text-cyan-500! transition-all! group-hover:rotate-6!"
                   >
-                    <font-awesome-icon icon="camera" class="text-2xl!" />
+                    <font-awesome-icon icon="camera" class="text-xl!" />
                   </div>
                   <p
-                    class="text-[10px]! font-black! text-slate-400! uppercase! tracking-widest! mb-4!"
+                    class="text-[10px]! font-black! text-slate-400! uppercase! tracking-widest! mb-3!"
                   >
                     Pilih Metode Input
                   </p>
@@ -262,7 +256,7 @@
                     <button
                       type="button"
                       @click="openLiveCamera"
-                      class="flex! items-center! justify-center! gap-2! py-3! rounded-xl! bg-cyan-600! text-white! font-black! text-[10px]! uppercase! tracking-wider! shadow-md! hover:bg-cyan-700! transition-all! active:scale-95!"
+                      class="w-full! flex! items-center! justify-center! gap-2! py-2! px-4! rounded-lg! bg-cyan-600! text-white! font-black! text-[10px]! uppercase! tracking-wider! shadow-md! hover:bg-cyan-700! transition-all! active:scale-95!"
                     >
                       <font-awesome-icon icon="video" />
                       Kamera
@@ -270,10 +264,10 @@
                     <button
                       type="button"
                       @click="triggerFile"
-                      class="flex! items-center! justify-center! gap-2! py-3! rounded-xl! bg-slate-100! text-slate-600! font-black! text-[10px]! uppercase! tracking-wider! shadow-sm! hover:bg-slate-200! transition-all! active:scale-95!"
+                      class="w-full! flex! items-center! justify-center! gap-2! py-2! px-4! rounded-lg! bg-slate-100! text-slate-600! font-black! text-[10px]! uppercase! tracking-wider! shadow-sm! hover:bg-slate-200! transition-all! active:scale-95!"
                     >
                       <font-awesome-icon icon="folder-open" />
-                      File / Galeri
+                      File
                     </button>
                   </div>
                 </div>
@@ -293,16 +287,14 @@
         </div>
 
         <div
-          class="p-4! md:p-5! bg-slate-50! border-t! border-slate-100! flex! items-center! justify-end!"
+          class="p-3! md:p-4! bg-slate-50! border-t! border-slate-100! flex! items-center! justify-end!"
         >
-          <div class="w-full! md:w-auto!">
-            <BaseButton
-              @click="handleSave"
-              class="w-full! md:w-auto! bg-slate-800! hover:bg-slate-900! px-12! py-4! rounded-xl! text-white! font-black! shadow-lg! shadow-slate-200! tracking-widest! text-xs! md:text-sm! uppercase! transition-all!"
-            >
-              Simpan Data Pemakaian
-            </BaseButton>
-          </div>
+          <BaseButton
+            @click="handleSave"
+            class="w-full! md:w-auto! bg-slate-800! hover:bg-slate-900! px-8! py-3! rounded-xl! text-white! font-black! shadow-lg! shadow-slate-200! tracking-widest! text-xs! uppercase! transition-all!"
+          >
+            Simpan Data Pemakaian
+          </BaseButton>
         </div>
       </div>
     </div>
@@ -329,6 +321,13 @@ const fileInputRef = ref(null)
 const photoPreview = ref(null)
 const selectedFile = ref(null)
 const meterInput = ref(null)
+const isScanning = ref(false)
+const ocrStatus = ref('idle')
+const isScanCameraOpen = ref(false)
+const scanVideoRef = ref(null)
+const scanCanvasRef = ref(null)
+const scanFacingMode = ref('environment')
+let scanStream = null
 
 // Live Camera State
 const isCameraOpen = ref(false)
@@ -341,16 +340,21 @@ watch(
   () => props.show,
   (newVal) => {
     if (newVal) {
-      meterAkhir.value = props.customer.meterAkhir
+      meterAkhir.value = props.customer.meterAwal
       photoPreview.value = null
       selectedFile.value = null
       isCameraOpen.value = false
       facingMode.value = 'environment'
+      isScanning.value = false
+      ocrStatus.value = 'idle'
+      scanFacingMode.value = 'environment'
+      stopScanCamera()
       document.body.style.overflow = 'hidden'
-      setTimeout(() => meterInput.value?.focus(), 100)
+      openScanCamera()
     } else {
       document.body.style.overflow = ''
       stopLiveCamera()
+      stopScanCamera()
     }
   },
 )
@@ -507,8 +511,127 @@ const closeModal = () => {
   emit('close')
 }
 
+const openScanCamera = async () => {
+  try {
+    isScanCameraOpen.value = true
+    await nextTick()
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: scanFacingMode.value },
+    })
+    scanStream = stream
+    if (scanVideoRef.value) {
+      scanVideoRef.value.srcObject = stream
+      scanVideoRef.value.onloadedmetadata = () => startAutoScan()
+    }
+  } catch (err) {
+    console.error('scan camera err:', err)
+    isScanCameraOpen.value = false
+    MySwal.fire({
+      icon: 'error',
+      title: 'Kamera Gagal',
+      text: 'Pastikan browser memiliki izin akses kamera.',
+      confirmButtonColor: '#f59e0b',
+    })
+  }
+}
+
+const stopScanCamera = () => {
+  if (autoScanTimer) {
+    clearTimeout(autoScanTimer)
+    autoScanTimer = null
+  }
+  if (scanStream) {
+    scanStream.getTracks().forEach((t) => t.stop())
+    scanStream = null
+  }
+  isScanCameraOpen.value = false
+  autoScanAttempts.value = 0
+}
+
+const autoScanAttempts = ref(0)
+let autoScanTimer = null
+
+const captureAndScan = async () => {
+  if (!scanVideoRef.value || !scanCanvasRef.value || isScanning.value || !isScanCameraOpen.value) return
+  const video = scanVideoRef.value
+  const canvas = scanCanvasRef.value
+  canvas.width = video.videoWidth
+  canvas.height = video.videoHeight
+  const ctx = canvas.getContext('2d')
+  ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
+
+  const cw = canvas.width
+  const ch = canvas.height
+  const rw = Math.round(cw * 0.75)
+  const rh = Math.round(ch * 0.45)
+  const rx = Math.round((cw - rw) / 2)
+  const ry = Math.round((ch - rh) / 2)
+  const crop = document.createElement('canvas')
+  crop.width = rw
+  crop.height = rh
+  crop.getContext('2d').drawImage(canvas, rx, ry, rw, rh, 0, 0, rw, rh)
+  const dataUrl = crop.toDataURL('image/jpeg', 0.9)
+
+  await scanMeterFromPhoto(dataUrl)
+
+  if (ocrStatus.value === 'ok' || !isScanCameraOpen.value) return
+  autoScanAttempts.value++
+  autoScanTimer = setTimeout(captureAndScan, 500)
+}
+
+const startAutoScan = () => {
+  autoScanAttempts.value = 0
+  if (autoScanTimer) clearTimeout(autoScanTimer)
+  captureAndScan()
+}
+
+// ponytail: OCR pakai tesseract.js dari CDN (worker + core fetched on demand).
+// Upgrade path: pindah ke paket npm + custom traineddata 7-segment saat akurasi rendah.
+const loadTesseract = () => {
+  if (window.Tesseract) return Promise.resolve(window.Tesseract)
+  return new Promise((resolve, reject) => {
+    const s = document.createElement('script')
+    s.src = 'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js'
+    s.onload = () => resolve(window.Tesseract)
+    s.onerror = reject
+    document.head.appendChild(s)
+  })
+}
+
+const extractDigits = (text) => {
+  const cleaned = (text || '').replace(/[^\d]/g, '')
+  if (!cleaned) return null
+  const n = parseInt(cleaned, 10)
+  return Number.isFinite(n) ? n : null
+}
+
+const scanMeterFromPhoto = async (dataUrl) => {
+  if (!dataUrl || isScanning.value) return
+  isScanning.value = true
+  ocrStatus.value = 'idle'
+  try {
+    const Tesseract = await loadTesseract()
+    const { data } = await Tesseract.recognize(dataUrl, 'eng', {
+      tessedit_char_whitelist: '0123456789',
+    })
+    const digits = extractDigits(data?.text)
+    if (digits === null) {
+      ocrStatus.value = 'fail'
+      return
+    }
+    meterAkhir.value = digits
+    ocrStatus.value = 'ok'
+  } catch (err) {
+    console.error('OCR error:', err)
+    ocrStatus.value = 'fail'
+  } finally {
+    isScanning.value = false
+  }
+}
+
 onUnmounted(() => {
   stopLiveCamera()
+  stopScanCamera()
 })
 </script>
 

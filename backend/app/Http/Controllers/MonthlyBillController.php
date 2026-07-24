@@ -218,7 +218,9 @@ class MonthlyBillController extends Controller
         $relasi = $bill->customer?->customer_code ?? 'Bill #' . $bill->id;
         $userId = Auth::id();
 
-        DB::transaction(function () use ($bill, $request, $abodemen, $usageCharge, $denda, $isTunggakan, $relasi, $userId) {
+        $restoredTicket = false;
+
+        DB::transaction(function () use ($bill, $request, $abodemen, $usageCharge, $denda, $isTunggakan, $relasi, $userId, &$restoredTicket) {
             $bill->update(['status' => 'paid']);
 
             $payment = BillPayment::create([
@@ -279,15 +281,113 @@ class MonthlyBillController extends Controller
                 ]);
                 $trx->update(['urutan' => $trx->id]);
             }
+
+            // ── Auto-restore: jika tiket suspended & semua bill paid → kembalikan ke completed ──
+            $customer = $bill->customer;
+            if ($customer && $customer->ticket && $customer->ticket->status === 'suspended') {
+                $stillUnpaid = MonthlyBill::where('customer_id', $customer->id)
+                    ->where('status', 'unpaid')
+                    ->count();
+
+                if ($stillUnpaid === 0) {
+                    $customer->ticket->update(['status' => 'completed']);
+                    $restoredTicket = true;
+                }
+            }
         });
 
         $bill->load('customer.user', 'customer.ticket.package');
 
         return response()->json([
             'success' => true,
-            'message' => 'Pembayaran berhasil dikonfirmasi',
+            'message' => $restoredTicket
+                ? 'Pembayaran berhasil. Pelanggan otomatis diaktifkan kembali karena seluruh tagihan telah lunas.'
+                : 'Pembayaran berhasil dikonfirmasi',
             'data' => [
                 'bill' => $bill,
+                'ticket_restored' => $restoredTicket,
+            ],
+        ]);
+    }
+
+    // Daftar pelanggan suspended + tagihan unpaid-nya (untuk teknisi)
+    public function suspended(Request $request)
+    {
+        $customers = Customer::with([
+            'user',
+            'ticket.package',
+            'ticket.village',
+            'monthlyBills' => fn ($q) => $q->orderBy('billing_period_year')->orderBy('billing_period_month'),
+        ])
+            ->whereHas('ticket', fn ($q) => $q->where('status', 'suspended'))
+            ->get();
+
+        $items = $customers->map(function ($c) {
+            $unpaid = $c->monthlyBills->where('status', 'unpaid');
+            return [
+                'id' => $c->id,
+                'customer_code' => $c->customer_code,
+                'name' => $c->user?->name ?? $c->ticket?->applicant_name,
+                'address' => $c->ticket?->address,
+                'dusun' => $c->ticket?->village?->hamlet_name,
+                'desa' => $c->ticket?->village?->village_name,
+                'package_name' => $c->ticket?->package?->name,
+                'unpaid_count' => $unpaid->count(),
+                'total_unpaid' => $unpaid->sum('total_amount'),
+                'bills' => $unpaid->map(fn ($b) => [
+                    'id' => $b->id,
+                    'period' => $b->billing_period_month . '/' . $b->billing_period_year,
+                    'amount' => $b->total_amount,
+                    'due_date' => $b->due_date,
+                ])->values(),
+            ];
+        })->values();
+
+        return response()->json([
+            'success' => true,
+            'data' => $items,
+        ]);
+    }
+
+    // Teknisi: konfirmasi pelanggan suspended sudah bayar & minta restore ke aktif.
+    // Backend cek: jika semua bill paid → ubah ticket status suspended → completed.
+    public function restoreCustomer(Request $request, $customerId)
+    {
+        $customer = Customer::with('ticket')->findOrFail($customerId);
+
+        if (! $customer->ticket) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Tiket instalasi tidak ditemukan.',
+            ], 404);
+        }
+
+        if ($customer->ticket->status !== 'suspended') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Pelanggan ini tidak dalam status suspended.',
+            ], 400);
+        }
+
+        $unpaidCount = MonthlyBill::where('customer_id', $customer->id)
+            ->where('status', 'unpaid')
+            ->count();
+
+        if ($unpaidCount > 0) {
+            return response()->json([
+                'success' => false,
+                'message' => "Masih ada {$unpaidCount} tagihan belum lunas. Pembayaran diproses oleh admin terlebih dahulu.",
+            ], 400);
+        }
+
+        $customer->ticket->update(['status' => 'completed']);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Pelanggan berhasil diaktifkan kembali.',
+            'data' => [
+                'customer_id' => $customer->id,
+                'new_status' => 'completed',
             ],
         ]);
     }
