@@ -93,6 +93,10 @@ Route::middleware(['auth:sanctum', 'role:admin,teknisi'])->group(function () {
     // Read-only shared: daftar tagihan & rekap pemakaian (bayar/hapus khusus admin)
     Route::get('monthly-bills', [MonthlyBillController::class, 'index']);
     Route::get('monthly-bills/usage', [MonthlyBillController::class, 'usage']);
+
+    // Teknisi: lihat daftar pelanggan suspended + konfirmasi restore (setelah bayar oleh admin)
+    Route::get('monthly-bills/suspended', [MonthlyBillController::class, 'suspended']);
+    Route::post('customers/{id}/restore', [MonthlyBillController::class, 'restoreCustomer']);
 });
 
 /*
@@ -151,7 +155,6 @@ Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
 
     // Tagihan bulanan — tulis hanya admin (baca sudah di grup admin+teknisi)
     Route::get('monthly-bills/{id}', [MonthlyBillController::class, 'show']);
-    Route::post('monthly-bills/{id}/pay', [MonthlyBillController::class, 'pay']);
     Route::delete('monthly-bills/{id}', [MonthlyBillController::class, 'destroy']);
     Route::post('monthly-bills/generate', [MonthlyBillController::class, 'generate']);
 

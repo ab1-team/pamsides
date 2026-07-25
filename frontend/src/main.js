@@ -165,6 +165,7 @@ import {
   faVideo,
   faSync,
   faInbox,
+  faMagic,
 } from '@fortawesome/free-solid-svg-icons'
 
 import { faWhatsapp } from '@fortawesome/free-brands-svg-icons'
@@ -310,6 +311,7 @@ library.add(
   faVideo,
   faSync,
   faInbox,
+  faMagic,
   faFileSignature,
 )
 

@@ -68,6 +68,18 @@ export const billingService = {
     const response = await api.get('/reports/bills', { params })
     return response.data
   },
+
+  // Daftar pelanggan suspended + tagihan unpaid (teknisi)
+  async getSuspendedCustomers() {
+    const response = await api.get('/monthly-bills/suspended')
+    return response.data
+  },
+
+  // Teknisi: konfirmasi restore suspended → completed (setelah admin bayar lunas)
+  async restoreCustomer(customerId) {
+    const response = await api.post(`/customers/${customerId}/restore`)
+    return response.data
+  },
 }
 
 export default billingService
