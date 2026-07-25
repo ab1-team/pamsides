@@ -187,6 +187,7 @@
 | PUT | `/api/transactions/{id}` | TransactionController | Perbarui transaksi |
 | DELETE | `/api/transactions/{id}` | TransactionController | Hapus transaksi |
 | POST | `/api/generate-amount` | GenerateAmountController | Generate jumlah akun |
+| POST | `/api/tunggakan/generate` | TunggakanController | Trigger manual generate jurnal piutang untuk tagihan menunggak |
 
 #### Amount
 | Method | Endpoint | Controller | Response |
@@ -356,6 +357,74 @@ Response:
 }
 ```
 
+#### Generate Tunggakan (Manual Trigger)
+
+| Method | Endpoint | Auth | Controller | Respons |
+|--------|----------|------|------------|---------|
+| POST | `/api/tunggakan/generate` | admin | TunggakanController | `{ success, tanggal, force, duration_ms, output }` |
+
+**Body (semua field opsional):**
+```json
+{
+  "tanggal": "2026-07-25",
+  "force": false
+}
+```
+- `tanggal` opsional, default `hari ini` (`Y-m-d`). Dipakai sebagai `tgl_transaksi` jurnal & acuan `due_date`.
+- `force` opsional, default `false`. Jika `true`, hapus jurnal tunggakan lama untuk bill yang sama (`reverence_type='overdue_bill'`, `reverence_id=`) sebelum insert baru. Default idempotent: skip bill yang sudah punya jurnal.
+
+**Logika:**
+- Loop `MonthlyBill` dengan `status='unpaid'` dan `due_date < (tanggal - toleransi)`. `toleransi` = `settings.toleransi_tunggakan` (default `0`).
+- Untuk tiap bill:
+  - Insert 1 baris jurnal ke `transactions` (`account_debet='1.1.03.01'` Piutang, `account_kredit='4.1.01.02'` Abodemen, `saldo = bill.abodemen`) jika `bill.abodemen > 0`.
+  - Insert 1 baris jurnal (`account_kredit='4.1.01.03'` Pemakaian, `saldo = bill.usage_charge`) jika `bill.usage_charge > 0`.
+  - `reverence_type='overdue_bill'`, `reverence_id=bill.id`, `id_user=admin pertama`, `keterangan_transaksi` prefix `Tunggakan Abodemen -` / `Tunggakan Pemakaian -`.
+- Trigger DB MySQL auto-update `amount` per insert (lihat `database/migrations/2026_06_23_034006_create_amount_table.php`), jadi **tidak ada recalc manual** di endpoint ini.
+- Notifikasi dashboard disimpan ke `Cache::put('overdue_gen_notification', ..., 7 hari)`.
+
+**Response sukses (200):**
+```json
+{
+  "success": true,
+  "tanggal": "2026-07-25",
+  "force": false,
+  "duration_ms": 432,
+  "output": "Berhasil memproses 12 tagihan menunggak (skip 3)."
+}
+```
+
+**Response sukses tanpa tagihan menunggak:**
+```json
+{
+  "success": true,
+  "tanggal": "2026-07-25",
+  "force": false,
+  "duration_ms": 12,
+  "output": "Tidak ada tagihan menunggak."
+}
+```
+
+**Response gagal validasi (422):**
+```json
+{
+  "success": false,
+  "errors": { "tanggal": ["The tanggal does not match the format Y-m-d."] }
+}
+```
+
+**Response gagal proses (200, success=false):** Terjadi jika `User::where('role','admin')->first()` null atau exception di loop. Output berisi pesan error.
+
+**Scheduler otomatis:** `routes/console.php:11` → `Schedule::command('billing:generate-overdue-transactions')->dailyAt('00:01')`. Pastikan cron `* * * * * php artisan schedule:run` aktif di server.
+
+**Command Artisan setara:**
+```bash
+php artisan billing:generate-overdue-transactions
+php artisan billing:generate-overdue-transactions --tanggal=2026-07-25
+php artisan billing:generate-overdue-transactions --force
+```
+
+**Catatan migrasi/config:** tidak ada migration baru. Toleransi baca dari `settings.toleransi_tunggakan` (kolom sudah ada sejak `2026_06_10_000001_add_company_fields_to_settings_table.php`).
+
 #### Pengaturan/SOP
 | Method | Endpoint | Controller | Respons |
 |--------|----------|------------|---------|
@@ -469,6 +538,7 @@ Response:
 - [x] `bill_payments` - model BillPayment (digunakan oleh MonthlyBillController)
 - [x] `settings` - SettingController + model Setting
 - [x] `transactions` - TransactionController + model Transaction
+- [x] `monthly_bills` (generate tunggakan) - TunggakanController (manual trigger endpoint) + GenerateOverdueTransactions (Artisan command + scheduler harian)
 - [x] `jenis_transactions` - JenisTransactionController + model JenisTransaction
 - [x] `jenis_laporans` - model JenisLaporan (digunakan oleh PelaporanController)
 - [x] `sub_laporans` - model SubLaporan (digunakan oleh PelaporanController)
@@ -492,10 +562,25 @@ Response:
 | **Tabel tanpa model** | **1** (`amount` — diakses via DB::table) |
 | **Tabel tanpa controller/rute** | **5** (`accounts` read-only via `AccountController`, `akun_level_1/2/3`, `master_arus_kas`) |
 | **Masalah kritis** | **1** (view `resources/views/pelaporan/pdf_template.blade.php` hilang — `preview()` masih stub) |
+| Generate tunggakan | Scheduler harian `00:01` + endpoint manual `POST /api/tunggakan/generate` (admin). Command `billing:generate-overdue-transactions` support `--tanggal` dan `--force`. |
 
 ---
 
 ## 3. Changelog
+
+### v1.2 (2026-07-25) — Generate Tunggakan API
+
+**Baru:**
+- `POST /api/tunggakan/generate` — Trigger manual generate jurnal piutang untuk tagihan menunggak (admin only). Delegasi ke `Artisan::call('billing:generate-overdue-transactions')`.
+- Controller baru: `app/Http/Controllers/TunggakanController.php`
+
+**Diubah:**
+- `php artisan billing:generate-overdue-transactions` — Tambah opsi `--tanggal=Y-m-d` (default hari ini) dan `--force` (hapus jurnal lama sebelum insert). Hormati `settings.toleransi_tunggakan` untuk threshold `due_date`. Return `FAILURE` bukan silent exit saat `User admin` tidak ditemukan.
+- Idempotency: default skip bill yang sudah punya jurnal `overdue_bill`; pakai `--force` / `force=true` untuk replace.
+
+**Catatan migrasi:**
+- Tidak ada migration baru
+- Trigger DB `amount` (existing) sudah handle update saldo otomatis per insert jurnal — endpoint ini tidak panggil recalc manual
 
 ### v1.1 (2026-07-24) — Fitur Tutup Buku, Simpan Saldo, Inventaris Jurnal Umum
 

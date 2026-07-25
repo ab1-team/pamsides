@@ -25,6 +25,7 @@ use App\Http\Controllers\SurveyResultController;
 use App\Http\Controllers\TroubleReportController;
 use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\TutupBukuController;
+use App\Http\Controllers\TunggakanController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\VillageController;
 use App\Http\Controllers\PelaporanController;
@@ -171,6 +172,7 @@ Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
     Route::apiResource('transactions', TransactionController::class);
     Route::get('jenis-transactions', [JenisTransactionController::class, 'index']);
     Route::post('generate-amount', [GenerateAmountController::class, 'generate']);
+    Route::post('tunggakan/generate', [TunggakanController::class, 'generate']);
     Route::get('accounts', [AccountController::class, 'index']);
     Route::get('accounts/by-level/{level}', [AccountController::class, 'byLevel']);
     Route::get('amount/total-saldo', [AmountController::class, 'getTotalSaldo']);
