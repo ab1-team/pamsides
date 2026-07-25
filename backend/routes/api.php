@@ -12,6 +12,8 @@ use App\Http\Controllers\GenerateAmountController;
 use App\Http\Controllers\InstallationPackageController;
 use App\Http\Controllers\InstallationResultController;
 use App\Http\Controllers\InstallationTicketController;
+use App\Http\Controllers\InventoryController;
+use App\Http\Controllers\JurnalUmumController;
 use App\Http\Controllers\MeterReadingController;
 use App\Http\Controllers\MonthlyBillController;
 use App\Http\Controllers\PaymentController;
@@ -169,6 +171,12 @@ Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
     Route::get('accounts', [AccountController::class, 'index']);
     Route::get('accounts/by-level/{level}', [AccountController::class, 'byLevel']);
     Route::get('amount/total-saldo', [AmountController::class, 'getTotalSaldo']);
+
+    // Inventaris (CRUD + integrasi jurnal umum)
+    Route::apiResource('inventaris', InventoryController::class);
+    Route::get('transaksi/jurnal-umum/form', [JurnalUmumController::class, 'form']);
+    Route::post('transaksi/inventaris', [JurnalUmumController::class, 'storeInventaris']);
+    Route::post('transaksi/inventaris/{inventory}/hapus', [JurnalUmumController::class, 'storeHapusInventaris']);
 
     //tutup buku routes
     Route::get('tutup-buku/check/{year}', [TutupBukuController::class, 'check']);
