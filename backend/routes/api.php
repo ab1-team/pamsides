@@ -169,6 +169,8 @@ Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
     Route::get('reports/installation/export-pdf', [ReportController::class, 'exportInstallationPdf']);
 
     //transaction routes
+    Route::get('transactions/saldo-akun', [TransactionController::class, 'saldoAkun']);
+    Route::get('transactions/buku-besar', [TransactionController::class, 'bukuBesar']);
     Route::apiResource('transactions', TransactionController::class);
     Route::get('jenis-transactions', [JenisTransactionController::class, 'index']);
     Route::post('generate-amount', [GenerateAmountController::class, 'generate']);

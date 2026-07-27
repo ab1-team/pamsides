@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Transaction;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class TransactionController extends Controller
 {
@@ -31,6 +32,13 @@ class TransactionController extends Controller
 
         if ($request->has('transaction_group')) {
             $query->where('transaction_group', $request->transaction_group);
+        }
+
+        if ($request->has('account')) {
+            $query->where(function ($query) use ($request) {
+                $query->where('account_debet', $request->account)
+                    ->orWhere('account_kredit', $request->account);
+            });
         }
 
         if ($request->has('reverence_type')) {
