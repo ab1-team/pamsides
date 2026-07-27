@@ -94,7 +94,9 @@ export function usePemakaianAir() {
           const statusLabel =
             String(item.status || '').toUpperCase() === 'PAID'
               ? STATUS_TYPES.PAID
-              : STATUS_TYPES.PENDING
+              : String(item.status || '').toUpperCase() === 'UNPAID'
+                ? 'UNPAID'
+                : STATUS_TYPES.PENDING
 
           return {
             id: item.id,
@@ -134,9 +136,10 @@ export function usePemakaianAir() {
 
   // Properti komputasi
   const filteredData = computed(() => {
-    if (!searchQuery.value) return tableData.value
+    const rows = tableData.value.filter((r) => r.status === 'PAID' || r.status === 'UNPAID')
+    if (!searchQuery.value) return rows
     const q = searchQuery.value.toLowerCase()
-    return tableData.value.filter(
+    return rows.filter(
       (r) =>
         (r.nama || '').toLowerCase().includes(q) ||
         String(r.id).includes(q) ||

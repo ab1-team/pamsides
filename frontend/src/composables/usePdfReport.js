@@ -47,7 +47,7 @@ export function usePdfReport() {
   const isGenerating = ref(false)
   const lastError = ref(null)
 
-  const buildPdfFromPages = async (pages, { filename = 'laporan.pdf' } = {}) => {
+  const buildPdfFromPages = async (pages, { filename = 'laporan.pdf', orientation = 'portrait' } = {}) => {
     if (!Array.isArray(pages) || pages.length === 0) {
       throw new Error('Tidak ada halaman yang akan dicetak')
     }
@@ -56,14 +56,14 @@ export function usePdfReport() {
     lastError.value = null
     try {
       const pdf = new jsPDF({
-        orientation: 'portrait',
+        orientation: orientation === 'landscape' ? 'landscape' : 'portrait',
         unit: 'mm',
         format: 'a4',
       })
 
       const h2c = html2canvas
-      const pageW = A4.width
-      const pageH = A4.height
+      const pageW = orientation === 'landscape' ? A4.height : A4.width
+      const pageH = orientation === 'landscape' ? A4.width : A4.height
       const usableW = pageW - MARGIN * 2
 
       for (let i = 0; i < pages.length; i++) {
@@ -80,15 +80,18 @@ export function usePdfReport() {
 
         const imgData = canvas.toDataURL('image/jpeg', 0.95)
         const ratio = canvas.height / canvas.width
-        const imgW = usableW
-        const imgH = imgW * ratio
+        const usableH = pageH - MARGIN * 2
+        let imgW = usableW
+        let imgH = imgW * ratio
+        if (imgH > usableH) {
+          imgH = usableH
+          imgW = imgH / ratio
+        }
+        const xPos = MARGIN + (usableW - imgW) / 2
+        const yPos = MARGIN + (usableH - imgH) / 2
 
         if (i > 0) pdf.addPage()
-        let yPos = MARGIN
-        if (imgH < pageH - MARGIN * 2) {
-          yPos = MARGIN
-        }
-        pdf.addImage(imgData, 'JPEG', MARGIN, yPos, imgW, imgH, undefined, 'FAST')
+        pdf.addImage(imgData, 'JPEG', xPos, yPos, imgW, imgH, undefined, 'FAST')
       }
 
       const blob = pdf.output('blob')

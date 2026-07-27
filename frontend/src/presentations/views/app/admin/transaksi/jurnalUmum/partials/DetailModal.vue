@@ -47,12 +47,7 @@
                   <th
                     class="py-3! px-4! text-xs font-semibold uppercase tracking-wide border-b border-slate-700 whitespace-nowrap"
                   >
-                    Kode Akun Debet
-                  </th>
-                  <th
-                    class="py-3! px-4! text-xs font-semibold uppercase tracking-wide border-b border-slate-700 whitespace-nowrap"
-                  >
-                    Kode Akun Kredit
+                    Kode Akun
                   </th>
                   <th
                     class="py-3! px-4! text-xs font-semibold uppercase tracking-wide border-b border-slate-700 min-w-[200px]"
@@ -88,7 +83,7 @@
               </thead>
               <tbody class="divide-y divide-slate-200">
                 <tr v-if="loading">
-                  <td colspan="10" class="py-8 text-center text-slate-500">
+                  <td colspan="9" class="py-8 text-center text-slate-500">
                     <div class="flex justify-center">
                       <div
                         class="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"
@@ -97,43 +92,49 @@
                   </td>
                 </tr>
                 <tr v-else-if="transactions.length === 0">
-                  <td colspan="10" class="py-8 text-center text-slate-500">
+                  <td colspan="9" class="py-8 text-center text-slate-500">
                     Tidak ada data transaksi ditemukan.
                   </td>
                 </tr>
                 <template v-else>
                   <tr
-                    v-for="(trx, index) in transactions"
-                    :key="trx.id"
-                    class="hover:bg-slate-50 transition-colors"
+                    v-for="(trx, index) in rows"
+                    :key="trx._isHeader ? `hdr-${index}` : trx.id"
+                    :class="trx._isHeader ? 'bg-slate-50 font-semibold' : 'hover:bg-slate-50 transition-colors'"
                   >
-                    <td class="py-4! px-4! text-center text-slate-600">{{ index + 1 }}</td>
-                    <td class="py-4! px-4! text-slate-700">{{ formatDate(trx.tgl_transaksi) }}</td>
-                    <td class="py-4! px-4! font-mono text-xs text-slate-500">
-                      {{ trx.account_debet?.kode_akun || trx.account_debet }}
-                      <span v-if="trx.account_debet?.nama_akun" class="text-slate-400 ml-1"
-                        >({{ trx.account_debet.nama_akun }})</span
-                      >
-                    </td>
-                    <td class="py-4! px-4! font-mono text-xs text-slate-500">
-                      {{ trx.account_kredit?.kode_akun || trx.account_kredit }}
-                      <span v-if="trx.account_kredit?.nama_akun" class="text-slate-400 ml-1"
-                        >({{ trx.account_kredit.nama_akun }})</span
-                      >
+                    <td class="py-4! px-4! text-center text-slate-600">
+                      {{ trx._isHeader ? '' : index + 1 }}
                     </td>
                     <td class="py-4! px-4! text-slate-700">
-                      {{ trx.keterangan_transaksi || '-' }}
+                      <template v-if="trx._isHeader">
+                        {{
+                          trx.label === 'Komulatif Transaksi Awal Tahun'
+                            ? `01/01/${filterTahun}`
+                            : `01/${String(filterBulan).padStart(2, '0')}/${filterTahun}`
+                        }}
+                      </template>
+                      <template v-else>{{ formatDate(trx.tgl_transaksi) }}</template>
                     </td>
-                    <td class="py-4! px-4! font-mono text-xs text-slate-500">{{ trx.id }}</td>
+                    <td class="py-4! px-4! font-mono text-xs text-slate-500">
+                      {{ trx._isHeader ? '' : kodeAkunTrx(trx) }}
+                    </td>
+                    <td class="py-4! px-4! text-slate-700">
+                      {{ trx._isHeader ? trx.label : (trx.keterangan_transaksi || '-') }}
+                    </td>
+                    <td class="py-4! px-4! font-mono text-xs text-slate-500">
+                      {{ trx._isHeader ? '' : trx.id }}
+                    </td>
                     <td class="py-4! px-4! text-right font-mono text-slate-700">
-                      {{ formatCurrency(trx.saldo) }}
+                      {{ formatCurrency(trx._isHeader ? trx.debit : debitTrx(trx)) }}
                     </td>
                     <td class="py-4! px-4! text-right font-mono text-slate-700">
-                      {{ formatCurrency(trx.saldo) }}
+                      {{ formatCurrency(trx._isHeader ? trx.kredit : kreditTrx(trx)) }}
                     </td>
-                    <td class="py-4! px-4! text-center font-mono text-slate-700">-</td>
+                    <td class="py-4! px-4! text-right font-mono text-slate-700">
+                      {{ formatCurrency(runningBalance[index]) }}
+                    </td>
                     <td class="py-4! px-4! text-center">
-                      <div class="flex items-center justify-center gap-2!">
+                      <div v-if="!trx._isHeader" class="flex items-center justify-center gap-2!">
                         <button
                           class="w-8! h-8! rounded-lg! bg-blue-50! text-blue-600! hover:bg-blue-100! transition-all active:scale-90"
                           title="Cetak"
@@ -179,7 +180,7 @@
 </template>
 
 <script setup>
-import { onMounted, onUnmounted, watch } from 'vue'
+import { computed, onMounted, onUnmounted, watch } from 'vue'
 
 const props = defineProps({
   show: {
@@ -197,6 +198,26 @@ const props = defineProps({
   title: {
     type: String,
     default: 'Detail Transaksi',
+  },
+  selectedAccount: {
+    type: String,
+    default: '',
+  },
+  saldoAwalTahun: {
+    type: Number,
+    default: 0,
+  },
+  saldoAwalBulan: {
+    type: Number,
+    default: null,
+  },
+  filterTahun: {
+    type: [Number, String],
+    default: '',
+  },
+  filterBulan: {
+    type: [Number, String],
+    default: '',
   },
 })
 
@@ -231,6 +252,70 @@ const openCetak = () => {
 const deleteTransaction = (id) => {
   emit('delete', id)
 }
+
+const kodeAkunTrx = (trx) => {
+  return props.selectedAccount || trx.account_debet?.kode_akun || trx.account_debet
+}
+
+const namaAkunTrx = () => {
+  return ''
+}
+
+const debitTrx = (trx) => {
+  if (!props.selectedAccount) return Number(trx.saldo) || 0
+  const debet = trx.account_debet?.kode_akun || trx.account_debet
+  return debet === props.selectedAccount ? Number(trx.saldo) || 0 : 0
+}
+
+const kreditTrx = (trx) => {
+  if (!props.selectedAccount) return 0
+  const kredit = trx.account_kredit?.kode_akun || trx.account_kredit
+  return kredit === props.selectedAccount ? Number(trx.saldo) || 0 : 0
+}
+
+const saldoAwal = computed(() => {
+  if (props.filterBulan && props.saldoAwalBulan === null) return props.saldoAwalTahun
+  return props.saldoAwalBulan !== null ? props.saldoAwalBulan : props.saldoAwalTahun
+})
+
+const saldoAwalTahunRow = computed(() => ({
+  _isHeader: true,
+  label: 'Komulatif Transaksi Awal Tahun',
+  debit: props.saldoAwalTahun,
+  kredit: 0,
+  saldo: props.saldoAwalTahun,
+}))
+
+const saldoAwalBulanRow = computed(() => {
+  if (!props.filterBulan) return null
+  const saldoBulan = props.saldoAwalBulan !== null ? props.saldoAwalBulan : props.saldoAwalTahun
+  const delta = saldoBulan - props.saldoAwalTahun
+  return {
+    _isHeader: true,
+    label: 'Komulatif Transaksi s/d Bulan Lalu',
+    debit: delta > 0 ? delta : 0,
+    kredit: delta < 0 ? Math.abs(delta) : 0,
+    saldo: saldoBulan,
+  }
+})
+
+const rows = computed(() => {
+  const out = [saldoAwalTahunRow.value]
+  if (saldoAwalBulanRow.value) out.push(saldoAwalBulanRow.value)
+  return [...out, ...props.transactions]
+})
+
+const runningBalance = computed(() => {
+  let bal = saldoAwal.value
+  return rows.value.map((row) => {
+    if (row._isHeader) {
+      bal = row.saldo
+      return bal
+    }
+    bal += debitTrx(row) - kreditTrx(row)
+    return bal
+  })
+})
 
 const handleKeydown = (e) => {
   if (e.key === 'Escape' && props.show) {

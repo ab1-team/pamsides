@@ -793,6 +793,20 @@ const handlePrint = () => {
   printDetail(customer.value, 'Pasang Baru')
 }
 
+const handleAdvance = async () => {
+  if (!customer.value.ticketId || isAdvancing.value) return
+  isAdvancing.value = true
+  try {
+    const res = await ticketService.advanceStage(customer.value.ticketId)
+    await Swal.fire('Berhasil', res?.message || 'Tahap berhasil dilanjutkan.', 'success')
+    await fetchData()
+  } catch (err) {
+    Swal.fire('Gagal', err.response?.data?.message || 'Gagal melanjutkan tahap.', 'error')
+  } finally {
+    isAdvancing.value = false
+  }
+}
+
 watch(
   () => installationResult.value,
   (val) => {

@@ -311,6 +311,30 @@ const router = createRouter({
       component: () =>
         import('@/presentations/views/app/admin/instalasi/partials/view/cetakInput.vue'),
     },
+    {
+      path: '/usages/cetak_form',
+      name: 'Cetak Form',
+      component: () =>
+        import('@/presentations/views/app/admin/tagihan/cetakForm.vue'),
+    },
+    {
+      path: '/usages/cetak_daftar_tagihan',
+      name: 'Cetak Daftar Tagihan',
+      component: () =>
+        import('@/presentations/views/app/admin/tagihan/cetakDaftarTagihan.vue'),
+    },
+    {
+      path: '/usages/cetak_struk',
+      name: 'Cetak Struk',
+      component: () =>
+        import('@/presentations/views/app/admin/tagihan/cetakStruk.vue'),
+    },
+    {
+      path: '/usages/cetak_bukti_transaksi',
+      name: 'Cetak Bukti Transaksi',
+      component: () =>
+        import('@/presentations/views/app/admin/transaksi/jurnalUmum/cetakBuktiTransaksi.vue'),
+    },
   ],
 })
 

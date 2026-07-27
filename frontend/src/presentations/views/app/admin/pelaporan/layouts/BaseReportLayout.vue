@@ -1,12 +1,12 @@
 <template>
-  <div 
-    class="report-page surat-page" 
+  <div
+    class="report-page surat-page"
     :class="[
       configPaperSize === 'F4' ? 'size-f4' : 'size-a4',
       configOrientation === 'landscape' ? 'landscape' : 'portrait'
     ]"
-  >    
-    <div class="surat-kop">
+  >
+    <div v-if="!noKop" class="surat-kop">
       <table class="kop-table">
         <tr>
           <td width="70" class="logo-cell">
@@ -53,7 +53,8 @@ import { computed } from 'vue'
 
 const props = defineProps({
   lembaga: { type: Object, default: () => ({}) },
-  config: { type: Object, default: () => ({ paper_size: 'A4', orientation: 'portrait' }) }
+  config: { type: Object, default: () => ({ paper_size: 'A4', orientation: 'portrait' }) },
+  noKop: { type: Boolean, default: false },
 })
 
 const configPaperSize = computed(() => {
