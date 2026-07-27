@@ -25,8 +25,7 @@
           <SelectSearch
             v-model="form.sumberDana"
             :options="sumberDanaOptions"
-            label="Kode Akun Debet"
-            placeholder="Pilih Akun Debet"
+            label="Sumber Dana"
             icon="wallet"
           />
         </div>
@@ -35,8 +34,7 @@
           <SelectSearch
             v-model="form.disimpanKe"
             :options="disimpanKeOptions"
-            label="Kode Akun Kredit"
-            placeholder="Pilih Akun Kredit"
+            label="Disimpan Ke"
             icon="archive"
           />
         </div>
@@ -76,6 +74,7 @@
               placeholder="0,00"
               label="Harga Satuan"
               :show-helper="true"
+              :hide-prefix="true"
             />
           </div>
           <div class="flex flex-col gap-0.5">
@@ -92,6 +91,7 @@
               placeholder="0,00"
               label="Harga Perolehan"
               :show-helper="true"
+              :hide-prefix="true"
             />
           </div>
         </div>
@@ -122,6 +122,7 @@
             placeholder="0,00"
             label="Nominal"
             :show-helper="true"
+            :hide-prefix="true"
           />
         </div>
       </template>
@@ -143,12 +144,12 @@
       <ContentCard variant="elevated" padding="none" hoverable class="total-saldo-wrapper">
         <div class="total-saldo-card">
           <div class="text-xs text-white/60 font-semibold mb-1 relative z-10">
-            Total Aset Terkini
+            Saldo
           </div>
-          <div class="relative z-10 mb-2! flex items-center gap-1 text-white">
-            <span class="text-xl font-black tracking-tight">{{ formatSaldo(totalSaldo) }}</span>
-          </div>
-          <hr class="border-t border-white/20" />
+           <div class="relative z-10 mb-2! flex items-center gap-1 text-white">
+             <span class="text-xl font-black tracking-tight">{{ formatSaldo(saldoSumberDana) }}</span>
+           </div>
+
         </div>
       </ContentCard>
 
@@ -195,11 +196,11 @@
             icon="calendar-day"
           />
         </div>
-
         <div class="flex gap-2 mt-4! justify-end">
           <BaseButton
             variant="danger"
             size="md"
+            :disabled="!form.sumberDana"
             @click="handleDetail"
             class="rounded-xl border border-slate-200 hover:bg-slate-50 py-2!"
           >
@@ -223,6 +224,11 @@
       :transactions="transactions" 
       :loading="loading" 
       :title="modalTitle"
+      :selected-account="form.sumberDana"
+      :saldo-awal-tahun="bukuBesar.saldo_awal_tahun"
+      :saldo-awal-bulan="bukuBesar.saldo_awal_bulan"
+      :filter-tahun="filter.tahun"
+      :filter-bulan="filter.bulan"
       @close="showDetail = false" 
       @openCetak="handleOpenCetak"
       @delete="deleteTransaction"
@@ -232,6 +238,11 @@
       :transactions="transactions" 
       :loading="loading" 
       :title="modalTitle"
+      :selected-account="form.sumberDana"
+      :saldo-awal-tahun="bukuBesar.saldo_awal_tahun"
+      :saldo-awal-bulan="bukuBesar.saldo_awal_bulan"
+      :filter-tahun="filter.tahun"
+      :filter-bulan="filter.bulan"
       @close="showCetak = false"
       @delete="deleteTransaction"
     />
@@ -280,7 +291,7 @@ const accounts = ref([])
 const showDetail = ref(false)
 const showCetak = ref(false)
 
-const totalSaldo = ref(0)
+const saldoSumberDana = ref(0)
 
 const filter = ref({
   tahun: new Date().getFullYear(),
@@ -326,36 +337,15 @@ const selectedJenisTransaksi = computed(() => {
 })
 
 const modalTitle = computed(() => {
-  let title = ''
-  
-  // Jenis transaksi
-  if (selectedJenisTransaksi.value) {
-    title += selectedJenisTransaksi.value.text
-  }
-  
-  // Sumber dana
-  if (sumberDanaText.value) {
-    const namaSumber = sumberDanaText.value.split(' - ').slice(1).join(' - ') || sumberDanaText.value
-    title += ` - ${namaSumber}`
-  }
-  
-  // Filter waktu
-  const parts = []
-  if (filter.value.tahun) {
-    parts.push(`Tahun ${filter.value.tahun}`)
-  }
+  if (!form.value.sumberDana) return 'Detail Transaksi'
+
+  const kode = form.value.sumberDana
+  const nama = sumberDanaText.value.split(' - ').slice(1).join(' - ') || sumberDanaText.value
+
   if (filter.value.bulan) {
-    parts.push(`Bulan ${filter.value.bulan}`)
+    return `${kode} - ${nama} Bulan ${filter.value.bulan} ${filter.value.tahun}`
   }
-  if (filter.value.tanggal) {
-    parts.push(`Tanggal ${filter.value.tanggal}`)
-  }
-  
-  if (parts.length > 0) {
-    title += ` (${parts.join(', ')})`
-  }
-  
-  return title || 'Detail Transaksi'
+  return `${kode} - ${nama} Tahun ${filter.value.tahun}`
 })
 
 const showRelasi = computed(() => {
@@ -379,7 +369,7 @@ const isInventaris = computed(() => {
 })
 
 const sumberDanaOptions = computed(() => {
-  const baseOptions = [{ id: '', text: 'Pilih Sumber' }]
+  const baseOptions = [{ id: '', text: 'Pilih Sumber Dana' }]
   if (!selectedJenisTransaksi.value) {
     // Jika belum pilih jenis transaksi, dropdown kosong (hanya placeholder)
     return baseOptions
@@ -504,18 +494,6 @@ const fetchAccounts = async () => {
   }
 }
 
-const fetchTotalSaldo = async () => {
-  try {
-    const response = await api.get('/amount/total-saldo')
-    if (response.data.success) {
-      totalSaldo.value = response.data.data.aset
-    }
-  } catch (error) {
-    console.error('Gagal mengambil total saldo:', error)
-    totalSaldo.value = 0
-  }
-}
-
 const regenerateAmount = async () => {
   const now = new Date()
   try {
@@ -575,6 +553,7 @@ const fetchAllTransactions = async () => {
     const params = {
       per_page: 1000,
       ...filterParams.value,
+      account: form.value.sumberDana || undefined,
     }
 
     const response = await api.get('/transactions', { params })
@@ -588,11 +567,38 @@ const fetchAllTransactions = async () => {
   }
 }
 
+const bukuBesar = ref({ saldo_awal_tahun: 0, saldo_awal_bulan: null })
+
+const fetchBukuBesar = async () => {
+  if (!form.value.sumberDana || !filter.value.tahun) {
+    bukuBesar.value = { saldo_awal_tahun: 0, saldo_awal_bulan: null }
+    return
+  }
+  try {
+    const response = await api.get('/transactions/buku-besar', {
+      params: {
+        kode_akun: form.value.sumberDana,
+        tahun: filter.value.tahun,
+        bulan: filter.value.bulan || undefined,
+      },
+    })
+    if (response.data.success) {
+      bukuBesar.value = {
+        saldo_awal_tahun: Number(response.data.data.saldo_awal_tahun) || 0,
+        saldo_awal_bulan: response.data.data.saldo_awal_bulan !== null
+          ? Number(response.data.data.saldo_awal_bulan)
+          : null,
+      }
+    }
+  } catch (error) {
+    console.error('Gagal mengambil buku besar:', error)
+  }
+}
+
 onMounted(() => {
   fetchJenisTransaksi()
   fetchAccounts()
   fetchTransactions()
-  fetchTotalSaldo()
 })
 
 watch(
@@ -610,8 +616,32 @@ watch(
     form.value.sumberDana = ''
     form.value.disimpanKe = ''
     form.value.keterangan = ''
+    saldoSumberDana.value = 0
   }
 )
+
+watch(
+  () => form.value.sumberDana,
+  (val) => {
+    if (val) {
+      fetchSaldoSumberDana(val)
+    } else {
+      saldoSumberDana.value = 0
+    }
+  }
+)
+
+const fetchSaldoSumberDana = async (kodeAkun) => {
+  try {
+    const response = await api.get('/transactions/saldo-akun', {
+      params: { kode_akun: kodeAkun },
+    })
+    saldoSumberDana.value = response.data.success ? Number(response.data.data.saldo) || 0 : 0
+  } catch (error) {
+    console.error('Gagal mengambil saldo akun:', error)
+    saldoSumberDana.value = 0
+  }
+}
 
 watch(
   () => [form.value.sumberDana, form.value.disimpanKe],
@@ -723,7 +753,6 @@ async function deleteTransaction(id) {
         // Refresh data transaksi
         fetchTransactions()
         fetchAllTransactions()
-        fetchTotalSaldo()
       } else {
         Swal.fire({
           icon: 'error',
@@ -832,8 +861,8 @@ async function handleSubmit() {
         hargaPerolehan: null,
       }
       fetchTransactions()
-      fetchTotalSaldo()
       regenerateAmount()
+      saldoSumberDana.value = 0
     } else {
       // Notifikasi gagal dengan detail error
       Swal.fire({
@@ -861,7 +890,7 @@ async function handleSubmit() {
 }
 
 async function handleDetail() {
-  await fetchAllTransactions()
+  await Promise.all([fetchAllTransactions(), fetchBukuBesar()])
   showDetail.value = true
 }
 

@@ -121,7 +121,7 @@
       </template>
 
       <template #column-pemakaian="{ row }">
-        <span class="text-sm! font-semibold! text-slate-900!"> {{ row.pemakaian }} m³ </span>
+        <span class="text-sm! font-semibold! text-slate-900!"> {{ row.pemakaian }}</span>
       </template>
 
       <template #column-tagihan="{ row }">
@@ -129,11 +129,17 @@
           Rp.
           {{
             Number(row.tagihan || 0).toLocaleString('id-ID', {
-              minimumFractionDigits: 0,
-              maximumFractionDigits: 0,
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
             })
           }}
         </div>
+      </template>
+
+      <template #column-jatuhTempo="{ row }">
+        <span class="text-sm! text-slate-700!">
+          {{ formatDate(row.jatuhTempo) }}
+        </span>
       </template>
 
       <template #column-status="{ row }">
@@ -241,7 +247,7 @@ const handleInputPemakaian = () => {
 
 const handleCetakFormInput = () => {
   const url = router.resolve({
-    name: 'Cetak Input',
+    name: 'Cetak Form',
     query: {
       tahun: filter.value.tahun,
       bulan: filter.value.bulan,
@@ -255,9 +261,22 @@ const tableColumns = [
   { key: 'meterRange', title: 'METER' },
   { key: 'pemakaian', title: 'PEMAKAIAN' },
   { key: 'tagihan', title: 'TAGIHAN' },
+  { key: 'jatuhTempo', title: 'TGL AKHIR BAYAR' },
   { key: 'status', title: 'STATUS' },
   { key: 'aksi', title: 'AKSI' },
 ]
+
+const formatDate = (val) => {
+  if (!val) return '-'
+  const d = new Date(val)
+  if (Number.isNaN(d.getTime())) return val
+  d.setDate(d.getDate() - 1)
+  return d.toLocaleDateString('id-ID', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  })
+}
 </script>
 
 <style scoped>
