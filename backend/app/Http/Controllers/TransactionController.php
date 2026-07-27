@@ -4,9 +4,145 @@ namespace App\Http\Controllers;
 
 use App\Models\Transaction;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class TransactionController extends Controller
 {
+    private function normalisasiSaldo(int $lev1, float $debit, float $kredit): float
+    {
+        return ($lev1 === 1 || $lev1 === 5) ? $debit - $kredit : $kredit - $debit;
+    }
+
+    public function saldoAkun(Request $request)
+    {
+        $kodeAkun = $request->query('kode_akun');
+        if (! $kodeAkun) {
+            return response()->json([
+                'success' => false,
+                'message' => 'kode_akun wajib diisi.',
+                'data'    => ['saldo' => 0],
+            ], 422);
+        }
+
+        $account = DB::table('accounts')->where('kode_akun', $kodeAkun)->first();
+        if (! $account) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Akun tidak ditemukan.',
+                'data'    => ['saldo' => 0],
+            ], 404);
+        }
+
+        $debit = (float) DB::table('transactions')
+            ->whereNull('deleted_at')
+            ->where('account_debet', $kodeAkun)
+            ->sum('saldo');
+
+        $kredit = (float) DB::table('transactions')
+            ->whereNull('deleted_at')
+            ->where('account_kredit', $kodeAkun)
+            ->sum('saldo');
+
+        return response()->json([
+            'success' => true,
+            'data'    => [
+                'kode_akun' => $kodeAkun,
+                'nama_akun' => $account->nama_akun,
+                'lev1'      => (int) $account->lev1,
+                'debit'     => $debit,
+                'kredit'    => $kredit,
+                'saldo'     => $this->normalisasiSaldo((int) $account->lev1, $debit, $kredit),
+            ],
+        ]);
+    }
+
+    public function bukuBesar(Request $request)
+    {
+        $kodeAkun = $request->query('kode_akun');
+        $tahun    = (int) $request->query('tahun', date('Y'));
+
+        if (! $kodeAkun) {
+            return response()->json([
+                'success' => false,
+                'message' => 'kode_akun wajib diisi.',
+            ], 422);
+        }
+
+        $account = DB::table('accounts')->where('kode_akun', $kodeAkun)->first();
+        if (! $account) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Akun tidak ditemukan.',
+            ], 404);
+        }
+
+        $lev1 = (int) $account->lev1;
+
+        $sumRange = function (string $endDate) use ($kodeAkun) {
+            $debit = (float) DB::table('transactions')
+                ->whereNull('deleted_at')
+                ->where('account_debet', $kodeAkun)
+                ->whereDate('tgl_transaksi', '<', $endDate)
+                ->sum('saldo');
+            $kredit = (float) DB::table('transactions')
+                ->whereNull('deleted_at')
+                ->where('account_kredit', $kodeAkun)
+                ->whereDate('tgl_transaksi', '<', $endDate)
+                ->sum('saldo');
+            return [$debit, $kredit];
+        };
+
+        [$dAwal, $kAwal] = $sumRange("{$tahun}-01-01");
+        $saldoAwalTahun = $this->normalisasiSaldo($lev1, $dAwal, $kAwal);
+
+        $bulan     = $request->query('bulan');
+        $tanggal   = $request->query('tanggal');
+        $tglDari   = "{$tahun}-01-01";
+        $tglSampai = "{$tahun}-12-31";
+
+        if ($bulan) {
+            $bulanStr = str_pad((string) $bulan, 2, '0', STR_PAD_LEFT);
+            $lastDay = (int) date('t', strtotime("{$tahun}-{$bulanStr}-01"));
+            $tglDari   = "{$tahun}-{$bulanStr}-01";
+            $tglSampai = "{$tahun}-{$bulanStr}-" . str_pad((string) $lastDay, 2, '0', STR_PAD_LEFT);
+
+            if ($tanggal) {
+                $tglStr = str_pad((string) $tanggal, 2, '0', STR_PAD_LEFT);
+                $tglDari = $tglSampai = "{$tahun}-{$bulanStr}-{$tglStr}";
+            }
+
+            [$dBulan, $kBulan] = $sumRange($tglDari);
+            $saldoAwalBulan = $this->normalisasiSaldo($lev1, $dBulan, $kBulan);
+        } else {
+            $saldoAwalBulan = null;
+        }
+
+        $trx = Transaction::with(['accountDebet', 'accountKredit'])
+            ->where(function ($q) use ($kodeAkun) {
+                $q->where('account_debet', $kodeAkun)
+                  ->orWhere('account_kredit', $kodeAkun);
+            })
+            ->whereDate('tgl_transaksi', '>=', $tglDari)
+            ->whereDate('tgl_transaksi', '<=', $tglSampai)
+            ->orderBy('tgl_transaksi')
+            ->orderBy('urutan')
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'data'    => [
+                'kode_akun'         => $kodeAkun,
+                'nama_akun'         => $account->nama_akun,
+                'lev1'              => $lev1,
+                'tahun'             => $tahun,
+                'bulan'             => $bulan ? str_pad((string) $bulan, 2, '0', STR_PAD_LEFT) : null,
+                'saldo_awal_tahun'  => $saldoAwalTahun,
+                'saldo_awal_bulan'  => $saldoAwalBulan,
+                'transactions'      => $trx,
+            ],
+        ]);
+    }
+
     public function index(Request $request)
     {
         $query = Transaction::with(['user', 'accountDebet', 'accountKredit'])
@@ -31,6 +167,13 @@ class TransactionController extends Controller
 
         if ($request->has('transaction_group')) {
             $query->where('transaction_group', $request->transaction_group);
+        }
+
+        if ($request->has('account')) {
+            $query->where(function ($query) use ($request) {
+                $query->where('account_debet', $request->account)
+                    ->orWhere('account_kredit', $request->account);
+            });
         }
 
         if ($request->has('reverence_type')) {
