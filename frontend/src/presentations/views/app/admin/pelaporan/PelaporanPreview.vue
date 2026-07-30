@@ -104,7 +104,7 @@ import EbudgetingView from '@/presentations/views/app/admin/pelaporan/views/Repo
 import AwalTahunView from '@/presentations/views/app/admin/pelaporan/views/ReportAwalTahun.vue'
 import TutupBukuAlokasiLabaView from '@/presentations/views/app/admin/pelaporan/views/ReportTutupBukuAlokasiLaba.vue'
 import TutupBukuNeracaView from '@/presentations/views/app/admin/pelaporan/views/ReportTutupBukuNeraca.vue'
-import TutupBukuLabaRugiView from '@/presentations/views/app/admin/pelaporan/views/ReportTutupBukuLabaRugi.vue'
+import TutupBukuLabaRugiView from '@/presentations/views/app/admin/pelaporan/views/ReportTutupBukuLaba.vue'
 import TutupBukuJurnalView from '@/presentations/views/app/admin/pelaporan/views/ReportTutupBukuJurnal.vue'
 import TutupBukuCalkView from '@/presentations/views/app/admin/pelaporan/views/ReportTutupBukuCalk.vue'
 
