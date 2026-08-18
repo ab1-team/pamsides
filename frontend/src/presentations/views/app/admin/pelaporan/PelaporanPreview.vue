@@ -10,8 +10,24 @@
         </h3>
       </div>
 
-      <div class="page-indicator" v-if="pages.length > 0">
-        <span>Halaman {{ activePage + 1 }} / {{ pages.length }}</span>
+      <div class="toolbar-center" v-if="pages.length > 0">
+        <div class="page-indicator">
+          <span>Halaman {{ activePage + 1 }} / {{ pages.length }}</span>
+        </div>
+
+        <div class="zoom-controls no-print">
+          <button class="zoom-btn" @click="zoomOut" :disabled="zoomLevel <= minZoom" title="Zoom Out">
+            <span>−</span>
+          </button>
+          <span
+            class="zoom-percent active"
+            @click="resetZoom"
+            title="Reset zoom"
+          >{{ zoomPercent }}%</span>
+          <button class="zoom-btn" @click="zoomIn" :disabled="zoomLevel >= maxZoom" title="Zoom In">
+            <span>+</span>
+          </button>
+        </div>
       </div>
     </div>
 
@@ -51,8 +67,8 @@
             class="report-page-wrap"
             :style="{
               width: pageNaturalWidth(i) + 'px',
-              transform: pageScale(i) < 1 ? 'scale(' + pageScale(i) + ')' : undefined,
-              marginBottom: pageScale(i) < 1 ? (pageNaturalHeight(i) * (pageScale(i) - 1)) + 'px' : '24px',
+              zoom: pageScale(i) !== 1 ? pageScale(i) : undefined,
+              marginBottom: pageMarginBottom(i),
             }"
           >
             <component
@@ -153,7 +169,42 @@ const stageEl = ref(null)
 const pageRefs = shallowRef([])
 const activePage = ref(0)
 const stageWidth = ref(0)
+const zoomLevel = ref(1)
+const minZoom = 0.5
+const maxZoom = 3
+const zoomStep = 0.1
 let resizeObserver = null
+
+const zoomPercent = computed(() => Math.round(zoomLevel.value * 100))
+
+const zoomIn = () => {
+  if (zoomLevel.value < maxZoom) {
+    zoomLevel.value = Math.min(maxZoom, +(zoomLevel.value + zoomStep).toFixed(2))
+  }
+}
+
+const zoomOut = () => {
+  if (zoomLevel.value > minZoom) {
+    zoomLevel.value = Math.max(minZoom, +(zoomLevel.value - zoomStep).toFixed(2))
+  }
+}
+
+const resetZoom = () => {
+  zoomLevel.value = 1
+  if (stageEl.value) {
+    stageEl.value.scrollLeft = 0
+  }
+}
+
+watch(zoomLevel, () => {
+  // Saat zoom berubah, pastikan posisi scroll tetap valid (di-reset ke awal agar
+  // user tahu harus scroll horizontal/vertical untuk melihat bagian yang terpotong).
+  nextTick(() => {
+    if (stageEl.value) {
+      stageEl.value.scrollLeft = 0
+    }
+  })
+})
 
 const pageDimsMm = (page) => {
   const cfg = page?.payload?.config || page?.config || {}
@@ -182,10 +233,15 @@ const pageScale = (i) => {
   const natural = pageNaturalWidth(i)
   if (!natural) return 1
   const available = stageWidth.value - 48
-  
-  // Jangan biarkan lebih kecil dari 0.8 (80%)
-  // Jika rasio lebih kecil dari 0.8, maka biarkan 0.8 (pengguna bisa scroll)
-  return Math.max(0.9, Math.min(1, available / natural))
+
+  const baseFit = Math.max(0.9, Math.min(1, available / natural))
+  return baseFit * zoomLevel.value
+}
+
+const pageMarginBottom = (i) => {
+  // CSS zoom menskalakan layout box sekaligus visual, jadi flex gap 24px
+  // dari .report-root sudah cukup untuk jarak visual antar halaman di semua zoom level.
+  return '0px'
 }
 
 // MODIFIKASI: Menyimpan backup path favicon utama aplikasi Anda
@@ -623,6 +679,13 @@ onUnmounted(() => {
   padding-left: 8px; 
 }
 
+.toolbar-center {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin: 0 auto;
+}
+
 .toolbar-menu-btn {
   display: flex;
   flex-direction: column;
@@ -665,6 +728,63 @@ onUnmounted(() => {
   padding: 4px 12px;
   border-radius: 6px;
 }
+
+/* ZOOM CONTROLS */
+.zoom-controls {
+  display: flex;
+  align-items: center;
+  background: #424242;
+  padding: 4px;
+  border-radius: 9px;
+  user-select: none;
+}
+.zoom-btn:hover {
+  background: #525050; 
+}
+.zoom-btn {
+  width: 30px;
+  height: 30px;
+  border-radius: 77px;
+  color: #f8fafc;
+  border: none;
+  font-size: 1.2rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s ease;
+}
+
+
+.zoom-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.zoom-percent {
+  min-width: 56px;
+  text-align: center;
+  color: #f8fafc;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0px 10px;
+  border-radius: 999px;
+  background: transparent;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+
+.zoom-percent.active {
+  background: #242424;
+  color: #ffffff;
+  border-radius:0;
+}
+
+
+
+
 
 /* WORKSPACE */
 .workspace-container {
@@ -772,25 +892,95 @@ onUnmounted(() => {
   min-width: 0;
   height: 100%;
   overflow-y: auto;
-  overflow-x: hidden;
+  overflow-x: auto;
 
   padding: 10px 0px 10px;
 
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: flex-start;
   background: #2c2e31;
   scroll-behavior: smooth;
+}
+
+/* Custom scrollbar untuk .preview-stage (Webkit/Chromium) */
+.preview-stage::-webkit-scrollbar {
+  width: 14px;
+  height: 14px;
+}
+
+.preview-stage::-webkit-scrollbar-track {
+  background: #1f2123;
+  border-radius: 8px;
+  margin: 4px 0;
+}
+
+.preview-stage::-webkit-scrollbar-track:horizontal {
+  margin: 0 4px;
+}
+
+.preview-stage::-webkit-scrollbar-thumb {
+  background: #5a5e63;
+  border-radius: 8px;
+  border: 3px solid #1f2123;
+  min-height: 40px;
+  min-width: 40px;
+}
+
+.preview-stage::-webkit-scrollbar-thumb:hover {
+  background: #7a7e83;
+}
+
+.preview-stage::-webkit-scrollbar-thumb:active {
+  background: #38bdf8;
+}
+
+/* Firefox */
+.preview-stage {
+  scrollbar-width: thin;
+  scrollbar-color: #5a5e63 #1f2123;
+}
+
+/* Custom scrollbar untuk thumbnail sidebar (disamakan dengan .preview-stage) */
+.thumbnail-sidebar::-webkit-scrollbar {
+  width: 14px;
+}
+
+.thumbnail-sidebar::-webkit-scrollbar-track {
+  background: #1f2123;
+  border-radius: 8px;
+  margin: 4px 0;
+}
+
+.thumbnail-sidebar::-webkit-scrollbar-thumb {
+  background: #5a5e63;
+  border-radius: 8px;
+  border: 3px solid #1f2123;
+  min-height: 40px;
+}
+
+.thumbnail-sidebar::-webkit-scrollbar-thumb:hover {
+  background: #7a7e83;
+}
+
+.thumbnail-sidebar::-webkit-scrollbar-thumb:active {
+  background: #38bdf8;
+}
+
+.thumbnail-sidebar {
+  scrollbar-width: thin;
+  scrollbar-color: #5a5e63 #1f2123;
 }
 .report-root {
   display: flex;
   flex-direction: column;
   gap: 24px;
 
-  width: 100%;
+  width: max-content;
+  min-width: 100%;
   align-items: center;
+  padding: 0 16px;
 
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
 }
 
 .report-page-wrap {
@@ -798,11 +988,6 @@ onUnmounted(() => {
   justify-content: center;
   align-items: flex-start;
   width: 100%;
-  transform-origin: top center;
-}
-
-.report-page-wrap :deep(.report-page) {
-  margin: 0 auto !important;
 }
 .alert-error {
   background: #fee2e2;
