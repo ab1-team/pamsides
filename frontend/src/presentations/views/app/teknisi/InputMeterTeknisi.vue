@@ -206,8 +206,7 @@ import { meterService } from '@/services/meter.service'
 import BaseButton from '@/presentations/components/ui/BaseButton.vue'
 import DataTable from '@/presentations/components/ui/DataTable.vue'
 import ContentCard from '@/presentations/components/ui/ContentCard.vue'
-import InputMeterModal from '@/presentations/views/app/admin/tagihan/partials/inputMeterModal.vue'
-
+import InputMeterModal from '@/presentations/views/app/admin/tagihan/partials/InputMeterModal.vue'
 const router = useRouter()
 const uiStore = useUiStore()
 
