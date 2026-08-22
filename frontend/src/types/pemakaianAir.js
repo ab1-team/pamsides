@@ -39,4 +39,5 @@ export const STATUS_COLORS = {
   [STATUS_TYPES.PAID]: 'bg-emerald-100 text-emerald-700',
   [STATUS_TYPES.PENDING]: 'bg-amber-100 text-amber-700',
   [STATUS_TYPES.OVERDUE]: 'bg-red-100 text-red-700',
+  UNPAID: 'bg-red-100 text-red-700',
 }

@@ -11,7 +11,7 @@ export default defineConfig([
     files: ['**/*.{vue,js,mjs,jsx}'],
   },
 
-  globalIgnores(['**/dist/**', '**/dist-ssr/**', '**/coverage/**']),
+  globalIgnores(['**/dist/**', '**/dist-ssr/**', '**/coverage/**', '**/clean_views.cjs']),
 
   {
     languageOptions: {
@@ -23,6 +23,13 @@ export default defineConfig([
 
   js.configs.recommended,
   ...pluginVue.configs['flat/essential'],
+
+  {
+    files: ['**/registrasi.vue'],
+    rules: {
+      'vue/multi-word-component-names': 'off',
+    },
+  },
 
   ...pluginOxlint.buildFromOxlintConfigFile('.oxlintrc.json'),
 

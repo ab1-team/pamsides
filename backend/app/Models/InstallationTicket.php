@@ -8,14 +8,26 @@ class InstallationTicket extends Model
 {
     protected $fillable = [
         'package_id',
+        'user_id',
         'applicant_name',
         'nik',
+        'order_date',
         'address',
+        'phone',
+        'gender',
+        'birth_place',
+        'birth_date',
         'lat',
         'lng',
         'status',
-        'created_by'
+        'village_id',
+        'created_by',
     ];
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
 
     public function package()
     {
@@ -35,5 +47,32 @@ class InstallationTicket extends Model
     public function customer()
     {
         return $this->hasMany(Customer::class, 'ticket_id');
+    }
+
+    public function village()
+    {
+        return $this->belongsTo(Village::class, 'village_id');
+    }
+
+    public function getTotalFeeAttribute(): float
+    {
+        return (float) ($this->package?->installation_fee ?? 0);
+    }
+
+    public function getPaidAmountAttribute(): float
+    {
+        return (float) $this->payments()
+            ->where('status', 'confirmed')
+            ->sum('amount');
+    }
+
+    public function getRemainingAttribute(): float
+    {
+        return max(0, $this->total_fee - $this->paid_amount);
+    }
+
+    public function getIsFullyPaidAttribute(): bool
+    {
+        return $this->remaining <= 0;
     }
 }

@@ -1,190 +1,119 @@
-import { ref, computed, watch } from 'vue'
-import { INSTALASI_STATUS_COLORS, INSTALASI_MENU_LIST } from '@/types/instalasiStatus'
+import { computed, ref, watch } from 'vue'
+
+import { useRoute, useRouter } from 'vue-router'
+
+import { useInstalasiStore } from '@/stores/instalasiStore'
+import { INSTALASI_MENU_LIST } from '@/types/instalasiStatus'
+
+const ALLOWED_FILTERS = INSTALASI_MENU_LIST.map((m) => m.key)
 
 export function useInstalasiStatus() {
-  const activeStatus = ref('permohonan')
-  const currentPage = ref(1)
-  const perPage = 10
-  const searchQuery = ref('')
+  const store = useInstalasiStore()
+  const route = useRoute()
+  const router = useRouter()
 
-  const menuList = INSTALASI_MENU_LIST
+  const activeStatus = ref(route.query.filter || 'permohonan')
+
+  // const fetchData = async () => {
+  //   try {
+  //     isLoading.value = true
+  //     const response = await ticketService.getTickets({ per_page: 150 })
+  //     if (response?.success && response?.data?.data) {
+  //       const freshMap = {
+  //         permohonan: [],
+  //         pasang_baru: [],
+  //         aktif: [],
+  //         blokir: [],
+  //         cabut: [],
+  //       }
+
+  //       response.data.data.forEach((ticket) => {
+  //         const status = ticket.status
+  //         let category = null
+  //         let mappedStatusLabel = ''
+
+  //         if (status === 'pending') {
+  //           category = 'permohonan'
+  //           mappedStatusLabel = 'Permohonan'
+  //         } else if (['surveyed', 'unpaid', 'processing'].includes(status)) {
+  //           category = 'pasang_baru'
+  //           mappedStatusLabel = 'Pasang Baru'
+  //         } else if (status === 'completed') {
+  //           category = 'aktif'
+  //           mappedStatusLabel = 'Aktif'
+  //         } else if (status === 'suspended') {
+  //           category = 'blokir'
+  //           mappedStatusLabel = 'Blokir'
+  //         } else if (status === 'terminated') {
+  //           category = 'cabut'
+  //           mappedStatusLabel = 'Cabut'
+  //         }
+
+  //         if (!category) return
+
+  //         freshMap[category].push({
+  //           id:
+  //             ticket.customer?.[0]?.customer_code ||
+  //             `#INS-${ticket.id.toString().padStart(4, '0')}`,
+  //           ticketId: ticket.id,
+  //           name: ticket.applicant_name || '-',
+  //           nik: ticket.nik || '-',
+  //           phone: ticket.phone || '-',
+  //           initials: ticket.applicant_name
+  //             ? ticket.applicant_name
+  //                 .split(' ')
+  //                 .map((n) => n[0])
+  //                 .join('')
+  //                 .toUpperCase()
+  //                 .substring(0, 2)
+  //             : '?',
+  //           color: ['#3B82F6', '#8B5CF6', '#10B981', '#F59E0B', '#EF4444'][ticket.id % 5],
+  //           type: ticket.package?.name || '-',
+  //           packageId: ticket.package_id || null,
+  //           address: ticket.address || '-',
+  //           village: ticket.village?.name || '-',
+  //           villageId: ticket.village_id || null,
+  //           lat: ticket.lat || null,
+  //           lng: ticket.lng || null,
+  //           orderDate: ticket.order_date || '-',
+  //           category: mappedStatusLabel,
+  //           status: INSTALASI_RAW_STATUS_LABELS[status] || status,
+  //           rawStatus: status,
+  //           createdAt: ticket.created_at || '-',
+  //           updatedAt: ticket.updated_at || '-',
+  //           rawData: ticket,
+  //           surveyInfo: ticket.survey?.[0]
+  //             ? {
+  //                 id: ticket.survey[0].id,
+  //                 distance_to_pipe_m: ticket.survey[0].distance_to_pipe_m,
+  //                 material_notes: ticket.survey[0].material_notes,
+  //                 photo_url: ticket.survey[0].photo_url,
+  //                 surveyed_at: ticket.survey[0].surveyed_at,
+  //                 surveyor_name: ticket.survey[0].surveyor?.name || '-',
+  //                 surveyor_id: ticket.survey[0].surveyor_id,
+  //                 ticket: ticket,
+  //               }
+  //             : null,
+  //         })
+  //       })
+  //       dataMap.value = freshMap
+  //     }
+  //   } catch (error) {
+  //     console.error('Failed to fetch installation statuses:', error)
+  //   } finally {
+  //     isLoading.value = false
+  //   }
+  // }
 
   const activeLabel = computed(() => {
-    return menuList.find((m) => m.key === activeStatus.value)?.label || ''
+    return store.menuList.find((m) => m.key === store.activeStatus)?.label || ''
   })
 
-  // Mock data map
-  const dataMap = ref({
-    permohonan: [
-      {
-        id: '#MA-2023-001',
-        name: 'Adi Saputra',
-        initials: 'AS',
-        color: '#3B82F6',
-        type: 'Residential Type A',
-        address: 'Jl. Merdeka No. 45, Kebon Jeruk, Jakarta',
-        status: 'Permohonan',
-      },
-      {
-        id: '#MA-2023-084',
-        name: 'Rina Maharani',
-        initials: 'RM',
-        color: '#8B5CF6',
-        type: 'Commercial Type B',
-        address: 'Blok C5 No. 12, Citra Indah, Bekasi',
-        status: 'Permohonan',
-      },
-      {
-        id: '#MA-2023-112',
-        name: 'Bambang Wijaya',
-        initials: 'BW',
-        color: '#10B981',
-        type: 'Residential Type A',
-        address: 'Jl. Sudirman Gg. 3, Sukajadi, Bandung',
-        status: 'Permohonan',
-      },
-      {
-        id: '#MA-2023-156',
-        name: 'Siti Khadijah',
-        initials: 'SK',
-        color: '#F59E0B',
-        type: 'Social Institution',
-        address: 'Komp. Permata, Jatiasih, Bekasi',
-        status: 'Permohonan',
-      },
-      {
-        id: '#MA-2023-178',
-        name: 'Dedi Kurniawan',
-        initials: 'DK',
-        color: '#EF4444',
-        type: 'Residential Type B',
-        address: 'Jl. Pahlawan No. 7, Depok',
-        status: 'Permohonan',
-      },
-      {
-        id: '#MA-2023-190',
-        name: 'Lestari Putri',
-        initials: 'LP',
-        color: '#6366F1',
-        type: 'Commercial Type A',
-        address: 'Ruko Niaga Blok B2, Tangerang',
-        status: 'Permohonan',
-      },
-      {
-        id: '#MA-2023-204',
-        name: 'Agus Santoso',
-        initials: 'AG',
-        color: '#14B8A6',
-        type: 'Residential Type A',
-        address: 'Jl. Kebon Raya No. 3, Bogor',
-        status: 'Permohonan',
-      },
-      {
-        id: '#MA-2023-215',
-        name: 'Fitriani',
-        initials: 'FT',
-        color: '#EC4899',
-        type: 'Social Institution',
-        address: 'Jl. Mawar Raya No. 11, Tangerang Selatan',
-        status: 'Permohonan',
-      },
-      {
-        id: '#MA-2023-230',
-        name: 'Hendra Gunawan',
-        initials: 'HG',
-        color: '#F97316',
-        type: 'Commercial Type B',
-        address: 'Jl. Gatot Subroto No. 88, Jakarta',
-        status: 'Permohonan',
-      },
-      {
-        id: '#MA-2023-245',
-        name: 'Wulandari',
-        initials: 'WL',
-        color: '#0EA5E9',
-        type: 'Residential Type C',
-        address: 'Perum Griya Asri Blok D5, Bekasi',
-        status: 'Permohonan',
-      },
-      {
-        id: '#MA-2023-260',
-        name: 'Rudi Hartono',
-        initials: 'RH',
-        color: '#84CC16',
-        type: 'Residential Type A',
-        address: 'Jl. Anggrek No. 22, Cibinong',
-        status: 'Permohonan',
-      },
-      {
-        id: '#MA-2023-271',
-        name: 'Novi Rahayu',
-        initials: 'NR',
-        color: '#A855F7',
-        type: 'Commercial Type A',
-        address: 'Jl. Raya Bogor KM 32, Depok',
-        status: 'Permohonan',
-      },
-    ],
-    pasang_baru: [
-      {
-        id: '#MA-2023-050',
-        name: 'Hendra Pratama',
-        initials: 'HP',
-        color: '#0EA5E9',
-        type: 'Residential Type B',
-        address: 'Jl. Anggrek No. 12, Menteng, Jakarta',
-        status: 'Pasang Baru',
-      },
-      {
-        id: '#MA-2023-063',
-        name: 'Yulia Sari',
-        initials: 'YS',
-        color: '#6366F1',
-        type: 'Commercial Type A',
-        address: 'Jl. Pemuda No. 88, Surabaya',
-        status: 'Pasang Baru',
-      },
-    ],
-    aktif: [
-      {
-        id: '#MA-2022-010',
-        name: 'Santoso Wibowo',
-        initials: 'SW',
-        color: '#10B981',
-        type: 'Residential Type A',
-        address: 'Jl. Kebon Raya No. 3, Bogor',
-        status: 'Aktif',
-      },
-    ],
-    blokir: [
-      {
-        id: '#MA-2021-033',
-        name: 'Rahmat Hidayat',
-        initials: 'RH',
-        color: '#F97316',
-        type: 'Residential Type B',
-        address: 'Jl. Cempaka No. 8, Medan',
-        status: 'Blokir',
-      },
-    ],
-    cabut: [
-      {
-        id: '#MA-2020-011',
-        name: 'Rudi Hartono',
-        initials: 'RH',
-        color: '#EF4444',
-        type: 'Residential Type A',
-        address: 'Jl. Sudirman No. 12, Makassar',
-        status: 'Cabut',
-      },
-    ],
-  })
-
-  const currentData = computed(() => dataMap.value[activeStatus.value] || [])
+  const currentData = computed(() => store.dataMap[store.activeStatus] || [])
 
   const filteredData = computed(() => {
-    if (!searchQuery.value) return currentData.value
-    const q = searchQuery.value.toLowerCase()
+    if (!store.searchQuery) return currentData.value
+    const q = store.searchQuery.toLowerCase()
     return currentData.value.filter(
       (item) =>
         item.name.toLowerCase().includes(q) ||
@@ -193,56 +122,96 @@ export function useInstalasiStatus() {
     )
   })
 
-  const totalPages = computed(() => Math.max(1, Math.ceil(filteredData.value.length / perPage)))
+  const totalPages = computed(() =>
+    Math.max(1, Math.ceil(filteredData.value.length / store.perPage)),
+  )
 
   const visiblePages = computed(() => {
     const pages = []
-    for (let i = 1; i <= totalPages.value; i++) {
-      pages.push(i)
-    }
+    for (let i = 1; i <= totalPages.value; i++) pages.push(i)
     return pages
   })
 
   const paginatedData = computed(() => {
-    const start = (currentPage.value - 1) * perPage
-    return filteredData.value.slice(start, start + perPage)
+    const start = (store.currentPage - 1) * store.perPage
+    return filteredData.value.slice(start, start + store.perPage)
   })
 
   const prevPage = () => {
-    if (currentPage.value > 1) currentPage.value--
+    if (store.currentPage > 1) store.currentPage--
   }
   const nextPage = () => {
-    if (currentPage.value < totalPages.value) currentPage.value++
+    if (store.currentPage < totalPages.value) store.currentPage++
   }
   const goToPage = (page) => {
-    currentPage.value = page
+    store.currentPage = page
   }
 
-  // Reset page on status change or search
-  watch([activeStatus, searchQuery], () => {
-    currentPage.value = 1
+  watch([() => store.activeStatus, () => store.searchQuery], () => {
+    store.currentPage = 1
   })
+
+  watch(
+    () => store.activeStatus,
+    (val) => {
+      if (route.path === '/app/instalasi/status' && route.query.filter !== val) {
+        router.replace({ path: '/app/instalasi/status', query: { filter: val } })
+      }
+    },
+  )
+
+  watch(
+    () => route.query.filter,
+    (val) => {
+      if (ALLOWED_FILTERS.includes(val) && store.activeStatus !== val) {
+        store.activeStatus = val
+      }
+    },
+  )
 
   const exportData = () => console.log('Export Excel for', activeLabel.value)
   const printData = () => console.log('Print Table for', activeLabel.value)
 
   return {
-    activeStatus,
+    activeStatus: computed({
+      get: () => store.activeStatus,
+      set: (v) => {
+        store.activeStatus = v
+      },
+    }),
     activeLabel,
-    currentPage,
-    perPage,
-    searchQuery,
-    menuList,
-    dataMap,
+    currentPage: computed({
+      get: () => store.currentPage,
+      set: (v) => {
+        store.currentPage = v
+      },
+    }),
+    perPage: computed({
+      get: () => store.perPage,
+      set: (v) => {
+        store.perPage = v
+      },
+    }),
+    searchQuery: computed({
+      get: () => store.searchQuery,
+      set: (v) => {
+        store.searchQuery = v
+      },
+    }),
+    menuList: store.menuList,
+    dataMap: computed(() => store.dataMap),
     filteredData,
     totalPages,
     visiblePages,
     paginatedData,
-    statusStyle: INSTALASI_STATUS_COLORS,
+    statusStyle: store.statusStyle,
     prevPage,
     nextPage,
     goToPage,
     exportData,
     printData,
+    fetchData: store.fetchData,
+    isLoading: computed(() => store.isLoading),
+    getCategoryByStatus: store.getCategoryByStatus,
   }
 }

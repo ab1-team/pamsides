@@ -1,23 +1,32 @@
 <?php
 
 namespace App\Http\Controllers;
-use App\Models\MonthlyBill;
+
 use App\Models\BillPayment;
-use App\Models\WaterTariffBlock;
 use App\Models\Customer;
-use App\Models\MeterReading;
+use App\Models\MonthlyBill;
+use App\Models\Setting;
+use App\Models\Transaction;
+use App\Services\BillingService;
 use App\Services\MonthlyBillService;
 use Carbon\Carbon;
-
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class MonthlyBillController extends Controller
 {
     public function __construct(protected MonthlyBillService $monthlyBillService) {}
+
     public function index(Request $request)
     {
-        $query = MonthlyBill::query();
+        $query = MonthlyBill::with([
+            'customer.user',
+            'customer.ticket.package',
+            'customer.ticket.village',
+            'billPayments',
+        ])->orderBy('billing_period_year', 'desc')
+            ->orderBy('billing_period_month', 'desc');
 
         if ($request->customer_id) {
             $query->where('customer_id', $request->customer_id);
@@ -27,70 +36,379 @@ class MonthlyBillController extends Controller
             $query->where('status', $request->status);
         }
 
-        if ($request->month && $request->year) {
-            $query->where('billing_period_month', $request->month)
-                ->where('billing_period_year', $request->year);
+        if ($request->month) {
+            $query->where('billing_period_month', $request->month);
         }
 
-        $bills = $query->latest()->get();
+        if ($request->year) {
+            $query->where('billing_period_year', $request->year);
+        }
+
+        $bills = $query->get();
+
+        $items = $bills->map(function ($b) {
+            try {
+                $customer = $b->customer;
+                $ticket = $customer?->ticket;
+                $user = $customer?->user;
+
+                return [
+                    'id' => $b->id,
+                    'customer_id' => $b->customer_id,
+                    'billing_period_month' => $b->billing_period_month,
+                    'billing_period_year' => $b->billing_period_year,
+                    'meter_reading_start' => $b->meter_reading_start,
+                    'meter_reading_end' => $b->meter_reading_end,
+                    'usage_m3' => $b->usage_m3,
+                    'usage_charge' => $b->usage_charge,
+                    'abodemen' => $b->abodemen,
+                    'penalty_amount' => $b->penalty_amount,
+                    'total_amount' => $b->total_amount,
+                    'status' => $b->status,
+                    'due_date' => $b->due_date,
+                    'bill_payments' => $b->billPayments->map(fn ($p) => [
+                        'id' => $p->id,
+                        'amount_paid' => $p->amount_paid,
+                        'confirmed_by' => $p->confirmed_by,
+                        'paid_at' => $p->paid_at,
+                    ]),
+                    'customer' => $customer ? [
+                        'id' => $customer->id,
+                        'customer_code' => $customer->customer_code,
+                        'initial_meter_reading' => $customer->initial_meter_reading,
+                        'activated_at' => $customer->activated_at,
+                        'meter_photo_url' => $customer->meter_photo_url ?: null,
+                        'user' => $user ? [
+                            'id' => $user->id,
+                            'name' => $user->name,
+                            'email' => $user->email,
+                        ] : null,
+                        'ticket' => $ticket ? [
+                            'id' => $ticket->id,
+                            'applicant_name' => $ticket->applicant_name,
+                            'nik' => $ticket->nik,
+                            'address' => $ticket->address,
+                            'phone' => $ticket->phone,
+                            'village' => $ticket->village,
+                            'package' => $ticket->package,
+                        ] : null,
+                    ] : null,
+                ];
+            } catch (\Throwable $e) {
+                \Log::warning('MonthlyBill::index map error', [
+                    'bill_id' => $b->id ?? null,
+                    'error' => $e->getMessage(),
+                ]);
+
+                return [
+                    'id' => $b->id,
+                    'customer_id' => $b->customer_id,
+                    'billing_period_month' => $b->billing_period_month,
+                    'billing_period_year' => $b->billing_period_year,
+                    'meter_reading_start' => $b->meter_reading_start,
+                    'meter_reading_end' => $b->meter_reading_end,
+                    'usage_m3' => $b->usage_m3,
+                    'usage_charge' => $b->usage_charge,
+                    'abodemen' => $b->abodemen,
+                    'penalty_amount' => $b->penalty_amount,
+                    'total_amount' => $b->total_amount,
+                    'status' => $b->status,
+                    'due_date' => $b->due_date,
+                    'customer' => null,
+                ];
+            }
+        })->values();
 
         return response()->json([
             'success' => true,
             'data' => [
-                'bills' => $bills
-            ]
+                'bills' => $items,
+            ],
         ]);
     }
 
-    //konfirmasi pembayaran
-    public function pay($id)
+    public function usage(Request $request)
     {
-
-        $bill = MonthlyBill::findOrFail($id);
-
-        if ($bill->status == 'paid') {
-            return response()->json([
-                'success' => false,
-                'message' => 'Tagihan sudah dibayar'
-            ], 400);
-        }
-
-        // update status
-        $bill->update([
-            'status' => 'paid'
+        $request->validate([
+            'month' => 'nullable|integer|between:1,12',
+            'year' => 'nullable|integer|min:2000',
         ]);
 
-        // simpan pembayaran
-        BillPayment::create([
-            'bill_id' => $bill->id,
-            'amount_paid' => $bill->total_amount,
-            'confirmed_by' => Auth::id(),
-            'paid_at' => now()
-        ]);
+        $month = $request->get('month', Carbon::now()->month);
+        $year = $request->get('year', Carbon::now()->year);
+
+        // Hanya pelanggan yang tiketnya sudah aktif/berjalan (bukan draft/pending)
+        $customers = Customer::with(['user', 'ticket.package', 'ticket.village'])
+            ->whereHas('ticket', function ($q) {
+                $q->whereIn('status', ['surveyed', 'unpaid', 'processing', 'completed', 'suspended']);
+            })
+            ->get();
+
+        $items = $customers->map(function ($customer) use ($month, $year) {
+            $reading = $customer->meterReadings()
+                ->where('reading_month', $month)
+                ->where('reading_year', $year)
+                ->first();
+
+            $bill = MonthlyBill::where('customer_id', $customer->id)
+                ->where('billing_period_month', $month)
+                ->where('billing_period_year', $year)
+                ->first();
+
+            $status = $bill
+                ? $bill->status
+                : ($reading ? 'unpaid' : 'pending');
+
+            $statusLabel = match (strtoupper($status)) {
+                'PAID' => 'PAID',
+                'UNPAID' => 'UNPAID',
+                default => 'PENDING',
+            };
+
+            return [
+                'id' => $customer->id,
+                'customer_code' => $customer->customer_code,
+                'nama' => optional($customer->user)->name ?? $customer->ticket?->applicant_name,
+                'nik' => $customer->ticket?->nik,
+                'alamat' => $customer->ticket?->address,
+                'dusun' => $customer->ticket?->village?->hamlet_name,
+                'desa' => $customer->ticket?->village?->village_name,
+                'package_name' => $customer->ticket?->package?->name,
+                'meter_awal' => $bill?->meter_reading_start ?? $customer->initial_meter_reading,
+                'meter_akhir' => $bill?->meter_reading_end ?? $reading?->meter_value,
+                'pemakaian' => $bill?->usage_m3,
+                'tagihan' => $bill?->total_amount,
+                'denda' => $bill?->penalty_amount,
+                'abodemen' => $bill?->abodemen,
+                'status' => $statusLabel,
+                'due_date' => $bill?->due_date,
+                'reading_photo' => $reading?->photo_url ?: null,
+                'reading_recorded_at' => $reading?->recorded_at,
+            ];
+        });
 
         return response()->json([
             'success' => true,
-            'message' => 'Pembayaran berhasil dikonfirmasi'
+            'data' => $items,
         ]);
     }
-    
+
+    public function pay(Request $request, $id)
+    {
+        $request->validate([
+            'payment_method' => 'nullable|string|in:cash,transfer',
+            'amount_paid' => 'nullable|numeric|min:0',
+        ]);
+
+        $bill = MonthlyBill::findOrFail($id);
+
+        if ($bill->status === 'paid') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Tagihan sudah dibayar',
+            ], 400);
+        }
+
+        $bill->load('customer');
+
+        $abodemen = (float) ($bill->abodemen ?? 0);
+        $usageCharge = (float) ($bill->usage_charge ?? 0);
+        $denda = (float) ($bill->penalty_amount ?? 0);
+        $isTunggakan = $denda > 0;
+        $relasi = $bill->customer?->customer_code ?? 'Bill #' . $bill->id;
+        $userId = Auth::id();
+
+        $restoredTicket = false;
+
+        DB::transaction(function () use ($bill, $request, $abodemen, $usageCharge, $denda, $isTunggakan, $relasi, $userId, &$restoredTicket) {
+            $bill->update(['status' => 'paid']);
+
+            $payment = BillPayment::create([
+                'bill_id' => $bill->id,
+                'amount_paid' => $request->amount_paid ?? $bill->total_amount,
+                'confirmed_by' => $userId,
+                'paid_at' => now(),
+            ]);
+
+            // ── Jurnal Pembayaran ──
+            // Abodemen
+            if ($abodemen > 0) {
+                $trx = Transaction::create([
+                    'tgl_transaksi'        => $payment->paid_at,
+                    'account_debet'        => '1.1.01.01',
+                    'account_kredit'       => $isTunggakan ? '1.1.03.01' : '4.1.01.02',
+                    'transaction_group'    => null,
+                    'reverence_type'       => 'bill_payment',
+                    'reverence_id'         => $payment->id,
+                    'keterangan_transaksi' => 'Abodemen - ' . $relasi,
+                    'relasi'               => $relasi,
+                    'saldo'                => $abodemen,
+                    'id_user'              => $userId,
+                ]);
+                $trx->update(['urutan' => $trx->id]);
+            }
+
+            // Tagihan Pemakaian
+            if ($usageCharge > 0) {
+                $trx = Transaction::create([
+                    'tgl_transaksi'        => $payment->paid_at,
+                    'account_debet'        => '1.1.01.01',
+                    'account_kredit'       => $isTunggakan ? '1.1.03.01' : '4.1.01.03',
+                    'transaction_group'    => null,
+                    'reverence_type'       => 'bill_payment',
+                    'reverence_id'         => $payment->id,
+                    'keterangan_transaksi' => 'Tagihan Pemakaian - ' . $relasi,
+                    'relasi'               => $relasi,
+                    'saldo'                => $usageCharge,
+                    'id_user'              => $userId,
+                ]);
+                $trx->update(['urutan' => $trx->id]);
+            }
+
+            // Denda (hanya tunggakan)
+            if ($denda > 0) {
+                $trx = Transaction::create([
+                    'tgl_transaksi'        => $payment->paid_at,
+                    'account_debet'        => '1.1.01.01',
+                    'account_kredit'       => '4.1.01.04',
+                    'transaction_group'    => null,
+                    'reverence_type'       => 'bill_payment',
+                    'reverence_id'         => $payment->id,
+                    'keterangan_transaksi' => 'Denda - ' . $relasi,
+                    'relasi'               => $relasi,
+                    'saldo'                => $denda,
+                    'id_user'              => $userId,
+                ]);
+                $trx->update(['urutan' => $trx->id]);
+            }
+
+            // ── Auto-restore: jika tiket suspended & semua bill paid → kembalikan ke completed ──
+            $customer = $bill->customer;
+            if ($customer && $customer->ticket && $customer->ticket->status === 'suspended') {
+                $stillUnpaid = MonthlyBill::where('customer_id', $customer->id)
+                    ->where('status', 'unpaid')
+                    ->count();
+
+                if ($stillUnpaid === 0) {
+                    $customer->ticket->update(['status' => 'completed']);
+                    $restoredTicket = true;
+                }
+            }
+        });
+
+        $bill->load('customer.user', 'customer.ticket.package');
+
+        return response()->json([
+            'success' => true,
+            'message' => $restoredTicket
+                ? 'Pembayaran berhasil. Pelanggan otomatis diaktifkan kembali karena seluruh tagihan telah lunas.'
+                : 'Pembayaran berhasil dikonfirmasi',
+            'data' => [
+                'bill' => $bill,
+                'ticket_restored' => $restoredTicket,
+            ],
+        ]);
+    }
+
+    // Daftar pelanggan suspended + tagihan unpaid-nya (untuk teknisi)
+    public function suspended(Request $request)
+    {
+        $customers = Customer::with([
+            'user',
+            'ticket.package',
+            'ticket.village',
+            'monthlyBills' => fn ($q) => $q->orderBy('billing_period_year')->orderBy('billing_period_month'),
+        ])
+            ->whereHas('ticket', fn ($q) => $q->where('status', 'suspended'))
+            ->get();
+
+        $items = $customers->map(function ($c) {
+            $unpaid = $c->monthlyBills->where('status', 'unpaid');
+            return [
+                'id' => $c->id,
+                'customer_code' => $c->customer_code,
+                'name' => $c->user?->name ?? $c->ticket?->applicant_name,
+                'address' => $c->ticket?->address,
+                'dusun' => $c->ticket?->village?->hamlet_name,
+                'desa' => $c->ticket?->village?->village_name,
+                'package_name' => $c->ticket?->package?->name,
+                'unpaid_count' => $unpaid->count(),
+                'total_unpaid' => $unpaid->sum('total_amount'),
+                'bills' => $unpaid->map(fn ($b) => [
+                    'id' => $b->id,
+                    'period' => $b->billing_period_month . '/' . $b->billing_period_year,
+                    'amount' => $b->total_amount,
+                    'due_date' => $b->due_date,
+                ])->values(),
+            ];
+        })->values();
+
+        return response()->json([
+            'success' => true,
+            'data' => $items,
+        ]);
+    }
+
+    // Teknisi: konfirmasi pelanggan suspended sudah bayar & minta restore ke aktif.
+    // Backend cek: jika semua bill paid → ubah ticket status suspended → completed.
+    public function restoreCustomer(Request $request, $customerId)
+    {
+        $customer = Customer::with('ticket')->findOrFail($customerId);
+
+        if (! $customer->ticket) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Tiket instalasi tidak ditemukan.',
+            ], 404);
+        }
+
+        if ($customer->ticket->status !== 'suspended') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Pelanggan ini tidak dalam status suspended.',
+            ], 400);
+        }
+
+        $unpaidCount = MonthlyBill::where('customer_id', $customer->id)
+            ->where('status', 'unpaid')
+            ->count();
+
+        if ($unpaidCount > 0) {
+            return response()->json([
+                'success' => false,
+                'message' => "Masih ada {$unpaidCount} tagihan belum lunas. Pembayaran diproses oleh admin terlebih dahulu.",
+            ], 400);
+        }
+
+        $customer->ticket->update(['status' => 'completed']);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Pelanggan berhasil diaktifkan kembali.',
+            'data' => [
+                'customer_id' => $customer->id,
+                'new_status' => 'completed',
+            ],
+        ]);
+    }
+
     public function generate()
     {
         $result = $this->monthlyBillService->generate();
 
-        if (!$result['status']) {
+        if (! $result['status']) {
             return response()->json([
                 'success' => false,
-                'message' => $result['message']
+                'message' => $result['message'],
             ], 400);
         }
 
         return response()->json([
             'success' => true,
-            'message' => $result['message']
+            'message' => $result['message'],
         ]);
     }
-    //laporan tagihan
+
     public function report(Request $request)
     {
         $request->validate([
@@ -98,7 +416,8 @@ class MonthlyBillController extends Controller
             'year' => 'required|integer',
         ]);
 
-        $bills = MonthlyBill::where('billing_period_month', $request->month)
+        $bills = MonthlyBill::with('customer.user')
+            ->where('billing_period_month', $request->month)
             ->where('billing_period_year', $request->year)
             ->get();
 
@@ -112,8 +431,54 @@ class MonthlyBillController extends Controller
             'success' => true,
             'data' => [
                 'summary' => $summary,
-                'bills' => $bills
-            ]
+                'bills' => $bills,
+            ],
+        ]);
+    }
+
+    public function show($id)
+    {
+        $bill = MonthlyBill::with([
+            'customer',
+        ])->findOrFail($id);
+
+        return response()->json([
+            'success' => true,
+            'data' => $bill,
+        ]);
+    }
+
+    public function destroy($id)
+    {
+        $bill = MonthlyBill::findOrFail($id);
+
+        if ($bill->status !== 'paid') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Hanya tagihan yang sudah lunas yang bisa di-rollback.',
+            ], 400);
+        }
+
+        DB::transaction(function () use ($bill) {
+            // Hapus transaksi jurnal terkait pembayaran bill ini
+            $paymentIds = $bill->billPayments()->pluck('id');
+            if ($paymentIds->isNotEmpty()) {
+                Transaction::where('reverence_type', 'bill_payment')
+                    ->whereIn('reverence_id', $paymentIds)
+                    ->delete();
+            }
+
+            // Hapus pembayaran
+            BillPayment::where('bill_id', $bill->id)->delete();
+
+            // Kembalikan status ke unpaid
+            $bill->update(['status' => 'unpaid']);
+        });
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Tagihan dikembalikan ke status belum dibayar.',
+            'data' => $bill,
         ]);
     }
 }

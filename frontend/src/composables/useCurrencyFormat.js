@@ -1,14 +1,8 @@
 /**
- * =============================================
-   CURRENCY FORMATTING UTILITY - MAKSMONEY
-   =============================================
- */
-
-/**
- * Format number to Indonesian currency format (maksMoney)
- * @param {number} amount - Amount to format
- * @param {Object} options - Formatting options
- * @returns {string} Formatted currency string
+ * Fungsi untuk memformat angka menjadi format mata uang Rupiah
+ * @param {number} amount - Jumlah yang akan diformat
+ * @param {Object} options - Opsi format
+ * @returns {string} String mata uang yang diformat
  */
 export function useCurrencyFormat(amount, options = {}) {
   const {
@@ -31,16 +25,16 @@ export function useCurrencyFormat(amount, options = {}) {
 }
 
 /**
- * Parse formatted currency string back to number
- * @param {string} formattedString - Formatted currency string
- * @returns {number} Parsed number
+ * Mengubah string mata uang yang diformat kembali menjadi angka
+ * @param {string} formattedString - String mata uang
+ * @returns {number} Angka hasil parsing
  */
 export function parseCurrency(formattedString) {
   if (!formattedString || typeof formattedString !== 'string') {
     return 0
   }
 
-  // Remove currency symbol, dots, and spaces, then replace comma with dot
+  // Hapus simbol mata uang, titik, dan spasi, lalu ganti koma dengan titik
   const cleanString = formattedString
     .replace(/[Rp\s]/g, '') // Remove 'Rp' and spaces
     .replace(/\./g, '') // Remove thousand separators
@@ -51,9 +45,9 @@ export function parseCurrency(formattedString) {
 }
 
 /**
- * Format number for input display (with thousand separators)
- * @param {number|string} value - Value to format
- * @returns {string} Formatted string for input
+ * Memformat angka untuk tampilan input (dengan pemisah ribuan)
+ * @param {number|string} value - Nilai yang diformat
+ * @returns {string} String untuk input
  */
 export function formatInputValue(value) {
   if (value === '' || value === null || value === undefined) {
@@ -73,16 +67,16 @@ export function formatInputValue(value) {
 }
 
 /**
- * Validate currency input
- * @param {string} input - Input string to validate
- * @returns {boolean} Is valid currency input
+ * Validasi input mata uang
+ * @param {string} input - String input yang divalidasi
+ * @returns {boolean} Valid atau tidak
  */
 export function validateCurrencyInput(input) {
   if (typeof input !== 'string') {
     return false
   }
 
-  // Allow empty string, numbers, dots, and commas
+  // Bolehkan string kosong, angka, titik, dan koma
   const cleanInput = input.replace(/[Rp\s]/g, '')
 
   // Check if it's a valid number format
@@ -91,9 +85,9 @@ export function validateCurrencyInput(input) {
 }
 
 /**
- * Get currency symbol
- * @param {string} currencyCode - Currency code
- * @returns {string} Currency symbol
+ * Mengambil simbol mata uang
+ * @param {string} currencyCode - Kode mata uang
+ * @returns {string} Simbol mata uang
  */
 export function getCurrencySymbol(currencyCode = 'IDR') {
   const symbols = {
@@ -107,9 +101,9 @@ export function getCurrencySymbol(currencyCode = 'IDR') {
 }
 
 /**
- * Format large amounts with abbreviations (K, M, B)
- * @param {number} amount - Amount to format
- * @returns {string} Formatted string with abbreviation
+ * Memformat jumlah besar dengan singkatan (RB, JT, M)
+ * @param {number} amount - Jumlah
+ * @returns {string} String format dengan singkatan
  */
 export function formatLargeAmount(amount) {
   if (amount === null || amount === undefined || isNaN(amount)) {
@@ -130,9 +124,9 @@ export function formatLargeAmount(amount) {
 }
 
 /**
- * Convert text to number (for "100 ribu" -> 100000)
- * @param {string} text - Text to convert
- * @returns {number} Converted number
+ * Konversi teks menjadi angka (contoh: "100 ribu" -> 100000)
+ * @param {string} text - Teks yang akan dikonversi
+ * @returns {number} Angka konversi
  */
 export function convertTextToAmount(text) {
   if (!text || typeof text !== 'string') {
@@ -144,7 +138,7 @@ export function convertTextToAmount(text) {
     .replace(/[^0-9a-z\s]/g, '')
     .trim()
 
-  // Extract number and unit
+  // Ekstrak angka dan unit
   const match = cleanText.match(/(\d+(?:\.\d+)?)\s*(ribu|juta|miliar|jt|rb|m)?/)
 
   if (!match) {
@@ -167,7 +161,7 @@ export function convertTextToAmount(text) {
   return number * (multipliers[unit] || 1)
 }
 
-// Export all functions as default object
+// Ekspor semua fungsi sebagai objek default
 export default {
   useCurrencyFormat,
   parseCurrency,

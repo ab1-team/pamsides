@@ -1,0 +1,303 @@
+.stat-card {
+  background: #ffffff;
+  border-radius: var(--card-radius);
+  box-shadow:
+    0 4px 6px -1px rgb(166 161 161 / 19%),
+    0 2px 4px -1px rgb(97 91 91 / 32%);
+  transition: var(--transition-normal);
+  padding: 0.7rem 1.35rem;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+  height: auto;
+  cursor: pointer;
+  user-select: none;
+}
+
+.stat-card:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.6);
+  outline-offset: 2px;
+}
+
+.stat-card:hover {
+  box-shadow:
+    0 15px 30px -5px rgba(0, 0, 0, 0.15),
+    0 8px 12px -3px rgba(0, 0, 0, 0.1);
+  transform: translateY(-4px) scale(1.02);
+  background: #f8fafc;
+  z-index: 10;
+}
+
+.stat-card--instalasi {
+  background: #23bbff !important;
+  border: none !important;
+}
+
+.stat-card--instalasi:hover {
+  background: #028ccb !important;
+  transform: translateY(-4px) scale(1.02);
+}
+
+.stat-card--pemakaian {
+  background: #f59e0b !important;
+  border: none !important;
+}
+
+.stat-card--pemakaian:hover {
+  background: #d97706 !important;
+  transform: translateY(-4px) scale(1.02);
+}
+
+.stat-card--tunggakan {
+  background: #e6376e !important;
+  border: none !important;
+}
+
+.stat-card--tunggakan:hover {
+  background: #af2f58 !important;
+  transform: translateY(-4px) scale(1.02);
+}
+
+.stat-card--tagihan {
+  background: #36cd6d !important;
+  border: none !important;
+}
+
+.stat-card--tagihan:hover {
+  background: #278a4b !important;
+  transform: translateY(-4px) scale(1.02);
+}
+
+/* Ensure text is white on colored backgrounds */
+.stat-card--instalasi .stat-card-title,
+.stat-card--pemakaian .stat-card-title,
+.stat-card--tunggakan .stat-card-title,
+.stat-card--tagihan .stat-card-title {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.stat-card--instalasi .stat-card-value,
+.stat-card--pemakaian .stat-card-value,
+.stat-card--tunggakan .stat-card-value,
+.stat-card--tagihan .stat-card-value {
+  color: #ffffff;
+}
+
+.stat-card--instalasi .stat-card-link,
+.stat-card--pemakaian .stat-card-link,
+.stat-card--tunggakan .stat-card-link,
+.stat-card--tagihan .stat-card-link {
+  color: rgba(255, 255, 255, 0.8) !important;
+}
+
+.stat-card--instalasi .stat-card-link:hover,
+.stat-card--pemakaian .stat-card-link:hover,
+.stat-card--tunggakan .stat-card-link:hover,
+.stat-card--tagihan .stat-card-link:hover {
+  color: #ffffff !important;
+}
+
+.stat-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  margin-bottom: 0.15rem;
+}
+
+.stat-card-title {
+  font-size: var(--text-xs);
+  font-weight: 800;
+  color: var(--color-text-sub);
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  opacity: 0.9;
+}
+
+.stat-card-content {
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-start;
+  margin-bottom: 0.25rem;
+}
+
+.stat-card-value {
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: var(--color-text-main);
+  line-height: 1;
+  letter-spacing: -0.04em;
+  font-variant-numeric: tabular-nums;
+}
+
+.stat-card-icon {
+  position: absolute;
+  top: 1rem;
+  right: 1.15rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  backdrop-filter: blur(8px);
+  flex-shrink: 0;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  transition: all var(--transition-normal);
+  z-index: 1;
+}
+
+.stat-card-progress {
+  background-color: rgba(255, 255, 255, 0.2);
+  border-radius: var(--border-radius-full);
+  height: 5px;
+  overflow: hidden;
+  width: 100%;
+  margin-top: 0.2rem;
+  position: relative;
+}
+
+.stat-card-progress-bar {
+  height: 100%;
+  border-radius: var(--border-radius-full);
+  transition: width 1.5s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+}
+
+.stat-card-progress-bar::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  animation: progress-shimmer 2s infinite;
+}
+
+.stat-card-value-container {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  width: 100%;
+  padding-right: 0.5rem;
+}
+
+.stat-card-footer {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  margin-top: 0;
+  margin-bottom: 0.15rem;
+  padding-right: 0.25rem;
+}
+
+.stat-card-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 10px;
+  font-weight: 700;
+  text-decoration: none;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  transition: all var(--transition-normal);
+  padding: 0.2rem 0;
+  margin-bottom: 0.35rem;
+}
+
+.stat-card-link .link-icon {
+  font-size: 9px;
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.stat-card-link:hover {
+  filter: brightness(0.8);
+}
+
+.stat-card-link:hover .link-icon {
+  transform: translateX(4px);
+}
+
+.stat-card--instalasi .stat-card-link {
+  color: #1a56db;
+}
+
+.stat-card--pemakaian .stat-card-link {
+  color: #0891b2;
+}
+
+.stat-card--tunggakan .stat-card-link {
+  color: #ea580c;
+}
+
+.stat-card--tagihan .stat-card-link {
+  color: #15803d;
+}
+
+@keyframes progress-shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.stat-card--instalasi .stat-card-progress-bar {
+  background-color: rgba(255, 255, 255, 0.8);
+}
+
+.stat-card--pemakaian .stat-card-progress-bar {
+  background-color: rgba(255, 255, 255, 0.8);
+}
+
+.stat-card--tunggakan .stat-card-progress-bar {
+  background-color: rgba(255, 255, 255, 0.8);
+}
+
+.stat-card--tagihan .stat-card-progress-bar {
+  background-color: rgba(255, 255, 255, 0.8);
+}
+
+.stat-card--instalasi .stat-card-icon {
+  background: #ffffff;
+  color: #23bbff;
+}
+
+.stat-card--pemakaian .stat-card-icon {
+  background: #ffffff;
+  color: #f59e0b;
+}
+
+.stat-card--tunggakan .stat-card-icon {
+  background: #ffffff;
+  color: #ea580c;
+}
+
+.stat-card--tagihan .stat-card-icon {
+  background: #ffffff;
+  color: #16a34a;
+}
+
+.stat-card:hover .stat-card-icon {
+  background: rgba(255, 255, 255, 0.4);
+  transform: scale(1.1) rotate(5deg);
+  box-shadow: 0 4px 12px rgba(255, 255, 255, 0.3);
+}
+
+.info-card {
+  box-shadow:
+    0 4px 6px -1px rgb(166 161 161 / 19%),
+    0 2px 4px -1px rgb(97 91 91 / 32%);
+  transition:
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
+}
+
+.info-card:hover {
+  box-shadow:
+    0 8px 20px -4px rgba(0, 0, 0, 0.12),
+    0 4px 8px -2px rgba(0, 0, 0, 0.08);
+  transform: translateY(-2px);
+}

@@ -3,9 +3,11 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class MonthlyBill extends Model
 {
+    use SoftDeletes;
     protected $fillable = [
         'customer_id',
         'billing_period_year',
@@ -29,5 +31,10 @@ class MonthlyBill extends Model
     public function billPayments()
     {
         return $this->hasMany(BillPayment::class, 'bill_id');
+    }
+
+    public function transactions()
+    {
+        return $this->morphMany(Transaction::class, 'reverence');
     }
 }

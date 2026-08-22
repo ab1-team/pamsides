@@ -17,4 +17,9 @@ class BillPayment extends Model
     {
         return $this->belongsTo(MonthlyBill::class, 'bill_id');
     }
+
+    public function transactions()
+    {
+        return $this->morphMany(Transaction::class, 'reverence');
+    }
 }

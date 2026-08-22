@@ -1,14 +1,8 @@
 /**
- * =============================================
-   CURRENCY FORMATTING UTILITY - STATIC
-   =============================================
- */
-
-/**
- * Format number to Indonesian Rupiah currency
- * @param {number} value - Number to format
- * @param {Object} options - Formatting options
- * @returns {string} Formatted currency string
+ * Memformat angka menjadi mata uang Rupiah Indonesia
+ * @param {number} value - Angka yang diformat
+ * @param {Object} options - Opsi pemformatan
+ * @returns {string} String mata uang yang diformat
  */
 export function useFormatCurrency(value, options = {}) {
   const {
@@ -34,9 +28,9 @@ export function useFormatCurrency(value, options = {}) {
 }
 
 /**
- * Simple Rupiah formatter (alternative)
- * @param {number} value - Number to format
- * @returns {string} Formatted Rupiah string
+ * Formatter Rupiah sederhana (alternatif)
+ * @param {number} value - Angka yang diformat
+ * @returns {string} String Rupiah yang diformat
  */
 export function formatRupiah(value) {
   if (value === null || value === undefined || isNaN(value)) {
@@ -47,16 +41,16 @@ export function formatRupiah(value) {
 }
 
 /**
- * Parse currency string back to number
- * @param {string} currencyString - Currency string to parse
- * @returns {number} Parsed number
+ * Mengubah string mata uang kembali menjadi angka
+ * @param {string} currencyString - String mata uang
+ * @returns {number} Angka hasil parsing
  */
 export function parseCurrency(currencyString) {
   if (!currencyString || typeof currencyString !== 'string') {
     return 0
   }
 
-  // Remove currency symbols and formatting
+  // Hapus simbol mata uang dan pemformatan
   const cleanString = currencyString
     .replace(/[Rp\s$€£¥]/g, '')
     .replace(/\./g, '')

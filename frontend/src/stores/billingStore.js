@@ -1,7 +1,5 @@
 /**
- * =============================================
-   BILLING STORE - DYNAMIC STATE MANAGEMENT
-   =============================================
+ * Store Pinia untuk manajemen state tagihan
  */
 
 import { defineStore } from 'pinia'
@@ -9,8 +7,11 @@ import { ref, computed } from 'vue'
 import { getCurrentDate } from '../composables/useDateFormat.js'
 import { formatRupiah } from '../composables/useFormatCurrency.js'
 
+import { customerService } from '@/services/customer.service'
+import { billingService } from '@/services/billing.service'
+
 export const useBillingStore = defineStore('billing', () => {
-  // State
+  // State utama tagihan
   const billingPeriods = ref([])
   const searchQuery = ref('')
   const selectedCustomer = ref(null)
@@ -18,100 +19,18 @@ export const useBillingStore = defineStore('billing', () => {
   const error = ref(null)
   const searchResults = ref([])
 
-  // Mock data pelanggan
-  const mockCustomers = [
-    {
-      name: 'Bambang Susanto',
-      id: 'PAM-2025-09821',
-      installationCode: 'RT04-RW02',
-      village: 'Mojosari',
-      hamlet: 'Mojosari Kulon',
-      rt: '04',
-      rw: '02',
-      cater: 'Cater-001',
-      status: 'AKTIF',
-    },
-    {
-      name: 'Siti Aminah',
-      id: 'PAM-2025-09822',
-      installationCode: 'RT03-RW01',
-      village: 'Mojosari',
-      hamlet: 'Mojosari Tengah',
-      rt: '03',
-      rw: '01',
-      cater: 'Cater-002',
-      status: 'AKTIF',
-    },
-    {
-      name: 'Ahmad Wijaya',
-      id: 'PAM-2025-09823',
-      installationCode: 'RT05-RW02',
-      village: 'Mojosari',
-      hamlet: 'Mojosari Wetan',
-      rt: '05',
-      rw: '02',
-      cater: 'Cater-003',
-      status: 'AKTIF',
-    },
-  ]
-
-  // Mock data - ini bisa diganti dengan API call
-  const mockBillingPeriods = [
-    {
-      id: 1,
-      period: 'Mei 2025',
-      status: 'LUNAS',
-      statusDate: '12 MEI 2025',
-      amount: 85000,
-      customerName: 'Bambang Susanto',
-      customerId: 'PAM-2025-09821',
-      installationCode: 'RT04-RW02',
-      isExpanded: true,
-      type: 'current',
-      meterAwal: 1240,
-      meterAkhir: 1265,
-      pemakaian: 25,
-    },
-    {
-      id: 2,
-      period: 'April 2025',
-      status: 'TERTUNGGAK',
-      statusDate: 'JATUH TEMPO 20 APR 2025',
-      amount: 92000,
-      customerName: 'Bambang Susanto',
-      customerId: 'PAM-2025-09821',
-      installationCode: 'RT04-RW02',
-      isExpanded: false,
-      type: 'overdue',
-      meterAwal: 1215,
-      meterAkhir: 1240,
-      pemakaian: 25,
-    },
-    {
-      id: 3,
-      period: 'Maret 2025',
-      status: 'MAU PROSES PEMBAYARAN',
-      statusDate: '',
-      amount: 70000,
-      customerName: 'Bambang Susanto',
-      customerId: 'PAM-2025-09821',
-      installationCode: 'RT04-RW02',
-      isExpanded: false,
-      type: 'processing',
-      meterAwal: 1190,
-      meterAkhir: 1215,
-      pemakaian: 25,
-    },
-  ]
-
-  // Computed properties
   const filteredBillingPeriods = computed(() => {
+    // Sembunyikan yang sudah lunas
+    const unpaidPeriods = billingPeriods.value.filter(
+      (period) => period.type !== 'paid' && period.status !== 'LUNAS',
+    )
+
     if (!searchQuery.value) {
-      return billingPeriods.value
+      return unpaidPeriods
     }
 
     const query = searchQuery.value.toLowerCase()
-    return billingPeriods.value.filter(
+    return unpaidPeriods.filter(
       (period) =>
         period.customerName.toLowerCase().includes(query) ||
         period.customerId.toLowerCase().includes(query) ||
@@ -132,32 +51,82 @@ export const useBillingStore = defineStore('billing', () => {
     return overduePeriods.value.reduce((total, period) => total + period.amount, 0)
   })
 
-  // Actions
+  // Fungsi-fungsi aksi (Actions)
   const fetchBillingPeriods = async (customerId) => {
     loading.value = true
     error.value = null
 
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 500))
-
-      // Filter by customer if customerId provided
-      if (customerId) {
-        billingPeriods.value = mockBillingPeriods.filter(
-          (period) => period.customerId === customerId,
-        )
-      } else {
-        billingPeriods.value = [...mockBillingPeriods]
+      if (!customerId) {
+        billingPeriods.value = []
+        return
       }
 
-      // Set selected customer
-      if (billingPeriods.value.length > 0) {
-        selectedCustomer.value = {
-          name: billingPeriods.value[0].customerName,
-          id: billingPeriods.value[0].customerId,
-          installationCode: billingPeriods.value[0].installationCode,
-          status: 'AKTIF',
-        }
+      const res = await billingService.getBills({ customer_id: customerId })
+      console.log('[BillingStore] fetchBillingPeriods response:', res)
+
+      const monthNames = [
+        'Januari',
+        'Februari',
+        'Maret',
+        'April',
+        'Mei',
+        'Juni',
+        'Juli',
+        'Agustus',
+        'September',
+        'Oktober',
+        'November',
+        'Desember',
+      ]
+
+      if (res?.success && res.data) {
+        const bills = Array.isArray(res.data.bills) ? res.data.bills : []
+        billingPeriods.value = bills.map((bill) => {
+          let type = 'current'
+          if (bill.status === 'unpaid') {
+            type = new Date(bill.due_date) < new Date() ? 'overdue' : 'processing'
+          } else if (bill.status === 'paid') {
+            type = 'paid'
+          }
+
+          return {
+            id: bill.id,
+            period: `${monthNames[bill.billing_period_month - 1]} ${bill.billing_period_year}`,
+            status:
+              bill.status === 'paid'
+                ? 'LUNAS'
+                : type === 'overdue'
+                  ? 'TERTUNGGAK'
+                  : 'BELUM DIBAYAR',
+            statusDate:
+              bill.status === 'paid'
+                ? ''
+                : `JATUH TEMPO ${new Date(bill.due_date).toLocaleDateString('id-ID')}`,
+            amount: Number(bill.total_amount),
+            abodemen: Number(bill.abodemen),
+            denda: Number(bill.penalty_amount),
+            usage_charge: Number(bill.usage_charge),
+            customerName:
+              bill.customer?.ticket?.applicant_name || bill.customer?.user?.name || 'Pelanggan',
+            customerId: bill.customer?.customer_code || '-',
+            installationCode: bill.customer?.customer_code || '-',
+            isExpanded: false,
+            type: type,
+            meterAwal: bill.meter_reading_start || 0,
+            meterAkhir: bill.meter_reading_end || 0,
+            pemakaian: bill.usage_m3 || 0,
+            dueDate: bill.due_date || null,
+            payments: bill.bill_payments
+              ? bill.bill_payments.map((p) => ({
+                  id: p.id,
+                  amount: Number(p.amount_paid),
+                  paidAt: p.paid_at ? new Date(p.paid_at).toLocaleDateString('id-ID') : '',
+                  confirmedBy: p.confirmed_by || '-',
+                }))
+              : [],
+          }
+        })
       }
     } catch (err) {
       error.value = 'Gagal memuat data billing'
@@ -168,36 +137,13 @@ export const useBillingStore = defineStore('billing', () => {
   }
 
   const togglePeriod = (periodId) => {
-    const period = billingPeriods.value.find((p) => p.id === periodId)
-    if (period) {
-      period.isExpanded = !period.isExpanded
-    }
-  }
-
-  const updateBillingPeriod = async (periodId, updates) => {
-    loading.value = true
-    error.value = null
-
-    try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 300))
-
-      const periodIndex = billingPeriods.value.findIndex((p) => p.id === periodId)
-      if (periodIndex !== -1) {
-        billingPeriods.value[periodIndex] = {
-          ...billingPeriods.value[periodIndex],
-          ...updates,
-        }
+    billingPeriods.value.forEach((p) => {
+      if (p.id === periodId) {
+        p.isExpanded = !p.isExpanded
+      } else {
+        p.isExpanded = false
       }
-
-      return true
-    } catch (err) {
-      error.value = 'Gagal mengupdate billing period'
-      console.error('Error updating billing period:', err)
-      return false
-    } finally {
-      loading.value = false
-    }
+    })
   }
 
   const savePayment = async (paymentData) => {
@@ -205,31 +151,70 @@ export const useBillingStore = defineStore('billing', () => {
     error.value = null
 
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 500))
+      const periodId = paymentData?.periodId
+      if (!periodId) {
+        return {
+          success: false,
+          message: 'ID tagihan tidak ditemukan.',
+        }
+      }
 
-      // Update billing period dengan data pembayaran
-      const periodId = paymentData.periodId
-      if (periodId) {
-        await updateBillingPeriod(periodId, {
+      const payload = {
+        payment_method: 'cash',
+        amount_paid: Number(paymentData.pembayaran || paymentData.amount || 0),
+      }
+
+      const res = await billingService.confirmPayment(periodId, payload)
+      console.log('[BillingStore] confirmPayment response:', res)
+
+      if (!res?.success) {
+        return {
+          success: false,
+          message: res?.message || 'Gagal mengkonfirmasi pembayaran.',
+        }
+      }
+
+      const periodIndex = billingPeriods.value.findIndex((p) => p.id === periodId)
+      if (periodIndex !== -1) {
+        const existing = billingPeriods.value[periodIndex]
+        const backendPayment = res?.data?.payment
+        const newPayment = backendPayment
+          ? [
+              {
+                id: backendPayment.id,
+                amount: Number(backendPayment.amount_paid),
+                paidAt: backendPayment.paid_at
+                  ? new Date(backendPayment.paid_at).toLocaleDateString('id-ID')
+                  : getCurrentDate(),
+                confirmedBy: backendPayment.confirmed_by || '-',
+              },
+            ]
+          : existing.payments || []
+
+        billingPeriods.value[periodIndex] = {
+          ...existing,
           status: 'LUNAS',
           statusDate: getCurrentDate(),
-          amount: paymentData.pembayaran,
+          amount: payload.amount_paid,
+          abodemen: Number(paymentData.abodemen ?? existing.abodemen),
+          denda: Number(paymentData.denda ?? existing.denda),
+          usage_charge: Number(paymentData.tagihan ?? existing.usage_charge),
           type: 'paid',
-        })
+          payments: newPayment,
+        }
       }
 
       return {
         success: true,
-        message: 'Pembayaran berhasil disimpan',
-        data: paymentData,
+        message: res.message || 'Pembayaran berhasil dikonfirmasi',
+        data: res.data,
       }
     } catch (err) {
       error.value = 'Gagal menyimpan pembayaran'
-      console.error('Error saving payment:', err)
+      console.error('[BillingStore] Error saving payment:', err)
       return {
         success: false,
-        message: 'Gagal menyimpan pembayaran',
+        message: err.response?.data?.message || 'Gagal menyimpan pembayaran',
         error: err,
       }
     } finally {
@@ -237,7 +222,7 @@ export const useBillingStore = defineStore('billing', () => {
     }
   }
 
-  const searchCustomers = (query) => {
+  const searchCustomers = async (query) => {
     searchQuery.value = query
 
     if (!query.trim()) {
@@ -245,26 +230,55 @@ export const useBillingStore = defineStore('billing', () => {
       return
     }
 
-    const searchTerm = query.toLowerCase()
-    searchResults.value = mockCustomers.filter(
-      (customer) =>
-        customer.name.toLowerCase().includes(searchTerm) ||
-        customer.id.toLowerCase().includes(searchTerm) ||
-        customer.installationCode.toLowerCase().includes(searchTerm),
-    )
+    try {
+      const res = await customerService.searchActive({ search: query })
+      console.log('[BillingStore] search response:', res)
+      if (res?.success && res.data) {
+        searchResults.value = res.data
+      } else {
+        searchResults.value = []
+      }
+    } catch (err) {
+      console.error('[BillingStore] Failed to search customers', err)
+      searchResults.value = []
+    }
   }
 
   const selectCustomer = async (customer) => {
+    const customerId = customer?.id ?? customer?.customer_id ?? null
+    if (!customerId) {
+      console.warn('[BillingStore] selectCustomer: customer.id missing', customer)
+      return
+    }
     selectedCustomer.value = customer
     searchResults.value = []
     searchQuery.value = customer.name
 
-    // Fetch billing periods untuk customer yang dipilih
-    await fetchBillingPeriods(customer.id)
+    await fetchBillingPeriods(customerId)
   }
 
   const clearSearch = () => {
     searchQuery.value = ''
+  }
+
+  const deleteBill = async (billId) => {
+    loading.value = true
+    error.value = null
+    try {
+      const res = await billingService.deleteBill(billId)
+      if (!res?.success) {
+        return { success: false, message: res?.message || 'Gagal rollback tagihan.' }
+      }
+      if (selectedCustomer.value?.id) {
+        await fetchBillingPeriods(selectedCustomer.value.id)
+      }
+      return { success: true, message: res.message || 'Tagihan dikembalikan ke belum dibayar.' }
+    } catch (err) {
+      error.value = 'Gagal rollback tagihan'
+      return { success: false, message: err.response?.data?.message || 'Gagal rollback tagihan.' }
+    } finally {
+      loading.value = false
+    }
   }
 
   const resetStore = () => {
@@ -276,7 +290,7 @@ export const useBillingStore = defineStore('billing', () => {
     error.value = null
   }
 
-  // Utility functions
+  // Fungsi utilitas bantuan
   const formatAmount = (amount) => {
     return formatRupiah(amount)
   }
@@ -301,9 +315,9 @@ export const useBillingStore = defineStore('billing', () => {
     return backgrounds[type] || 'bg-slate-100'
   }
 
-  // Initialize store
+  // Inisialisasi store saat pertama dimuat
   const initializeStore = async () => {
-    // Jangan otomatis fetch data, tunggu user search
+    // Data belum di-fetch secara otomatis, menunggu pencarian pengguna
     // await fetchBillingPeriods()
   }
 
@@ -316,24 +330,24 @@ export const useBillingStore = defineStore('billing', () => {
     error,
     searchResults,
 
-    // Computed
+    // Komputasi
     filteredBillingPeriods,
     currentPeriod,
     overduePeriods,
     totalOverdueAmount,
 
-    // Actions
+    // Aksi
     fetchBillingPeriods,
     togglePeriod,
-    updateBillingPeriod,
     savePayment,
+    deleteBill,
     searchCustomers,
     selectCustomer,
     clearSearch,
     resetStore,
     initializeStore,
 
-    // Utilities
+    // Utilitas
     formatAmount,
     getPeriodStatusColor,
     getPeriodStatusBg,

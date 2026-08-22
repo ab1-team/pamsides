@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Customer;
 use App\Models\MeterReading;
 use App\Models\MonthlyBill;
+use App\Models\Setting;
 use App\Services\BillingService;
 use Illuminate\Http\Request;
 
@@ -110,6 +111,9 @@ class BillingController extends Controller
         }
 
         // Generate tagihan untuk semua pelanggan
+        $settings = Setting::first();
+        $batasTagihan = $settings?->batas_tagihan ?? 27;
+
         $customers = Customer::with([
             'meterReadings',
             'ticket.package.waterTariffBlocks',
@@ -117,7 +121,7 @@ class BillingController extends Controller
 
         $bills = [];
         foreach ($customers as $customer) {
-            $bills[] = $this->billingService->generateForCustomer($customer, $year, $month);
+            $bills[] = $this->billingService->generateForCustomer($customer, $year, $month, $batasTagihan);
         }
 
         return response()->json([

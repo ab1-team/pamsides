@@ -1,67 +1,72 @@
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { STATUS_TYPES, STATUS_COLORS } from '@/types/pelanggan'
+import customerService from '@/services/customer.service'
+import { confirmDelete } from '@/utils/deleteHandler'
+import { MySwal } from '@/utils/swal'
 
-export function usePelanggan() {
-  // Filter state
+export function usePelanggan(router = null) {
+  // State untuk filter pencarian
   const searchQuery = ref('')
   const currentPage = ref(1)
-  const perPage = 10
+  const perPage = ref(10)
 
-  // Sample data for Customers
-  const tableData = ref([
-    {
-      id: 'P-2024-0001',
-      nama: 'Budi Santoso',
-      initials: 'BS',
-      avatarColor: '#0ea5e9',
-      nik: '3201012345678001',
-      alamat: 'Jl. Merdeka No. 123, Desa Sukamaju',
-      no_hp: '0812-3456-7890',
-      status: STATUS_TYPES.AKTIF,
-    },
-    {
-      id: 'P-2024-0002',
-      nama: 'Santi Wijaya',
-      initials: 'SW',
-      avatarColor: '#f43f5e',
-      nik: '3201012345678002',
-      alamat: 'Perum Gading blok C-15, Desa Sukamaju',
-      no_hp: '0856-9876-5432',
-      status: STATUS_TYPES.AKTIF,
-    },
-    {
-      id: 'P-2024-0003',
-      nama: 'Asep Sunandar',
-      initials: 'AS',
-      avatarColor: '#10b981',
-      nik: '3201012345678003',
-      alamat: 'Kp. Durian Runtuh RT 02/05',
-      no_hp: '0821-2233-4455',
-      status: STATUS_TYPES.NON_AKTIF,
-    },
-    {
-      id: 'P-2024-0004',
-      nama: 'Diana Putri',
-      initials: 'DP',
-      avatarColor: '#8b5cf6',
-      nik: '3201012345678004',
-      alamat: 'Jl. Melati No. 45, Desa Sukamaju',
-      no_hp: '0813-1122-3344',
-      status: STATUS_TYPES.AKTIF,
-    },
-    {
-      id: 'P-2024-0005',
-      nama: 'Eko Prasetyo',
-      initials: 'EP',
-      avatarColor: '#f59e0b',
-      nik: '3201012345678005',
-      alamat: 'Gg. Kelinci No. 7, Kp. Baru',
-      no_hp: '0877-6655-4433',
-      status: STATUS_TYPES.SUSPENDED,
-    },
-  ])
+  // State untuk data pelanggan
+  const tableData = ref([])
+  const isLoading = ref(false)
 
-  // Computed properties
+  // Fungsi untuk mengambil data dari API
+  const fetchCustomers = async () => {
+    try {
+      isLoading.value = true
+      const response = await customerService.getCustomers({
+        search: searchQuery.value,
+      })
+
+      const list = response?.data?.data || response?.data || []
+
+      tableData.value = list.map((c) => ({
+        id: c.customer_code || c.id,
+        realId: c.id,
+        nama: c.name,
+        initials: c.name
+          ? c.name
+              .split(' ')
+              .map((n) => n[0])
+              .join('')
+              .toUpperCase()
+              .substring(0, 2)
+          : '??',
+        avatarColor: ['#0ea5e9', '#f43f5e', '#10b981', '#8b5cf6', '#f59e0b'][c.id % 5],
+        nik: c.nik || '-',
+        alamat: c.address || '-',
+        no_telp: c.no_telp || '-',
+        customer_code: c.customer_code || null,
+        status: c.status || 'draft',
+      }))
+    } catch (error) {
+      console.error('Error fetching customers:', error)
+      MySwal.fire({
+        title: 'Gagal!',
+        text: 'Tidak dapat mengambil data pelanggan.',
+        icon: 'error',
+      })
+    } finally {
+      isLoading.value = false
+    }
+  }
+
+  // Ambil data saat komponen di-mount
+  onMounted(() => {
+    fetchCustomers()
+  })
+
+  // Watcher untuk pencarian
+  watch(searchQuery, () => {
+    currentPage.value = 1
+    fetchCustomers()
+  })
+
+  // Properti komputasi
   const filteredData = computed(() => {
     if (!searchQuery.value) return tableData.value
     const q = searchQuery.value.toLowerCase()
@@ -74,7 +79,9 @@ export function usePelanggan() {
     )
   })
 
-  const totalPages = computed(() => Math.max(1, Math.ceil(filteredData.value.length / perPage)))
+  const totalPages = computed(() =>
+    Math.max(1, Math.ceil(filteredData.value.length / perPage.value)),
+  )
   const visiblePages = computed(() => {
     const pages = []
     for (let i = 1; i <= totalPages.value; i++) {
@@ -83,17 +90,24 @@ export function usePelanggan() {
     return pages
   })
 
-  // Handlers
+  // Fungsi-fungsi penanganan aksi
   const handleEdit = (row) => {
-    console.log('Edit Pelanggan:', row)
-    // Future: router.push(`/data/pelanggan/edit/${row.id}`)
+    if (router) {
+      router.push(`/app/data-pelanggan/edit/${row.id}`)
+    }
   }
 
-  const handleDelete = (row) => {
-    console.log('Delete Pelanggan:', row)
-    if (confirm(`Apakah Anda yakin ingin menghapus pelanggan ${row.nama}?`)) {
-      tableData.value = tableData.value.filter((item) => item.id !== row.id)
-    }
+  const handleDelete = async (row) => {
+    await confirmDelete({
+      title: 'Hapus Pelanggan?',
+      text: `Pelanggan an. "${row.nama}" akan dihapus secara permanent dari aplikasi`,
+      successMessage: 'Data pelanggan berhasil dihapus',
+      entity: 'pelanggan',
+      onConfirm: async () => {
+        await customerService.deleteCustomer(row.realId || row.id)
+        await fetchCustomers()
+      },
+    })
   }
 
   return {
@@ -101,20 +115,24 @@ export function usePelanggan() {
     searchQuery,
     currentPage,
     perPage,
+    isLoading,
 
     // Data
     tableData,
     filteredData,
 
-    // Computed
+    // Fungsi
+    fetchCustomers,
+
+    // Komputasi
     totalPages,
     visiblePages,
 
-    // Constants
+    // Konstanta
     STATUS_TYPES,
     STATUS_COLORS,
 
-    // Handlers
+    // Penanganan Aksi
     handleEdit,
     handleDelete,
   }

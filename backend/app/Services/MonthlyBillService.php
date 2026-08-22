@@ -2,9 +2,10 @@
 
 namespace App\Services;
 
-use App\Models\MonthlyBill;
-use App\Models\MeterReading;
 use App\Models\Customer;
+use App\Models\MeterReading;
+use App\Models\MonthlyBill;
+use App\Models\Setting;
 use App\Models\WaterTariffBlock;
 use Carbon\Carbon;
 
@@ -16,6 +17,9 @@ class MonthlyBillService
         $bulan = $now->month;
         $tahun = $now->year;
 
+        $settings = Setting::first();
+        $batasTagihan = $settings?->batas_tagihan ?? 27;
+
         // CEGAH GENERATE DOBEL
         $exists = MonthlyBill::where('billing_period_month', $bulan)
             ->where('billing_period_year', $tahun)
@@ -24,7 +28,7 @@ class MonthlyBillService
         if ($exists) {
             return [
                 'status' => false,
-                'message' => 'Tagihan bulan ini sudah pernah digenerate'
+                'message' => 'Tagihan bulan ini sudah pernah digenerate',
             ];
         }
 
@@ -38,7 +42,7 @@ class MonthlyBillService
         if ($totalReading < $totalCustomer) {
             return [
                 'status' => false,
-                'message' => 'Masih ada pelanggan yang belum dicatat meternya'
+                'message' => 'Masih ada pelanggan yang belum dicatat meternya',
             ];
         }
 
@@ -62,15 +66,19 @@ class MonthlyBillService
                 ->orderByDesc('reading_month')
                 ->first();
 
-            if (!$last) continue;
+            if (! $last) {
+                continue;
+            }
 
             $usage = $reading->meter_value - $last->meter_value;
 
-            if ($usage < 0) continue;
+            if ($usage < 0) {
+                continue;
+            }
 
             $customer = Customer::with('ticket.package')->find($reading->customer_id);
 
-            if (!$customer || !$customer->ticket || !$customer->ticket->package) {
+            if (! $customer || ! $customer->ticket || ! $customer->ticket->package) {
                 continue;
             }
 
@@ -101,7 +109,7 @@ class MonthlyBillService
                 'penalty_amount' => $penalty,
                 'total_amount' => $total,
                 'status' => 'unpaid',
-                'due_date' => now()->addDays(20)
+                'due_date' => $this->computeDueDate($tahun, $bulan, $batasTagihan),
             ]);
 
             $count++;
@@ -110,7 +118,7 @@ class MonthlyBillService
         return [
             'status' => true,
             'message' => 'Tagihan berhasil digenerate',
-            'total_generated' => $count
+            'total_generated' => $count,
         ];
     }
 
@@ -120,19 +128,25 @@ class MonthlyBillService
             ->orderBy('usage_min_m3')
             ->get();
 
+        if ($blocks->isEmpty()) {
+            return 0;
+        }
+
         $remaining = $usage;
         $total = 0;
 
         foreach ($blocks as $block) {
-            if ($remaining <= 0) break;
+            if ($remaining <= 0) {
+                break;
+            }
 
-            $min = $block->usage_min_m3;
-            $max = $block->usage_max_m3 ?? $remaining;
+            $min = (int) $block->usage_min_m3;
+            $max = $block->usage_max_m3 !== null ? (int) $block->usage_max_m3 : PHP_INT_MAX;
 
-            $range = $max - $min + 1;
+            $range = max(0, $max - $min);
             $used = min($remaining, $range);
 
-            $total += $used * $block->price_per_m3;
+            $total += $used * (float) $block->price_per_m3;
             $remaining -= $used;
         }
 
@@ -153,5 +167,14 @@ class MonthlyBillService
         }
 
         return 0;
+    }
+
+    public function computeDueDate(int $year, int $month, int $day = 27): string
+    {
+        $carbon = Carbon::create($year, $month, 1);
+        $maxDay = $carbon->daysInMonth;
+        $day = min($day, $maxDay);
+
+        return $carbon->setDay($day)->toDateString();
     }
 }
