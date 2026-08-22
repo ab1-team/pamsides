@@ -51,7 +51,7 @@
                 <input
                   v-model="formData.currentReading"
                   type="number"
-                  class="w-full! text-3xl! bg-slate-50! border-4! border-slate-100! rounded-3xl! px-6! py-5! focus:border-blue-500! focus:outline-none! font-black! text-blue-600!"
+                  class="w-full! text-3xl! bg-slate-50! border-4! border-slate-100! rounded-3xl! px-6! py-5! focus:border-blue-500! focus:outline-hidden! font-black! text-blue-600!"
                   placeholder="0000"
                 />
                 <span
@@ -81,7 +81,7 @@
                 @click="$refs.fileInput.click()"
               >
                 <div
-                  class="w-16! h-16! bg-white! rounded-full! flex! items-center! justify-center! shadow-sm! mb-3! text-blue-500!"
+                  class="w-16! h-16! bg-white! rounded-full! flex! items-center! justify-center! shadow-xs! mb-3! text-blue-500!"
                 >
                   <font-awesome-icon icon="camera" size="2x" />
                 </div>

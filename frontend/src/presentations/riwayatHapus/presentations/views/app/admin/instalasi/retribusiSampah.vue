@@ -79,7 +79,7 @@
                 v-model="searchQuery"
                 type="text"
                 placeholder="Cari Nama / ID..."
-                class="w-full! h-12! bg-white! border! border-slate-200! rounded-2xl! pl-10! pr-4! text-sm! font-bold! text-slate-700! focus:border-cyan-500! focus:ring-4! focus:ring-cyan-500/10! outline-none! transition-all! shadow-sm!"
+                class="w-full! h-12! bg-white! border! border-slate-200! rounded-2xl! pl-10! pr-4! text-sm! font-bold! text-slate-700! focus:border-cyan-500! focus:ring-4! focus:ring-cyan-500/10! outline-hidden! transition-all! shadow-xs!"
               />
               <font-awesome-icon
                 icon="search"
@@ -196,7 +196,7 @@
 
       <div
         v-if="totalPages > 1"
-        class="flex! items-center! justify-between! bg-white! p-4! rounded-3xl! shadow-sm! border! border-slate-50! mt-8!"
+        class="flex! items-center! justify-between! bg-white! p-4! rounded-3xl! shadow-xs! border! border-slate-50! mt-8!"
       >
         <p class="text-xs! font-bold! text-slate-400! hidden md:block!">
           Menampilkan {{ perPage }} dari {{ tableData.length }} entri

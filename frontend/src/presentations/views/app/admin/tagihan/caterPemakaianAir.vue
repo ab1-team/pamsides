@@ -12,10 +12,10 @@
           </p>
         </div>
         <div class="flex! gap-3!">
-          <BaseButton variant="success-gradient" icon="file-alt" class="shadow-sm!"
+          <BaseButton variant="success-gradient" icon="file-alt" class="shadow-xs!"
             >Hasil Input</BaseButton
           >
-          <BaseButton variant="warning-gradient" icon="print" class="shadow-sm!"
+          <BaseButton variant="warning-gradient" icon="print" class="shadow-xs!"
             >Cetak Form</BaseButton
           >
         </div>
@@ -58,7 +58,7 @@
                   type="text"
                   v-model="form.staff"
                   readonly
-                  class="w-full! bg-slate-50! border! border-slate-200! rounded-xl! px-4! py-3! text-sm! font-bold! text-blue-800! tracking-wider! uppercase! focus:outline-none!"
+                  class="w-full! bg-slate-50! border! border-slate-200! rounded-xl! px-4! py-3! text-sm! font-bold! text-blue-800! tracking-wider! uppercase! focus:outline-hidden!"
                 />
                 <div class="absolute! right-4! top-1/2! -translate-y-1/2! text-blue-600!">
                   <font-awesome-icon icon="shield-halved" />
@@ -113,7 +113,7 @@
               class="absolute! inset-0! w-full! h-full! object-cover! transition-transform! duration-700! group-hover:scale-110!"
             />
             <div
-              class="absolute! inset-0! bg-gradient-to-t! from-slate-900/80! via-slate-900/40! to-transparent!"
+              class="absolute! inset-0! bg-linear-to-t! from-slate-900/80! via-slate-900/40! to-transparent!"
             ></div>
             <div class="absolute! bottom-6! left-6! right-6!">
               <p class="text-white! text-sm! font-medium! opacity-90! leading-tight!">
@@ -349,7 +349,7 @@ input:read-only {
 
 @media (max-width: 1024px) {
   :deep(.custom-select-search .select-display) {
-    @apply !h-auto !py-4 !rounded-2xl;
+    @apply h-auto! py-4! rounded-2xl!;
   }
 }
 </style>

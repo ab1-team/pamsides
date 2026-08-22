@@ -24,7 +24,7 @@
           <h1 class="text-2xl! lg:text-3xl! font-black! text-slate-800! tracking-tight!">
             Selamat Datang,
             <span
-              class="text-transparent! bg-clip-text! bg-gradient-to-r! from-cyan-500! to-blue-500!"
+              class="text-transparent! bg-clip-text! bg-linear-to-r! from-cyan-500! to-blue-500!"
               >{{ teknisiName }}</span
             >
           </h1>
@@ -34,7 +34,7 @@
         </div>
         <div class="flex! items-center! gap-4!">
           <div
-            class="bg-white! px-4! py-3! rounded-2xl! shadow-sm! border! border-slate-100! flex! items-center! gap-3!"
+            class="bg-white! px-4! py-3! rounded-2xl! shadow-xs! border! border-slate-100! flex! items-center! gap-3!"
           >
             <div
               class="w-9! h-9! rounded-lg! bg-cyan-50! text-cyan-600! flex! items-center! justify-center!"
@@ -56,13 +56,13 @@
         <!-- Primary Action: Catat Meter -->
         <div
           @click="$router.push('/app/instalasi/teknisiPemakaianAir')"
-          class="group! cursor-pointer! bg-gradient-to-br! from-cyan-500! to-blue-600! p-6! rounded-3xl! shadow-lg! shadow-cyan-500/30! relative! overflow-hidden! transition-all! hover:-translate-y-1! hover:shadow-cyan-500/50!"
+          class="group! cursor-pointer! bg-linear-to-br! from-cyan-500! to-blue-600! p-6! rounded-3xl! shadow-lg! shadow-cyan-500/30! relative! overflow-hidden! transition-all! hover:-translate-y-1! hover:shadow-cyan-500/50!"
         >
           <div
             class="absolute! top-0! right-0! w-32! h-32! bg-white/10! rounded-full! blur-2xl! -mr-10! -mt-10!"
           ></div>
           <div
-            class="w-12! h-12! bg-white/20! backdrop-blur-sm! rounded-xl! flex! items-center! justify-center! text-white! text-xl! mb-4! group-hover:scale-110! transition-transform!"
+            class="w-12! h-12! bg-white/20! backdrop-blur-xs! rounded-xl! flex! items-center! justify-center! text-white! text-xl! mb-4! group-hover:scale-110! transition-transform!"
           >
             <font-awesome-icon icon="tachometer-alt" />
           </div>
@@ -82,7 +82,7 @@
         <!-- Secondary Action: Daftar Tagihan -->
         <div
           @click="$router.push('/app/teknisi/daftar-tagihan')"
-          class="group! cursor-pointer! bg-white! border! border-slate-100! p-6! rounded-3xl! shadow-sm! relative! overflow-hidden! transition-all! hover:-translate-y-1! hover:border-rose-200! hover:shadow-xl! hover:shadow-rose-500/10!"
+          class="group! cursor-pointer! bg-white! border! border-slate-100! p-6! rounded-3xl! shadow-xs! relative! overflow-hidden! transition-all! hover:-translate-y-1! hover:border-rose-200! hover:shadow-xl! hover:shadow-rose-500/10!"
         >
           <div class="flex! items-start! justify-between! mb-4!">
             <div
@@ -112,7 +112,7 @@
 
         <!-- Stats: Target Pencatatan -->
         <div
-          class="bg-white! border! border-slate-100! p-4! rounded-3xl! shadow-sm! lg:col-span-2! flex! flex-col! justify-center!"
+          class="bg-white! border! border-slate-100! p-4! rounded-3xl! shadow-xs! lg:col-span-2! flex! flex-col! justify-center!"
         >
           <div class="flex! items-center! justify-between! mb-3!">
             <div class="flex! items-center! gap-2!">
@@ -138,7 +138,7 @@
 
           <div class="relative! w-full! h-2.5! bg-slate-100! rounded-full! overflow-hidden!">
             <div
-              class="absolute! top-0! left-0! h-full! bg-gradient-to-r! from-emerald-400! to-emerald-500! rounded-full! transition-all! duration-1000!"
+              class="absolute! top-0! left-0! h-full! bg-linear-to-r! from-emerald-400! to-emerald-500! rounded-full! transition-all! duration-1000!"
               :style="{ width: meterProgressPercentage + '%' }"
             ></div>
           </div>
@@ -183,7 +183,7 @@
             <div
               v-for="(task, idx) in displayedTasks"
               :key="idx"
-              class="bg-white! p-5! rounded-2xl! shadow-sm! border! border-slate-100! flex! flex-col! sm:flex-row! sm:items-center! justify-between! gap-4! transition-all! hover:shadow-md! hover:border-cyan-100!"
+              class="bg-white! p-5! rounded-2xl! shadow-xs! border! border-slate-100! flex! flex-col! sm:flex-row! sm:items-center! justify-between! gap-4! transition-all! hover:shadow-md! hover:border-cyan-100!"
             >
               <div class="flex! items-start! gap-4!">
                 <div
@@ -260,7 +260,7 @@
               <div
                 v-for="cust in suspendedList"
                 :key="cust.id"
-                class="bg-white! p-4! rounded-2xl! shadow-sm! border! border-rose-100! flex! items-center! gap-3! transition-all! hover:shadow-md! hover:border-rose-200!"
+                class="bg-white! p-4! rounded-2xl! shadow-xs! border! border-rose-100! flex! items-center! gap-3! transition-all! hover:shadow-md! hover:border-rose-200!"
               >
                 <div
                   class="w-10! h-10! rounded-xl! bg-rose-100! text-rose-600! flex! items-center! justify-center! shrink-0! font-black! text-sm!"
@@ -295,7 +295,7 @@
                 <button
                   @click="handleRestore(cust)"
                   :disabled="restoringId === cust.id || cust.unpaid_count > 0"
-                  class="px-3! py-2! rounded-xl! text-[10px]! font-black! uppercase! tracking-wider! transition-all! active:scale-95! flex! items-center! gap-1.5! shadow-sm! shrink-0!"
+                  class="px-3! py-2! rounded-xl! text-[10px]! font-black! uppercase! tracking-wider! transition-all! active:scale-95! flex! items-center! gap-1.5! shadow-xs! shrink-0!"
                   :class="
                     cust.unpaid_count > 0
                       ? 'bg-slate-100! text-slate-400! cursor-not-allowed!'

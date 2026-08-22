@@ -1,7 +1,7 @@
 <template>
   <div
     v-if="show"
-    class="fixed! inset-0! bg-black/50! backdrop-blur-sm! z-[60]! flex! items-center! justify-center! p-4!"
+    class="fixed! inset-0! bg-black/50! backdrop-blur-xs! z-[60]! flex! items-center! justify-center! p-4!"
     @click.self="$emit('close')"
   >
     <div
@@ -40,7 +40,7 @@
                 v-model="formData.distance_to_pipe_m"
                 type="number"
                 step="1"
-                class="w-full! h-12! px-4! bg-slate-50! border! border-slate-200! rounded-xl! text-sm! text-slate-700! focus:outline-none! focus:border-indigo-500! focus:bg-white! transition-all! font-bold!"
+                class="w-full! h-12! px-4! bg-slate-50! border! border-slate-200! rounded-xl! text-sm! text-slate-700! focus:outline-hidden! focus:border-indigo-500! focus:bg-white! transition-all! font-bold!"
                 placeholder="0"
               />
               <span
@@ -59,7 +59,7 @@
             <textarea
               v-model="formData.material_notes"
               rows="4"
-              class="w-full! px-4! py-3! bg-slate-50! border! border-slate-200! rounded-xl! text-sm! text-slate-700! focus:outline-none! focus:border-indigo-500! focus:bg-white! transition-all! font-medium! resize-none!"
+              class="w-full! px-4! py-3! bg-slate-50! border! border-slate-200! rounded-xl! text-sm! text-slate-700! focus:outline-hidden! focus:border-indigo-500! focus:bg-white! transition-all! font-medium! resize-none!"
               placeholder="Contoh: Butuh penambahan pipa 2 meter, lokasi di gang sempit..."
             ></textarea>
           </div>
@@ -148,7 +148,7 @@
           <button
             @click="submitSurvey"
             :disabled="!isFormValid || isSubmitting"
-            class="flex-1! flex! items-center! justify-center! gap-2! bg-gradient-to-r! from-indigo-500! to-blue-600! hover:from-indigo-600! hover:to-blue-700! text-white! font-bold! py-3! rounded-xl! shadow-lg! shadow-indigo-200/50! transition-all! active:scale-95! disabled:opacity-50! disabled:cursor-not-allowed!"
+            class="flex-1! flex! items-center! justify-center! gap-2! bg-linear-to-r! from-indigo-500! to-blue-600! hover:from-indigo-600! hover:to-blue-700! text-white! font-bold! py-3! rounded-xl! shadow-lg! shadow-indigo-200/50! transition-all! active:scale-95! disabled:opacity-50! disabled:cursor-not-allowed!"
           >
             <font-awesome-icon icon="save" />
             {{ isSubmitting ? 'Menyimpan...' : 'Simpan Survey' }}
@@ -297,7 +297,7 @@ const submitSurvey = async () => {
 }
 
 .preview-overlay {
-  @apply absolute inset-0 bg-gradient-to-t from-black/50 to-transparent;
+  @apply absolute inset-0 bg-linear-to-t from-black/50 to-transparent;
 }
 
 .remove-btn {

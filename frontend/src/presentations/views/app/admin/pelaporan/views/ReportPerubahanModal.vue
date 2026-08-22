@@ -23,11 +23,13 @@
           <td class="text-right">{{ formatCurrency(item.saldo) }}</td>
         </tr>
         
-        <tr v-for="i in (5 - (payload?.items?.length || 0))" :key="'empty-'+i" v-if="(payload?.items?.length || 0) < 5">
-          <td class="text-center">{{ (payload?.items?.length || 0) + i }}</td>
-          <td>&nbsp;</td>
-          <td>&nbsp;</td>
-        </tr>
+        <template v-if="(payload?.items?.length || 0) < 5">
+          <tr v-for="i in (5 - (payload?.items?.length || 0))" :key="'empty-'+i">
+            <td class="text-center">{{ (payload?.items?.length || 0) + i }}</td>
+            <td>&nbsp;</td>
+            <td>&nbsp;</td>
+          </tr>
+        </template>
         
         <tr class="total-row">
           <td colspan="2" class="text-center"><b>TOTAL</b></td>
@@ -42,7 +44,6 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
 import BaseReportLayout from '../layouts/BaseReportLayout.vue'
 
 defineProps({
@@ -67,14 +68,6 @@ const formatCurrency = (val) => {
   });
   return number < 0 ? `(${formatted})` : formatted;
 }
-
-const tanggalCetak = computed(() => {
-  return new Date().toLocaleDateString('id-ID', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-  })
-})
 </script>
 
 <style scoped>

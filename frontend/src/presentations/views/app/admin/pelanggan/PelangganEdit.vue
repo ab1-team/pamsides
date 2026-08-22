@@ -5,7 +5,7 @@
         variant="ghost"
         size="md"
         @click="router.push('/app/data-pelanggan')"
-        class="w-12! h-12! p-0! rounded-full! border! border-slate-200! hover:bg-slate-50! text-slate-600! shadow-sm! transition-all!"
+        class="w-12! h-12! p-0! rounded-full! border! border-slate-200! hover:bg-slate-50! text-slate-600! shadow-xs! transition-all!"
         icon="arrow-left"
         title="Kembali ke Daftar"
       />

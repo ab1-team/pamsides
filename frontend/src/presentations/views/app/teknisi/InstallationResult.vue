@@ -52,7 +52,7 @@
               <input
                 v-model="formData.meter_number"
                 type="text"
-                class="w-full! text-lg! bg-slate-50! border-2! border-slate-100! rounded-2xl! px-5! py-4! focus:border-cyan-500! focus:outline-none! font-bold! text-slate-700!"
+                class="w-full! text-lg! bg-slate-50! border-2! border-slate-100! rounded-2xl! px-5! py-4! focus:border-cyan-500! focus:outline-hidden! font-bold! text-slate-700!"
                 placeholder="Contoh: MTR-2024-001234"
               />
               <p class="mt-2! text-xs! text-slate-400! font-medium!">
@@ -69,7 +69,7 @@
                 <input
                   v-model="formData.initial_meter_value"
                   type="number"
-                  class="w-full! text-2xl! bg-slate-50! border-2! border-slate-100! rounded-2xl! px-5! py-4! focus:border-cyan-500! focus:outline-none! font-black! text-cyan-600!"
+                  class="w-full! text-2xl! bg-slate-50! border-2! border-slate-100! rounded-2xl! px-5! py-4! focus:border-cyan-500! focus:outline-hidden! font-black! text-cyan-600!"
                   placeholder="0"
                 />
                 <span
@@ -87,7 +87,7 @@
               <textarea
                 v-model="formData.notes"
                 rows="4"
-                class="w-full! bg-slate-50! border-2! border-slate-100! rounded-2xl! px-5! py-4! focus:border-cyan-500! focus:outline-none! text-sm! text-slate-700! font-medium!"
+                class="w-full! bg-slate-50! border-2! border-slate-100! rounded-2xl! px-5! py-4! focus:border-cyan-500! focus:outline-hidden! text-sm! text-slate-700! font-medium!"
                 placeholder="Contoh: Pipa tambahan 3 meter, dll..."
               ></textarea>
             </div>
@@ -105,7 +105,7 @@
                 @click="$refs.fileInput.click()"
               >
                 <div
-                  class="w-20! h-20! bg-white! rounded-full! flex! items-center! justify-center! shadow-sm! mb-4! text-cyan-500!"
+                  class="w-20! h-20! bg-white! rounded-full! flex! items-center! justify-center! shadow-xs! mb-4! text-cyan-500!"
                 >
                   <font-awesome-icon icon="camera" size="2x" />
                 </div>

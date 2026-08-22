@@ -2,14 +2,14 @@
   <Teleport to="body">
     <div
       v-if="show"
-      class="fixed! inset-0! z-[100]! flex! items-end! md:items-center! justify-center! bg-slate-900/80! backdrop-blur-sm! p-0! md:p-4! transition-all!"
+      class="fixed! inset-0! z-[100]! flex! items-end! md:items-center! justify-center! bg-slate-900/80! backdrop-blur-xs! p-0! md:p-4! transition-all!"
       @click="closeModal"
     >
       <div
         class="bg-white! w-full! h-full! md:h-auto! md:max-w-2xl! rounded-none! md:rounded-[2.5rem]! shadow-2xl! relative! flex! flex-col! overflow-hidden! animate-in! slide-in-from-bottom-full! md:fade-in! md:zoom-in-95! duration-300!"
         @click.stop
       >
-        <div class="h-2! bg-gradient-to-r! from-cyan-500! to-blue-600! w-full! shrink-0!"></div>
+        <div class="h-2! bg-linear-to-r! from-cyan-500! to-blue-600! w-full! shrink-0!"></div>
 
         <div
           class="px-5! md:px-6! py-4! md:py-5! border-b! border-slate-50! flex! items-center! justify-between! shrink-0!"
@@ -37,7 +37,7 @@
 
         <div class="p-4! md:p-5! overflow-y-auto! flex-1! md:max-h-[75vh]!">
           <div
-            class="flex! items-center! gap-2! p-2.5! rounded-2xl! bg-gradient-to-r! from-slate-50! to-blue-50/50! border! border-slate-100! mb-4!"
+            class="flex! items-center! gap-2! p-2.5! rounded-2xl! bg-linear-to-r! from-slate-50! to-blue-50/50! border! border-slate-100! mb-4!"
           >
             <div
               class="w-8! h-8! rounded-lg! bg-white! flex! items-center! justify-center! text-slate-400! shrink-0!"
@@ -75,7 +75,7 @@
                   <label class="text-[9px]! font-black! text-slate-700! uppercase! tracking-widest!">Meter Akhir (Bulan Ini)</label>
                 </div>
                 <div
-                  class="flex! items-center! bg-white! border-2! border-slate-200! rounded-xl! px-4! py-2.5! shadow-sm! focus-within:border-cyan-500! focus-within:ring-4! focus-within:ring-cyan-500/10! transition-all!"
+                  class="flex! items-center! bg-white! border-2! border-slate-200! rounded-xl! px-4! py-2.5! shadow-xs! focus-within:border-cyan-500! focus-within:ring-4! focus-within:ring-cyan-500/10! transition-all!"
                 >
                   <input
                     type="text"
@@ -84,7 +84,7 @@
                     ref="meterInput"
                     placeholder="0000"
                     onkeypress="return /[0-9]/.test(event.key)"
-                    class="flex-1! bg-transparent! border-none! outline-none! text-base! font-black! text-slate-800! placeholder-slate-200! focus:text-cyan-600! font-mono!"
+                    class="flex-1! bg-transparent! border-none! outline-hidden! text-base! font-black! text-slate-800! placeholder-slate-200! focus:text-cyan-600! font-mono!"
                   />
                   <span class="text-[9px]! font-black! text-cyan-600! bg-cyan-50! px-1.5! py-0.5! rounded!">M³</span>
                 </div>
@@ -185,7 +185,7 @@
                     <button
                       @click="takeSnapshot"
                       type="button"
-                      class="w-16! h-16! rounded-full! bg-white/30! backdrop-blur-sm! border-4! border-white! flex! items-center! justify-center! hover:scale-105! active:scale-95! transition-all! shadow-lg!"
+                      class="w-16! h-16! rounded-full! bg-white/30! backdrop-blur-xs! border-4! border-white! flex! items-center! justify-center! hover:scale-105! active:scale-95! transition-all! shadow-lg!"
                     >
                       <div class="w-12! h-12! rounded-full! bg-white!"></div>
                     </button>
@@ -202,7 +202,7 @@
                     class="w-full! aspect-square! object-cover! group-hover:scale-105! transition-transform! duration-700!"
                   />
                   <div
-                    class="absolute! inset-0! bg-gradient-to-t! from-slate-900/60! via-transparent! to-transparent!"
+                    class="absolute! inset-0! bg-linear-to-t! from-slate-900/60! via-transparent! to-transparent!"
                   ></div>
 
                   <div
@@ -264,7 +264,7 @@
                     <button
                       type="button"
                       @click="triggerFile"
-                      class="w-full! flex! items-center! justify-center! gap-2! py-2! px-4! rounded-lg! bg-slate-100! text-slate-600! font-black! text-[10px]! uppercase! tracking-wider! shadow-sm! hover:bg-slate-200! transition-all! active:scale-95!"
+                      class="w-full! flex! items-center! justify-center! gap-2! py-2! px-4! rounded-lg! bg-slate-100! text-slate-600! font-black! text-[10px]! uppercase! tracking-wider! shadow-xs! hover:bg-slate-200! transition-all! active:scale-95!"
                     >
                       <font-awesome-icon icon="folder-open" />
                       File

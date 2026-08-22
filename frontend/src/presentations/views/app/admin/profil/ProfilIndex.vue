@@ -116,7 +116,7 @@
         <div
           class="flex! flex-col! sm:flex-row! justify-end! items-stretch! sm:items-center! gap-3! mt-8! pt-6! border-t! border-slate-100!"
         >
-          <BaseButton variant="info" @click="showModal = true" class="shadow-sm!" icon="key">
+          <BaseButton variant="info" @click="showModal = true" class="shadow-xs!" icon="key">
             Ubah Password
           </BaseButton>
           <BaseButton variant="secondary" @click="saveProfile" :loading="isSaving" icon="save">

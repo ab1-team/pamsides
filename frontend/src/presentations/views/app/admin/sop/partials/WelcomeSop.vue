@@ -31,7 +31,7 @@
       >
         Selamat Datang di
         <span
-          class="bg-gradient-to-r! from-indigo-600! via-blue-600! to-cyan-500! bg-clip-text! text-transparent! drop-shadow-xs!"
+          class="bg-linear-to-r! from-indigo-600! via-blue-600! to-cyan-500! bg-clip-text! text-transparent! drop-shadow-xs!"
           >Pusat Kendali SOP</span
         >
       </h1>
@@ -50,7 +50,7 @@
         class="group! relative! bg-white! border! border-slate-100! rounded-2xl! p-4! shadow-[0_4px_20px_rgba(15,23,42,0.02)]! hover:shadow-xl! hover:shadow-indigo-100/30! hover:-translate-y-1! transition-all! duration-300!"
       >
         <div
-          class="w-8! h-8! bg-indigo-50! group-hover:bg-indigo-600! text-indigo-600! group-hover:text-white! rounded-xl! flex! items-center! justify-center! shadow-sm! transition-all! duration-300! mb-2!"
+          class="w-8! h-8! bg-indigo-50! group-hover:bg-indigo-600! text-indigo-600! group-hover:text-white! rounded-xl! flex! items-center! justify-center! shadow-xs! transition-all! duration-300! mb-2!"
         >
           <font-awesome-icon icon="building" class="text-sm!" />
         </div>
@@ -70,7 +70,7 @@
         class="group! relative! bg-white! border! border-slate-100! rounded-2xl! p-4! shadow-[0_4px_20px_rgba(15,23,42,0.02)]! hover:shadow-xl! hover:shadow-cyan-100/30! hover:-translate-y-1! transition-all! duration-300!"
       >
         <div
-          class="w-8! h-8! bg-cyan-50! group-hover:bg-cyan-500! text-cyan-600! group-hover:text-white! rounded-xl! flex! items-center! justify-center! shadow-sm! transition-all! duration-300! mb-2!"
+          class="w-8! h-8! bg-cyan-50! group-hover:bg-cyan-500! text-cyan-600! group-hover:text-white! rounded-xl! flex! items-center! justify-center! shadow-xs! transition-all! duration-300! mb-2!"
         >
           <font-awesome-icon icon="user-plus" class="text-sm!" />
         </div>
@@ -90,7 +90,7 @@
         class="group! relative! bg-white! border! border-slate-100! rounded-2xl! p-4! shadow-[0_4px_20px_rgba(15,23,42,0.02)]! hover:shadow-xl! hover:shadow-emerald-100/30! hover:-translate-y-1! transition-all! duration-300!"
       >
         <div
-          class="w-8! h-8! bg-emerald-50! group-hover:bg-emerald-500! text-emerald-600! group-hover:text-white! rounded-xl! flex! items-center! justify-center! shadow-sm! transition-all! duration-300! mb-2!"
+          class="w-8! h-8! bg-emerald-50! group-hover:bg-emerald-500! text-emerald-600! group-hover:text-white! rounded-xl! flex! items-center! justify-center! shadow-xs! transition-all! duration-300! mb-2!"
         >
           <font-awesome-icon icon="file-invoice-dollar" class="text-sm!" />
         </div>

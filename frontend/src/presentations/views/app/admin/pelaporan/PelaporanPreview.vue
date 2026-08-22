@@ -60,25 +60,26 @@
 
       <div class="preview-stage" ref="stageEl" @scroll.passive="onStageScroll">
         <div ref="reportRoot" class="report-root">
-          <div
-            v-if="pages.length > 0"
-            v-for="(page, i) in pages"
-            :key="i"
-            class="report-page-wrap"
-            :style="{
-              width: pageNaturalWidth(i) + 'px',
-              zoom: pageScale(i) !== 1 ? pageScale(i) : undefined,
-              marginBottom: pageMarginBottom(i),
-            }"
-          >
-            <component
-              :is="resolvedView"
-              :id="'report-page-' + i"
-              :payload="page.payload"
-              :meta="page.meta"
-              :ref="(el) => registerPageRef(el, i)"
-            />
-          </div>
+          <template v-if="pages.length > 0">
+            <div
+              v-for="(page, i) in pages"
+              :key="i"
+              class="report-page-wrap"
+              :style="{
+                width: pageNaturalWidth(i) + 'px',
+                zoom: pageScale(i) !== 1 ? pageScale(i) : undefined,
+                marginBottom: pageMarginBottom(i),
+              }"
+            >
+              <component
+                :is="resolvedView"
+                :id="'report-page-' + i"
+                :payload="page.payload"
+                :meta="page.meta"
+                :ref="(el) => registerPageRef(el, i)"
+              />
+            </div>
+          </template>
         </div>
       </div>
 
@@ -88,10 +89,8 @@
 
 <script setup>
 import { computed, nextTick, onMounted, onUnmounted, onBeforeUnmount, ref, shallowRef, watch } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
-import BaseButton from '@/presentations/components/ui/BaseButton.vue'
+import { useRoute } from 'vue-router'
 import pelaporanService from '@/services/pelaporan.service.js'
-import { usePdfReport } from '@/composables/usePdfReport.js'
 
 // Kelompok Utama
 import CoverView from '@/presentations/views/app/admin/pelaporan/views/ReportCover.vue'
@@ -155,9 +154,7 @@ const reportComponents = {
   'tutup_buku_calk': TutupBukuCalkView
 };
 
-const router = useRouter()
 const route = useRoute()
-const { isGenerating, downloadPdf, bulanNama } = usePdfReport()
 
 const loading = ref(true)
 const errorMsg = ref('')
@@ -222,12 +219,6 @@ const pageNaturalWidth = (i) => {
   return pageDimsMm(p).w * PX_PER_MM
 }
 
-const pageNaturalHeight = (i) => {
-  const p = pages.value[i]
-  if (!p) return 0
-  return pageDimsMm(p).h * PX_PER_MM
-}
-
 const pageScale = (i) => {
   if (!stageWidth.value) return 1
   const natural = pageNaturalWidth(i)
@@ -238,7 +229,7 @@ const pageScale = (i) => {
   return baseFit * zoomLevel.value
 }
 
-const pageMarginBottom = (i) => {
+const pageMarginBottom = () => {
   // CSS zoom menskalakan layout box sekaligus visual, jadi flex gap 24px
   // dari .report-root sudah cukup untuk jarak visual antar halaman di semua zoom level.
   return '0px'
@@ -615,13 +606,6 @@ const onStageScroll = () => {
     activePage.value = nearest
     nextTick(() => scrollThumbIntoView(nearest))
   }
-}
-
-const collectPageElements = async () => {
-  await nextTick()
-  await new Promise((r) => setTimeout(r, 250))
-  const els = pageRefs.value.filter(Boolean)
-  return els
 }
 
 onMounted(async () => {

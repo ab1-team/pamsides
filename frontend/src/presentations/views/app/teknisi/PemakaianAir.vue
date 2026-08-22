@@ -86,7 +86,7 @@
                   type="text"
                   :value="staffName"
                   readonly
-                  class="w-full! bg-slate-50! border-2! border-slate-100! rounded-2xl! px-6! py-4! text-sm! font-bold! text-slate-700! focus:border-blue-500! focus:outline-none! transition-all!"
+                  class="w-full! bg-slate-50! border-2! border-slate-100! rounded-2xl! px-6! py-4! text-sm! font-bold! text-slate-700! focus:border-blue-500! focus:outline-hidden! transition-all!"
                 />
                 <div class="absolute! right-6! top-1/2! -translate-y-1/2! text-blue-500!">
                   <font-awesome-icon icon="id-badge" />
@@ -113,7 +113,7 @@
         <!-- Right Column: Stats & Info -->
         <div class="col-span-5! flex! flex-col! gap-6!">
           <div
-            class="bg-gradient-to-br from-blue-600 to-indigo-700! rounded-2xl! p-4! text-white! shadow-lg! shadow-blue-100! relative! overflow-hidden!"
+            class="bg-linear-to-br from-blue-600 to-indigo-700! rounded-2xl! p-4! text-white! shadow-lg! shadow-blue-100! relative! overflow-hidden!"
           >
             <div class="relative! z-10!">
               <p class="text-blue-100! text-[9px]! font-black! uppercase! tracking-widest! mb-3!">
@@ -205,7 +205,7 @@
 
       <!-- Mobile Progress Card -->
       <div
-        class="bg-gradient-to-br from-blue-600 to-indigo-700! rounded-2xl! p-4! text-white! shadow-lg! shadow-blue-100!"
+        class="bg-linear-to-br from-blue-600 to-indigo-700! rounded-2xl! p-4! text-white! shadow-lg! shadow-blue-100!"
       >
         <div v-if="stats.loading" class="animate-pulse!">
           <div class="h-4! w-32! bg-white/20! rounded! mb-4!"></div>
@@ -367,7 +367,7 @@
           class="fixed inset-0! z-50 flex items-center justify-center p-4! md:p-8!"
         >
           <div
-            class="absolute inset-0! bg-slate-900/60! backdrop-blur-sm!"
+            class="absolute inset-0! bg-slate-900/60! backdrop-blur-xs!"
             @click="closeResultsModal"
           ></div>
 
@@ -424,7 +424,7 @@
                   type="text"
                   v-model="searchQuery"
                   placeholder="Cari ..."
-                  class="block w-full pl-9! pr-4! py-2! bg-white border border-slate-200 rounded-lg! text-sm! focus:outline-none focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 transition-all shadow-sm!"
+                  class="block w-full pl-9! pr-4! py-2! bg-white border border-slate-200 rounded-lg! text-sm! focus:outline-hidden focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 transition-all shadow-xs!"
                 />
               </div>
             </div>
@@ -572,7 +572,7 @@
             >
               <button
                 @click="closeResultsModal"
-                class="flex items-center! gap-2! bg-white! border! border-slate-300! hover:bg-slate-100! text-slate-700! px-6! py-2.5! font-semibold! transition-all active:scale-95 rounded-lg! shadow-sm!"
+                class="flex items-center! gap-2! bg-white! border! border-slate-300! hover:bg-slate-100! text-slate-700! px-6! py-2.5! font-semibold! transition-all active:scale-95 rounded-lg! shadow-xs!"
               >
                 <font-awesome-icon icon="times" />
                 Tutup

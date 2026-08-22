@@ -2,7 +2,7 @@
   <Teleport to="body">
     <Transition name="modal-fade">
       <div v-if="show" class="fixed inset-0! z-50 flex items-center justify-center p-4! md:p-8!">
-        <div class="absolute inset-0! bg-slate-900/60! backdrop-blur-sm!" @click="close"></div>
+        <div class="absolute inset-0! bg-slate-900/60! backdrop-blur-xs!" @click="close"></div>
 
         <div
           class="relative w-full! max-w-2xl! bg-white rounded-2xl! shadow-xl! border border-slate-200 flex flex-col overflow-hidden animate-slide-up max-h-[90vh]!"
@@ -55,7 +55,7 @@
                           v-model="formData.distance_to_pipe_m"
                           type="number"
                           step="0.01"
-                          class="w-full! px-4! py-3! bg-white! border-2! border-slate-200! rounded-xl! text-sm! text-slate-700! focus:outline-none! focus:border-orange-500! focus:ring-2! focus:ring-orange-200! transition-all! font-bold! pr-16!"
+                          class="w-full! px-4! py-3! bg-white! border-2! border-slate-200! rounded-xl! text-sm! text-slate-700! focus:outline-hidden! focus:border-orange-500! focus:ring-2! focus:ring-orange-200! transition-all! font-bold! pr-16!"
                           placeholder="Masukkan jarak"
                         />
                         <span
@@ -72,7 +72,7 @@
                       <textarea
                         v-model="formData.material_notes"
                         rows="5"
-                        class="w-full! px-4! py-3! bg-white! border-2! border-slate-200! rounded-xl! text-sm! text-slate-700! focus:outline-none! focus:border-orange-500! focus:ring-2! focus:ring-orange-200! transition-all! font-medium! resize-none!"
+                        class="w-full! px-4! py-3! bg-white! border-2! border-slate-200! rounded-xl! text-sm! text-slate-700! focus:outline-hidden! focus:border-orange-500! focus:ring-2! focus:ring-orange-200! transition-all! font-medium! resize-none!"
                         placeholder="Contoh: Butuh penambahan pipa 2 meter, lokasi di gang sempit..."
                       ></textarea>
                     </div>
@@ -170,7 +170,7 @@
           >
             <button
               @click="close"
-              class="flex items-center! gap-2! bg-white! border! border-slate-300! hover:bg-slate-100! text-slate-700! px-6! py-2.5! font-semibold! transition-all active:scale-95 rounded-lg! shadow-sm!"
+              class="flex items-center! gap-2! bg-white! border! border-slate-300! hover:bg-slate-100! text-slate-700! px-6! py-2.5! font-semibold! transition-all active:scale-95 rounded-lg! shadow-xs!"
             >
               <font-awesome-icon icon="times" />
               Batal

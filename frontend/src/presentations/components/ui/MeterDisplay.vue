@@ -78,11 +78,11 @@ const meterCardClasses = computed(() => {
 
   switch (props.type) {
     case 'initial':
-      return `${base} bg-gradient-to-br! from-slate-50! via-slate-100! to-slate-200!`
+      return `${base} bg-linear-to-br! from-slate-50! via-slate-100! to-slate-200!`
     case 'final':
-      return `${base} bg-gradient-to-br! from-zinc-50! via-zinc-100! to-zinc-200!`
+      return `${base} bg-linear-to-br! from-zinc-50! via-zinc-100! to-zinc-200!`
     case 'total':
-      return `${base} bg-gradient-to-br! from-gray-700! via-gray-800! to-gray-900! shadow-xl! flex! flex-col!`
+      return `${base} bg-linear-to-br! from-gray-700! via-gray-800! to-gray-900! shadow-xl! flex! flex-col!`
     default:
       return base
   }

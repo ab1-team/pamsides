@@ -72,11 +72,6 @@ const rows = computed(() => {
   return []
 })
 
-const periodeText = computed(() => {
-  const p = props.payload?.periode || {}
-  return `01 ${p.bulan_name?.toUpperCase() || ''} ${p.tahun || ''} S.D 30 ${p.bulan_name?.toUpperCase() || ''} ${p.tahun || ''}`
-})
-
 const format = (value) => {
   const angka = Number(value || 0)
   return angka.toLocaleString('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 })

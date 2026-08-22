@@ -115,13 +115,6 @@
     })
     const pad = (n) => String(n || '').padStart(2, '0')
 
-    const formatDate = (val) => {
-        if (!val) return ''
-        const d = new Date(val)
-        if (isNaN(d)) return val
-        return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()}`
-    }
-
     const isKredit = computed(() => String(props.payload?.jenis_mutasi || '').toLowerCase() === 'kredit')
 
     const showHeader = computed(() => props.payload?.showHeader !== false)

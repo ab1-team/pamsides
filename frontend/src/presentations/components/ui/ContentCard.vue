@@ -67,7 +67,7 @@ const cardClasses = computed(() => {
   // Gaya sudut membulat
   const roundedStyles = {
     none: 'rounded-none',
-    sm: 'rounded-sm',
+    sm: 'rounded-xs',
     md: 'rounded-md',
     lg: 'rounded-lg',
     xl: 'rounded-xl',

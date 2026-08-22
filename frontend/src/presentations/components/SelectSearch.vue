@@ -440,7 +440,7 @@ onUnmounted(() => {
 .search-input-field {
   @apply w-full pl-9 pr-3 py-2 bg-white border border-slate-200 rounded-xl text-sm text-slate-700 transition-all;
   @apply placeholder:text-slate-400 placeholder:font-normal;
-  @apply focus:outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-500/5;
+  @apply focus:outline-hidden focus:border-blue-400 focus:ring-4 focus:ring-blue-500/5;
 }
 
 .options-list {

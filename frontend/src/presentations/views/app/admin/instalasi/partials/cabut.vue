@@ -92,7 +92,7 @@
         <button
           @click="handleDelete"
           :disabled="!customer.ticketId || customer.tunggakanList.length > 0"
-          class="flex! items-center! justify-center! gap-2! bg-gradient-to-r! from-red-500! to-rose-600! hover:from-red-600! hover:to-rose-700! text-white! font-bold! py-2.5! rounded-xl! shadow-lg! shadow-red-200/50! transition-all! active:scale-95! disabled:opacity-50! disabled:cursor-not-allowed!"
+          class="flex! items-center! justify-center! gap-2! bg-linear-to-r! from-red-500! to-rose-600! hover:from-red-600! hover:to-rose-700! text-white! font-bold! py-2.5! rounded-xl! shadow-lg! shadow-red-200/50! transition-all! active:scale-95! disabled:opacity-50! disabled:cursor-not-allowed!"
         >
           <font-awesome-icon icon="trash-alt" />
           Hapus Permanen

@@ -4,7 +4,7 @@
       <ContentCard variant="bordered" padding="normal" rounded="2xl">
         <div class="flex! items-center! gap-3!">
           <div
-            class="w-12! h-12! rounded-full! flex! items-center! justify-center! text-white! text-sm! font-bold! shrink-0! shadow-sm!"
+            class="w-12! h-12! rounded-full! flex! items-center! justify-center! text-white! text-sm! font-bold! shrink-0! shadow-xs!"
             :style="{ backgroundColor: avatarColor }"
           >
             {{ customerInitials }}
@@ -96,7 +96,7 @@
             class="flex-1! flex! flex-col! items-center! relative!"
           >
             <div
-              class="w-7! h-7! rounded-full! flex! items-center! justify-center! text-white! text-[10px]! shadow-sm! z-10! transition-all!"
+              class="w-7! h-7! rounded-full! flex! items-center! justify-center! text-white! text-[10px]! shadow-xs! z-10! transition-all!"
               :class="
                 step.state === 'done'
                   ? 'bg-emerald-500!'
@@ -239,7 +239,7 @@
             <button
               @click="handleAdvance"
               :disabled="!customer.ticketId || isAdvancing"
-              class="w-full! flex! items-center! justify-center! gap-2! bg-gradient-to-r! from-sky-500! to-blue-600! hover:from-sky-600! hover:to-blue-700! text-white! font-bold! py-2.5! rounded-xl! shadow-lg! shadow-sky-200/50! transition-all! active:scale-95! disabled:opacity-50! disabled:cursor-not-allowed!"
+              class="w-full! flex! items-center! justify-center! gap-2! bg-linear-to-r! from-sky-500! to-blue-600! hover:from-sky-600! hover:to-blue-700! text-white! font-bold! py-2.5! rounded-xl! shadow-lg! shadow-sky-200/50! transition-all! active:scale-95! disabled:opacity-50! disabled:cursor-not-allowed!"
             >
               <font-awesome-icon
                 :icon="isAdvancing ? 'spinner' : 'arrow-right'"
@@ -352,7 +352,7 @@
                   type="number"
                   step="1"
                   min="0"
-                  class="w-full! h-9! px-3! pr-12! bg-slate-50! border! border-slate-200! rounded-lg! text-xs! text-slate-700! focus:outline-none! focus:border-sky-500! focus:bg-white! transition-all!"
+                  class="w-full! h-9! px-3! pr-12! bg-slate-50! border! border-slate-200! rounded-lg! text-xs! text-slate-700! focus:outline-hidden! focus:border-sky-500! focus:bg-white! transition-all!"
                   placeholder="0"
                 />
                 <span
@@ -434,7 +434,7 @@
               :disabled="
                 !installForm.initial_meter_reading || !installForm.photoFile || isSubmittingInstall
               "
-              class="w-full! flex! items-center! justify-center! gap-2! bg-gradient-to-r! from-sky-500! to-blue-600! hover:from-sky-600! hover:to-blue-700! text-white! font-bold! py-2.5! rounded-xl! shadow-lg! shadow-sky-200/50! transition-all! active:scale-95! disabled:opacity-50! disabled:cursor-not-allowed!"
+              class="w-full! flex! items-center! justify-center! gap-2! bg-linear-to-r! from-sky-500! to-blue-600! hover:from-sky-600! hover:to-blue-700! text-white! font-bold! py-2.5! rounded-xl! shadow-lg! shadow-sky-200/50! transition-all! active:scale-95! disabled:opacity-50! disabled:cursor-not-allowed!"
             >
               <font-awesome-icon
                 :icon="isSubmittingInstall ? 'spinner' : 'save'"

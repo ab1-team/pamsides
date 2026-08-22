@@ -7,7 +7,7 @@
 
       <!-- Icon/Illustration Placeholder -->
       <div class="absolute! inset-0! flex! items-center! justify-center! text-slate-500!">
-        <font-awesome-icon :icon="icon" size="2x" class="md:size-3x! drop-shadow-sm!" />
+        <font-awesome-icon :icon="icon" size="2x" class="md:size-3x! drop-shadow-xs!" />
       </div>
     </div>
 

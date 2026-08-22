@@ -5,7 +5,7 @@
         variant="ghost"
         icon="arrow-left"
         @click="$router.back()"
-        class="w-12! h-12! p-0! rounded-full! border! border-slate-200! bg-white! hover:bg-slate-50! hover:border-slate-300! text-slate-600! shadow-sm! shrink-0!"
+        class="w-12! h-12! p-0! rounded-full! border! border-slate-200! bg-white! hover:bg-slate-50! hover:border-slate-300! text-slate-600! shadow-xs! shrink-0!"
       />
       <div>
         <h1 class="text-3xl font-extrabold text-slate-900! tracking-tight mb-0.5!">

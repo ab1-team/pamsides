@@ -16,7 +16,7 @@
 
       <div class="flex! flex-wrap! gap-2!">
         <div
-          class="px-4! py-2! rounded-xl! bg-white! border! border-amber-200! shadow-sm! flex! items-center! gap-2!"
+          class="px-4! py-2! rounded-xl! bg-white! border! border-amber-200! shadow-xs! flex! items-center! gap-2!"
         >
           <div class="w-2! h-2! rounded-full! bg-amber-500!"></div>
           <div>
@@ -27,7 +27,7 @@
           </div>
         </div>
         <div
-          class="px-4! py-2! rounded-xl! bg-white! border! border-orange-200! shadow-sm! flex! items-center! gap-2!"
+          class="px-4! py-2! rounded-xl! bg-white! border! border-orange-200! shadow-xs! flex! items-center! gap-2!"
         >
           <div class="w-2! h-2! rounded-full! bg-orange-500! animate-pulse!"></div>
           <div>
@@ -38,7 +38,7 @@
           </div>
         </div>
         <div
-          class="px-4! py-2! rounded-xl! bg-white! border! border-sky-200! shadow-sm! flex! items-center! gap-2!"
+          class="px-4! py-2! rounded-xl! bg-white! border! border-sky-200! shadow-xs! flex! items-center! gap-2!"
         >
           <div class="w-2! h-2! rounded-full! bg-sky-500!"></div>
           <div>
@@ -88,7 +88,7 @@
               v-model="search"
               type="text"
               placeholder="Cari nama, NIK, atau kode..."
-              class="w-full! pl-9! pr-3! py-2! bg-slate-50! border! border-slate-200! rounded-lg! text-xs! text-slate-700! focus:outline-none! focus:ring-2! focus:ring-sky-100! focus:border-sky-400! transition-all!"
+              class="w-full! pl-9! pr-3! py-2! bg-slate-50! border! border-slate-200! rounded-lg! text-xs! text-slate-700! focus:outline-hidden! focus:ring-2! focus:ring-sky-100! focus:border-sky-400! transition-all!"
             />
           </div>
         </div>
@@ -158,7 +158,7 @@
                   :class="
                     t.is_paid_off
                       ? 'bg-emerald-500!'
-                      : 'bg-gradient-to-r! from-orange-400! to-orange-500!'
+                      : 'bg-linear-to-r! from-orange-400! to-orange-500!'
                   "
                   :style="{ width: `${getProgress(t)}%` }"
                 ></div>
@@ -262,7 +262,7 @@
               </div>
 
               <div class="grid! grid-cols-3! gap-2! mt-4!">
-                <div class="bg-white/5! backdrop-blur-sm! rounded-lg! p-3!">
+                <div class="bg-white/5! backdrop-blur-xs! rounded-lg! p-3!">
                   <div class="text-[10px]! text-white/60! uppercase! font-bold! tracking-wider!">
                     Total Tagihan
                   </div>
@@ -271,7 +271,7 @@
                   </div>
                 </div>
                 <div
-                  class="bg-emerald-500/10! backdrop-blur-sm! rounded-lg! p-3! border! border-emerald-400/20!"
+                  class="bg-emerald-500/10! backdrop-blur-xs! rounded-lg! p-3! border! border-emerald-400/20!"
                 >
                   <div class="text-[10px]! text-emerald-300! uppercase! font-bold! tracking-wider!">
                     Sudah Dibayar
@@ -281,7 +281,7 @@
                   </div>
                 </div>
                 <div
-                  class="rounded-lg! p-3! backdrop-blur-sm! border!"
+                  class="rounded-lg! p-3! backdrop-blur-xs! border!"
                   :class="
                     selectedTicket.is_paid_off
                       ? 'bg-emerald-500/10! border-emerald-400/20!'
@@ -349,7 +349,7 @@
                     class="flex-1! px-2! py-1.5! rounded-lg! border! text-[11px]! font-bold! transition-all!"
                     :class="
                       form.amount === opt.value
-                        ? 'bg-sky-500! text-white! border-sky-500! shadow-sm!'
+                        ? 'bg-sky-500! text-white! border-sky-500! shadow-xs!'
                         : 'bg-white! text-slate-600! border-slate-200! hover:border-sky-300!'
                     "
                   >
@@ -367,7 +367,7 @@
                     type="text"
                     inputmode="numeric"
                     placeholder="0"
-                    class="w-full! pl-10! pr-3! py-2.5! text-sm! font-extrabold! text-sky-700! bg-sky-50! border! border-sky-200! rounded-lg! focus:outline-none! focus:ring-2! focus:ring-sky-200! focus:border-sky-400!"
+                    class="w-full! pl-10! pr-3! py-2.5! text-sm! font-extrabold! text-sky-700! bg-sky-50! border! border-sky-200! rounded-lg! focus:outline-hidden! focus:ring-2! focus:ring-sky-200! focus:border-sky-400!"
                   />
                 </div>
                 <div class="flex! items-center! justify-between! mt-1.5! text-[11px]!">
@@ -416,8 +416,8 @@
                   class="flex-1! py-2.5! rounded-lg! font-bold! text-sm! flex! items-center! justify-center! gap-2! transition-all! disabled:opacity-50! disabled:cursor-not-allowed!"
                   :class="
                     form.amount >= selectedTicket.remaining
-                      ? 'bg-gradient-to-r! from-emerald-500! to-emerald-600! hover:from-emerald-600! hover:to-emerald-700! text-white! shadow-lg! shadow-emerald-200!'
-                      : 'bg-gradient-to-r! from-sky-500! to-blue-600! hover:from-sky-600! hover:to-blue-700! text-white! shadow-lg! shadow-sky-200!'
+                      ? 'bg-linear-to-r! from-emerald-500! to-emerald-600! hover:from-emerald-600! hover:to-emerald-700! text-white! shadow-lg! shadow-emerald-200!'
+                      : 'bg-linear-to-r! from-sky-500! to-blue-600! hover:from-sky-600! hover:to-blue-700! text-white! shadow-lg! shadow-sky-200!'
                   "
                 >
                   <font-awesome-icon v-if="submitting" icon="spinner" spin />
@@ -724,11 +724,11 @@ const handleSubmit = async () => {
         denyButtonColor: '#10b981',
         reverseButtons: false,
         customClass: {
-          popup: 'rounded-2xl !font-sans',
-          title: '!text-base !font-bold !text-slate-900 !pb-2',
-          confirmButton: '!rounded-lg !px-4 !py-2 !text-sm !font-semibold',
-          denyButton: '!rounded-lg !px-4 !py-2 !text-sm !font-semibold',
-          actions: '!gap-2',
+          popup: 'rounded-2xl font-sans!',
+          title: 'text-base! font-bold! text-slate-900! pb-2!',
+          confirmButton: 'rounded-lg! px-4! py-2! text-sm! font-semibold!',
+          denyButton: 'rounded-lg! px-4! py-2! text-sm! font-semibold!',
+          actions: 'gap-2!',
         },
       })
       if (choice.isConfirmed) {

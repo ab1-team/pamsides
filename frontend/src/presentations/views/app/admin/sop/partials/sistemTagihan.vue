@@ -1,6 +1,6 @@
 <template>
   <div class="flex flex-col gap-6! py-2!">
-    <div class="relative! p-1! bg-slate-50/50! border! border-slate-100! rounded-3xl! shadow-sm!">
+    <div class="relative! p-1! bg-slate-50/50! border! border-slate-100! rounded-3xl! shadow-xs!">
       <div
         class="grid grid-cols-1 md:grid-cols-2! divide-y! md:divide-y-0! md:divide-x! divide-slate-100!"
       >

@@ -1,10 +1,12 @@
 <template>
-  <div class="currency-input" :class="{ 'mb-2': !noMargin }">
+  <div
+    class="currency-input"
+    :class="{ 'mb-2': !noMargin, 'currency-input--sm': size === 'sm' }"
+  >
     <label v-if="label" class="currency-label">{{ label }}</label>
     <div class="currency-input-wrapper">
-      <span v-if="!hidePrefix" class="currency-prefix">Rp.</span>
       <InputNumber
-        v-model="internalValue"
+        :model-value="modelValue"
         :placeholder="placeholder"
         :disabled="disabled"
         :readonly="readonly"
@@ -14,9 +16,8 @@
         :maxFractionDigits="2"
         :min="0"
         class="custom-input-number"
-        @input="handleInput"
+        @update:model-value="(v) => emit('update:modelValue', toNum(v))"
         @blur="handleBlur"
-        @focus="handleFocus"
       />
     </div>
 
@@ -25,10 +26,9 @@
 </template>
 
 <script setup>
-import { ref, watch } from 'vue'
 import InputNumber from 'primevue/inputnumber'
 
-const props = defineProps({
+defineProps({
   modelValue: { type: [Number, String], default: null },
   label: { type: String, default: '' },
   placeholder: { type: String, default: '0,00' },
@@ -39,40 +39,21 @@ const props = defineProps({
   helperText: { type: String, default: '' },
   noMargin: { type: Boolean, default: false },
   size: { type: String, default: 'normal', validator: (v) => ['normal', 'sm'].includes(v) },
-  hidePrefix: { type: Boolean, default: false },
 })
 
 const emit = defineEmits(['update:modelValue', 'change'])
 
-const internalValue = ref(props.modelValue ?? null)
-
-// Sync dari luar ke dalam
-watch(
-  () => props.modelValue,
-  (val) => {
-    if (val !== internalValue.value) internalValue.value = val ?? null
-  },
-)
-
-// Sync dari dalam ke luar — coerce ke Number agar parent computed tidak NaN/null
 function toNum(v) {
   if (v === null || v === undefined || v === '') return 0
   const n = typeof v === 'number' ? v : Number(String(v).replace(/\./g, '').replace(',', '.'))
   return Number.isFinite(n) ? n : 0
 }
 
-function handleInput(e) {
-  emit('update:modelValue', toNum(e.value))
-}
-
-function handleBlur() {
-  const v = toNum(internalValue.value)
-  internalValue.value = v
-  emit('update:modelValue', v)
+function handleBlur(e) {
+  const raw = e?.value
+  const v = toNum(raw)
   emit('change', v)
 }
-
-function handleFocus() {}
 </script>
 
 <style scoped>
@@ -88,14 +69,6 @@ function handleFocus() {}
 
 .currency-input-wrapper {
   @apply relative flex items-center;
-}
-
-.currency-prefix {
-  @apply absolute left-4 text-slate-400 text-sm font-medium z-10;
-}
-
-.currency-input-wrapper:not(:has(.currency-prefix)) :deep(.p-inputnumber-input) {
-  padding-left: 1rem !important;
 }
 
 :deep(.p-inputnumber) {
@@ -114,7 +87,11 @@ function handleFocus() {}
   color: #334155 !important;
   transition: all 0.3s !important;
   outline: none !important;
-  height: v-bind('size === "sm" ? "2.25rem" : "2.75rem"');
+  height: 2.75rem;
+}
+
+.currency-input--sm :deep(.p-inputnumber-input) {
+  height: 2.25rem !important;
 }
 :deep(.p-inputnumber-input::placeholder) {
   color: #94a3b8 !important;

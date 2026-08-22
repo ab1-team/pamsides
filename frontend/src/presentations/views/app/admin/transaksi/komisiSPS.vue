@@ -42,7 +42,7 @@
             <BaseInput
               :model-value="formatRp(form.totalTagihan)"
               label="Total Tagihan"
-              placeholder="Rp. 0,00"
+              placeholder="0,00"
               :readonly="true"
             />
             <span v-if="unpaidInfo" class="text-[11px]! text-slate-500! mt-1!">
@@ -57,7 +57,6 @@
               placeholder="0,00"
               label="Nominal Komisi"
               :readonly="true"
-              hide-prefix
             />
           </div>
         </div>
@@ -109,7 +108,7 @@
       <div class="flex! flex-col! gap-4! lg:sticky! lg:top-8!">
         <ContentCard variant="minimal" padding="normal" hoverable>
           <div class="flex! gap-3! items-start!">
-            <div class="text-base! flex-shrink-0! mt-0.5!">ℹ️</div>
+            <div class="text-base! shrink-0! mt-0.5!">ℹ️</div>
             <div class="text-xs! text-slate-600! leading-relaxed!">
               <strong>Bantuan Komisi SPS</strong><br />
               Pilih pelanggan untuk menampilkan total tagihan unpaid. Nominal akan
@@ -178,7 +177,6 @@ const {
   notificationState,
   success,
   error,
-  warning,
   handleConfirm,
   handleCancel,
   handleClose,

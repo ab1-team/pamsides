@@ -13,11 +13,11 @@
       </div>
 
       <div
-        class="flex! items-center! gap-2! lg:gap-3! bg-white! py-1.5! lg:py-2.5! px-3! lg:px-5! rounded-[2rem]! border! border-slate-100! shadow-sm!"
+        class="flex! items-center! gap-2! lg:gap-3! bg-white! py-1.5! lg:py-2.5! px-3! lg:px-5! rounded-[2rem]! border! border-slate-100! shadow-xs!"
       >
         <div class="relative!">
           <div
-            class="w-8! lg:w-10! h-8! lg:h-10! rounded-full! bg-gradient-to-br! from-cyan-500! to-cyan-700! text-white! flex! items-center! justify-center! text-[10px]! lg:text-xs! font-black! shadow-inner!"
+            class="w-8! lg:w-10! h-8! lg:h-10! rounded-full! bg-linear-to-br! from-cyan-500! to-cyan-700! text-white! flex! items-center! justify-center! text-[10px]! lg:text-xs! font-black! shadow-inner!"
           >
             AS
           </div>
@@ -47,7 +47,7 @@
       <div class="space-y-8! pb-4!">
         <div class="flex! items-center! gap-2! sm:gap-4!">
           <div
-            class="flex! items-center! h-14! bg-white! rounded-2xl! border! border-slate-100! p-1.5! pr-2! sm:pr-4! shadow-sm! w-full! sm:w-auto!"
+            class="flex! items-center! h-14! bg-white! rounded-2xl! border! border-slate-100! p-1.5! pr-2! sm:pr-4! shadow-xs! w-full! sm:w-auto!"
           >
             <div
               class="hidden! sm:flex! w-9! h-9! rounded-xl! bg-cyan-100! text-cyan-600! items-center! justify-center! mr-2!"
@@ -79,7 +79,7 @@
 
           <button
             @click="refreshData"
-            class="w-14! h-14! rounded-2xl! bg-white! border! border-slate-100! text-slate-400! hover:text-cyan-600! hover:border-cyan-200! shadow-sm! transition-all! flex! items-center! justify-center! active:scale-90!"
+            class="w-14! h-14! rounded-2xl! bg-white! border! border-slate-100! text-slate-400! hover:text-cyan-600! hover:border-cyan-200! shadow-xs! transition-all! flex! items-center! justify-center! active:scale-90!"
             title="Segarkan Data"
           >
             <font-awesome-icon icon="redo-alt" />
@@ -94,7 +94,7 @@
             class="relative! bg-slate-50! border! border-slate-100! rounded-[2rem]! p-2! flex! items-center! gap-2! transition-all! duration-300! group-focus-within:bg-white! group-focus-within:border-cyan-300! group-focus-within:shadow-2xl! group-focus-within:shadow-cyan-100!"
           >
             <div
-              class="w-12! h-12! rounded-full! bg-white! flex! items-center! justify-center! text-slate-400! group-focus-within:text-cyan-500! transition-colors! shadow-sm!"
+              class="w-12! h-12! rounded-full! bg-white! flex! items-center! justify-center! text-slate-400! group-focus-within:text-cyan-500! transition-colors! shadow-xs!"
             >
               <font-awesome-icon icon="search" />
             </div>
@@ -102,13 +102,13 @@
               v-model="searchQuery"
               type="text"
               placeholder="Cari nama pelanggan atau nomor rumah..."
-              class="hidden! lg:block! flex-1! bg-transparent! border-none! outline-none! focus:outline-none! focus:ring-0! font-bold! text-slate-700! px-2! placeholder:text-slate-400!"
+              class="hidden! lg:block! flex-1! bg-transparent! border-none! outline-hidden! focus:outline-hidden! focus:ring-0! font-bold! text-slate-700! px-2! placeholder:text-slate-400!"
             />
             <input
               v-model="searchQuery"
               type="text"
               placeholder="Cari pelanggan..."
-              class="lg:hidden! flex-1! bg-transparent! border-none! outline-none! focus:outline-none! focus:ring-0! font-bold! text-slate-700! px-2! placeholder:text-slate-400!"
+              class="lg:hidden! flex-1! bg-transparent! border-none! outline-hidden! focus:outline-hidden! focus:ring-0! font-bold! text-slate-700! px-2! placeholder:text-slate-400!"
             />
             <div class="hidden lg:flex! items-center! gap-2! pr-2!">
               <kbd
@@ -182,7 +182,7 @@
         <button
           @click="currentPage--"
           :disabled="currentPage === 1"
-          class="w-10! h-10! rounded-xl! bg-white! border! border-slate-100! text-slate-400! disabled:opacity-30! flex! items-center! justify-center! shadow-sm!"
+          class="w-10! h-10! rounded-xl! bg-white! border! border-slate-100! text-slate-400! disabled:opacity-30! flex! items-center! justify-center! shadow-xs!"
         >
           <font-awesome-icon icon="chevron-left" />
         </button>
@@ -206,7 +206,7 @@
         <button
           @click="currentPage++"
           :disabled="currentPage === totalPages"
-          class="w-10! h-10! rounded-xl! bg-white! border! border-slate-100! text-slate-400! disabled:opacity-30! flex! items-center! justify-center! shadow-sm!"
+          class="w-10! h-10! rounded-xl! bg-white! border! border-slate-100! text-slate-400! disabled:opacity-30! flex! items-center! justify-center! shadow-xs!"
         >
           <font-awesome-icon icon="chevron-right" />
         </button>

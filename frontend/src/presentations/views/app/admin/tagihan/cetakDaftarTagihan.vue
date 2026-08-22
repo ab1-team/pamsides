@@ -71,13 +71,13 @@
 </template>
 
 <script setup>
-import { computed, nextTick, onMounted, onBeforeUnmount, onUnmounted, ref, shallowRef } from 'vue'
+import { computed, nextTick, onMounted, onBeforeUnmount, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import ReportView from '@/presentations/views/app/admin/tagihan/partials/ReportCetakDaftarTagihan.vue'
 import { usePemakaianAir } from '@/composables/usePemakaianAir'
 
 const route = useRoute()
-const { tableData, filter, refreshData, groupedData } = usePemakaianAir()
+const { filter, refreshData, groupedData } = usePemakaianAir()
 
 const isLoading = ref(true)
 const errorMsg = ref('')

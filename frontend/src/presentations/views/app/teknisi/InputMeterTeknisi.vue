@@ -7,7 +7,7 @@
         <BaseButton
           variant="ghost"
           icon="chevron-left"
-          class="w-8! h-8! md:w-10! md:h-10! p-0! rounded-full! bg-white! shadow-sm!"
+          class="w-8! h-8! md:w-10! md:h-10! p-0! rounded-full! bg-white! shadow-xs!"
           @click="handleBack"
         />
         <div>
@@ -47,7 +47,7 @@
               type="text"
               inputmode="numeric"
               v-model.number="row.meterAkhir"
-              class="w-16! md:w-20! text-right! bg-transparent! outline-none! border-b! border-transparent! focus:border-cyan-500! hover:border-slate-300! transition-colors! font-semibold!"
+              class="w-16! md:w-20! text-right! bg-transparent! outline-hidden! border-b! border-transparent! focus:border-cyan-500! hover:border-slate-300! transition-colors! font-semibold!"
               :class="row.meterAkhir === row.meterAwal ? 'text-red-500!' : 'text-orange-500!'"
             />
           </template>
@@ -87,7 +87,7 @@
               v-model="searchQuery"
               type="text"
               placeholder="Cari nama atau no. induk..."
-              class="w-full! pl-10! pr-4! py-3! bg-slate-50! border! border-slate-200! rounded-2xl! text-sm! text-slate-700! focus:outline-none! focus:ring-2! focus:ring-cyan-500/10! focus:border-cyan-400! transition-all!"
+              class="w-full! pl-10! pr-4! py-3! bg-slate-50! border! border-slate-200! rounded-2xl! text-sm! text-slate-700! focus:outline-hidden! focus:ring-2! focus:ring-cyan-500/10! focus:border-cyan-400! transition-all!"
             />
           </div>
 
@@ -114,7 +114,7 @@
           <div class="flex! items-start! justify-between! gap-3!">
             <div class="flex! items-center! gap-3! min-w-0!">
               <div
-                class="w-10! h-10! rounded-xl! bg-gradient-to-br! from-cyan-500! to-blue-600! flex! items-center! justify-center! text-white! font-bold! text-sm! shadow-sm! shrink-0!"
+                class="w-10! h-10! rounded-xl! bg-linear-to-br! from-cyan-500! to-blue-600! flex! items-center! justify-center! text-white! font-bold! text-sm! shadow-xs! shrink-0!"
               >
                 {{ row.nama.charAt(0) }}
               </div>
@@ -172,7 +172,7 @@
             size="sm"
             :disabled="currentPage === 1"
             @click="currentPage--"
-            class="w-10! h-10! p-0! rounded-full! bg-white! border! border-slate-100! text-slate-400! shadow-sm!"
+            class="w-10! h-10! p-0! rounded-full! bg-white! border! border-slate-100! text-slate-400! shadow-xs!"
           >
             <font-awesome-icon icon="chevron-left" class="text-[10px]!" />
           </BaseButton>
@@ -181,7 +181,7 @@
             size="sm"
             :disabled="currentPage === totalPages"
             @click="currentPage++"
-            class="w-10! h-10! p-0! rounded-full! bg-white! border! border-slate-100! text-slate-400! shadow-sm!"
+            class="w-10! h-10! p-0! rounded-full! bg-white! border! border-slate-100! text-slate-400! shadow-xs!"
           >
             <font-awesome-icon icon="chevron-right" class="text-[10px]!" />
           </BaseButton>

@@ -86,7 +86,7 @@
               <div
                 v-for="(block, idx) in row.water_tariff_blocks"
                 :key="idx"
-                class="bg-white! p-3! rounded-2xl! border! border-slate-100! shadow-sm! hover:shadow-md! hover:border-blue-100! transition-all! relative! overflow-hidden!"
+                class="bg-white! p-3! rounded-2xl! border! border-slate-100! shadow-xs! hover:shadow-md! hover:border-blue-100! transition-all! relative! overflow-hidden!"
               >
                 <div
                   v-if="!block.usage_max_m3"
@@ -141,14 +141,14 @@
               size="sm"
               icon="edit"
               @click="handleEdit(row)"
-              class="w-8! h-8! p-0! rounded-lg! border! border-slate-100! hover:border-blue-200! hover:bg-blue-50! text-slate-600! hover:text-blue-600! shadow-sm! transition-all!"
+              class="w-8! h-8! p-0! rounded-lg! border! border-slate-100! hover:border-blue-200! hover:bg-blue-50! text-slate-600! hover:text-blue-600! shadow-xs! transition-all!"
             />
             <BaseButton
               variant="ghost"
               size="sm"
               icon="trash"
               @click="handleDelete(row)"
-              class="w-8! h-8! p-0! rounded-lg! border! border-slate-100! hover:border-red-200! hover:bg-red-50! text-slate-600! hover:text-red-600! shadow-sm! transition-all!"
+              class="w-8! h-8! p-0! rounded-lg! border! border-slate-100! hover:border-red-200! hover:bg-red-50! text-slate-600! hover:text-red-600! shadow-xs! transition-all!"
             />
           </div>
         </template>

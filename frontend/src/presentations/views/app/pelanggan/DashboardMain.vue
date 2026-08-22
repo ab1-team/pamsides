@@ -22,7 +22,7 @@
             >
               Selamat Datang,<br v-if="isMobile" />
               <span
-                class="bg-gradient-to-r! from-indigo-600! to-blue-500! bg-clip-text! text-transparent!"
+                class="bg-linear-to-r! from-indigo-600! to-blue-500! bg-clip-text! text-transparent!"
                 >{{ dashboardData.user.name }}</span
               >
               👋
@@ -45,7 +45,7 @@
             class="h-full! border-0! shadow-[0_25px_50px_-12px_rgba(0,0,0,0.15)]! rounded-3xl! overflow-hidden! bg-white! relative!"
           >
             <div
-              class="absolute! top-0! left-0! right-0! h-2! bg-gradient-to-r! from-indigo-500! to-blue-400!"
+              class="absolute! top-0! left-0! right-0! h-2! bg-linear-to-r! from-indigo-500! to-blue-400!"
             ></div>
 
             <div class="p-5! lg:p-8!">
@@ -357,7 +357,7 @@
         >
           <div class="p-4! lg:p-5! flex! items-center! gap-4!">
             <div
-              :class="`w-12! h-12! rounded-full! ${action.bg}! ${action.color}! flex! items-center! justify-center! text-lg! flex-shrink-0! shadow-inner! group-hover:scale-110! transition-transform!`"
+              :class="`w-12! h-12! rounded-full! ${action.bg}! ${action.color}! flex! items-center! justify-center! text-lg! shrink-0! shadow-inner! group-hover:scale-110! transition-transform!`"
             >
               <font-awesome-icon :icon="action.icon" />
             </div>
@@ -442,8 +442,6 @@ const distributionSeries = computed(() => {
 })
 
 const usageValues = computed(() => distributionSeries.value.map((p) => Number(p.usage_m3 || 0)))
-
-const usageLabels = computed(() => distributionSeries.value.map((p) => p.label))
 
 const usageLabelsCompact = computed(() => distributionSeries.value.map((p) => p.shortLabel))
 
@@ -536,16 +534,6 @@ const topMonths = computed(() => {
     .filter((p) => p.usage_m3 > 0)
     .sort((a, b) => b.usage_m3 - a.usage_m3)
     .slice(0, 3)
-})
-
-const totalUsageRupiahEquivalent = computed(() => {
-  const bill = dashboardData.value.latest_bill
-  if (!bill) return null
-  const avg = avgUsage.value
-  if (!avg) return Number(bill.total_amount) || 0
-  // estimasi kasar: skala tagihan terakhir ke rata-rata pemakaian
-  const ratio = avg / Math.max(Number(bill.usage_m3) || 1, 1)
-  return Math.round((Number(bill.total_amount) || 0) * ratio)
 })
 
 const formatNumber = (num) => new Intl.NumberFormat('id-ID').format(Number(num) || 0)

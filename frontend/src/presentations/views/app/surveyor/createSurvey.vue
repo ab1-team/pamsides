@@ -7,7 +7,7 @@
         <button
           v-if="route.query.id"
           @click="router.push('/app')"
-          class="w-10! h-10! bg-white! border! border-slate-200! rounded-full! flex! items-center! justify-center! text-slate-500! hover:bg-slate-50! hover:text-orange-500! transition-all! shadow-sm!"
+          class="w-10! h-10! bg-white! border! border-slate-200! rounded-full! flex! items-center! justify-center! text-slate-500! hover:bg-slate-50! hover:text-orange-500! transition-all! shadow-xs!"
         >
           <font-awesome-icon icon="arrow-left" />
         </button>
@@ -22,7 +22,7 @@
       </div>
 
       <div
-        class="bg-white! border! border-slate-200! rounded-2xl! px-4! py-2.5! flex! items-center! gap-3! shadow-sm! self-start! md:self-center!"
+        class="bg-white! border! border-slate-200! rounded-2xl! px-4! py-2.5! flex! items-center! gap-3! shadow-xs! self-start! md:self-center!"
       >
         <div
           class="w-9! h-9! bg-slate-100! rounded-xl! flex! items-center! justify-center! text-slate-500! shrink-0!"
@@ -44,7 +44,7 @@
 
     <div class="grid! grid-cols-1! lg:grid-cols-12! gap-6! lg:gap-8!">
       <div class="lg:col-span-8! space-y-6!">
-        <ContentCard variant="default" padding="large" class="border-0! shadow-sm!">
+        <ContentCard variant="default" padding="large" class="border-0! shadow-xs!">
           <div class="flex! items-center! gap-3! mb-6!">
             <div class="w-1.5! h-6! bg-indigo-500! rounded-full!"></div>
             <h3 class="text-base! md:text-lg! font-black! text-slate-800!">Informasi Teknis</h3>
@@ -84,7 +84,7 @@
                     v-model="formData.distance_to_pipe_m"
                     type="number"
                     step="1"
-                    class="w-full! h-12! px-4! bg-slate-50! border! border-slate-200! rounded-xl! text-sm! text-slate-700! focus:outline-none! focus:border-orange-500! focus:bg-white! transition-all! font-bold!"
+                    class="w-full! h-12! px-4! bg-slate-50! border! border-slate-200! rounded-xl! text-sm! text-slate-700! focus:outline-hidden! focus:border-orange-500! focus:bg-white! transition-all! font-bold!"
                     placeholder="0"
                   />
                   <span
@@ -104,7 +104,7 @@
               <textarea
                 v-model="formData.material_notes"
                 rows="4"
-                class="w-full! px-4! py-3! bg-slate-50! border! border-slate-200! rounded-xl! text-sm! text-slate-700! focus:outline-none! focus:border-orange-500! focus:bg-white! transition-all! font-medium!"
+                class="w-full! px-4! py-3! bg-slate-50! border! border-slate-200! rounded-xl! text-sm! text-slate-700! focus:outline-hidden! focus:border-orange-500! focus:bg-white! transition-all! font-medium!"
                 placeholder="Contoh: Butuh penambahan pipa 2 meter, lokasi di gang sempit..."
               ></textarea>
             </div>
@@ -113,7 +113,7 @@
       </div>
 
       <div class="lg:col-span-4! space-y-6!">
-        <ContentCard variant="default" padding="large" class="border-0! shadow-sm!">
+        <ContentCard variant="default" padding="large" class="border-0! shadow-xs!">
           <div class="flex! items-center! gap-3! mb-6! md:mb-8!">
             <div class="w-1.5! h-6! bg-emerald-500! rounded-full!"></div>
             <h3 class="text-base! md:text-lg! font-black! text-slate-800!">Foto Lokasi</h3>
@@ -393,7 +393,7 @@ const submitSurvey = async () => {
 }
 
 .preview-overlay {
-  @apply absolute inset-0 bg-gradient-to-t from-black/50 to-transparent;
+  @apply absolute inset-0 bg-linear-to-t from-black/50 to-transparent;
 }
 
 .remove-btn {

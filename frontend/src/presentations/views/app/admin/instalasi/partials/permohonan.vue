@@ -91,7 +91,7 @@
                 v-model="formData.distance_to_pipe_m"
                 type="number"
                 step="1"
-                class="w-full! h-9! px-3! bg-slate-50! border! border-slate-200! rounded-lg! text-xs! text-slate-700! focus:outline-none! focus:border-indigo-500! focus:bg-white! transition-all!"
+                class="w-full! h-9! px-3! bg-slate-50! border! border-slate-200! rounded-lg! text-xs! text-slate-700! focus:outline-hidden! focus:border-indigo-500! focus:bg-white! transition-all!"
                 placeholder="0"
               />
               <span
@@ -110,7 +110,7 @@
             <textarea
               v-model="formData.material_notes"
               rows="2"
-              class="w-full! px-3! py-1.5! bg-slate-50! border! border-slate-200! rounded-lg! text-xs! text-slate-700! focus:outline-none! focus:border-indigo-500! focus:bg-white! transition-all! resize-y! min-h-16!"
+              class="w-full! px-3! py-1.5! bg-slate-50! border! border-slate-200! rounded-lg! text-xs! text-slate-700! focus:outline-hidden! focus:border-indigo-500! focus:bg-white! transition-all! resize-y! min-h-16!"
               placeholder="Catatan teknis..."
             ></textarea>
           </div>
@@ -185,7 +185,7 @@
           <button
             @click="submitSurvey"
             :disabled="!isFormValid || isSubmitting || !customer.ticketId"
-            class="w-full! flex! items-center! justify-center! gap-2! bg-gradient-to-r! from-indigo-500! to-blue-600! hover:from-indigo-600! hover:to-blue-700! text-white! font-bold! py-2.5! rounded-xl! shadow-lg! shadow-indigo-200/50! transition-all! active:scale-95! disabled:opacity-50! disabled:cursor-not-allowed!"
+            class="w-full! flex! items-center! justify-center! gap-2! bg-linear-to-r! from-indigo-500! to-blue-600! hover:from-indigo-600! hover:to-blue-700! text-white! font-bold! py-2.5! rounded-xl! shadow-lg! shadow-indigo-200/50! transition-all! active:scale-95! disabled:opacity-50! disabled:cursor-not-allowed!"
           >
             <font-awesome-icon icon="save" />
             {{ isSubmitting ? 'Menyimpan...' : 'Proses ke Pasang Baru' }}

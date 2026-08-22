@@ -88,14 +88,6 @@ const props = defineProps({
   payload: { type: Object, default: () => ({ config: {}, periode: {} }) }
 })
 
-const tanggalCetak = computed(() => {
-  return new Date().toLocaleDateString('id-ID', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-  })
-})
-
 const formatRupiah = (val) => {
   const n = Number(val || 0)
   return n.toLocaleString('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
@@ -137,10 +129,6 @@ const pageTitle = computed(() => {
   // Jika API mengirimkan 'view_target', gunakan itu sebagai fallback
   const label = props.payload?.view_target === 'atb' ? 'ASET TAK BERWUJUD' : '';
   return currentGroup.value?.nama_akun || label;
-})
-
-const isLastPage = computed(() => {
-  return props.payload?.isLastPage !== false
 })
 
 const rows = computed(() => {

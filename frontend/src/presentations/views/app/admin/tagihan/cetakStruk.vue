@@ -70,7 +70,7 @@
 </template>
 
 <script setup>
-import { computed, nextTick, onMounted, onBeforeUnmount, ref, shallowRef } from 'vue'
+import { computed, nextTick, onMounted, onBeforeUnmount, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { useUiStore } from '@/stores/uiStore'
 import ReportView from '@/presentations/views/app/admin/tagihan/partials/ReportCetakStruk.vue'

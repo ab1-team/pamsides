@@ -85,15 +85,6 @@
         })
     }
 
-    const tanggalCetak = computed(() => {
-        return new Date().toLocaleDateString('id-ID', {
-            day: 'numeric',
-            month: 'long',
-            year: 'numeric',
-        })
-    })
-
-    const tempat = 'Tempat'
 </script>
 
 <style scoped>

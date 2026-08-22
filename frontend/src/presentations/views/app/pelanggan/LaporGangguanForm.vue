@@ -26,7 +26,7 @@
             >
             <select
               v-model="formData.trouble_type"
-              class="w-full! h-12! px-4! bg-slate-50! border-2! border-slate-100! rounded-xl! text-sm! text-slate-700! focus:outline-none! focus:border-indigo-500! focus:bg-white! transition-all! font-bold!"
+              class="w-full! h-12! px-4! bg-slate-50! border-2! border-slate-100! rounded-xl! text-sm! text-slate-700! focus:outline-hidden! focus:border-indigo-500! focus:bg-white! transition-all! font-bold!"
             >
               <option value="">-- Pilih Jenis Gangguan --</option>
               <option value="air_mati">Air Mati Total</option>
@@ -46,7 +46,7 @@
             <textarea
               v-model="formData.description"
               rows="5"
-              class="w-full! px-4! py-3! bg-slate-50! border-2! border-slate-100! rounded-xl! text-sm! text-slate-700! focus:outline-none! focus:border-indigo-500! focus:bg-white! transition-all! font-medium!"
+              class="w-full! px-4! py-3! bg-slate-50! border-2! border-slate-100! rounded-xl! text-sm! text-slate-700! focus:outline-hidden! focus:border-indigo-500! focus:bg-white! transition-all! font-medium!"
               placeholder="Jelaskan masalah yang Anda alami secara detail..."
             ></textarea>
           </div>
@@ -111,7 +111,7 @@
             <input
               v-model="formData.contact_phone"
               type="tel"
-              class="w-full! h-12! px-4! bg-slate-50! border-2! border-slate-100! rounded-xl! text-sm! text-slate-700! focus:outline-none! focus:border-indigo-500! focus:bg-white! transition-all! font-bold!"
+              class="w-full! h-12! px-4! bg-slate-50! border-2! border-slate-100! rounded-xl! text-sm! text-slate-700! focus:outline-hidden! focus:border-indigo-500! focus:bg-white! transition-all! font-bold!"
               placeholder="Contoh: 081234567890"
             />
           </div>
@@ -156,7 +156,7 @@
         <ContentCard
           variant="elevated"
           padding="normal"
-          class="border-0! shadow-sm! cursor-pointer! hover:shadow-lg! transition-all!"
+          class="border-0! shadow-xs! cursor-pointer! hover:shadow-lg! transition-all!"
           @click="openWhatsApp"
         >
           <div class="flex! items-center! gap-4!">
@@ -178,7 +178,7 @@
         <ContentCard
           variant="elevated"
           padding="normal"
-          class="border-0! shadow-sm! cursor-pointer! hover:shadow-lg! transition-all!"
+          class="border-0! shadow-xs! cursor-pointer! hover:shadow-lg! transition-all!"
           @click="makeCall"
         >
           <div class="flex! items-center! gap-4!">

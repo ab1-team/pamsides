@@ -4,7 +4,7 @@
       <ContentCard variant="bordered" padding="normal" rounded="2xl">
         <div class="flex! items-center! gap-3!">
           <div
-            class="w-12! h-12! rounded-full! flex! items-center! justify-center! text-white! text-sm! font-bold! shrink-0! shadow-sm!"
+            class="w-12! h-12! rounded-full! flex! items-center! justify-center! text-white! text-sm! font-bold! shrink-0! shadow-xs!"
             :style="{ backgroundColor: avatarColor }"
           >
             {{ customerInitials }}
@@ -168,7 +168,7 @@
           Belum ada tagihan.
         </div>
         <div v-else class="space-y-2!">
-          <div class="rounded-xl! bg-gradient-to-br! from-sky-50! to-cyan-50! border! border-sky-100! p-3!">
+          <div class="rounded-xl! bg-linear-to-br! from-sky-50! to-cyan-50! border! border-sky-100! p-3!">
             <div class="flex! items-center! justify-between! mb-1!">
               <span class="text-[10px]! font-bold! text-slate-500! uppercase! tracking-wider!">
                 Periode
@@ -270,7 +270,7 @@
           <button
             @click="handleBlokir"
             :disabled="!customer.ticketId"
-            class="w-full! flex! items-center! justify-center! gap-2! bg-gradient-to-r! from-orange-500! to-amber-500! hover:from-orange-600! hover:to-amber-600! text-white! font-bold! py-2.5! rounded-xl! shadow-lg! shadow-orange-200/50! transition-all! active:scale-95! disabled:opacity-50! disabled:cursor-not-allowed!"
+            class="w-full! flex! items-center! justify-center! gap-2! bg-linear-to-r! from-orange-500! to-amber-500! hover:from-orange-600! hover:to-amber-600! text-white! font-bold! py-2.5! rounded-xl! shadow-lg! shadow-orange-200/50! transition-all! active:scale-95! disabled:opacity-50! disabled:cursor-not-allowed!"
           >
             <font-awesome-icon icon="ban" />
             Blokir Pelanggan
@@ -278,7 +278,7 @@
           <button
             @click="handleCabut"
             :disabled="!customer.ticketId"
-            class="w-full! flex! items-center! justify-center! gap-2! bg-gradient-to-r! from-red-500! to-rose-600! hover:from-red-600! hover:to-rose-700! text-white! font-bold! py-2.5! rounded-xl! shadow-lg! shadow-red-200/50! transition-all! active:scale-95! disabled:opacity-50! disabled:cursor-not-allowed!"
+            class="w-full! flex! items-center! justify-center! gap-2! bg-linear-to-r! from-red-500! to-rose-600! hover:from-red-600! hover:to-rose-700! text-white! font-bold! py-2.5! rounded-xl! shadow-lg! shadow-red-200/50! transition-all! active:scale-95! disabled:opacity-50! disabled:cursor-not-allowed!"
           >
             <font-awesome-icon icon="times-circle" />
             Cabut Instalasi

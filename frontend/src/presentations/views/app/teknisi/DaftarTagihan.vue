@@ -44,7 +44,7 @@
         <template #column-customer="{ row }">
           <div class="flex items-center gap-3!">
             <div
-              class="w-9! h-9! rounded-xl! bg-gradient-to-br! from-cyan-500! to-blue-600! flex! items-center! justify-center! text-white! text-xs! font-bold! shrink-0! shadow-sm!"
+              class="w-9! h-9! rounded-xl! bg-linear-to-br! from-cyan-500! to-blue-600! flex! items-center! justify-center! text-white! text-xs! font-bold! shrink-0! shadow-xs!"
             >
               {{ getInitials(row) }}
             </div>

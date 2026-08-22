@@ -48,7 +48,7 @@
       <!-- Suffix Icon atau Aksi -->
       <!-- Password Visibility Toggle -->
       <div v-if="type === 'password'" class="base-input__password-toggle">
-        <button type="button" @click="togglePassword" class="focus:outline-none!">
+        <button type="button" @click="togglePassword" class="focus:outline-hidden!">
           <font-awesome-icon :icon="showPassword ? 'eye-slash' : 'eye'" />
         </button>
       </div>

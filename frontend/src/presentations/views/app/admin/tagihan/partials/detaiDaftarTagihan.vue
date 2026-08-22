@@ -3,7 +3,7 @@
     <Transition name="modal-fade">
       <div
         v-if="show"
-        class="fixed! inset-0! bg-slate-950/60! backdrop-blur-sm! z-[9999]! flex! items-center! justify-center! p-4! overflow-y-auto!"
+        class="fixed! inset-0! bg-slate-950/60! backdrop-blur-xs! z-[9999]! flex! items-center! justify-center! p-4! overflow-y-auto!"
         @click="closeModal"
       >
         <div
@@ -11,7 +11,7 @@
           @click.stop
         >
           <div
-            class="px-6! py-4! bg-gradient-to-r! from-cyan-600! to-cyan-800! text-white! flex! items-center! justify-between! shrink-0!"
+            class="px-6! py-4! bg-linear-to-r! from-cyan-600! to-cyan-800! text-white! flex! items-center! justify-between! shrink-0!"
           >
             <div class="flex! items-center! gap-3!">
               <div
@@ -19,7 +19,7 @@
               >
                 <font-awesome-icon
                   icon="file-invoice-dollar"
-                  class="text-white! text-lg! !m-auto!"
+                  class="text-white! text-lg! m-auto!"
                 />
               </div>
               <div>
@@ -38,7 +38,7 @@
               @click="closeModal"
               class="w-8! h-8! rounded-xl! bg-white/10! hover:bg-white/20! flex! items-center! justify-center! text-white! hover:scale-105! transition-all! cursor-pointer!"
             >
-              <font-awesome-icon icon="times" class="text-sm! !m-auto!" />
+              <font-awesome-icon icon="times" class="text-sm! m-auto!" />
             </button>
           </div>
 
@@ -53,12 +53,12 @@
                 </h4>
 
                 <div
-                  class="bg-white! border! border-slate-100! rounded-2xl! p-5! shadow-sm! flex-1! flex! flex-col! justify-between! gap-6!"
+                  class="bg-white! border! border-slate-100! rounded-2xl! p-5! shadow-xs! flex-1! flex! flex-col! justify-between! gap-6!"
                 >
                   <div class="space-y-4!">
                     <div class="flex! items-center! gap-3.5! pb-4! border-b! border-slate-100!">
                       <div
-                        class="w-12! h-12! rounded-xl! bg-gradient-to-br! from-cyan-500! to-blue-600! text-white! flex! items-center! justify-center! text-base! font-bold! shadow-sm!"
+                        class="w-12! h-12! rounded-xl! bg-linear-to-br! from-cyan-500! to-blue-600! text-white! flex! items-center! justify-center! text-base! font-bold! shadow-xs!"
                       >
                         {{ getInitials }}
                       </div>
@@ -146,7 +146,7 @@
                 </h4>
 
                 <div
-                  class="bg-white! border! border-slate-100! rounded-2xl! p-5! shadow-sm! flex-1! flex! flex-col! justify-between! gap-6! relative! overflow-hidden!"
+                  class="bg-white! border! border-slate-100! rounded-2xl! p-5! shadow-xs! flex-1! flex! flex-col! justify-between! gap-6! relative! overflow-hidden!"
                 >
                   <div
                     class="absolute! top-0! right-0! bg-rose-50! text-rose-600! border-b! border-l! border-rose-100! px-3! py-1! rounded-bl-xl! text-[9px]! font-black! tracking-wider! uppercase!"
@@ -288,7 +288,7 @@
                 v-if="bill?.status !== 'paid'"
                 variant="info-gradient"
                 @click="sendWhatsAppReminder"
-                class="flex-1! sm:flex-initial! justify-center! rounded-xl! shadow-md! h-10! text-xs md:text-sm font-bold! bg-gradient-to-r! from-green-500! to-green-600! hover:from-green-600! hover:to-green-700!"
+                class="flex-1! sm:flex-initial! justify-center! rounded-xl! shadow-md! h-10! text-xs md:text-sm font-bold! bg-linear-to-r! from-green-500! to-green-600! hover:from-green-600! hover:to-green-700!"
                 icon="paper-plane"
               >
                 Kirim WA Pengingat

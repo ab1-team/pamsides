@@ -10,7 +10,7 @@
               type="number"
               min="2000"
               max="2100"
-              class="w-full h-12 pl-24 pr-12 bg-white border border-slate-200 rounded-xl text-center font-bold text-lg text-slate-700 transition-all duration-300 focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 focus:bg-white focus:shadow-lg focus:shadow-blue-500/5 hover:border-blue-400"
+              class="w-full h-12 pl-24 pr-12 bg-white border border-slate-200 rounded-xl text-center font-bold text-lg text-slate-700 transition-all duration-300 focus:outline-hidden focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 focus:bg-white focus:shadow-lg focus:shadow-blue-500/5 hover:border-blue-400"
               placeholder=""
             />
             <span class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
@@ -26,7 +26,7 @@
               type="number"
               min="1"
               max="12"
-              class="w-full h-12 pl-20 pr-12 bg-white border border-slate-200 rounded-xl text-center font-bold text-lg text-slate-700 transition-all duration-300 focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 focus:bg-white focus:shadow-lg focus:shadow-blue-500/5 hover:border-blue-400"
+              class="w-full h-12 pl-20 pr-12 bg-white border border-slate-200 rounded-xl text-center font-bold text-lg text-slate-700 transition-all duration-300 focus:outline-hidden focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 focus:bg-white focus:shadow-lg focus:shadow-blue-500/5 hover:border-blue-400"
               placeholder=""
             />
             <span class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">

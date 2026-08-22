@@ -180,7 +180,7 @@
                 <font-awesome-icon icon="calendar-alt" class="text-slate-400! text-xs!" />
                 <select
                   v-model.number="selectedYear"
-                  class="text-[11px]! font-bold! text-slate-600! bg-white! border! border-slate-200! rounded-md! px-2! py-1! focus:outline-none! focus:ring-2! focus:ring-blue-200!"
+                  class="text-[11px]! font-bold! text-slate-600! bg-white! border! border-slate-200! rounded-md! px-2! py-1! focus:outline-hidden! focus:ring-2! focus:ring-blue-200!"
                 >
                   <option v-for="y in availableYears" :key="y" :value="y">{{ y }}</option>
                 </select>

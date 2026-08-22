@@ -158,7 +158,7 @@ const fetchAccounts = async () => {
       },
     })
 
-    $(treeEl.value).on('click.jstree', '.jstree-anchor', function (e) {
+    $(treeEl.value).on('click.jstree', '.jstree-anchor', function () {
       const inst = $.jstree.reference(this)
       const node = inst && inst.get_node(this)
       if (!node) return

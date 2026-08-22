@@ -161,8 +161,8 @@ const bilang = (val) => {
 .lbl-meta { font-weight: normal !important; width: 65px; }
 
 .header-center { display: flex; align-items: center; gap: 12px; flex: 1; justify-content: flex-start; padding-left: 90px; }
-.logo-l { width: 35px; height: 28px; background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%230284c7"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>'); background-size: contain; background-repeat: no-repeat; flex-shrink: 0; }
-.logo-r { width: 35px; height: 28px; background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23f59e0b"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>'); background-size: contain; background-repeat: no-repeat; flex-shrink: 0; }
+.logo-l { width: 35px; height: 28px; background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%230284c7"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>'); background-size: contain; background-repeat: no-repeat; shrink: 0; }
+.logo-r { width: 35px; height: 28px; background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23f59e0b"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>'); background-size: contain; background-repeat: no-repeat; shrink: 0; }
 
 .t { text-align: center; font-size: 9.5px; font-weight: 700; text-transform: uppercase; }
 .tm { 

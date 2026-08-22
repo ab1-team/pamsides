@@ -2,7 +2,7 @@
   <Teleport to="body">
     <Transition name="modal-fade">
       <div v-if="show" class="fixed inset-0! z-50 flex items-center justify-center p-4! md:p-8!">
-        <div class="absolute inset-0! bg-slate-900/60! backdrop-blur-sm!" @click="close"></div>
+        <div class="absolute inset-0! bg-slate-900/60! backdrop-blur-xs!" @click="close"></div>
 
         <div
           class="relative w-full! h-full! max-w-7xl! bg-white rounded-2xl! shadow-xl! border border-slate-200 flex flex-col overflow-hidden animate-slide-up"
@@ -57,7 +57,7 @@
                 type="text"
                 v-model="searchQuery"
                 placeholder="Cari ..."
-                class="block w-full pl-9! pr-4! py-2! bg-white border border-slate-200 rounded-lg! text-sm! focus:outline-none focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 transition-all shadow-sm!"
+                class="block w-full pl-9! pr-4! py-2! bg-white border border-slate-200 rounded-lg! text-sm! focus:outline-hidden focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 transition-all shadow-xs!"
               />
             </div>
           </div>
@@ -373,7 +373,7 @@ onUnmounted(() => {
   cursor: pointer;
   position: relative;
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
-  flex-shrink: 0;
+  shrink: 0;
 }
 .cb-white:hover {
   border-color: #0891b2;

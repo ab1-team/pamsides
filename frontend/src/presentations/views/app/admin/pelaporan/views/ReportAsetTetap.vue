@@ -88,14 +88,6 @@ const props = defineProps({
   payload: { type: Object, default: () => ({ config: {}, periode: {} }) }
 })
 
-const tanggalCetak = computed(() => {
-  return new Date().toLocaleDateString('id-ID', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-  })
-})
-
 const formatRupiah = (val) => {
   const n = Number(val || 0)
   return n.toLocaleString('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
@@ -135,10 +127,6 @@ const currentGroup = computed(() => {
 
 const pageTitle = computed(() => {
   return currentGroup.value?.nama_akun || 'ASET TETAP'
-})
-
-const isLastPage = computed(() => {
-  return props.payload?.isLastPage !== false
 })
 
 const rows = computed(() => {

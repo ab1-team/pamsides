@@ -49,7 +49,7 @@
     <Teleport to="body">
       <div
         v-if="isQrModalOpen"
-        class="fixed! inset-0! z-[100]! flex! items-center! justify-center! bg-slate-900/80! backdrop-blur-sm! p-4! transition-all!"
+        class="fixed! inset-0! z-[100]! flex! items-center! justify-center! bg-slate-900/80! backdrop-blur-xs! p-4! transition-all!"
         @click="closeQrModal"
       >
         <div
@@ -57,7 +57,7 @@
           @click.stop
         >
           <!-- Header Gradient Strip -->
-          <div class="h-2! bg-gradient-to-r! from-emerald-500! to-teal-600! w-full!"></div>
+          <div class="h-2! bg-linear-to-r! from-emerald-500! to-teal-600! w-full!"></div>
 
           <!-- Modal Header -->
           <div class="px-6! py-5! border-b! border-slate-50! flex! items-center! justify-between!">
@@ -105,7 +105,7 @@
               ></div>
 
               <div
-                class="relative! w-48! h-48! bg-white! rounded-2xl! flex! items-center! justify-center! p-2! overflow-hidden! shadow-sm!"
+                class="relative! w-48! h-48! bg-white! rounded-2xl! flex! items-center! justify-center! p-2! overflow-hidden! shadow-xs!"
               >
                 <!-- Animated Scanner Laser -->
                 <div

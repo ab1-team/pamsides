@@ -229,7 +229,7 @@ const logoUrl = computed(() => {
 
 .surat-kop {
     width: 100%;
-    flex-shrink: 0;
+    shrink: 0;
 }
 
 .kop-table {
@@ -345,14 +345,14 @@ width: calc(100% + 40px);
     font-weight: bold;
     margin: 1px 0 3px;
     letter-spacing: 0.5px;
-    flex-shrink: 0;
+    shrink: 0;
 }
 
 .bukti-info {
     width: 100%;
     border-collapse: collapse;
     font-size: 9.5px;
-    flex-shrink: 0;
+    shrink: 0;
 }
 
 .bukti-info td {
@@ -381,7 +381,7 @@ width: calc(100% + 40px);
     gap: 4px;
     padding-top: 4px;
     font-size: 8.5px;
-    flex-shrink: 0;
+    shrink: 0;
 }
 
 .sign-col {

@@ -19,7 +19,7 @@
             variant="ghost"
             size="sm"
             @click="handleEdit(row)"
-            class="w-8! h-8! p-0! rounded-lg! border! border-slate-100! hover:border-blue-200! hover:bg-blue-50! text-slate-600! hover:text-blue-600! shadow-sm!"
+            class="w-8! h-8! p-0! rounded-lg! border! border-slate-100! hover:border-blue-200! hover:bg-blue-50! text-slate-600! hover:text-blue-600! shadow-xs!"
             title="Ubah"
             icon="edit"
           />
@@ -27,7 +27,7 @@
             variant="ghost"
             size="sm"
             @click="handleDelete(row)"
-            class="w-8! h-8! p-0! rounded-lg! border! border-slate-100! hover:border-red-200! hover:bg-red-50! text-slate-600! hover:text-red-600! shadow-sm!"
+            class="w-8! h-8! p-0! rounded-lg! border! border-slate-100! hover:border-red-200! hover:bg-red-50! text-slate-600! hover:text-red-600! shadow-xs!"
             title="Hapus"
             icon="trash"
           />

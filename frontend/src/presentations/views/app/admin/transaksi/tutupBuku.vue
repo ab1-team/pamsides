@@ -85,7 +85,7 @@
             <input
               v-model="searchQuery"
               type="text"
-              class="w-full! h-11! pl-10! pr-4! rounded-xl! border! border-slate-200! bg-slate-50! font-inherit! text-sm! text-slate-700! outline-none! transition-all! duration-300! focus:bg-white! focus:border-blue-500! focus:ring-4! focus:ring-blue-500/10! focus:shadow-lg! focus:shadow-blue-500/5!"
+              class="w-full! h-11! pl-10! pr-4! rounded-xl! border! border-slate-200! bg-slate-50! font-inherit! text-sm! text-slate-700! outline-hidden! transition-all! duration-300! focus:bg-white! focus:border-blue-500! focus:ring-4! focus:ring-blue-500/10! focus:shadow-lg! focus:shadow-blue-500/5!"
               placeholder="Cari kode atau nama akun..."
             />
           </div>

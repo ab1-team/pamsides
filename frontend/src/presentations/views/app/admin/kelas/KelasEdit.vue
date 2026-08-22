@@ -5,7 +5,7 @@
         variant="ghost"
         icon="arrow-left"
         @click="handleBack"
-        class="w-10! h-10! sm:w-12! sm:h-12! p-0! rounded-full! border! border-slate-200! bg-white! hover:bg-slate-50! hover:border-slate-300! text-slate-600! shadow-sm! shrink-0!"
+        class="w-10! h-10! sm:w-12! sm:h-12! p-0! rounded-full! border! border-slate-200! bg-white! hover:bg-slate-50! hover:border-slate-300! text-slate-600! shadow-xs! shrink-0!"
       />
       <div>
         <h1 class="text-xl! sm:text-3xl! font-extrabold text-slate-900! tracking-tight mb-0.5!">
@@ -112,7 +112,7 @@
                   <input
                     type="number"
                     v-model="block.from"
-                    class="w-full! text-center! py-2.5! bg-slate-50! border! border-slate-200! rounded-xl! text-sm! font-bold! text-slate-400! cursor-not-allowed! outline-none!"
+                    class="w-full! text-center! py-2.5! bg-slate-50! border! border-slate-200! rounded-xl! text-sm! font-bold! text-slate-400! cursor-not-allowed! outline-hidden!"
                     disabled
                   />
                   <span
@@ -130,7 +130,7 @@
                     v-model="block.to"
                     @input="updateNextBlockFrom(index)"
                     :placeholder="index === blocks.length - 1 ? '∞' : '0'"
-                    class="w-full! text-center! py-2.5! bg-white! border! border-slate-200! rounded-xl! text-sm! font-bold! text-slate-700! focus:outline-none! focus:border-blue-500! focus:ring-4! focus:ring-blue-500/5! transition-all!"
+                    class="w-full! text-center! py-2.5! bg-white! border! border-slate-200! rounded-xl! text-sm! font-bold! text-slate-700! focus:outline-hidden! focus:border-blue-500! focus:ring-4! focus:ring-blue-500/5! transition-all!"
                   />
                   <span
                     class="absolute! -top-2! left-3! bg-white! px-1! text-[8px]! font-bold! text-slate-400! uppercase!"
@@ -161,7 +161,7 @@
                 size="sm"
                 icon="trash"
                 @click="removeBlock(index)"
-                class="w-8! h-8! p-0! rounded-lg! border! border-slate-100! hover:border-red-200! hover:bg-red-50! text-slate-600! hover:text-red-600! shadow-sm!"
+                class="w-8! h-8! p-0! rounded-lg! border! border-slate-100! hover:border-red-200! hover:bg-red-50! text-slate-600! hover:text-red-600! shadow-xs!"
                 title="Hapus Blok"
               />
             </div>
@@ -202,7 +202,7 @@
       <Transition name="fade">
         <div
           v-if="isSaving"
-          class="fixed! inset-0! z-[9999]! flex! items-center! justify-center! bg-slate-900/60! backdrop-blur-sm! pointer-events-auto!"
+          class="fixed! inset-0! z-[9999]! flex! items-center! justify-center! bg-slate-900/60! backdrop-blur-xs! pointer-events-auto!"
         >
           <div
             class="bg-white! p-8! rounded-3xl! shadow-2xl! flex! flex-col! items-center! gap-4! max-w-xs! w-full! animate-in! zoom-in! duration-300!"

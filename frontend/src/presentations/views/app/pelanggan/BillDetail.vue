@@ -17,7 +17,7 @@
           <BaseButton
             variant="ghost"
             icon="arrow-left"
-            class="w-10! h-10! lg:w-12! lg:h-12! rounded-full! bg-white! shadow-sm! border! border-slate-100! flex! items-center! justify-center! text-slate-600! hover:bg-slate-50!"
+            class="w-10! h-10! lg:w-12! lg:h-12! rounded-full! bg-white! shadow-xs! border! border-slate-100! flex! items-center! justify-center! text-slate-600! hover:bg-slate-50!"
             @click="$router.back()"
           />
           <div class="flex! items-center! gap-2! lg:gap-3!">
@@ -52,7 +52,7 @@
             class="border-0! shadow-[0_25px_50px_-12px_rgba(0,0,0,0.15)]! overflow-hidden! rounded-[2.5rem]! bg-white! relative! z-10!"
           >
             <div
-              class="p-6! lg:p-10! bg-gradient-to-br! from-slate-900! via-slate-800! to-slate-900! text-white! relative! overflow-hidden!"
+              class="p-6! lg:p-10! bg-linear-to-br! from-slate-900! via-slate-800! to-slate-900! text-white! relative! overflow-hidden!"
             >
               <div
                 class="absolute! top-0! right-0! w-64! h-64! bg-white/5! rounded-full! -mr-20! -mt-20! blur-3xl!"
@@ -66,9 +66,9 @@
                 >
                   <div class="flex! items-center! justify-center! lg:justify-start! gap-3! mb-4!">
                     <div
-                      class="w-10! h-10! lg:w-12! lg:h-12! bg-indigo-500! rounded-xl! lg:rounded-2xl! flex! items-center! justify-center! shadow-lg! shadow-indigo-500/20! flex-shrink-0!"
+                      class="w-10! h-10! lg:w-12! lg:h-12! bg-indigo-500! rounded-xl! lg:rounded-2xl! flex! items-center! justify-center! shadow-lg! shadow-indigo-500/20! shrink-0!"
                     >
-                      <font-awesome-icon icon="droplet" class="text-xl! lg:text-2xl! !m-auto!" />
+                      <font-awesome-icon icon="droplet" class="text-xl! lg:text-2xl! m-auto!" />
                     </div>
                     <div class="text-left!">
                       <h2 class="text-lg! lg:text-xl! font-black! tracking-tighter!">
@@ -120,12 +120,12 @@
                       </p>
                     </div>
                     <div
-                      class="w-12! h-12! lg:w-16! lg:h-16! bg-white! p-1! rounded-xl! shadow-lg! flex! items-center! justify-center! flex-shrink-0!"
+                      class="w-12! h-12! lg:w-16! lg:h-16! bg-white! p-1! rounded-xl! shadow-lg! flex! items-center! justify-center! shrink-0!"
                     >
                       <div
                         class="w-full! h-full! bg-slate-100! rounded-md! flex! items-center! justify-center! text-slate-300!"
                       >
-                        <font-awesome-icon icon="qrcode" size="lg" class="!m-auto!" />
+                        <font-awesome-icon icon="qrcode" size="lg" class="m-auto!" />
                       </div>
                     </div>
                   </div>
@@ -135,9 +135,9 @@
                   >
                     <div class="flex! items-center! gap-3! lg:gap-4! mb-2! lg:mb-4!">
                       <div
-                        class="w-8! h-8! lg:w-10! lg:h-10! bg-white! rounded-lg! lg:rounded-xl! flex! items-center! justify-center! text-slate-800! flex-shrink-0!"
+                        class="w-8! h-8! lg:w-10! lg:h-10! bg-white! rounded-lg! lg:rounded-xl! flex! items-center! justify-center! text-slate-800! shrink-0!"
                       >
-                        <font-awesome-icon icon="user" size="xs" class="!m-auto!" />
+                        <font-awesome-icon icon="user" size="xs" class="m-auto!" />
                       </div>
                       <div class="text-left!">
                         <p
@@ -162,9 +162,9 @@
                   class="col-span-1! bg-slate-50! rounded-2xl! p-4! lg:p-8! border! border-slate-100! flex! flex-col! items-center! justify-center! text-center!"
                 >
                   <div
-                    class="w-10! lg:w-16! h-10! lg:h-16! bg-white! shadow-lg! shadow-slate-200! rounded-full! flex! items-center! justify-center! text-indigo-600! mb-2! lg:mb-4! flex-shrink-0!"
+                    class="w-10! lg:w-16! h-10! lg:h-16! bg-white! shadow-lg! shadow-slate-200! rounded-full! flex! items-center! justify-center! text-indigo-600! mb-2! lg:mb-4! shrink-0!"
                   >
-                    <font-awesome-icon icon="tint" class="text-lg! lg:text-2xl! !m-auto!" />
+                    <font-awesome-icon icon="tint" class="text-lg! lg:text-2xl! m-auto!" />
                   </div>
                   <h4
                     class="text-[8px]! lg:text-[10px]! font-black! text-slate-400! uppercase! tracking-widest! mb-1!"
@@ -186,7 +186,7 @@
                       <div
                         class="w-6! h-6! lg:w-8! lg:h-8! bg-slate-100! rounded-full! flex! items-center! justify-center! text-slate-400! text-[10px]!"
                       >
-                        <font-awesome-icon icon="history" class="!m-auto!" />
+                        <font-awesome-icon icon="history" class="m-auto!" />
                       </div>
                       <span class="text-[10px]! lg:text-sm! font-bold! text-slate-500!"
                         >Meteran Lalu</span
@@ -204,7 +204,7 @@
                       <div
                         class="w-6! h-6! lg:w-8! lg:h-8! bg-indigo-50! text-indigo-500! rounded-full! flex! items-center! justify-center! text-[10px]!"
                       >
-                        <font-awesome-icon icon="camera" class="!m-auto!" />
+                        <font-awesome-icon icon="camera" class="m-auto!" />
                       </div>
                       <span class="text-[10px]! lg:text-sm! font-bold! text-slate-500!"
                         >Meteran Kini</span
@@ -235,9 +235,9 @@
                   >
                     <div class="flex! items-center! gap-4!">
                       <div
-                        class="w-10! h-10! bg-slate-50! group-hover:bg-white! rounded-xl! flex! items-center! justify-center! text-slate-400! flex-shrink-0!"
+                        class="w-10! h-10! bg-slate-50! group-hover:bg-white! rounded-xl! flex! items-center! justify-center! text-slate-400! shrink-0!"
                       >
-                        <font-awesome-icon :icon="item.icon" size="sm" class="!m-auto!" />
+                        <font-awesome-icon :icon="item.icon" size="sm" class="m-auto!" />
                       </div>
                       <div>
                         <p class="text-sm! font-bold! text-slate-700!">
@@ -258,7 +258,7 @@
               </div>
 
               <div
-                class="bg-gradient-to-br! from-slate-900! via-indigo-950! to-slate-900! rounded-[2rem]! p-5! lg:p-8! text-white! flex! flex-row! justify-between! items-center! gap-4! lg:gap-6! relative! overflow-hidden! shadow-xl! shadow-indigo-900/10!"
+                class="bg-linear-to-br! from-slate-900! via-indigo-950! to-slate-900! rounded-[2rem]! p-5! lg:p-8! text-white! flex! flex-row! justify-between! items-center! gap-4! lg:gap-6! relative! overflow-hidden! shadow-xl! shadow-indigo-900/10!"
               >
                 <div
                   class="absolute! top-0! left-0! w-full! h-full! bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]! opacity-5!"
@@ -273,7 +273,7 @@
                     Rp. {{ formatNumber(bill.total_amount) }}
                   </div>
                 </div>
-                <div v-if="bill.status === 'unpaid'" class="relative! z-10! flex-shrink-0!">
+                <div v-if="bill.status === 'unpaid'" class="relative! z-10! shrink-0!">
                   <BaseButton
                     v-if="isMobile"
                     variant="primary-gradient"

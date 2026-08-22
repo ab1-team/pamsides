@@ -159,10 +159,6 @@ const allAccountsFilled = computed(() => {
 
 const canSave = computed(() => isBalanced.value && allAccountsFilled.value)
 
-const pctDibagihkan = computed(() =>
-  totalSaldo.value > 0 ? (totalDibagihkan.value / totalSaldo.value) * 100 : 0,
-)
-
 const pemupukanModalNominal = computed(() => {
   return totalSaldo.value - totalDibagihkan.value
 })
@@ -229,21 +225,6 @@ const loadBookStatus = async (year) => {
     return false
   } finally {
     loadingStatus.value = false
-  }
-}
-
-const calculateAllocation = async (year) => {
-  try {
-    const res = await accountingService.calculateAllocation(year, null)
-    if (res?.success && res.data) {
-      applyAllocation(
-        res.data.laba_dibagihkan,
-        res.data.total_laba,
-      )
-    }
-  } catch (e) {
-    console.error('Gagal hitung alokasi:', e)
-    uiStore.error(e?.response?.data?.message || 'Gagal memuat perhitungan alokasi.')
   }
 }
 

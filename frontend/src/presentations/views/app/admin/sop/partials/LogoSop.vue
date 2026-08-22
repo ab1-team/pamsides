@@ -1,7 +1,7 @@
 <template>
   <div class="flex flex-col gap-6! py-2!">
     <div
-      class="relative! group! py-5! px-6! bg-white! border! border-slate-100! rounded-2xl! shadow-sm!"
+      class="relative! group! py-5! px-6! bg-white! border! border-slate-100! rounded-2xl! shadow-xs!"
     >
       <div
         class="inline-flex! items-center! gap-2! px-2.5! py-1! bg-indigo-50! text-indigo-600! rounded-lg! mb-4!"
@@ -59,7 +59,7 @@
             />
             <div v-else class="flex! flex-col! items-center! gap-2! text-slate-300!">
               <div
-                class="w-14! h-14! rounded-xl! bg-white! border! border-slate-100! flex! items-center! justify-center! shadow-sm!"
+                class="w-14! h-14! rounded-xl! bg-white! border! border-slate-100! flex! items-center! justify-center! shadow-xs!"
               >
                 <font-awesome-icon icon="image" class="text-2xl!" />
               </div>

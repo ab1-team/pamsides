@@ -5,7 +5,7 @@
       <h2 class="mt-1 mb-0 leading-tight " style="font-size: 19px;">
         "TIRTO MULO" BUMDes BANGUN KENCANA
       </h2>
-      <p class="page-subtitle"style="font-size: 14px;">KALURAHAN MULO KAPANEWON WONOSARI</p>
+      <p class="page-subtitle" style="font-size: 14px;">KALURAHAN MULO KAPANEWON WONOSARI</p>
             <hr class="kop-single-divider">
 
     </div>

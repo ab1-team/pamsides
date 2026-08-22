@@ -28,7 +28,7 @@
           {{ formatCurrency(row.total) }}
         </span>
       </template>
-      <template #column-status="{ row }">
+      <template #column-status>
         <span
           class="px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider rounded-md bg-rose-50 text-rose-600"
         >

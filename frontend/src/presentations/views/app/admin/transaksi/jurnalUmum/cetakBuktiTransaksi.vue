@@ -89,7 +89,7 @@
 </template>
 
 <script setup>
-import { computed, nextTick, onMounted, onBeforeUnmount, ref, watch } from 'vue'
+import { computed, nextTick, onMounted, onBeforeUnmount, ref } from 'vue'
 import ReportCellView from '@/presentations/views/app/admin/transaksi/jurnalUmum/partials/ReportCetakBuktiCell.vue'
 import { sopService } from '@/services/sop.service'
 
@@ -138,7 +138,6 @@ const pageDimsMm = () => {
 }
 const pageNaturalWidth = () => pageDimsMm().w * PX_PER_MM
 const pageNaturalHeight = () => pageDimsMm().h * PX_PER_MM
-const pageScale = () => zoom.value
 
 const THUMB_TOTAL_W = PAGE_CONFIG.orientation === 'landscape' ? 1120 : 790
 const THUMB_TOTAL_H = PAGE_CONFIG.orientation === 'landscape' ? 790 : 1120
@@ -164,7 +163,7 @@ const loadLembaga = async () => {
   try {
     const res = await sopService.getAll()
     const data = res?.data ?? res?.payload ?? res
-    const lembaga = { ...(data?.lembaga || {}) }
+    const lembaga = { ...data?.lembaga }
     const logo = data?.logo?.logo
     if (logo) lembaga.logo = logo
     return lembaga
@@ -305,7 +304,7 @@ const toggleSidebar = () => { showSidebar.value = !showSidebar.value }
 .thumbnail-sidebar {
   width: 240px; background: #2c2e31; border-right: 1px solid #979797;
   padding: 20px 0; display: flex; flex-direction: column; align-items: center;
-  gap: 18px; overflow-y: auto; user-select: none; flex-shrink: 0;
+  gap: 18px; overflow-y: auto; user-select: none; shrink: 0;
 }
 .thumb-wrapper { display: flex; flex-direction: column; align-items: center; gap: 6px; cursor: pointer; }
 .thumb-wrapper.landscape .thumb-paper { width: 195px; height: 140px; }

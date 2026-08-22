@@ -14,7 +14,7 @@
           v-model="searchQuery"
           type="text"
           placeholder="🔍 Cari kode atau nama akun..."
-          class="w-full! h-10! pl-3! pr-3! bg-white! border! border-slate-200! rounded-lg! text-sm! text-slate-700! transition-all! focus:outline-none! focus:border-blue-500! focus:ring-2! focus:ring-blue-500/10!"
+          class="w-full! h-10! pl-3! pr-3! bg-white! border! border-slate-200! rounded-lg! text-sm! text-slate-700! transition-all! focus:outline-hidden! focus:border-blue-500! focus:ring-2! focus:ring-blue-500/10!"
         />
       </div>
     </div>
@@ -24,9 +24,9 @@
       <p class="text-slate-500! text-sm!">Memuat data akun...</p>
     </div>
 
-    <div v-else class="overflow-x-auto! rounded-xl! border! border-slate-200! shadow-sm!">
+    <div v-else class="overflow-x-auto! rounded-xl! border! border-slate-200! shadow-xs!">
       <table class="min-w-full! divide-y! divide-slate-200!">
-        <thead class="bg-gradient-to-r! from-slate-700! to-slate-800!">
+        <thead class="bg-linear-to-r! from-slate-700! to-slate-800!">
           <tr>
             <th class="px-4! py-3! text-xs! sm:text-sm! font-semibold! text-white! uppercase! tracking-wider! text-left!">
               Kode Akun

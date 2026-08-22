@@ -48,10 +48,10 @@
       <div class="flex-1! min-w-0!">
         <div class="mb-4!">
           <div
-            class="relative! overflow-hidden! rounded-xl! border! border-blue-100/85! bg-gradient-to-br! from-slate-50! via-blue-50/20! to-white! p-2.5! sm:p-3! md:pr-5! shadow-sm! transition-all! hover:shadow-md!"
+            class="relative! overflow-hidden! rounded-xl! border! border-blue-100/85! bg-linear-to-br! from-slate-50! via-blue-50/20! to-white! p-2.5! sm:p-3! md:pr-5! shadow-xs! transition-all! hover:shadow-md!"
           >
             <div
-              class="absolute! -right-8! -top-8! w-24! h-24! rounded-full! bg-gradient-to-br! from-blue-400/10! to-sky-400/5! blur-xl!"
+              class="absolute! -right-8! -top-8! w-24! h-24! rounded-full! bg-linear-to-br! from-blue-400/10! to-sky-400/5! blur-xl!"
             ></div>
 
             <div
@@ -59,7 +59,7 @@
             >
               <div class="flex! items-center! gap-2.5! flex-1!">
                 <div
-                  class="w-9! h-9! rounded-lg! bg-gradient-to-tr! from-blue-600! to-sky-400! flex! items-center! justify-center! text-white! shadow-md! shadow-blue-500/20! flex-shrink-0! transform! transition-transform! hover:scale-105!"
+                  class="w-9! h-9! rounded-lg! bg-linear-to-tr! from-blue-600! to-sky-400! flex! items-center! justify-center! text-white! shadow-md! shadow-blue-500/20! shrink-0! transform! transition-transform! hover:scale-105!"
                 >
                   <font-awesome-icon icon="box" class="text-sm!" />
                 </div>
@@ -101,11 +101,11 @@
               </div>
 
               <div
-                class="hidden! md:block! w-px! h-9! bg-gradient-to-b! from-transparent! via-slate-200! to-transparent!"
+                class="hidden! md:block! w-px! h-9! bg-linear-to-b! from-transparent! via-slate-200! to-transparent!"
               ></div>
 
               <div
-                class="flex-shrink-0! bg-white/60! backdrop-blur-sm! p-2! sm:p-2.5! rounded-lg! border! border-slate-105! shadow-sm! md:min-w-[250px]!"
+                class="shrink-0! bg-white/60! backdrop-blur-xs! p-2! sm:p-2.5! rounded-lg! border! border-slate-105! shadow-xs! md:min-w-[250px]!"
               >
                 <h4
                   class="text-[8px]! font-extrabold! text-slate-500! uppercase! tracking-wider! mb-1! flex! items-center! gap-1.5!"
@@ -150,7 +150,7 @@
               <div class="flex! items-center! gap-3! flex-1! min-w-0!">
                 <div
                   :class="[
-                    'w-8! h-8! sm:w-9! sm:h-9! rounded-xl! flex! items-center! justify-center! flex-shrink-0!',
+                    'w-8! h-8! sm:w-9! sm:h-9! rounded-xl! flex! items-center! justify-center! shrink-0!',
                     period.type === 'overdue'
                       ? 'bg-red-50!'
                       : period.type === 'processing'
@@ -238,10 +238,10 @@
         </div>
       </div>
 
-      <div class="w-full! xl:w-[280px]! flex-shrink-0!">
+      <div class="w-full! xl:w-[280px]! shrink-0!">
         <ContentCard variant="elevated" padding="large" class="overflow-hidden!">
           <div
-            class="bg-gradient-to-br! from-[#0B7A9E]! to-[#094e67]! rounded-2xl! shadow-lg! p-4! sm:p-6! text-white! relative! overflow-hidden! -m-4! sm:-m-6!"
+            class="bg-linear-to-br! from-[#0B7A9E]! to-[#094e67]! rounded-2xl! shadow-lg! p-4! sm:p-6! text-white! relative! overflow-hidden! -m-4! sm:-m-6!"
           >
             <div
               class="absolute! top-0! right-0! w-24! h-24! sm:w-32! sm:h-32! bg-white/5! rounded-full! -mr-12! -mt-12! sm:-mr-16! sm:-mt-16!"
@@ -253,7 +253,7 @@
             <div class="relative! z-10!">
               <div class="flex! items-center! gap-3! sm:gap-4! mb-4! sm:mb-6!">
                 <div
-                  class="w-12! h-12! sm:w-16! sm:h-16! rounded-full! bg-white/20! backdrop-blur-sm! flex! items-center! justify-center! text-white! text-lg! sm:text-xl! font-bold! border-2! border-white/30!"
+                  class="w-12! h-12! sm:w-16! sm:h-16! rounded-full! bg-white/20! backdrop-blur-xs! flex! items-center! justify-center! text-white! text-lg! sm:text-xl! font-bold! border-2! border-white/30!"
                 >
                   {{ getCustomerInitials() }}
                 </div>
@@ -263,11 +263,11 @@
                       billingStore.selectedCustomer?.name || '-'
                     }}</span>
                     <div
-                      class="w-2.5! h-2.5! bg-emerald-400! rounded-full! animate-pulse! flex-shrink-0!"
+                      class="w-2.5! h-2.5! bg-emerald-400! rounded-full! animate-pulse! shrink-0!"
                     ></div>
                   </div>
                   <span
-                    class="inline-block! px-2! sm:px-3! py-1! bg-emerald-500/20! backdrop-blur-sm! text-emerald-100! text-xs! font-bold! rounded-full! border! border-emerald-400/30!"
+                    class="inline-block! px-2! sm:px-3! py-1! bg-emerald-500/20! backdrop-blur-xs! text-emerald-100! text-xs! font-bold! rounded-full! border! border-emerald-400/30!"
                   >
                     <font-awesome-icon icon="check-circle" class="mr-1!" />
                     AKTIF
@@ -276,12 +276,12 @@
               </div>
 
               <div
-                class="bg-white/10! backdrop-blur-sm! rounded-xl! p-3! sm:p-4! border! border-white/20!"
+                class="bg-white/10! backdrop-blur-xs! rounded-xl! p-3! sm:p-4! border! border-white/20!"
               >
                 <div class="grid! grid-cols-1! gap-2! sm:gap-3!">
                   <div class="flex! items-center! gap-2! sm:gap-3!">
                     <div
-                      class="w-6! h-6! sm:w-8! sm:h-8! rounded-lg! bg-white/20! backdrop-blur-sm! flex! items-center! justify-center! flex-shrink-0!"
+                      class="w-6! h-6! sm:w-8! sm:h-8! rounded-lg! bg-white/20! backdrop-blur-xs! flex! items-center! justify-center! shrink-0!"
                     >
                       <font-awesome-icon icon="id-card" class="text-white! text-xs!" />
                     </div>
@@ -295,7 +295,7 @@
 
                   <div class="flex! items-center! gap-2! sm:gap-3!">
                     <div
-                      class="w-6! h-6! sm:w-8! sm:h-8! rounded-lg! bg-white/20! backdrop-blur-sm! flex! items-center! justify-center! flex-shrink-0!"
+                      class="w-6! h-6! sm:w-8! sm:h-8! rounded-lg! bg-white/20! backdrop-blur-xs! flex! items-center! justify-center! shrink-0!"
                     >
                       <font-awesome-icon icon="map-marker-alt" class="text-white! text-xs!" />
                     </div>
@@ -312,7 +312,7 @@
 
                   <div class="flex! items-center! gap-2! sm:gap-3!">
                     <div
-                      class="w-6! h-6! sm:w-8! sm:h-8! rounded-lg! bg-white/20! backdrop-blur-sm! flex! items-center! justify-center! flex-shrink-0!"
+                      class="w-6! h-6! sm:w-8! sm:h-8! rounded-lg! bg-white/20! backdrop-blur-xs! flex! items-center! justify-center! shrink-0!"
                     >
                       <font-awesome-icon icon="archive" class="text-white! text-xs!" />
                     </div>

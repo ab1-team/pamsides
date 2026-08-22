@@ -9,7 +9,7 @@
         <ContentCard
           variant="minimal"
           padding="none"
-          class="w-54! xl:w-62! flex-shrink-0! bg-slate-900! border-r! border-slate-800! rounded-tr-none! rounded-br-none! overflow-visible! relative! z-20!"
+          class="w-54! xl:w-62! shrink-0! bg-slate-900! border-r! border-slate-800! rounded-tr-none! rounded-br-none! overflow-visible! relative! z-20!"
         >
           <div class="flex flex-col gap-1! py-6!">
             <p
@@ -31,7 +31,7 @@
                   class="w-full! justify-start! pl-3! pr-4! py-3.5! rounded-l-full! rounded-r-none! transition-all! duration-300! relative!"
                   :class="[
                     activeSection === menu.key
-                      ? 'bg-[#f8fafc]! text-slate-900! font-bold! z-10! translate-x-[1px]! ring-0! ring-offset-0! focus:ring-0! focus:ring-offset-0! outline-none! border-r-0! shadow-none!'
+                      ? 'bg-[#f8fafc]! text-slate-900! font-bold! z-10! translate-x-[1px]! ring-0! ring-offset-0! focus:ring-0! focus:ring-offset-0! outline-hidden! border-r-0! shadow-none!'
                       : 'text-slate-400! hover:text-white! hover:bg-white/10!',
                   ]"
                 >
@@ -115,7 +115,7 @@
             <div v-for="menu in menuList" :key="menu.key" class="flex-1! flex! justify-center!">
               <button
                 @click="activeSection = menu.key"
-                class="relative! flex! items-center! justify-center! transition-all! duration-500! outline-none!"
+                class="relative! flex! items-center! justify-center! transition-all! duration-500! outline-hidden!"
                 :class="[
                   activeSection === menu.key
                     ? 'bg-white! text-slate-900! px-2.5! py-1.5! rounded-xl! shadow-lg! shadow-white/10!'

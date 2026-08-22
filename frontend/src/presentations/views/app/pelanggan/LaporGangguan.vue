@@ -6,7 +6,7 @@
           v-if="$route.query.from === 'dashboard'"
           variant="ghost"
           icon="arrow-left"
-          class="w-12! h-12! rounded-full! bg-white! shadow-sm! border! border-slate-100! flex! items-center! justify-center! text-slate-600! hover:bg-slate-50! flex-shrink-0! mt-1!"
+          class="w-12! h-12! rounded-full! bg-white! shadow-xs! border! border-slate-100! flex! items-center! justify-center! text-slate-600! hover:bg-slate-50! shrink-0! mt-1!"
           @click="$router.back()"
         />
         <div :class="{ 'text-center! w-full! pr-12!': $route.query.from !== 'dashboard' }">
@@ -38,7 +38,7 @@
           <div class="p-6! lg:p-10! flex! flex-col! h-full!">
             <div class="flex! items-center! gap-4! lg:gap-6! mb-8! lg:mb-10!">
               <div
-                class="w-16! lg:w-20! h-16! lg:h-20! bg-gradient-to-br! from-indigo-400! to-indigo-600! text-white! rounded-2xl! lg:rounded-[2rem]! flex! items-center! justify-center! shadow-xl! shadow-indigo-200! group-hover:rotate-6! transition-transform!"
+                class="w-16! lg:w-20! h-16! lg:h-20! bg-linear-to-br! from-indigo-400! to-indigo-600! text-white! rounded-2xl! lg:rounded-[2rem]! flex! items-center! justify-center! shadow-xl! shadow-indigo-200! group-hover:rotate-6! transition-transform!"
               >
                 <font-awesome-icon icon="file-alt" class="text-2xl! lg:text-4xl!" />
               </div>
@@ -97,7 +97,7 @@
           <div class="p-6! lg:p-10! flex! flex-col! h-full!">
             <div class="flex! items-center! gap-4! lg:gap-6! mb-8! lg:mb-10!">
               <div
-                class="w-16! lg:w-20! h-16! lg:h-20! bg-gradient-to-br! from-green-400! to-emerald-600! text-white! rounded-2xl! lg:rounded-[2rem]! flex! items-center! justify-center! shadow-xl! shadow-green-200! group-hover:rotate-6! transition-transform!"
+                class="w-16! lg:w-20! h-16! lg:h-20! bg-linear-to-br! from-green-400! to-emerald-600! text-white! rounded-2xl! lg:rounded-[2rem]! flex! items-center! justify-center! shadow-xl! shadow-green-200! group-hover:rotate-6! transition-transform!"
               >
                 <font-awesome-icon :icon="['fab', 'whatsapp']" class="text-2xl! lg:text-4xl!" />
               </div>
@@ -156,7 +156,7 @@
           <div class="p-6! lg:p-10! flex! flex-col! h-full!">
             <div class="flex! items-center! gap-4! lg:gap-6! mb-8! lg:mb-10!">
               <div
-                class="w-16! lg:w-20! h-16! lg:h-20! bg-gradient-to-br! from-red-500! to-rose-700! text-white! rounded-2xl! lg:rounded-[2rem]! flex! items-center! justify-center! shadow-xl! shadow-red-200! group-hover:rotate-6! transition-transform!"
+                class="w-16! lg:w-20! h-16! lg:h-20! bg-linear-to-br! from-red-500! to-rose-700! text-white! rounded-2xl! lg:rounded-[2rem]! flex! items-center! justify-center! shadow-xl! shadow-red-200! group-hover:rotate-6! transition-transform!"
               >
                 <font-awesome-icon icon="phone" class="text-2xl! lg:text-4xl!" />
               </div>
@@ -208,7 +208,7 @@
           <div class="space-y-6!">
             <div v-for="(step, idx) in steps" :key="idx" class="flex! gap-4!">
               <div
-                class="w-8! h-8! bg-white/10! rounded-xl! flex-shrink-0! flex! items-center! justify-center! text-sm! font-black! border! border-white/10!"
+                class="w-8! h-8! bg-white/10! rounded-xl! shrink-0! flex! items-center! justify-center! text-sm! font-black! border! border-white/10!"
               >
                 {{ idx + 1 }}
               </div>

@@ -1,4 +1,4 @@
-import { computed, ref, watch } from 'vue'
+import { computed, watch } from 'vue'
 
 import { useRoute, useRouter } from 'vue-router'
 
@@ -11,8 +11,6 @@ export function useInstalasiStatus() {
   const store = useInstalasiStore()
   const route = useRoute()
   const router = useRouter()
-
-  const activeStatus = ref(route.query.filter || 'permohonan')
 
   // const fetchData = async () => {
   //   try {

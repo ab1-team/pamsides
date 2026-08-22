@@ -7,7 +7,7 @@
             v-if="$route.query.from === 'dashboard'"
             variant="ghost"
             icon="arrow-left"
-            class="w-10! h-10! lg:w-12! lg:h-12! rounded-full! bg-white! shadow-sm! border! border-slate-100! flex! items-center! justify-center! text-slate-600! hover:bg-slate-50! flex-shrink-0! mt-1!"
+            class="w-10! h-10! lg:w-12! lg:h-12! rounded-full! bg-white! shadow-xs! border! border-slate-100! flex! items-center! justify-center! text-slate-600! hover:bg-slate-50! shrink-0! mt-1!"
             @click="$router.back()"
           />
           <div :class="{ 'text-center! w-full!': $route.query.from !== 'dashboard' && isMobile }">
@@ -49,9 +49,9 @@
                 {{ stat.label }}
               </span>
               <div
-                :class="`w-6! h-6! lg:w-7! lg:h-7! rounded-lg! ${stat.bg}! ${stat.color}! flex! items-center! justify-center! flex-shrink-0!`"
+                :class="`w-6! h-6! lg:w-7! lg:h-7! rounded-lg! ${stat.bg}! ${stat.color}! flex! items-center! justify-center! shrink-0!`"
               >
-                <font-awesome-icon :icon="stat.icon" class="text-[10px]! lg:text-xs! !m-auto!" />
+                <font-awesome-icon :icon="stat.icon" class="text-[10px]! lg:text-xs! m-auto!" />
               </div>
             </div>
 

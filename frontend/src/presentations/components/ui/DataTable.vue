@@ -3,7 +3,7 @@
     :class="
       props.noCard
         ? 'h-full! flex! flex-col!'
-        : 'bg-white! rounded-xl! shadow-sm! overflow-hidden! transition-all!'
+        : 'bg-white! rounded-xl! shadow-xs! overflow-hidden! transition-all!'
     "
   >
     <div
@@ -19,7 +19,7 @@
           <select
             :value="effectivePerPage"
             @change="effectivePerPage = parseInt($event.target.value)"
-            class="bg-white! border! border-slate-200! rounded-md! px-2! py-1! outline-none! focus:border-cyan-600! transition-all! cursor-pointer! text-slate-700!"
+            class="bg-white! border! border-slate-200! rounded-md! px-2! py-1! outline-hidden! focus:border-cyan-600! transition-all! cursor-pointer! text-slate-700!"
           >
             <option :value="10">10</option>
             <option :value="25">25</option>
@@ -41,7 +41,7 @@
             v-model="searchQuery"
             type="text"
             :placeholder="searchPlaceholder"
-            class="pl-9! pr-4! py-2! bg-slate-50! border! border-slate-200! rounded-lg! text-sm! text-slate-900! w-full! sm:w-56! hover:bg-white! hover:border-slate-300! focus:border-cyan-600! focus:bg-white! focus:outline-none! transition-all!"
+            class="pl-9! pr-4! py-2! bg-slate-50! border! border-slate-200! rounded-lg! text-sm! text-slate-900! w-full! sm:w-56! hover:bg-white! hover:border-slate-300! focus:border-cyan-600! focus:bg-white! focus:outline-hidden! transition-all!"
           />
         </div>
         <slot name="search-actions"></slot>
@@ -215,7 +215,7 @@
           variant="ghost"
           size="sm"
           @click="handleGoToPage(page)"
-          class="min-w-[32px]! h-8! rounded-lg! border! px-1 md:px-2! shadow-sm!"
+          class="min-w-[32px]! h-8! rounded-lg! border! px-1 md:px-2! shadow-xs!"
           :class="
             page === effectiveCurrentPage
               ? 'bg-blue-50! border-blue-200! text-blue-600! font-bold!'

@@ -36,7 +36,7 @@
         <ContentCard
           variant="minimal"
           padding="normal"
-          class="w-56! xl:w-64! flex-shrink-0! border-r! border-slate-100! !rounded-tr-none !rounded-br-none"
+          class="w-56! xl:w-64! shrink-0! border-r! border-slate-100! rounded-tr-none! rounded-br-none!"
         >
           <div class="flex flex-col gap-2.5!">
             <p
@@ -144,7 +144,7 @@
                   variant="ghost"
                   size="sm"
                   @click.stop="handleRowClick(row)"
-                  class="w-8! h-8! p-0! rounded-full! border! border-slate-100! hover:border-blue-200! hover:bg-blue-50! text-slate-600! hover:text-blue-600! shadow-sm!"
+                  class="w-8! h-8! p-0! rounded-full! border! border-slate-100! hover:border-blue-200! hover:bg-blue-50! text-slate-600! hover:text-blue-600! shadow-xs!"
                   title="Lihat Detail"
                   icon="chevron-right"
                 />
@@ -204,7 +204,7 @@
               v-model="searchQuery"
               type="text"
               placeholder="Cari pelanggan..."
-              class="w-full! pl-8! pr-4! py-1.5! bg-slate-50! border! border-slate-200! rounded-lg! text-xs! text-slate-700! focus:outline-none! focus:ring-2! focus:ring-blue-500/10! focus:border-blue-400! transition-all!"
+              class="w-full! pl-8! pr-4! py-1.5! bg-slate-50! border! border-slate-200! rounded-lg! text-xs! text-slate-700! focus:outline-hidden! focus:ring-2! focus:ring-blue-500/10! focus:border-blue-400! transition-all!"
             />
           </div>
         </div>
@@ -217,7 +217,7 @@
             class="flex! items-center! gap-3! px-4! py-2.5! hover:bg-slate-50/80! transition-colors! cursor-pointer!"
           >
             <div
-              class="w-8! h-8! rounded-full! flex! items-center! justify-center! text-white! text-xs! font-bold! shrink-0! shadow-sm!"
+              class="w-8! h-8! rounded-full! flex! items-center! justify-center! text-white! text-xs! font-bold! shrink-0! shadow-xs!"
               :style="{ backgroundColor: row.color }"
             >
               {{ row.initials }}

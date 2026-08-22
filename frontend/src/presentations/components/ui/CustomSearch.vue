@@ -9,7 +9,7 @@
       v-model="searchQuery"
       type="text"
       :placeholder="placeholder"
-      class="flex-1! bg-transparent! border-0! ring-0! focus:ring-0! text-sm! py-2! px-3! text-slate-700! placeholder-slate-400! outline-none!"
+      class="flex-1! bg-transparent! border-0! ring-0! focus:ring-0! text-sm! py-2! px-3! text-slate-700! placeholder-slate-400! outline-hidden!"
       @input="handleInput"
     />
     <BaseButton

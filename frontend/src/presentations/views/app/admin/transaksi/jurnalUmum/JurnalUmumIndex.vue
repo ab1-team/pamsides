@@ -74,7 +74,6 @@
               placeholder="0,00"
               label="Harga Satuan"
               :show-helper="true"
-              :hide-prefix="true"
             />
           </div>
           <div class="flex flex-col gap-0.5">
@@ -91,7 +90,6 @@
               placeholder="0,00"
               label="Harga Perolehan"
               :show-helper="true"
-              :hide-prefix="true"
             />
           </div>
         </div>
@@ -122,7 +120,6 @@
             placeholder="0,00"
             label="Nominal"
             :show-helper="true"
-            :hide-prefix="true"
           />
         </div>
       </template>
@@ -211,7 +208,7 @@
 
       <ContentCard variant="minimal" padding="normal" hoverable>
         <div class="flex gap-3 items-start">
-          <div class="text-base flex-shrink-0 mt-0.5">ℹ️</div>
+          <div class="text-base shrink-0 mt-0.5">ℹ️</div>
           <div class="text-xs text-slate-600 leading-relaxed">
             <strong>Butuh Bantuan?</strong><br />
             Pastikan nominal sesuai bukti transaksi fisik. Periksa saldo kas sebelum menyimpan.
@@ -416,11 +413,6 @@ const disimpanKeText = computed(() => {
   if (!form.value.disimpanKe) return ''
   const option = disimpanKeOptions.value.find(opt => opt.id === form.value.disimpanKe)
   return option ? option.text : ''
-})
-
-const disimpanKeLabel = computed(() => {
-  const jenisText = selectedJenisTransaksi.value ? selectedJenisTransaksi.value.text.toLowerCase().replace(/\s+/g, '_') : ''
-  return jenisText === 'aset_keluar' ? 'Keperluan' : 'Disimpan Ke'
 })
 
 const disimpanKeOptions = computed(() => {
@@ -705,24 +697,6 @@ const tanggalOptionsFiltered = computed(() => {
 
 function formatSaldo(val) {
   return useCurrencyFormat(val)
-}
-
-function formatDate(dateString) {
-  if (!dateString) return '-'
-  const date = new Date(dateString)
-  return date.toLocaleDateString('id-ID', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-  })
-}
-
-function formatCurrency(amount) {
-  if (!amount) return '0'
-  return new Intl.NumberFormat('id-ID', {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(amount)
 }
 
 async function deleteTransaction(id) {

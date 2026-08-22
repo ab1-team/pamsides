@@ -2,7 +2,7 @@
   <Teleport to="body">
     <Transition name="modal-fade">
       <div v-if="show" class="fixed inset-0 z-50 flex items-center justify-center p-4! md:p-8!">
-        <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" @click="close"></div>
+        <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-xs" @click="close"></div>
 
         <div
           class="relative w-full! h-full! max-w-7xl! bg-white rounded-2xl! shadow-xl! border border-slate-200 flex flex-col overflow-hidden animate-slide-up"
@@ -255,10 +255,6 @@ const deleteTransaction = (id) => {
 
 const kodeAkunTrx = (trx) => {
   return props.selectedAccount || trx.account_debet?.kode_akun || trx.account_debet
-}
-
-const namaAkunTrx = () => {
-  return ''
 }
 
 const debitTrx = (trx) => {

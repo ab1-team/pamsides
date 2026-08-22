@@ -1,7 +1,7 @@
 <template>
   <div class="surveyor-dashboard-modern">
     <div
-      class="relative! mb-10! overflow-hidden! rounded-2xl! bg-gradient-to-br! from-slate-900! via-slate-800! to-slate-900! p-6! lg:p-8! shadow-2xl! shadow-slate-900/20!"
+      class="relative! mb-10! overflow-hidden! rounded-2xl! bg-linear-to-br! from-slate-900! via-slate-800! to-slate-900! p-6! lg:p-8! shadow-2xl! shadow-slate-900/20!"
     >
       <div
         class="absolute! top-0! right-0! w-64! h-64! bg-orange-500/10! rounded-full! blur-3xl! -mr-32! -mt-32!"
@@ -27,7 +27,7 @@
           >
             Selamat Pagi,
             <span
-              class="text-transparent! bg-clip-text! bg-gradient-to-r! from-orange-400! to-orange-200!"
+              class="text-transparent! bg-clip-text! bg-linear-to-r! from-orange-400! to-orange-200!"
               >{{ surveyorName }}</span
             >
           </h1>
@@ -98,7 +98,7 @@
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <ContentCard variant="default" padding="large" class="border-0 shadow-sm">
+          <ContentCard variant="default" padding="large" class="border-0 shadow-xs">
             <div class="flex items-center gap-3 mb-6">
               <div class="w-1.5 h-5 bg-orange-500 rounded-full"></div>
               <h2 class="text-lg font-bold text-slate-800">Distribusi Jarak Pipa</h2>
@@ -108,7 +108,7 @@
             </div>
           </ContentCard>
 
-          <ContentCard variant="default" padding="large" class="border-0 shadow-sm">
+          <ContentCard variant="default" padding="large" class="border-0 shadow-xs">
             <div class="flex items-center gap-3 mb-6">
               <div class="w-1.5 h-5 bg-emerald-500 rounded-full"></div>
               <h2 class="text-lg font-bold text-slate-800">Status Verifikasi</h2>
@@ -129,7 +129,7 @@
         <ContentCard
           variant="default"
           padding="none"
-          class="h-full! border-0! rounded-2xl! overflow-hidden! shadow-sm!"
+          class="h-full! border-0! rounded-2xl! overflow-hidden! shadow-xs!"
         >
           <div
             class="p-6! border-b! border-slate-50! flex! items-center! justify-between! bg-slate-50/30!"

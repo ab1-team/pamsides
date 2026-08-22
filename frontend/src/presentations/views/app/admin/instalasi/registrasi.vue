@@ -26,7 +26,7 @@
               v-model="customerSearch"
               type="text"
               placeholder="Cari nama / NIK..."
-              class="flex-1! min-w-0! bg-transparent! border-none! text-sm! text-slate-700! placeholder-slate-400! focus:outline-none! py-3.5! sm:py-4!"
+              class="flex-1! min-w-0! bg-transparent! border-none! text-sm! text-slate-700! placeholder-slate-400! focus:outline-hidden! py-3.5! sm:py-4!"
               @focus="isCustomerDropdownOpen = true"
               @input="isCustomerDropdownOpen = true"
             />
@@ -87,7 +87,7 @@
               >
                 <div class="flex! items-center! gap-3! w-full!">
                   <div
-                    class="w-8! h-8! rounded-full! shrink-0! flex! items-center! justify-center! text-white! text-xs! font-extrabold! shadow-sm!"
+                    class="w-8! h-8! rounded-full! shrink-0! flex! items-center! justify-center! text-white! text-xs! font-extrabold! shadow-xs!"
                     :style="{ backgroundColor: '#3b82f6' }"
                   >
                     {{ customer.name ? customer.name.charAt(0).toUpperCase() : 'C' }}
@@ -231,7 +231,7 @@
       >
         <div
           :class="[
-            'w-16! h-16! rounded-full! flex! items-center! justify-center! shadow-sm!',
+            'w-16! h-16! rounded-full! flex! items-center! justify-center! shadow-xs!',
             selectedCustomer.status === 'Suspended'
               ? 'bg-orange-100! text-orange-600!'
               : 'bg-rose-100! text-rose-600!',
@@ -290,7 +290,7 @@
         v-else
         class="grid! grid-cols-1! lg:grid-cols-2! gap-2! divide-y! lg:divide-y-0! lg:divide-x! divide-slate-100!"
       >
-        <div class="p-4! sm:p-5! lg:p-6! bg-gradient-to-br! from-slate-50/60! to-white!">
+        <div class="p-4! sm:p-5! lg:p-6! bg-linear-to-br! from-slate-50/60! to-white!">
           <div class="flex! items-center! gap-2.5! mb-4! sm:mb-5!">
             <div class="w-8! h-8! bg-blue-100! rounded-lg! flex! items-center! justify-center!">
               <font-awesome-icon icon="file-alt" class="w-4! h-4! text-blue-600!" />
@@ -448,7 +448,7 @@
                           type="text"
                           inputmode="numeric"
                           placeholder="0,00"
-                          class="w-full! px-3! py-2.5! text-sm! font-extrabold! text-right! border-none! focus:outline-none! bg-transparent!"
+                          class="w-full! px-3! py-2.5! text-sm! font-extrabold! text-right! border-none! focus:outline-hidden! bg-transparent!"
                           :class="
                             isMustFullyPaid
                               ? 'text-slate-500! cursor-not-allowed!'
@@ -464,7 +464,7 @@
           </div>
         </div>
 
-        <div class="p-4! sm:p-5! lg:p-6! bg-gradient-to-br! from-cyan-50/40! to-white!">
+        <div class="p-4! sm:p-5! lg:p-6! bg-linear-to-br! from-cyan-50/40! to-white!">
           <div class="flex! items-center! gap-2.5! mb-4! sm:mb-5!">
             <div class="w-8! h-8! bg-cyan-100! rounded-lg! flex! items-center! justify-center!">
               <font-awesome-icon icon="map-marker-alt" class="w-4! h-4! text-cyan-600!" />
@@ -518,7 +518,7 @@
                   type="text"
                   inputmode="decimal"
                   placeholder="contoh: -7.4591"
-                  class="w-full! min-w-0! px-3! py-2.5! text-xs! sm:text-sm! font-mono! text-slate-700! border-none! focus:outline-none! bg-transparent!"
+                  class="w-full! min-w-0! px-3! py-2.5! text-xs! sm:text-sm! font-mono! text-slate-700! border-none! focus:outline-hidden! bg-transparent!"
                 />
               </div>
               <div
@@ -534,7 +534,7 @@
                   type="text"
                   inputmode="decimal"
                   placeholder="contoh: 110.2589"
-                  class="w-full! min-w-0! px-3! py-2.5! text-xs! sm:text-sm! font-mono! text-slate-700! border-none! focus:outline-none! bg-transparent!"
+                  class="w-full! min-w-0! px-3! py-2.5! text-xs! sm:text-sm! font-mono! text-slate-700! border-none! focus:outline-hidden! bg-transparent!"
                 />
               </div>
             </div>
@@ -594,7 +594,7 @@
                 <button
                   type="button"
                   @click="openMapPreview"
-                  class="flex! items-center! justify-center! px-4! py-2! bg-white/90! hover:bg-white! text-slate-700! text-xs! font-bold! rounded-lg! border! border-slate-200! shadow-sm! hover:shadow-md! transition-all! cursor-pointer!"
+                  class="flex! items-center! justify-center! px-4! py-2! bg-white/90! hover:bg-white! text-slate-700! text-xs! font-bold! rounded-lg! border! border-slate-200! shadow-xs! hover:shadow-md! transition-all! cursor-pointer!"
                 >
                   <font-awesome-icon icon="eye" class="mr-2! text-blue-500!" />
                   PREVIEW LOCATION
@@ -604,7 +604,7 @@
             <button
               type="button"
               @click="openMapPreview"
-              class="sm:hidden! mt-2! w-full! flex! items-center! justify-center! px-4! py-2! bg-white! text-slate-700! text-xs! font-bold! rounded-lg! border! border-slate-200! shadow-sm! active:bg-slate-50! transition-all! cursor-pointer!"
+              class="sm:hidden! mt-2! w-full! flex! items-center! justify-center! px-4! py-2! bg-white! text-slate-700! text-xs! font-bold! rounded-lg! border! border-slate-200! shadow-xs! active:bg-slate-50! transition-all! cursor-pointer!"
             >
               <font-awesome-icon icon="eye" class="mr-2! text-blue-500!" />
               PREVIEW LOCATION
