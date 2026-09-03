@@ -9,40 +9,60 @@ export function usePelanggan(router = null) {
   const searchQuery = ref('')
   const currentPage = ref(1)
   const perPage = ref(10)
+  let fetchId = 0
 
   // State untuk data pelanggan
   const tableData = ref([])
   const isLoading = ref(false)
 
-  // Fungsi untuk mengambil data dari API
-  const fetchCustomers = async () => {
+  const mapRow = (c) => ({
+    id: c.customer_code || c.id,
+    realId: c.id,
+    nama: c.name,
+    initials: c.name
+      ? c.name
+          .split(' ')
+          .map((n) => n[0])
+          .join('')
+          .toUpperCase()
+          .substring(0, 2)
+      : '??',
+    avatarColor: ['#0ea5e9', '#f43f5e', '#10b981', '#8b5cf6', '#f59e0b'][c.id % 5],
+    nik: c.nik || '-',
+    alamat: c.address || '-',
+    no_telp: c.no_telp || '-',
+    customer_code: c.customer_code || null,
+    status: c.status || 'draft',
+  })
+
+  // Fungsi untuk mengambil data dari API (semua halaman)
+  const fetchCustomers = async (search = '') => {
+    const myId = ++fetchId
     try {
       isLoading.value = true
-      const response = await customerService.getCustomers({
-        search: searchQuery.value,
-      })
+      const pageSize = 100
+      let page = 1
+      let lastPage = 1
+      let aggregated = []
 
-      const list = response?.data?.data || response?.data || []
+      do {
+        const response = await customerService.getCustomers({
+          search,
+          page,
+          per_page: pageSize,
+        })
+        if (myId !== fetchId) return
 
-      tableData.value = list.map((c) => ({
-        id: c.customer_code || c.id,
-        realId: c.id,
-        nama: c.name,
-        initials: c.name
-          ? c.name
-              .split(' ')
-              .map((n) => n[0])
-              .join('')
-              .toUpperCase()
-              .substring(0, 2)
-          : '??',
-        avatarColor: ['#0ea5e9', '#f43f5e', '#10b981', '#8b5cf6', '#f59e0b'][c.id % 5],
-        nik: c.nik || '-',
-        alamat: c.address || '-',
-        no_telp: c.no_telp || '-',
-        customer_code: c.customer_code || null,
-        status: c.status || 'draft',
-      }))
+        const payload = response?.data || {}
+        const items = payload.data || []
+        aggregated = aggregated.concat(items)
+
+        lastPage = payload.last_page || 1
+        page += 1
+      } while (page <= lastPage)
+      if (myId !== fetchId) return
+
+      tableData.value = aggregated.map(mapRow)
     } catch (error) {
       console.error('Error fetching customers:', error)
       MySwal.fire({
@@ -51,20 +71,19 @@ export function usePelanggan(router = null) {
         icon: 'error',
       })
     } finally {
-      isLoading.value = false
+      if (myId === fetchId) isLoading.value = false
     }
   }
 
-  // Ambil data saat komponen di-mount
-  onMounted(() => {
-    fetchCustomers()
-  })
-
-  // Watcher untuk pencarian
-  watch(searchQuery, () => {
-    currentPage.value = 1
-    fetchCustomers()
-  })
+  // Watcher untuk pencarian (satu-satunya trigger fetch)
+  watch(
+    searchQuery,
+    (val) => {
+      currentPage.value = 1
+      fetchCustomers(val)
+    },
+    { immediate: true },
+  )
 
   // Properti komputasi
   const filteredData = computed(() => {
@@ -82,13 +101,6 @@ export function usePelanggan(router = null) {
   const totalPages = computed(() =>
     Math.max(1, Math.ceil(filteredData.value.length / perPage.value)),
   )
-  const visiblePages = computed(() => {
-    const pages = []
-    for (let i = 1; i <= totalPages.value; i++) {
-      pages.push(i)
-    }
-    return pages
-  })
 
   // Fungsi-fungsi penanganan aksi
   const handleEdit = (row) => {
@@ -126,7 +138,6 @@ export function usePelanggan(router = null) {
 
     // Komputasi
     totalPages,
-    visiblePages,
 
     // Konstanta
     STATUS_TYPES,

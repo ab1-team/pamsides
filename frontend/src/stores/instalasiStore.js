@@ -37,7 +37,7 @@ export const useInstalasiStore = defineStore('instalasi', () => {
   const fetchData = async () => {
     try {
       isLoading.value = true
-      const response = await ticketService.getTickets({ per_page: 150 })
+      const response = await ticketService.getTickets({ per_page: 5000 })
       if (response?.success && response?.data?.data) {
         const freshMap = {
           permohonan: [],

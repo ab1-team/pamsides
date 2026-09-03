@@ -28,10 +28,8 @@
       title=""
       v-model:current-page="currentPage"
       v-model:per-page="perPage"
-      :total-pages="totalPages"
-      :visible-pages="visiblePages"
+      :total-entries="filteredData.length"
       v-model="searchQuery"
-      :total-entries="tableData.length"
       class="mt-6!"
       search-placeholder="Cari pelanggan..."
       empty-title="Data Instalasi Tidak Ditemukan"
@@ -96,8 +94,6 @@ const {
   tableData,
   filteredData,
   isLoading,
-  totalPages,
-  visiblePages,
   STATUS_COLORS,
   fetchData,
   handleCetakDataInstalasi,
