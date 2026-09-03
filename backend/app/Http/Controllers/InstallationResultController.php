@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Helpers\FileHelper;
 use App\Models\Customer;
 use App\Models\InstallationTicket;
+use App\Models\Village;
 use App\StateMachines\TicketStateMachine;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -39,16 +40,9 @@ class InstallationResultController extends Controller
             $customer = Customer::where('ticket_id', $installationTicket->id)->first();
 
             if (! $customer) {
-                $year = now()->format('Y');
-                $latestCustomer = Customer::where('customer_code', 'like', 'PAM-'.$year.'-%')
-                    ->orderBy('customer_code', 'desc')
-                    ->first();
-
-                $nextNumber = $latestCustomer
-                    ? str_pad((int) substr($latestCustomer->customer_code, -4) + 1, 4, '0', STR_PAD_LEFT)
-                    : '0001';
-
-                $customerCode = 'PAM-'.$year.'-'.$nextNumber;
+                $customerCode = \App\Models\Village::generateCustomerCodeForVillageId(
+                    $installationTicket->village_id
+                );
 
                 $customer = Customer::create([
                     'ticket_id' => $installationTicket->id,

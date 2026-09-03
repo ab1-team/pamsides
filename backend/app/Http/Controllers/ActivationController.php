@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Customer;
 use App\Models\InstallationTicket;
+use App\Models\Village;
 use App\StateMachines\TicketStateMachine;
 use Illuminate\Http\Request;
 
@@ -26,16 +27,8 @@ class ActivationController extends Controller
 
         $user = $installationTicket->user;
 
-        $year = now()->format('Y');
-        $latestCustomer = Customer::where('customer_code', 'like', 'PAM-'.$year.'-%')
-            ->orderBy('customer_code', 'desc')
-            ->first();
-
-        $nextNumber = $latestCustomer
-            ? str_pad((int) substr($latestCustomer->customer_code, -4) + 1, 4, '0', STR_PAD_LEFT)
-            : '0001';
-
-        $customerCode = 'PAM-'.$year.'-'.$nextNumber;
+        // 3. Generate customer_code berdasarkan village.code + counter per desa
+        $customerCode = Village::generateCustomerCodeForVillageId($installationTicket->village_id);
 
         $customer = Customer::create([
             'ticket_id'             => $installationTicket->id,

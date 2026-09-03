@@ -204,35 +204,42 @@
           size="sm"
           :disabled="effectiveCurrentPage === 1"
           @click="handlePrevPage"
-          class="w-8! h-8! p-0! rounded-lg! border! border-slate-200! bg-white!"
+          class="h-8! px-2! rounded-lg! border! border-slate-200! bg-white! text-slate-600! font-medium!"
         >
-          ‹
+          Previous
         </BaseButton>
 
-        <BaseButton
-          v-for="page in effectiveVisiblePages"
-          :key="page"
-          variant="ghost"
-          size="sm"
-          @click="handleGoToPage(page)"
-          class="min-w-[32px]! h-8! rounded-lg! border! px-1 md:px-2! shadow-sm!"
-          :class="
-            page === effectiveCurrentPage
-              ? 'bg-blue-50! border-blue-200! text-blue-600! font-bold!'
-              : 'border-slate-200! bg-white! text-slate-600!'
-          "
-        >
-          {{ page }}
-        </BaseButton>
+        <template v-for="(page, idx) in effectiveVisiblePages" :key="`${page}-${idx}`">
+          <span
+            v-if="page === '...'"
+            class="min-w-[32px]! h-8! flex! items-center! justify-center! text-slate-400! text-xs!"
+          >
+            ...
+          </span>
+          <BaseButton
+            v-else
+            variant="ghost"
+            size="sm"
+            @click="handleGoToPage(page)"
+            class="min-w-[32px]! h-8! rounded-lg! border! px-1 md:px-2! shadow-sm!"
+            :class="
+              page === effectiveCurrentPage
+                ? 'bg-blue-50! border-blue-200! text-blue-600! font-bold!'
+                : 'border-slate-200! bg-white! text-slate-600!'
+            "
+          >
+            {{ page }}
+          </BaseButton>
+        </template>
 
         <BaseButton
           variant="ghost"
           size="sm"
           :disabled="effectiveCurrentPage === effectiveTotalPages"
           @click="handleNextPage"
-          class="w-8! h-8! p-0! rounded-lg! border! border-slate-200! bg-white!"
+          class="h-8! px-2! rounded-lg! border! border-slate-200! bg-white! text-slate-600! font-medium!"
         >
-          ›
+          Next
         </BaseButton>
       </div>
     </div>
@@ -418,18 +425,27 @@ const effectiveTotalPages = computed(() => {
 
 const effectiveVisiblePages = computed(() => {
   if (props.visiblePages !== undefined) return props.visiblePages
-  const pages = []
+  const total = effectiveTotalPages.value
+  const current = effectiveCurrentPage.value
   const maxPages = 5
-  let start = Math.max(1, effectiveCurrentPage.value - 2)
-  let end = Math.min(effectiveTotalPages.value, start + maxPages - 1)
+  const pages = []
 
+  if (total <= maxPages) {
+    for (let i = 1; i <= total; i++) pages.push(i)
+    return pages
+  }
+
+  let start = Math.max(1, current - 2)
+  let end = Math.min(total, start + maxPages - 1)
   if (end - start < maxPages - 1) {
     start = Math.max(1, end - maxPages + 1)
   }
 
-  for (let i = start; i <= end; i++) {
-    pages.push(i)
-  }
+  for (let i = start; i <= end; i++) pages.push(i)
+
+  if (start > 1) pages.unshift('...')
+  if (end < total) pages.push(total)
+
   return pages
 })
 
