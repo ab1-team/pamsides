@@ -79,7 +79,6 @@ class BillingService
 
         $remaining = $usageM3;
         $total = 0;
-        $blockIndex = 0;
 
         foreach ($blocks as $block) {
             if ($remaining <= 0) {
@@ -90,9 +89,9 @@ class BillingService
 
             if ($block->usage_max_m3 !== null) {
                 $max = (int) $block->usage_max_m3;
-                // Blok pertama (min=0): range = max - min
-                // Blok selanjutnya: range = max - min + 1 (karena min = prev_max + 1)
-                $range = $blockIndex === 0 ? $max - $min : $max - $min + 1;
+                // Range selalu max - min. min adalah batas bawah inklusif, max batas atas inklusif.
+                // Contoh: min=10, max=20 → range = 10 m³ (11..20 = 10 nilai, atau 10..19 = 10 nilai).
+                $range = $max - $min;
             } else {
                 $range = $remaining;
             }
@@ -100,7 +99,6 @@ class BillingService
             $used = min($remaining, $range);
             $total += round($used * (float) $block->price_per_m3);
             $remaining -= $used;
-            $blockIndex++;
         }
 
         return round($total);

@@ -1,0 +1,81 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build frontend
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: pnpm/action-setup@v6
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: pnpm install --frozen-lockfile
+
+      - name: Build frontend
+        working-directory: frontend
+        env:
+          VITE_API_BASE_URL: https://pamsides.siupk.com/api
+        run: pnpm run build
+
+      - name: Guard production API URL in bundle
+        run: grep -rq "pamsides.siupk.com/api" frontend/dist || { echo "::error::VITE_API_BASE_URL missing from built bundle"; exit 1; }
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: frontend-dist
+          path: frontend/dist
+          retention-days: 3
+
+  deploy:
+    name: Deploy to sim-sppg
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - uses: actions/download-artifact@v8
+        with:
+          name: frontend-dist
+          path: frontend/dist
+
+      - name: Setup SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.DEPLOY_SSH_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -p ${{ secrets.SSH_PORT }} ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Rsync frontend build to server
+        run: rsync -az --delete -e "ssh -p ${{ secrets.SSH_PORT }} -o IdentitiesOnly=yes" frontend/dist/ ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/home/enpii/pamsides/frontend/dist/
+
+      - name: Pull source, migrate, clear caches
+        run: ssh -p ${{ secrets.SSH_PORT }} -o IdentitiesOnly=yes ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} 'set -e; cd /home/enpii/pamsides; git pull --ff-only origin main; docker exec pamsides-app php artisan migrate --force --no-interaction; docker exec pamsides-app php artisan config:clear; docker exec pamsides-app php artisan route:clear'
+
+      - name: Smoke test production
+        run: |
+          site=$(curl -s -o /dev/null -w '%{http_code}' https://pamsides.siupk.com/)
+          api=$(curl -s -o /dev/null -w '%{http_code}' https://pamsides.siupk.com/api/health)
+          echo "site=$site api=$api"
+          test "$site" = "200"
+          test "$api" = "200"
