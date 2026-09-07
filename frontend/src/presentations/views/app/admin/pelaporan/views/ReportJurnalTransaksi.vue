@@ -2,7 +2,7 @@
   <BaseReportLayout :lembaga="payload?.lembaga" :config="payload?.config">
     <div class="header-section">
       <h2>JURNAL TRANSAKSI</h2>
-      <h3>BULAN {{ periodeText }}</h3>
+      <h3>BULAN {{ periodeText }} <span v-if="pageInfoText"> — Hal. {{ pageInfoText }}</span></h3>
     </div>
 
     <table class="data-table">
@@ -19,9 +19,9 @@
         </tr>
       </thead>
       <tbody>
-        <template v-for="(item, index) in payload.items" :key="item.id">
+        <template v-for="(item, index) in payload.items" :key="item.id + '-' + index">
           <tr>
-            <td class="text-center">{{ index + 1 }}</td>
+            <td class="text-center">{{ startIndex + index + 1 }}</td>
             <td class="text-center">{{ formatDate(item.tgl) }}</td>
             <td class="text-center">{{ item.id }}</td>
             <td class="text-center">{{ item.debet.kode }}</td>
@@ -42,7 +42,7 @@
           </tr>
         </template>
       </tbody>
-      <tfoot>
+      <tfoot v-if="showFooter">
         <tr class="total">
           <td colspan="5" class="text-center" style="font-weight: bold;">Total Transaksi</td>
           <td class="text-right" style="font-weight: bold;">{{ totalDebit }}</td>
@@ -68,18 +68,39 @@
       return `${(p.bulan_name || '').toUpperCase()} ${p.tahun || ''}`
     })
 
-    // Fungsi bantu untuk membersihkan string angka agar kalkulasi akurat
+    const startIndex = computed(() => Number(props.payload?.startIndex) || 0)
+    const showFooter = computed(() => props.payload?.showFooter !== false)
+    const pageInfo = computed(() => props.payload?.pageInfo || {})
+    const pageInfoText = computed(() => {
+      const p = pageInfo.value
+      if (!p || !p.total || p.total <= 1) return ''
+      return `${p.current} / ${p.total}`
+    })
+
     const parseNumber = (val) => parseFloat(String(val).replace(/[^0-9.-]+/g, "")) || 0;
 
-    const totalDebit = computed(() => {
-      const total = props.payload.items.reduce((sum, item) => sum + parseNumber(item.debet.jumlah), 0);
-      return total.toLocaleString('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    });
+    const totals = computed(() => {
+      if (props.payload?.totals && typeof props.payload.totals === 'object') {
+        return {
+          debit: Number(props.payload.totals.debit) || 0,
+          kredit: Number(props.payload.totals.kredit) || 0,
+        }
+      }
+      const items = Array.isArray(props.payload?.allItems) && props.payload.allItems.length > 0
+        ? props.payload.allItems
+        : props.payload.items
+      return {
+        debit: items.reduce((s, i) => s + parseNumber(i?.debet?.jumlah), 0),
+        kredit: items.reduce((s, i) => s + parseNumber(i?.kredit?.jumlah), 0),
+      }
+    })
 
-    const totalKredit = computed(() => {
-      const total = props.payload.items.reduce((sum, item) => sum + parseNumber(item.kredit.jumlah), 0);
-      return total.toLocaleString('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    });
+    const totalDebit = computed(() =>
+      totals.value.debit.toLocaleString('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+    )
+    const totalKredit = computed(() =>
+      totals.value.kredit.toLocaleString('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+    )
 
     const formatCurrency = (val) => {
       return parseNumber(val).toLocaleString('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -88,12 +109,12 @@
     const formatDate = (dateString) => {
       if (!dateString) return '-';
       const date = new Date(dateString);
-      
-      // Mengambil komponen tanggal, bulan, dan tahun
+
       const day = String(date.getDate()).padStart(2, '0');
-      const month = String(date.getMonth() + 1).padStart(2, '0'); // Bulan dimulai dari 0
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+
       const year = date.getFullYear();
-      
+
       return `${day}/${month}/${year}`;
     };
 </script>

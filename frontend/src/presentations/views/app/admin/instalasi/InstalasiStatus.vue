@@ -83,8 +83,6 @@
             :columns="tableColumns"
             v-model:current-page="currentPage"
             v-model:per-page="perPage"
-            :total-pages="totalPages"
-            :visible-pages="visiblePages"
             :total-entries="filteredData.length"
             :show-toolbar="true"
             :search-query="searchQuery"
@@ -290,8 +288,6 @@ const {
   menuList,
   dataMap,
   filteredData,
-  totalPages,
-  visiblePages,
   paginatedData,
   statusStyle,
   prevPage,

@@ -31,14 +31,14 @@
           <template v-for="(dusunGroup, namaDesa) in hierarchicalRows" :key="namaDesa">
             <template v-for="(customers, namaDusun) in dusunGroup" :key="namaDusun">
 
-              <tr class="wilayah-header-gabung">
+              <tr v-if="shouldShowWilayahHeader(namaDesa, namaDusun)" class="wilayah-header-gabung">
                 <td colspan="9">
                   <span class="text-format-normal"><b>Desa {{ namaDesa.toLowerCase() }} Dusun {{ namaDusun.toLowerCase() }}</b></span>
                 </td>
               </tr>
 
               <tr v-for="(row, idx) in customers" :key="row.id ?? idx">
-                <td class="text-center">{{ idx + 1 }}</td>
+                <td class="text-center">{{ startIndex + idx + 1 }}</td>
                 <td>{{ row.name }}</td>
                 <td class="text-center">{{ row.customer_code }}</td>
                 <td class="text-center">{{ row.activated_at }}</td>
@@ -79,19 +79,33 @@
     return props.payload?.items || []
   })
 
+  const startIndex = computed(() => {
+    return Number(props.payload?.startIndex) || 0
+  })
+
   const hierarchicalRows = computed(() => {
     const tree = {}
     rawItems.value.forEach(item => {
       const desa = item.nama_desa || 'BELUM DISET'
       const dusun = item.nama_dusun || 'BELUM DISET'
-      
+
       if (!tree[desa]) tree[desa] = {}
       if (!tree[desa][dusun]) tree[desa][dusun] = []
-      
+
       tree[desa][dusun].push(item)
     })
     return tree
   })
+
+  const shouldShowWilayahHeader = (desa, dusun) => {
+    const items = rawItems.value
+    if (!items || items.length === 0) return true
+    const first = items[0]
+    const firstDesa = first.nama_desa || 'BELUM DISET'
+    const firstDusun = first.nama_dusun || 'BELUM DISET'
+    if (firstDesa !== desa || firstDusun !== dusun) return true
+    return first._show_wilayah_header === true
+  }
 
   const periodeText = computed(() => {
     const m = props.meta || {}

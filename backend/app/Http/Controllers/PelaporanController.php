@@ -634,7 +634,7 @@ class PelaporanController extends Controller
         $query->whereDate('activated_at', '<=', $data['tgl_kondisi']);
 
         $query->whereHas('ticket', function ($q) {
-            $q->where('status', '!=', 'draft');
+            $q->where('status', 'completed');
         });
 
         if (! empty($sub) && $sub !== 'DRPY' && $sub !== 'null' && $sub !== 'undefined') {
@@ -719,8 +719,10 @@ class PelaporanController extends Controller
         }
 
         if (isset($data['bulanan']) && $data['bulanan'] && ! empty($data['bulan'])) {
-            $query->where('billing_period_month', $data['bulan'])
-                ->where('billing_period_year', $data['tahun']);
+            // Filter by due_date (tempo bayar) supaya match konvensi legacy:
+            // "BULAN X" = tagihan yang tgl_akhir/tempo bayarnya di bulan X.
+            $query->whereYear('due_date', $data['tahun'])
+                ->whereMonth('due_date', $data['bulan']);
         }
 
         $bills = $query->get();

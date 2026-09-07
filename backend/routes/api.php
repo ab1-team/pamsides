@@ -66,6 +66,7 @@ Route::middleware('auth:sanctum')->group(function () {
 Route::middleware(['auth:sanctum', 'role:admin,surveyor'])->group(function () {
     // Dipindahkan ke sini agar admin bisa membaca draft & surveyor bisa membaca pending
     Route::get('installation-tickets', [InstallationTicketController::class, 'index']);
+    Route::get('installation-tickets/register-dropdown', [InstallationTicketController::class, 'registerDropdown']);
     Route::get('installation-tickets/{installationTicket}', [InstallationTicketController::class, 'show']);
 });
 

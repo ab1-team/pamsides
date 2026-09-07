@@ -12,7 +12,8 @@ class CustomerController extends Controller
 {
     public function index(Request $request)
     {
-        $query = InstallationTicket::with(['user', 'customer']);
+        $query = InstallationTicket::with(['user', 'customer'])
+            ->where('status', '!=', 'draft');
 
         if ($request->search) {
             $q = $request->search;
@@ -24,11 +25,6 @@ class CustomerController extends Controller
 
         if ($request->status) {
             $query->where('status', $request->status);
-        }
-
-        // Least-privilege: teknisi hanya melihat tiket yang sudah masuk tahap aktif
-        if (auth()->check() && auth()->user()->role === 'teknisi') {
-            $query->whereIn('status', ['surveyed', 'unpaid', 'processing', 'completed', 'suspended']);
         }
 
         $tickets = $query->latest()->paginate($request->get('per_page', 10));

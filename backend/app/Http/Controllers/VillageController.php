@@ -25,9 +25,11 @@ class VillageController extends Controller
         $request->validate([
             'village_name' => 'required',
             'hamlet_name' => 'required',
+            'code' => 'nullable|string|max:20|unique:villages,code',
         ]);
 
         $village = Village::create([
+            'code' => $request->code,
             'village_name' => $request->village_name,
             'hamlet_name' => $request->hamlet_name,
             'address' => $request->address,
@@ -38,7 +40,7 @@ class VillageController extends Controller
             'success' => true,
             'message' => 'Village berhasil ditambahkan',
             'data' => $village,
-        ]);
+        ], 201);
     }
 
     public function show($id)

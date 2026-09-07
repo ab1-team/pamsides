@@ -94,6 +94,7 @@ Authorization: Bearer {token}
 | Method | Endpoint | Role | Keterangan |
 |---|---|---|---|
 | GET | `/installation-tickets` | Admin | Daftar tiket |
+| GET | `/installation-tickets/register-dropdown` | Admin | Data ringan di-groupBy NIK untuk dropdown Register Instalasi (tanpa eager-load berat) |
 | POST | `/installation-tickets` | Admin | Buat tiket baru |
 | GET | `/installation-tickets/{id}` | Admin | Detail tiket |
 | PATCH | `/installation-tickets/{id}/transition` | Admin | Ubah status tiket |
@@ -104,9 +105,16 @@ Authorization: Bearer {token}
 
 **Query Parameters GET `/installation-tickets`:**
 ```
-?status=pending|surveyed|unpaid|processing|completed
+?status=pending|surveyed|unpaid|processing|completed|draft
 ?search=nama_atau_nik
+?grouped=1                # return semua tiket di-groupBy NIK (semua status, tanpa paginasi)
 ```
+
+**Query Parameters GET `/installation-tickets/register-dropdown`:**
+```
+?search=nama_atau_nik     # opsional, filter by applicant_name atau nik
+```
+Response sudah di-groupBy NIK di backend, tanpa eager-load relasi berat (`payments`, `customer.meterReadings`, `customer.monthlyBills`, `tariffBlocks`). Direkomendasikan untuk halaman Register Instalasi agar loading cepat.
 
 **Alur Status Tiket:**
 ```

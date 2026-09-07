@@ -25,8 +25,19 @@ class GenerateAmountController extends Controller
         // Hapus semua amount untuk tahun tersebut
         DB::table('amount')->where('tahun', $tahun)->delete();
 
-        // Ambil SEMUA akun
-        $accounts = DB::table('accounts')->get();
+        // Ambil akun unik — kalau ada beberapa akun dengan kode_akun sama,
+        // keep hanya yang id-nya paling besar (akun hasil migrasi dari legacy id >= 594),
+        // supaya generate amount tidak double-count transaksi dari legacy.
+        $allAccounts = DB::table('accounts')->orderBy('id', 'DESC')->get();
+        $seenKode = [];
+        $accounts = [];
+        foreach ($allAccounts as $account) {
+            if (isset($seenKode[$account->kode_akun])) continue;
+            $seenKode[$account->kode_akun] = true;
+            $accounts[] = $account;
+        }
+        $accounts = array_reverse($accounts); // restore ascending id order
+        $accounts = collect($accounts);
 
         foreach ($accounts as $account) {
             for ($m = 1; $m <= $bulan; $m++) {

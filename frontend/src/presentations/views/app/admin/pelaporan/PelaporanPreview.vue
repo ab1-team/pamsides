@@ -245,7 +245,7 @@ const pageMarginBottom = (i) => {
 }
 
 // MODIFIKASI: Menyimpan backup path favicon utama aplikasi Anda
-const originalFavicon = '/favicon.ico'
+const originalFavicon = ''
 
 const meta = computed(() => response.value?.meta || {})
 const viewTarget = computed(() => response.value?.view_target || '')
@@ -338,23 +338,100 @@ const buildPages = (res) => {
   } 
   else if (['daftar_pelanggan', 'tagihan_pelanggan', 'piutang_pelanggan'].includes(res.view_target)) {
     const items = Array.isArray(data) ? data : data?.items || []
-    const chunkSize = 25
+    const rowsPerPage = 25
 
     if (items.length === 0) {
-      pages.value = [{ payload: { config: baseConfig, items: [] }, meta: baseMeta }]
+      pages.value = [{ payload: { config: baseConfig, items: [], startIndex: 0, pageInfo: { current: 1, total: 1 } }, meta: baseMeta }]
     } else {
+      // Kelompokkan items berdasarkan Desa + Dusun, lalu chunk per-group
+      // supaya header desa/dusun tidak muncul dua kali di halaman yang berbeda
+      const groups = new Map()
+      items.forEach((item) => {
+        const key = `${item.nama_desa || 'BELUM DISET'}__${item.nama_dusun || 'BELUM DISET'}`
+        if (!groups.has(key)) groups.set(key, { desa: item.nama_desa || 'BELUM DISET', dusun: item.nama_dusun || 'BELUM DISET', rows: [] })
+        groups.get(key).rows.push(item)
+      })
+
+      // Bangun chunks: kumpulkan group selama baris belum lewat rowsPerPage
       pages.value = []
-      for (let i = 0; i < items.length; i += chunkSize) {
+      let buffer = []
+      let bufferCount = 0
+      let globalIndex = 0
+      let prevLastGroupKey = null // key desa/dusun dari item terakhir halaman sebelumnya
+
+      const flushPage = (lastPage = false) => {
+        if (bufferCount === 0) return
+        // Tandai item pertama di halaman: apakah grup desa/dusun berbeda dari halaman sebelumnya?
+        const firstKey = buffer.length > 0
+          ? `${buffer[0].nama_desa || 'BELUM DISET'}__${buffer[0].nama_dusun || 'BELUM DISET'}`
+          : null
+        const showWilayahHeader = firstKey !== prevLastGroupKey
+        const marked = buffer.map((row, i) => ({
+          ...row,
+          _show_wilayah_header: i === 0 ? showWilayahHeader : false,
+        }))
         pages.value.push({
           payload: {
             config: baseConfig,
-            items: items.slice(i, i + chunkSize)
+            items: marked,
+            startIndex: globalIndex - bufferCount,
+            pageInfo: { current: pages.value.length + 1, total: 0 }
           },
           meta: baseMeta,
         })
+        prevLastGroupKey = buffer.length > 0
+          ? `${buffer[buffer.length - 1].nama_desa || 'BELUM DISET'}__${buffer[buffer.length - 1].nama_dusun || 'BELUM DISET'}`
+          : prevLastGroupKey
+        buffer = []
+        bufferCount = 0
       }
+
+      for (const group of groups.values()) {
+        const groupRows = group.rows
+
+        // Kalau group ini sendiri sudah > rowsPerPage, paksa split per rowsPerPage
+        if (groupRows.length > rowsPerPage) {
+          flushPage()
+          for (let j = 0; j < groupRows.length; j += rowsPerPage) {
+            const slice = groupRows.slice(j, j + rowsPerPage)
+            const sliceFirstKey = `${slice[0].nama_desa || 'BELUM DISET'}__${slice[0].nama_dusun || 'BELUM DISET'}`
+            const sliceShowHeader = sliceFirstKey !== prevLastGroupKey
+            const marked = slice.map((row, i) => ({
+              ...row,
+              _show_wilayah_header: i === 0 ? sliceShowHeader : false,
+            }))
+            pages.value.push({
+              payload: {
+                config: baseConfig,
+                items: marked,
+                startIndex: globalIndex,
+                pageInfo: { current: pages.value.length + 1, total: 0 }
+              },
+              meta: baseMeta,
+            })
+            globalIndex += slice.length
+            prevLastGroupKey = sliceFirstKey
+          }
+        } else {
+          // Kalau menambah group ini akan overflow, flush dulu
+          if (bufferCount + groupRows.length > rowsPerPage && bufferCount > 0) {
+            flushPage()
+          }
+          buffer = buffer.concat(groupRows)
+          bufferCount += groupRows.length
+          globalIndex += groupRows.length
+        }
+      }
+      flushPage(true)
+
+      // Isi total pages
+      const total = pages.value.length
+      pages.value = pages.value.map((p) => ({
+        ...p,
+        payload: { ...p.payload, pageInfo: { ...(p.payload.pageInfo || {}), total } }
+      }))
     }
-  } 
+  }
   else if (res.view_target === 'neraca_saldo') {
     const items = Array.isArray(data?.items) ? data.items : []
     const summary = data?.summary || {}
@@ -470,29 +547,39 @@ const buildPages = (res) => {
     }
   }
   else if (res.view_target === 'jurnal_transaksi') {
-    const transactions = Array.isArray(data?.transactions) ? data.transactions : [];
-    const chunkSize = 20; // Sesuaikan jumlah baris per halaman
+    const items = Array.isArray(data?.items) ? data.items : [];
+    const chunkSize = 25;
+    const parseNumber = (val) => parseFloat(String(val).replace(/[^0-9.-]+/g, '')) || 0;
+    const totalDebitAll = items.reduce((s, i) => s + parseNumber(i?.debet?.jumlah), 0);
+    const totalKreditAll = items.reduce((s, i) => s + parseNumber(i?.kredit?.jumlah), 0);
+    const totals = {
+      debit: totalDebitAll.toLocaleString('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+      kredit: totalKreditAll.toLocaleString('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+    };
 
-    if (transactions.length === 0) {
-      pages.value = [{ 
-        payload: { ...data, config: baseConfig, transactions: [], showHeader: true, showFooter: true }, 
-        meta: baseMeta 
+    if (items.length === 0) {
+      pages.value = [{
+        payload: { ...data, config: baseConfig, items: [], allItems: [], totals, showHeader: true, showFooter: true, startIndex: 0, pageInfo: { current: 1, total: 1 } },
+        meta: baseMeta
       }];
     } else {
       pages.value = [];
-      const totalChunks = Math.ceil(transactions.length / chunkSize);
-      
-      for (let i = 0; i < transactions.length; i += chunkSize) {
+      const totalChunks = Math.ceil(items.length / chunkSize);
+
+      for (let i = 0; i < items.length; i += chunkSize) {
         const chunkIndex = Math.floor(i / chunkSize);
         const isLast = chunkIndex === totalChunks - 1;
-        
+
         pages.value.push({
           payload: {
             ...data,
             config: baseConfig,
-            transactions: transactions.slice(i, i + chunkSize),
+            items: items.slice(i, i + chunkSize),
+            allItems: items,
+            totals,
+            startIndex: i,
             showHeader: true,
-            showFooter: isLast, // Footer (Total/Tanda tangan) hanya muncul di halaman terakhir
+            showFooter: isLast,
             pageInfo: { current: chunkIndex + 1, total: totalChunks }
           },
           meta: baseMeta,
@@ -988,6 +1075,12 @@ onUnmounted(() => {
   justify-content: center;
   align-items: flex-start;
   width: 100%;
+  page-break-after: always;
+  break-after: page;
+}
+.report-page-wrap:last-child {
+  page-break-after: auto;
+  break-after: auto;
 }
 .alert-error {
   background: #fee2e2;

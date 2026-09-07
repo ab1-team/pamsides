@@ -15,6 +15,17 @@ export const ticketService = {
     return response.data
   },
 
+  /**
+   * Ambil data ringan untuk dropdown Register Instalasi.
+   * Response sudah di-groupBy NIK di backend, tanpa eager-load relasi berat.
+   */
+  async getRegisterDropdown(params = {}) {
+    const response = await api.get('/installation-tickets/register-dropdown', {
+      params,
+    })
+    return response.data
+  },
+
   async getSurveyResults(params = {}) {
     const response = await api.get('/survey-results', {
       params,

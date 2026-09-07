@@ -91,12 +91,6 @@ export function useDataInstalasi() {
     Math.max(1, Math.ceil(filteredData.value.length / perPage.value)),
   )
 
-  const visiblePages = computed(() => {
-    const pages = []
-    for (let i = 1; i <= Math.min(3, totalPages.value); i++) pages.push(i)
-    return pages
-  })
-
   const handleCetakDataInstalasi = () => {
     const printWindow = window.open('', '_blank', 'width=900,height=700')
     if (!printWindow) {
@@ -202,7 +196,6 @@ export function useDataInstalasi() {
     filteredData,
     isLoading,
     totalPages,
-    visiblePages,
     STATUS_COLORS,
     fetchData,
     handleCetakDataInstalasi,

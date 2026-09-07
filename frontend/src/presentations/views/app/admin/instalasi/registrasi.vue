@@ -66,7 +66,7 @@
             v-if="isCustomerDropdownOpen"
             class="absolute! top-full! left-0! right-0! mt-2! bg-white! border! border-slate-200! rounded-xl! shadow-xl! z-50! overflow-hidden!"
           >
-            <div class="max-h-60! overflow-y-auto!">
+            <div class="max-h-60! overflow-y-auto! overflow-x-hidden!">
               <div v-if="filteredCustomerOptions.length === 0" class="py-12! px-6! text-center!">
                 <div
                   class="w-16! h-16! bg-slate-50! rounded-full! flex! items-center! justify-center! mx-auto! mb-4! border-2! border-dashed! border-slate-200!"
@@ -97,7 +97,7 @@
                       {{ customer.name }}
                     </div>
                     <div class="text-[9px]! text-slate-400! font-mono! font-bold! leading-none!">
-                      NIK: {{ customer.nik }}
+                      NIK: {{ customer.nik || '-' }}
                     </div>
                   </div>
                   <div
@@ -146,7 +146,7 @@
             </div>
             <div class="px-4! py-2! border-t! border-slate-100! bg-slate-50/50!">
               <p class="text-[11px]! text-slate-400!">
-                {{ filteredCustomerOptions.length }} customer ditemukan
+                
               </p>
             </div>
           </div>
@@ -167,16 +167,16 @@
           <div
             class="w-10! h-10! sm:w-14! sm:h-14! rounded-full! bg-white/20! backdrop-blur-md! flex! items-center! justify-center! text-white! font-bold! text-base! sm:text-xl! border-2! border-white/40! shrink-0!"
           >
-            {{ selectedCustomer.name.charAt(0).toUpperCase() }}
+            {{ (selectedCustomer.name || '?').charAt(0).toUpperCase() }}
           </div>
           <div class="flex-1! min-w-0!">
             <div class="font-bold! text-white! text-sm! sm:text-lg! truncate! tracking-tight!">
-              {{ selectedCustomer.name }}
+              {{ selectedCustomer.name || '(Tanpa Nama)' }}
             </div>
             <div
               class="flex! flex-wrap! items-center! gap-x-2! gap-y-0.5! text-blue-50! text-[10px]! sm:text-xs! mt-0.5! opacity-90!"
             >
-              <span class="font-mono! font-bold!">NIK: {{ selectedCustomer.nik }}</span>
+              <span class="font-mono! font-bold!">NIK: {{ selectedCustomer.nik || '-' }}</span>
               <span class="hidden! sm:inline!">·</span>
               <span class="truncate!">
                 Status:
@@ -691,76 +691,85 @@ const packages = ref([])
 const caterUsers = ref([])
 
 // 1. FETCH CUSTOMERS
-const fetchCustomers = async () => {
+let fetchSeq = 0
+const fetchCustomers = async (search = '') => {
+  const seq = ++fetchSeq
   try {
-    const res = await ticketService.getTickets()
-    const list = res.data?.data || res.data || []
-    const grouped = {}
+    const params = {}
+    if (search && search.trim()) params.search = search.trim()
+    const res = await ticketService.getRegisterDropdown(params)
+    if (seq !== fetchSeq) return
+    const list = Array.isArray(res?.data?.data)
+      ? res.data.data
+      : Array.isArray(res?.data)
+        ? res.data
+        : Array.isArray(res)
+          ? res
+          : []
 
-    list.forEach((item) => {
-      const nik = item.nik
-      if (!grouped[nik]) {
-        grouped[nik] = {
-          nik: nik,
-          name: item.applicant_name || '',
-          phone: item.phone || '',
-          gender: item.gender || '',
-          birth_place: item.birth_place || '',
-          birth_date: item.birth_date || '',
-          tickets: [],
-        }
-      }
+    // Response backend: array of customer (sudah grouped by NIK).
+    // Tiap item: { id, applicant_name, nik, phone, gender, birth_place, birth_date, tickets: [...] }
+    const customers = list.map((item) => {
+      const tickets = (item.tickets || []).map((t) => ({
+        id: t.id,
+        village_id: t.village_id || '',
+        village_name: t.village_name || '',
+        village_address: t.village_address || '',
+        lat: t.lat || '',
+        lng: t.lng || '',
+        package_id: t.package_id || '',
+        package: t.package || null,
+        user_id: t.user_id || '',
+        order_date: t.order_date || '',
+        nominal: t.package?.installation_fee ?? 0,
+        status: t.status || 'draft',
+      }))
 
-      if (!grouped[nik].phone && item.phone) grouped[nik].phone = item.phone
-      if (!grouped[nik].gender && item.gender) grouped[nik].gender = item.gender
-      if (!grouped[nik].birth_place && item.birth_place) grouped[nik].birth_place = item.birth_place
-      if (!grouped[nik].birth_date && item.birth_date) grouped[nik].birth_date = item.birth_date
-
-      grouped[nik].tickets.push({
-        id: item.id,
-        village_id: item.village_id || '',
-        village_name: item.village?.village_name || '',
-        village_address: item.village?.address || '',
-        lat: item.lat || '',
-        lng: item.lng || '',
-        package_id: item.package_id || '',
-        package: item.package || null,
-        user_id: item.user_id || '',
-        order_date: item.order_date || '',
-        nominal: item.package?.installation_fee || 0,
-        status: item.status || 'draft',
-      })
-    })
-
-    Object.values(grouped).forEach((c) => {
       const activeStatuses = ['pending', 'surveyed', 'unpaid', 'processing', 'completed']
-      const hasActive = c.tickets.some((t) => activeStatuses.includes(t.status))
-      const hasDraft = c.tickets.some((t) => t.status === 'draft')
-      const hasSuspended = c.tickets.some((t) => t.status === 'suspended')
-      const hasTerminated = c.tickets.some((t) => t.status === 'terminated')
-      const latestTicket = [...c.tickets].sort((a, b) => (b.id || 0) - (a.id || 0))[0]
+      const hasActive = tickets.some((t) => activeStatuses.includes(t.status))
+      const hasDraft = tickets.some((t) => t.status === 'draft')
+      const hasSuspended = tickets.some((t) => t.status === 'suspended')
+      const hasTerminated = tickets.some((t) => t.status === 'terminated')
+      const latestTicket = [...tickets].sort((a, b) => (b.id || 0) - (a.id || 0))[0]
 
+      let status = 'Tidak Aktif'
+      let statusLabel = 'tidak aktif'
+      let isBlocked = false
       if (hasTerminated) {
-        c.status = 'Terminated'
-        c.statusLabel = 'cabut'
-        c.isBlocked = true
+        status = 'Terminated'
+        statusLabel = 'cabut'
+        isBlocked = true
       } else if (hasSuspended) {
-        c.status = 'Suspended'
-        c.statusLabel = 'blokir'
-        c.isBlocked = true
+        status = 'Suspended'
+        statusLabel = 'blokir'
+        isBlocked = true
       } else if (hasActive) {
-        c.status = 'Aktif'
-        c.statusLabel = latestTicket?.status || 'aktif'
+        status = 'Aktif'
+        statusLabel = latestTicket?.status || 'aktif'
       } else if (hasDraft) {
-        c.status = 'Draft'
-        c.statusLabel = 'draft'
-      } else {
-        c.status = 'Tidak Aktif'
-        c.statusLabel = 'tidak aktif'
+        status = 'Draft'
+        statusLabel = 'draft'
+      }
+
+      return {
+        id: item.id,
+        nik: item.nik,
+        name: item.applicant_name || '',
+        phone: item.phone || '',
+        gender: item.gender || '',
+        birth_place: item.birth_place || '',
+        birth_date: item.birth_date || '',
+        tickets,
+        status,
+        statusLabel,
+        isBlocked,
       }
     })
 
-    customerOptions.value = Object.values(grouped)
+    customerOptions.value = customers
+    if (import.meta.env.DEV) {
+      console.debug('[register-dropdown] customers loaded:', customers.length)
+    }
   } catch (err) {
     console.error('Gagal ambil customer:', err)
   }
@@ -845,13 +854,23 @@ const fetchPasangBaruMode = async () => {
   }
 }
 
-// FILTER SEARCH CUSTOMER
+// FILTER SEARCH CUSTOMER (server-side primary + client-side fallback)
 const filteredCustomerOptions = computed(() => {
-  if (!customerSearch.value) return customerOptions.value
-  const q = customerSearch.value.toLowerCase()
+  const q = (customerSearch.value || '').trim().toLowerCase()
+  if (!q) return customerOptions.value
   return customerOptions.value.filter((c) => {
-    return c.name.toLowerCase().includes(q) || c.nik.toLowerCase().includes(q)
+    const name = (c.name || '').toLowerCase()
+    const nik = c.nik == null ? '' : String(c.nik).toLowerCase()
+    return name.includes(q) || nik.includes(q)
   })
+})
+
+let searchDebounceTimer = null
+watch(customerSearch, (val) => {
+  if (searchDebounceTimer) clearTimeout(searchDebounceTimer)
+  searchDebounceTimer = setTimeout(() => {
+    fetchCustomers(val)
+  }, 250)
 })
 
 // VALIDASI TAMPILAN MAP PREVIEW
@@ -864,7 +883,7 @@ const hasCoordinates = computed(() => {
 // KETIKA PILIH CUSTOMER
 const selectCustomer = (customer) => {
   selectedCustomer.value = customer
-  customerSearch.value = customer.name
+  customerSearch.value = customer.name || ''
   isCustomerDropdownOpen.value = false
 
   if (customer.isBlocked) {

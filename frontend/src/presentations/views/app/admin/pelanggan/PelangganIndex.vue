@@ -14,9 +14,7 @@
       title=""
       v-model:current-page="currentPage"
       v-model:per-page="perPage"
-      :total-pages="totalPages"
-      :visible-pages="visiblePages"
-      :total-entries="tableData.length"
+      :total-entries="filteredData.length"
       v-model="searchQuery"
       class="mt-6!"
       search-placeholder="Cari pelanggan..."
@@ -99,8 +97,6 @@ const {
   tableData,
   filteredData,
   isLoading,
-  totalPages,
-  visiblePages,
   handleEdit,
   handleDelete,
   fetchCustomers,
