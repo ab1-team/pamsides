@@ -21,7 +21,7 @@ class ProbeTxUserIdsCommand extends Command
             $lu = DB::connection('legacy')->table('users')->where('id', $uid)->first();
             $role = $lu ? match ((int) ($lu->jabatan ?? 0)) {
                 1, 2, 3, 4, 6, 8 => 'admin',
-                5 => 'surveyor',
+                5 => 'teknisi',
                 7 => 'teknisi',
                 default => 'admin',
             } : '?';

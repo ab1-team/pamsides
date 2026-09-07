@@ -418,4 +418,22 @@ router.beforeEach((to) => {
   return true
 })
 
+const APP_NAME = 'PAMSIDES'
+
+const humanize = (name) => {
+  if (!name || typeof name !== 'string') return ''
+  return name
+    .replace(/[-_]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .split(' ')
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(' ')
+}
+
+router.afterEach((to) => {
+  const baseName = humanize(to.name)
+  document.title = baseName ? `${baseName} - ${APP_NAME}` : APP_NAME
+})
+
 export default router
