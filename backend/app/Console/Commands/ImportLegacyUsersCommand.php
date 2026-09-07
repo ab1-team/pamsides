@@ -22,9 +22,9 @@ class ImportLegacyUsersCommand extends Command
         2 => 'admin',     // Sekertaris
         3 => 'admin',     // Bendahara
         4 => 'admin',     // Pengawas
-        5 => 'surveyor',  // Caters (pembaca meter)
+        5 => 'teknisi',   // Cater/teknisi lapangan (pembaca meter & penanggung jawab instalasi)
         6 => 'admin',     // Pos Bayar
-        7 => 'teknisi',   // Teknisi
+        7 => 'teknisi',   // Teknisi khusus
         8 => 'admin',     // Ketua
     ];
 

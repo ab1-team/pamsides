@@ -40,9 +40,10 @@ class ImportLegacyMeterReadingsCommand extends Command
         $legacyPkgs = DB::connection('legacy')->table('packages')->get(['id', 'business_id', 'kelas']);
         $newPkgs = DB::table('installation_packages')->get();
         foreach ($legacyPkgs as $lp) {
-            $want = "{$lp->kelas} (B{$lp->business_id})";
+            $wantSuffixed = "{$lp->kelas} (B{$lp->business_id})";
+            $wantPlain    = $lp->kelas;
             foreach ($newPkgs as $np) {
-                if (strcasecmp($np->name, $want) === 0) {
+                if (strcasecmp($np->name, $wantSuffixed) === 0 || strcasecmp($np->name, $wantPlain) === 0) {
                     $packageMap[(int) $lp->id] = (int) $np->id;
                     $newPkgIdToLegacy[(int) $np->id][] = (int) $lp->id;
                     break;
@@ -63,14 +64,36 @@ class ImportLegacyMeterReadingsCommand extends Command
             $customersById[(int) $c->id] = $c;
         }
 
-        // Group legacy inst by (nama|village|legacy_pkg) → list of inst_ids (urut ascending)
+        // Build legacy.villages.id → new.villages.id map by nama+dusun
+        $villageMap = [];
+        $legacyVillages = DB::connection('legacy')->table('villages')->get();
+        $localVillages = DB::table('villages')->get();
+        foreach ($legacyVillages as $lv) {
+            $nama = strtolower(trim((string) $lv->nama));
+            $dusun = strtolower(trim((string) ($lv->dusun ?? '')));
+            foreach ($localVillages as $nv) {
+                $matchNama = strtolower(trim((string) $nv->village_name)) === $nama;
+                $matchDusun = $dusun === '' || $dusun === '-'
+                    ? strtolower(trim((string) $nv->hamlet_name)) === ''
+                    : strtolower(trim((string) $nv->hamlet_name)) === $dusun;
+                if ($matchNama && $matchDusun) {
+                    $villageMap[(int) $lv->id] = (int) $nv->id;
+                    break;
+                }
+            }
+        }
+        $this->info('legacy→new village map: '.count($villageMap));
+
+        // Group legacy inst by (nama|new_village_id|legacy_pkg) → list of inst_ids
         $byTriple = [];
         foreach ($rows as $li) {
             $cust = $customersById[(int) $li->customer_id] ?? null;
             if (! $cust) continue;
             $name = strtolower(trim((string) ($cust->nama ?? '')));
             if ($name === '') continue;
-            $key = $name.'|'.((int) $li->desa).'|'.((int) $li->package_id);
+            $newVillage = $villageMap[(int) $li->desa] ?? null;
+            if ($newVillage === null) continue;
+            $key = $name.'|'.$newVillage.'|'.((int) $li->package_id);
             if (! isset($byTriple[$key])) {
                 $byTriple[$key] = [];
             }
@@ -91,10 +114,8 @@ class ImportLegacyMeterReadingsCommand extends Command
         $this->info('newByTriple size: '.count($newByTriple));
 
         // Map: legacy_inst_id → new_ticket_id
-        // Translate each legacy triple key from legacy_pkg_id to new_pkg_id, then lookup
         $instToTicket = [];
         foreach ($byTriple as $key => $instIds) {
-            // key format: name|village|legacy_pkg
             $parts = explode('|', $key);
             $name = $parts[0];
             $village = $parts[1];
@@ -141,7 +162,7 @@ class ImportLegacyMeterReadingsCommand extends Command
         foreach ($legacyUsers as $lu) {
             $role = match ((int) ($lu->jabatan ?? 0)) {
                 1, 2, 3, 4, 6, 8 => 'admin',
-                5 => 'surveyor',
+                5 => 'teknisi',
                 7 => 'teknisi',
                 default => 'admin',
             };

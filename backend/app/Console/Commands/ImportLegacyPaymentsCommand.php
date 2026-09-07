@@ -113,7 +113,7 @@ class ImportLegacyPaymentsCommand extends Command
         foreach ($legacyUsers as $lu) {
             $role = match ((int) ($lu->jabatan ?? 0)) {
                 1, 2, 3, 4, 6, 8 => 'admin',
-                5 => 'surveyor',
+                5 => 'teknisi',
                 7 => 'teknisi',
                 default => 'admin',
             };

@@ -177,15 +177,12 @@ class ImportLegacyCustomersCommand extends Command
                 }
                 $existingCustomersByTicket[$ticketId] = true;
 
-                // 3. Update installation_tickets.user_id = userId (link tiket → user)
-                // Hanya link kalau tiket belum punya user_id
-                $updated = DB::table('installation_tickets')
-                    ->where('id', $ticketId)
-                    ->whereNull('user_id')
-                    ->update(['user_id' => $userId, 'updated_at' => now()]);
-                if ($updated > 0) {
-                    $stats['tickets_linked']++;
-                }
+                // 3. JANGAN timpa installation_tickets.user_id kalau sudah berisi teknisi/cater
+                //    (di-set oleh ImportLegacyTicketsCommand dari legacy.cater_id).
+                //    user_id di sini adalah teknisi/cater, BUKAN user pelanggan.
+                //    Akun pelanggan disimpan di customers.user_id (line 133 di atas).
+                //    Kita HANYA catat stats, tanpa update tiket.
+                $stats['tickets_linked']++;
 
                 $this->maybeLog($i + 1, $chunkSize, $totalRows, $stats);
             } catch (\Throwable $e) {

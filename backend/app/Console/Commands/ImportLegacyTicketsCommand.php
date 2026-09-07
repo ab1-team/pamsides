@@ -190,18 +190,27 @@ class ImportLegacyTicketsCommand extends Command
         $newPkgs = InstallationPackage::all(['id', 'name'])->keyBy('name');
 
         foreach ($rows as $legacy) {
-            $wantName = "{$legacy->kelas} (B{$legacy->business_id})";
+            $wantNameSuffixed = "{$legacy->kelas} (B{$legacy->business_id})";
+            $wantNamePlain    = $legacy->kelas;
             $match = null;
             foreach ($newPkgs as $p) {
-                if (strcasecmp($p->name, $wantName) === 0) {
+                if (strcasecmp($p->name, $wantNameSuffixed) === 0) {
                     $match = $p;
                     break;
+                }
+            }
+            if (! $match) {
+                foreach ($newPkgs as $p) {
+                    if (strcasecmp($p->name, $wantNamePlain) === 0) {
+                        $match = $p;
+                        break;
+                    }
                 }
             }
             if ($match) {
                 $this->packageMap[(int) $legacy->id] = $match->id;
             } else {
-                $this->warn("Package legacy {$legacy->id} ({$wantName}) tidak ada match di DB baru");
+                $this->warn("Package legacy {$legacy->id} ({$wantNameSuffixed} / {$wantNamePlain}) tidak ada match di DB baru");
             }
         }
     }
@@ -235,8 +244,29 @@ class ImportLegacyTicketsCommand extends Command
             if (isset($byNameRole[$key]) && ! empty($byNameRole[$key])) {
                 $this->userMap[(int) $lu->id] = (int) array_shift($byNameRole[$key]);
             } else {
-                // fallback formula
-                $this->userMap[(int) $lu->id] = $existingMax + (int) $lu->id;
+                // Fallback: insert user placeholder ke DB baru dengan role yg benar.
+                //    Pakai offset existingMax+legacy_id supaya ID konsisten.
+                $newId = $existingMax + (int) $lu->id;
+                try {
+                    User::create([
+                        'id'         => $newId,
+                        'name'       => trim((string) $lu->nama),
+                        'email'      => "legacy_{$lu->id}_{$role}@pamsides.local",
+                        'password'   => \Hash::make('legacy'),
+                        'role'       => $role,
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
+                } catch (\Throwable) {
+                    // Kalau ID bentrok (existing user dengan ID sama), ambil ID existing
+                    $existing = User::where('email', "legacy_{$lu->id}_{$role}@pamsides.local")->first();
+                    if ($existing) {
+                        $newId = (int) $existing->id;
+                    } else {
+                        $newId = (int) User::max('id');
+                    }
+                }
+                $this->userMap[(int) $lu->id] = $newId;
             }
         }
     }
@@ -245,7 +275,7 @@ class ImportLegacyTicketsCommand extends Command
     {
         return match ($jabatan) {
             1, 2, 3, 4, 6, 8 => 'admin',
-            5 => 'surveyor',
+            5 => 'teknisi',
             7 => 'teknisi',
             default => 'admin',
         };
@@ -263,19 +293,47 @@ class ImportLegacyTicketsCommand extends Command
             return null;
         }
 
-        // 2. Village (legacy desa = village id, ID match 1:1)
-        $villageId = (int) $row->desa;
-        if (! Village::where('id', $villageId)->exists()) {
-            $reason = "desa={$villageId} tidak ada di villages DB baru";
+        // 2. Village: legacy.installations.desa → legacy.villages.id → DB baru by nama+dusun
+        //    Legacy & DB baru village id TIDAK match 1:1, jadi pakai lookup nama+dusun.
+        $legacyVillageId = (int) $row->desa;
+        $legacyVillage = DB::connection('legacy')
+            ->table('villages')
+            ->where('id', $legacyVillageId)
+            ->first();
+        if (! $legacyVillage) {
+            $reason = "desa={$legacyVillageId} tidak ada di legacy.villages";
             return null;
         }
+        $villageName = strtolower(trim((string) $legacyVillage->nama));
+        $hamletName  = strtolower(trim((string) ($legacyVillage->dusun ?? '')));
+        if ($hamletName === '-' || $hamletName === '') {
+            // legacy kadang dusun kosong → match by nama saja, ambil yg pertama
+            $villageMatch = Village::whereRaw('LOWER(village_name) = ?', [$villageName])
+                ->orderBy('id')
+                ->first();
+        } else {
+            $villageMatch = Village::whereRaw('LOWER(village_name) = ?', [$villageName])
+                ->whereRaw('LOWER(hamlet_name) = ?', [$hamletName])
+                ->first();
+        }
+        if (! $villageMatch) {
+            $reason = "desa={$legacyVillageId} '{$legacyVillage->nama}/{$legacyVillage->dusun}' tidak ada di villages DB baru";
+            return null;
+        }
+        $villageId = (int) $villageMatch->id;
 
-        // 3. Created_by (cater_id → user.id)
+        // 3. Cater/teknisi (cater_id legacy → user.id teknisi di DB baru).
+        //    Dipakai untuk installation_tickets.user_id (dipakai PelaporanController
+        //    untuk filter laporan per teknisi).
         if (! isset($this->userMap[(int) $row->cater_id])) {
             $reason = "cater_id={$row->cater_id} (legacy user) tidak ada di DB baru";
             return null;
         }
-        $createdBy = $this->userMap[(int) $row->cater_id];
+        $teknisiId = $this->userMap[(int) $row->cater_id];
+
+        //    created_by di-set ke teknisi yg sama (siapa yg input tiket di legacy).
+        //    Bisa dipisahkan nanti kalau ada admin yg input tiket berbeda dari cater.
+        $createdBy = $teknisiId;
 
         // 4. Status
         $status = $this->statusMap[(string) $row->status] ?? null;
@@ -349,6 +407,7 @@ class ImportLegacyTicketsCommand extends Command
             'lng'            => $lng,
             'status'         => $status,
             'order_date'     => $orderDate,
+            'user_id'        => $teknisiId,
             'created_by'     => $createdBy,
         ];
     }
