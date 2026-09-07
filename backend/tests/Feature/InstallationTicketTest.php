@@ -52,7 +52,7 @@ class InstallationTicketTest extends TestCase
         $response->assertStatus(201)
                  ->assertJson([
                      'success' => true,
-                     'data'    => ['status' => 'pending'],
+                     'data'    => ['status' => 'draft'],
                  ]);
     }
 
@@ -84,6 +84,13 @@ class InstallationTicketTest extends TestCase
 
         $ticketId = $tiket->json('data.id');
 
+        // draft -> pending (transisi valid)
+        $this->patchJson("/api/installation-tickets/{$ticketId}/transition", [
+            'status' => 'pending',
+        ])->assertStatus(200)
+          ->assertJson(['success' => true, 'data' => ['status' => 'pending']]);
+
+        // pending -> surveyed (transisi valid)
         $response = $this->patchJson("/api/installation-tickets/{$ticketId}/transition", [
             'status' => 'surveyed',
         ]);

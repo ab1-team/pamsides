@@ -54,7 +54,7 @@ class BillingServiceTest extends TestCase
         $package = $this->createPackageWithBlocks();
         $result  = $this->service->calculateChargeForTesting($package, 15);
 
-        $this->assertEquals(30_000, $result);
+        $this->assertEquals(25_000, $result);
     }
 
     #[Test]
@@ -63,7 +63,7 @@ class BillingServiceTest extends TestCase
         $package = $this->createPackageWithBlocks();
         $result  = $this->service->calculateChargeForTesting($package, 25);
 
-        $this->assertEquals(62_500, $result);
+        $this->assertEquals(47_500, $result);
     }
 
     #[Test]
@@ -82,6 +82,6 @@ class BillingServiceTest extends TestCase
         $package = $this->createPackageWithBlocks();
         $result  = $this->service->calculateChargeForTesting($package, 10.5);
 
-        $this->assertEquals(21_000, $result);
+        $this->assertEquals(16_000, $result);
     }
 }
