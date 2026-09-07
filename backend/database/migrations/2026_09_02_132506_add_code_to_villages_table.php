@@ -23,6 +23,13 @@ return new class extends Migration
             $table->string('code', 30)->nullable()->after('id')->unique();
         });
 
+        // Skip backfill legacy jika env testing atau legacy connection tidak tersedia.
+        // Koneksi 'legacy' hanya ada di server produksi (data import dari server SIM-SPPG).
+        if (app()->environment('testing') || ! $this->legacyConnectionAvailable()) {
+            DB::statement("SELECT 'Migration add_code_to_villages: backfill skipped (testing/no legacy)' AS info");
+            return;
+        }
+
         // Build map: legacy.villages.id -> new.villages.id
         // Match by lower(nama) + lower(dusun)
         $legacy = DB::connection('legacy')->table('villages')->orderBy('id')->get();
@@ -74,5 +81,25 @@ return new class extends Migration
             $table->dropUnique(['code']);
             $table->dropColumn('code');
         });
+    }
+
+    private function legacyConnectionAvailable(): bool
+    {
+        $cfg = config('database.connections.legacy');
+        if (! is_array($cfg)) {
+            return false;
+        }
+        $host = $cfg['host'] ?? null;
+        $user = $cfg['username'] ?? null;
+        $db   = $cfg['database'] ?? null;
+        if (empty($host) || empty($user) || empty($db)) {
+            return false;
+        }
+        try {
+            DB::connection('legacy')->getPdo();
+            return true;
+        } catch (\Throwable $e) {
+            return false;
+        }
     }
 };
