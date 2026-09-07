@@ -26,7 +26,9 @@ return new class extends Migration
         // Skip backfill legacy jika env testing atau legacy connection tidak tersedia.
         // Koneksi 'legacy' hanya ada di server produksi (data import dari server SIM-SPPG).
         if (app()->environment('testing') || ! $this->legacyConnectionAvailable()) {
-            DB::statement("SELECT 'Migration add_code_to_villages: backfill skipped (testing/no legacy)' AS info");
+            if (! app()->environment('testing')) {
+                DB::statement("SELECT 'Migration add_code_to_villages: backfill skipped (testing/no legacy)' AS info");
+            }
             return;
         }
 

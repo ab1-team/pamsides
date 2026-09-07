@@ -204,13 +204,19 @@ class BillingTest extends TestCase
         $this->setupCustomerWithMeterReading();
 
         // Generate tagihan
-        $this->postJson('/api/bills/generate', [
+        $generateResponse = $this->postJson('/api/bills/generate', [
             'year'  => now()->year,
             'month' => now()->month,
         ]);
+        $generateResponse->assertStatus(201);
 
-        // Lihat detail tagihan id 1
-        $response = $this->getJson('/api/bills/1');
+        $billId = $generateResponse->json('data.0.id')
+            ?? $generateResponse->json('data.id')
+            ?? $generateResponse->json('data.0.data.id')
+            ?? \App\Models\MonthlyBill::latest('id')->first()?->id;
+
+        // Lihat detail tagihan
+        $response = $this->getJson("/api/bills/{$billId}");
 
         $response->assertStatus(200)
                  ->assertJson(['success' => true]);
