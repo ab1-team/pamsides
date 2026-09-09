@@ -18,76 +18,99 @@ class InstallationTicketController extends Controller
 {
     public function index(Request $request)
     {
-        $query = InstallationTicket::with([
-            'package.tariffBlocks',
-            'package',
-            'survey.surveyor',
-            'user',
-            'village',
-            'customer.meterReadings',
-            'customer.monthlyBills',
-            'payments',
-        ])->orderBy('created_at', 'desc');
+        try {
+            $query = InstallationTicket::with([
+                'package.tariffBlocks',
+                'package',
+                'survey.surveyor',
+                'user',
+                'village',
+                'customer.meterReadings',
+                'customer.monthlyBills',
+                'payments',
+            ])->orderBy('created_at', 'desc');
 
-        if ($request->has('search') && ! empty($request->search)) {
-            $q = $request->search;
-            $query->where(function ($sub) use ($q) {
-                $sub->where('applicant_name', 'like', "%{$q}%")
-                    ->orWhere('nik', 'like', "%{$q}%");
-            });
-        }
+            if ($request->has('search') && ! empty($request->search)) {
+                $q = $request->search;
+                $query->where(function ($sub) use ($q) {
+                    $sub->where('applicant_name', 'like', "%{$q}%")
+                        ->orWhere('nik', 'like', "%{$q}%");
+                });
+            }
 
-        $wantsGrouped = $request->boolean('grouped')
-            || $request->status === 'draft';
+            $wantsGrouped = $request->boolean('grouped')
+                || $request->status === 'draft';
 
-        if ($request->has('status') && ! $wantsGrouped) {
-            $query->where('status', $request->status);
-        }
+            if ($request->has('status') && ! $wantsGrouped) {
+                $query->where('status', $request->status);
+            }
 
-        if ($wantsGrouped) {
-            $allTickets = $query->get();
+            if ($wantsGrouped) {
+                $allTickets = $query->get();
 
-            $grouped = $allTickets->groupBy('nik')->map(function ($items) {
-                $base = $items->firstWhere(fn ($item) => $item->phone || $item->gender || $item->birth_place) ?? $items->first();
+                $grouped = $allTickets->groupBy('nik')->map(function ($items) {
+                    $base = $items->firstWhere(fn ($item) => $item->phone || $item->gender || $item->birth_place) ?? $items->first();
 
-                $tickets = $items->map(function ($item) {
+                    $tickets = $items->map(function ($item) {
+                        $missing = [];
+                        if (! $item->package) $missing[] = 'package';
+                        if (! $item->village) $missing[] = 'village';
+                        if ($missing) {
+                            \Log::warning('InstallationTicket::index incomplete relation', [
+                                'ticket_id' => $item->id,
+                                'missing' => $missing,
+                            ]);
+                        }
+
+                        return [
+                            'id' => $item->id,
+                            'village_id' => $item->village_id,
+                            'lat' => $item->lat,
+                            'lng' => $item->lng,
+                            'package_id' => $item->package_id,
+                            'package' => $item->package,
+                            'user_id' => $item->user_id,
+                            'order_date' => $item->order_date,
+                            'status' => $item->status,
+                            'payments' => $item->payments,
+                            'customer' => $item->customer,
+                        ];
+                    })->values();
+
                     return [
-                        'id' => $item->id,
-                        'village_id' => $item->village_id,
-                        'lat' => $item->lat,
-                        'lng' => $item->lng,
-                        'package_id' => $item->package_id,
-                        'package' => $item->package,
-                        'user_id' => $item->user_id,
-                        'order_date' => $item->order_date,
-                        'status' => $item->status,
-                        'payments' => $item->payments,
-                        'customer' => $item->customer,
+                        'id' => $base->id,
+                        'applicant_name' => $base->applicant_name,
+                        'nik' => $base->nik,
+                        'phone' => $items->pluck('phone')->filter()->first(),
+                        'gender' => $items->pluck('gender')->filter()->first(),
+                        'birth_place' => $items->pluck('birth_place')->filter()->first(),
+                        'birth_date' => $items->pluck('birth_date')->filter()->first(),
+                        'tickets' => $tickets,
                     ];
                 })->values();
 
-                return [
-                    'id' => $base->id,
-                    'applicant_name' => $base->applicant_name,
-                    'nik' => $base->nik,
-                    'phone' => $items->pluck('phone')->filter()->first(),
-                    'gender' => $items->pluck('gender')->filter()->first(),
-                    'birth_place' => $items->pluck('birth_place')->filter()->first(),
-                    'birth_date' => $items->pluck('birth_date')->filter()->first(),
-                    'tickets' => $tickets,
-                ];
-            })->values();
+                $tickets = $grouped;
+            } else {
+                $perPage = (int) $request->get('per_page', 10);
+                $perPage = max(1, min($perPage, 200));
+                $tickets = $query->paginate($perPage);
+            }
 
-            $tickets = $grouped;
-        } else {
-            $perPage = (int) $request->get('per_page', 10);
-            $tickets = $query->paginate($perPage > 0 ? $perPage : 10);
+            return response()->json([
+                'success' => true,
+                'data' => $tickets,
+            ]);
+        } catch (\Throwable $e) {
+            \Log::error('InstallationTicket::index error', [
+                'message' => $e->getMessage(),
+                'trace'   => $e->getTraceAsString(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal memuat data tiket: '.$e->getMessage(),
+            ], 500);
         }
-
-        return response()->json([
-            'success' => true,
-            'data' => $tickets,
-        ]);
     }
 
     /**

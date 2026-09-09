@@ -206,6 +206,7 @@ const {
   filter,
   searchQuery,
   currentPage,
+  perPage,
   tahunOptions,
   bulanOptions,
   tableData,

@@ -34,10 +34,13 @@ export const useInstalasiStore = defineStore('instalasi', () => {
   const menuList = INSTALASI_MENU_LIST
   const statusStyle = INSTALASI_STATUS_COLORS
 
+  const fetchError = ref(null)
+
   const fetchData = async () => {
     try {
       isLoading.value = true
-      const response = await ticketService.getTickets({ per_page: 5000 })
+      fetchError.value = null
+      const response = await ticketService.getTickets({ per_page: 200 })
       if (response?.success && response?.data?.data) {
         const freshMap = {
           permohonan: [],
@@ -112,6 +115,7 @@ export const useInstalasiStore = defineStore('instalasi', () => {
       }
     } catch (error) {
       console.error('Failed to fetch installation statuses:', error)
+      fetchError.value = error?.message || 'Gagal memuat data status instalasi.'
     } finally {
       isLoading.value = false
     }
@@ -132,6 +136,7 @@ export const useInstalasiStore = defineStore('instalasi', () => {
     perPage,
     searchQuery,
     isLoading,
+    fetchError,
     dataMap,
     menuList,
     statusStyle,

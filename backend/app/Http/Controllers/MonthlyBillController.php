@@ -20,37 +20,75 @@ class MonthlyBillController extends Controller
 
     public function index(Request $request)
     {
-        $query = MonthlyBill::with([
-            'customer.user',
-            'customer.ticket.package',
-            'customer.ticket.village',
-            'billPayments',
-        ])->orderBy('billing_period_year', 'desc')
-            ->orderBy('billing_period_month', 'desc');
+        try {
+            $query = MonthlyBill::with([
+                'customer.user',
+                'customer.ticket.package',
+                'customer.ticket.village',
+                'billPayments',
+            ])->orderBy('billing_period_year', 'desc')
+                ->orderBy('billing_period_month', 'desc');
 
-        if ($request->customer_id) {
-            $query->where('customer_id', $request->customer_id);
+            if ($request->customer_id) {
+                $query->where('customer_id', $request->customer_id);
+            }
+
+            if ($request->status && in_array($request->status, ['unpaid', 'paid'], true)) {
+                $query->where('status', $request->status);
+            }
+
+            if ($request->month) {
+                $query->where('billing_period_month', $request->month);
+            }
+
+            if ($request->year) {
+                $query->where('billing_period_year', $request->year);
+            }
+
+            $perPage = (int) $request->get('per_page', 50);
+            $perPage = max(1, min($perPage, 200));
+
+            $page = $query->paginate($perPage);
+            $bills = $page->getCollection();
+
+            $paginatorMeta = [
+                'current_page' => $page->currentPage(),
+                'last_page'    => $page->lastPage(),
+                'per_page'     => $page->perPage(),
+                'total'        => $page->total(),
+            ];
+        } catch (\Throwable $e) {
+            \Log::error('MonthlyBill::index query error', [
+                'message' => $e->getMessage(),
+                'trace'   => $e->getTraceAsString(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal memuat daftar tagihan: '.$e->getMessage(),
+            ], 500);
         }
-
-        if ($request->status) {
-            $query->where('status', $request->status);
-        }
-
-        if ($request->month) {
-            $query->where('billing_period_month', $request->month);
-        }
-
-        if ($request->year) {
-            $query->where('billing_period_year', $request->year);
-        }
-
-        $bills = $query->get();
 
         $items = $bills->map(function ($b) {
             try {
                 $customer = $b->customer;
                 $ticket = $customer?->ticket;
                 $user = $customer?->user;
+
+                $missing = [];
+
+                if (! $customer) $missing[] = 'customer';
+                elseif (! $ticket) $missing[] = 'customer.ticket';
+                elseif (! $ticket->village) $missing[] = 'customer.ticket.village';
+                elseif (! $ticket->package) $missing[] = 'customer.ticket.package';
+
+                if ($missing) {
+                    \Log::warning('MonthlyBill::index incomplete relation', [
+                        'bill_id' => $b->id ?? null,
+                        'customer_id' => $b->customer_id ?? null,
+                        'missing' => $missing,
+                    ]);
+                }
 
                 return [
                     'id' => $b->id,
@@ -66,31 +104,31 @@ class MonthlyBillController extends Controller
                     'total_amount' => $b->total_amount,
                     'status' => $b->status,
                     'due_date' => $b->due_date,
-                    'bill_payments' => $b->billPayments->map(fn ($p) => [
-                        'id' => $p->id,
-                        'amount_paid' => $p->amount_paid,
-                        'confirmed_by' => $p->confirmed_by,
-                        'paid_at' => $p->paid_at,
-                    ]),
+                    'bill_payments' => ($b->billPayments ?? collect())->map(fn ($p) => [
+                        'id' => $p->id ?? null,
+                        'amount_paid' => $p->amount_paid ?? null,
+                        'confirmed_by' => $p->confirmed_by ?? null,
+                        'paid_at' => $p->paid_at ?? null,
+                    ])->values()->all(),
                     'customer' => $customer ? [
-                        'id' => $customer->id,
-                        'customer_code' => $customer->customer_code,
-                        'initial_meter_reading' => $customer->initial_meter_reading,
-                        'activated_at' => $customer->activated_at,
+                        'id' => $customer->id ?? null,
+                        'customer_code' => $customer->customer_code ?? null,
+                        'initial_meter_reading' => $customer->initial_meter_reading ?? null,
+                        'activated_at' => $customer->activated_at ?? null,
                         'meter_photo_url' => $customer->meter_photo_url ?: null,
                         'user' => $user ? [
-                            'id' => $user->id,
-                            'name' => $user->name,
-                            'email' => $user->email,
+                            'id' => $user->id ?? null,
+                            'name' => $user->name ?? null,
+                            'email' => $user->email ?? null,
                         ] : null,
                         'ticket' => $ticket ? [
-                            'id' => $ticket->id,
-                            'applicant_name' => $ticket->applicant_name,
-                            'nik' => $ticket->nik,
-                            'address' => $ticket->address,
-                            'phone' => $ticket->phone,
-                            'village' => $ticket->village,
-                            'package' => $ticket->package,
+                            'id' => $ticket->id ?? null,
+                            'applicant_name' => $ticket->applicant_name ?? null,
+                            'nik' => $ticket->nik ?? null,
+                            'address' => $ticket->address ?? null,
+                            'phone' => $ticket->phone ?? null,
+                            'village' => $ticket->village ?? null,
+                            'package' => $ticket->package ?? null,
                         ] : null,
                     ] : null,
                 ];
@@ -101,10 +139,10 @@ class MonthlyBillController extends Controller
                 ]);
 
                 return [
-                    'id' => $b->id,
-                    'customer_id' => $b->customer_id,
-                    'billing_period_month' => $b->billing_period_month,
-                    'billing_period_year' => $b->billing_period_year,
+                    'id' => $b->id ?? null,
+                    'customer_id' => $b->customer_id ?? null,
+                    'billing_period_month' => $b->billing_period_month ?? null,
+                    'billing_period_year' => $b->billing_period_year ?? null,
                     'meter_reading_start' => $b->meter_reading_start,
                     'meter_reading_end' => $b->meter_reading_end,
                     'usage_m3' => $b->usage_m3,
@@ -124,6 +162,7 @@ class MonthlyBillController extends Controller
             'data' => [
                 'bills' => $items,
             ],
+            'meta' => $paginatorMeta ?? null,
         ]);
     }
 
