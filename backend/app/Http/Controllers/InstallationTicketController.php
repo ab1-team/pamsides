@@ -19,15 +19,37 @@ class InstallationTicketController extends Controller
     public function index(Request $request)
     {
         $query = InstallationTicket::with([
-            'package.tariffBlocks',
-            'package',
-            'survey.surveyor',
-            'user',
-            'village',
-            'customer.meterReadings',
-            'customer.monthlyBills',
-            'payments',
+            'package:id,name,installation_fee,monthly_abodemen,late_penalty',
+            'survey:id,ticket_id,surveyor_id,distance_to_pipe_m,material_notes,photo_url,surveyed_at',
+            'survey.surveyor:id,name',
+            'user:id,name',
+            'village:id,village_name,address',
+            'customer:id,user_id,ticket_id,customer_code,initial_meter_reading,activated_at',
+            'customer.user:id,name,email',
+            'customer.meterReadings:id,customer_id,meter_value,reading_month,reading_year,recorded_at',
+            'customer.monthlyBills:id,customer_id,billing_period_month,billing_period_year,total_amount,status,due_date',
+            'payments:id,ticket_id,amount,status,paid_at',
         ])->orderBy('created_at', 'desc');
+
+        $query->select([
+            'id',
+            'applicant_name',
+            'nik',
+            'phone',
+            'gender',
+            'birth_place',
+            'birth_date',
+            'address',
+            'village_id',
+            'package_id',
+            'user_id',
+            'order_date',
+            'lat',
+            'lng',
+            'status',
+            'created_at',
+            'updated_at',
+        ]);
 
         if ($request->has('search') && ! empty($request->search)) {
             $q = $request->search;

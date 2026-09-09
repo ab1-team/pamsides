@@ -20,11 +20,31 @@ class MonthlyBillController extends Controller
 
     public function index(Request $request)
     {
+        try {
+            return $this->indexInternal($request);
+        } catch (\Throwable $e) {
+            \Log::error('MonthlyBill index failed', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal memuat daftar tagihan: '.$e->getMessage(),
+                'data'    => ['bills' => []],
+            ], 500);
+        }
+    }
+
+    private function indexInternal(Request $request)
+    {
         $query = MonthlyBill::with([
-            'customer.user',
-            'customer.ticket.package',
-            'customer.ticket.village',
-            'billPayments',
+            'customer:id,user_id,ticket_id,customer_code,initial_meter_reading,activated_at,meter_photo_url',
+            'customer.user:id,name,email',
+            'customer.ticket:id,applicant_name,nik,address,phone,village_id,package_id',
+            'customer.ticket.package:id,name,installation_fee,monthly_abodemen,late_penalty',
+            'customer.ticket.village:id,village_name,hamlet_name,address',
+            'billPayments:id,bill_id,amount_paid,confirmed_by,paid_at',
         ])->orderBy('billing_period_year', 'desc')
             ->orderBy('billing_period_month', 'desc');
 

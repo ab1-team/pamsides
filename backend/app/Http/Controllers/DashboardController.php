@@ -18,112 +18,143 @@ class DashboardController extends Controller
         $year  = (int) $request->query('year', $now->year);
         $month = (int) $request->query('month', $now->month);
 
-        // Jumlah pelanggan aktif
-        $totalCustomers = Customer::count();
+        try {
+            // Jumlah pelanggan aktif
+            $totalCustomers = Customer::count();
 
-        // Tiket per status
-        $ticketsByStatus = InstallationTicket::selectRaw('status, count(*) as total')
-            ->groupBy('status')
-            ->pluck('total', 'status');
+            // Tiket per status
+            $ticketsByStatus = InstallationTicket::selectRaw('status, count(*) as total')
+                ->groupBy('status')
+                ->pluck('total', 'status');
 
-        // Pendapatan bulan ini (tagihan yang sudah paid)
-        $revenueThisMonth = MonthlyBill::where('billing_period_year', $year)
-            ->where('billing_period_month', $month)
-            ->where('status', 'paid')
-            ->sum('total_amount');
+            // Pendapatan bulan ini (tagihan yang sudah paid)
+            $revenueThisMonth = MonthlyBill::where('billing_period_year', $year)
+                ->where('billing_period_month', $month)
+                ->where('status', 'paid')
+                ->sum('total_amount');
 
-        // Tagihan bulan ini (semua status unpaid, semua periode)
-        $billsThisMonth = MonthlyBill::where('status', 'unpaid')
-            ->selectRaw('status, count(*) as total')
-            ->groupBy('status')
-            ->pluck('total', 'status');
+            // Tagihan bulan ini (semua status unpaid, semua periode)
+            $billsThisMonth = MonthlyBill::where('status', 'unpaid')
+                ->selectRaw('status, count(*) as total')
+                ->groupBy('status')
+                ->pluck('total', 'status');
 
-        // Pemakaian bulan ini = total tiket completed
-        $pemakaianThisMonth = InstallationTicket::where('status', 'completed')->count();
+            // Pemakaian bulan ini = total tiket completed
+            $pemakaianThisMonth = InstallationTicket::where('status', 'completed')->count();
 
-        // Tunggakan total = tagihan unpaid yang punya denda (penalty_amount > 0)
-        $tunggakanTotal = MonthlyBill::where('status', 'unpaid')
-            ->where('penalty_amount', '>', 0)
-            ->count();
+            // Tunggakan total = tagihan unpaid yang punya denda (penalty_amount > 0)
+            $tunggakanTotal = MonthlyBill::where('status', 'unpaid')
+                ->where('penalty_amount', '>', 0)
+                ->count();
 
-        // Tiket terbaru
-        $latestTickets = InstallationTicket::with('package')
-            ->orderBy('created_at', 'desc')
-            ->limit(5)
-            ->get();
+            // Tiket terbaru
+            $latestTickets = InstallationTicket::with(['package:id,name'])
+                ->orderBy('created_at', 'desc')
+                ->limit(5)
+                ->get();
 
-        // Tagihan jatuh tempo (unpaid & due_date <= hari ini)
-        $overdueBills = MonthlyBill::with('customer.user')
-            ->where('status', 'unpaid')
-            ->where('due_date', '<=', $now->toDateString())
-            ->orderBy('due_date')
-            ->limit(5)
-            ->get();
+            // Tagihan jatuh tempo (unpaid & due_date <= hari ini)
+            $overdueBills = MonthlyBill::with(['customer:id,user_id,customer_code', 'customer.user:id,name'])
+                ->where('status', 'unpaid')
+                ->where('due_date', '<=', $now->toDateString())
+                ->orderBy('due_date')
+                ->limit(5)
+                ->get();
 
-        // Keuangan bulan ini dari jurnal umum (akun pendapatan 4.x di-kredit, akun beban 5.x di-debet)
-        $pendapatanThisMonth = Transaction::whereYear('tgl_transaksi', $year)
-            ->whereMonth('tgl_transaksi', $month)
-            ->where('account_kredit', 'like', '4.%')
-            ->sum('saldo');
+            // Keuangan bulan ini dari jurnal umum (akun pendapatan 4.x di-kredit, akun beban 5.x di-debet)
+            $pendapatanThisMonth = (float) Transaction::whereYear('tgl_transaksi', $year)
+                ->whereMonth('tgl_transaksi', $month)
+                ->where('account_kredit', 'like', '4.%')
+                ->sum('saldo');
 
-        $bebanThisMonth = Transaction::whereYear('tgl_transaksi', $year)
-            ->whereMonth('tgl_transaksi', $month)
-            ->where('account_debet', 'like', '5.%')
-            ->sum('saldo');
+            $bebanThisMonth = (float) Transaction::whereYear('tgl_transaksi', $year)
+                ->whereMonth('tgl_transaksi', $month)
+                ->where('account_debet', 'like', '5.%')
+                ->sum('saldo');
 
-        $surplusThisMonth = $pendapatanThisMonth - $bebanThisMonth;
+            $surplusThisMonth = $pendapatanThisMonth - $bebanThisMonth;
 
-        // Riwayat keuangan per bulan dari jurnal umum pada tahun fiskal $year
-        $monthlyRows = Transaction::selectRaw('YEAR(tgl_transaksi) as y, MONTH(tgl_transaksi) as m,
-                COALESCE(SUM(CASE WHEN account_kredit LIKE ? THEN saldo ELSE 0 END), 0) as pendapatan,
-                COALESCE(SUM(CASE WHEN account_debet LIKE ? THEN saldo ELSE 0 END), 0) as beban', ['4.%', '5.%'])
-            ->whereYear('tgl_transaksi', $year)
-            ->groupBy(DB::raw('YEAR(tgl_transaksi)'), DB::raw('MONTH(tgl_transaksi)'))
-            ->orderBy(DB::raw('YEAR(tgl_transaksi)'))
-            ->orderBy(DB::raw('MONTH(tgl_transaksi)'))
-            ->get();
+            // Riwayat keuangan per bulan dari jurnal umum pada tahun fiskal $year
+            $monthlyRows = Transaction::selectRaw('YEAR(tgl_transaksi) as y, MONTH(tgl_transaksi) as m,
+                    COALESCE(SUM(CASE WHEN account_kredit LIKE ? THEN saldo ELSE 0 END), 0) as pendapatan,
+                    COALESCE(SUM(CASE WHEN account_debet LIKE ? THEN saldo ELSE 0 END), 0) as beban', ['4.%', '5.%'])
+                ->whereYear('tgl_transaksi', $year)
+                ->groupBy(DB::raw('YEAR(tgl_transaksi)'), DB::raw('MONTH(tgl_transaksi)'))
+                ->orderBy(DB::raw('YEAR(tgl_transaksi)'))
+                ->orderBy(DB::raw('MONTH(tgl_transaksi)'))
+                ->get();
 
-        $financeChart = $monthlyRows->map(function ($r) {
-            $p = (float) $r->pendapatan;
-            $b = (float) $r->beban;
-            return [
-                'year'      => (int) $r->y,
-                'month'     => (int) $r->m,
-                'pendapatan'=> $p,
-                'beban'     => $b,
-                'surplus'   => $p - $b,
-            ];
-        })->values();
+            $financeChart = $monthlyRows->map(function ($r) {
+                $p = (float) $r->pendapatan;
+                $b = (float) $r->beban;
+                return [
+                    'year'      => (int) $r->y,
+                    'month'     => (int) $r->m,
+                    'pendapatan'=> $p,
+                    'beban'     => $b,
+                    'surplus'   => $p - $b,
+                ];
+            })->values();
 
-        $availableYears = Transaction::selectRaw('DISTINCT YEAR(tgl_transaksi) as y')
-            ->whereNotNull('tgl_transaksi')
-            ->orderBy('y')
-            ->pluck('y')
-            ->map(fn ($y) => (int) $y)
-            ->values();
+            $availableYears = Transaction::selectRaw('DISTINCT YEAR(tgl_transaksi) as y')
+                ->whereNotNull('tgl_transaksi')
+                ->orderBy('y')
+                ->pluck('y')
+                ->map(fn ($y) => (int) $y)
+                ->values();
 
-        return response()->json([
-            'success' => true,
-            'data'    => [
-                'total_customers'   => $totalCustomers,
-                'tickets_by_status' => $ticketsByStatus,
-                'revenue_this_month'=> $revenueThisMonth,
-                'bills_this_month'  => $billsThisMonth,
-                'pemakaian_count'   => $pemakaianThisMonth,
-                'tunggakan_total'   => $tunggakanTotal,
-                'latest_tickets'    => $latestTickets,
-                'overdue_bills'     => $overdueBills,
-                'finance'           => [
-                    'pendapatan' => $pendapatanThisMonth,
-                    'beban'      => $bebanThisMonth,
-                    'surplus'    => $surplusThisMonth,
-                    'year'       => $year,
-                    'month'      => $month,
+            return response()->json([
+                'success' => true,
+                'data'    => [
+                    'total_customers'   => $totalCustomers,
+                    'tickets_by_status' => $ticketsByStatus,
+                    'revenue_this_month'=> $revenueThisMonth,
+                    'bills_this_month'  => $billsThisMonth,
+                    'pemakaian_count'   => $pemakaianThisMonth,
+                    'tunggakan_total'   => $tunggakanTotal,
+                    'latest_tickets'    => $latestTickets,
+                    'overdue_bills'     => $overdueBills,
+                    'finance'           => [
+                        'pendapatan' => $pendapatanThisMonth,
+                        'beban'      => $bebanThisMonth,
+                        'surplus'    => $surplusThisMonth,
+                        'year'       => $year,
+                        'month'      => $month,
+                    ],
+                    'finance_chart'     => $financeChart,
+                    'available_years'   => $availableYears,
                 ],
-                'finance_chart'     => $financeChart,
-                'available_years'   => $availableYears,
-            ],
-        ]);
+            ]);
+        } catch (\Throwable $e) {
+            \Log::error('Dashboard statistics failed', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'data'    => [
+                    'total_customers'   => 0,
+                    'tickets_by_status' => [],
+                    'revenue_this_month'=> 0,
+                    'bills_this_month'  => [],
+                    'pemakaian_count'   => 0,
+                    'tunggakan_total'   => 0,
+                    'latest_tickets'    => [],
+                    'overdue_bills'     => [],
+                    'finance'           => [
+                        'pendapatan' => 0,
+                        'beban'      => 0,
+                        'surplus'    => 0,
+                        'year'       => $year,
+                        'month'      => $month,
+                    ],
+                    'finance_chart'     => [],
+                    'available_years'   => [],
+                ],
+                'warning' => 'Beberapa statistik tidak dapat dimuat: '.$e->getMessage(),
+            ]);
+        }
     }
 
     public function getNotification()
