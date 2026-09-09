@@ -31,6 +31,14 @@
       </div>
     </div>
 
+    <div
+      v-if="fetchError"
+      class="mb-4! rounded-xl! border! border-red-200! bg-red-50! px-4! py-3! text-sm! text-red-700! flex items-center justify-between gap-3!"
+    >
+      <span>Gagal memuat data: {{ fetchError }}</span>
+      <BaseButton variant="outline-danger" size="sm" @click="fetchData">Coba lagi</BaseButton>
+    </div>
+
     <ContentCard variant="default" padding="none" hoverable class="overflow-hidden!">
       <div class="hidden lg:flex! h-full!">
         <ContentCard
@@ -289,11 +297,13 @@ const {
   dataMap,
   filteredData,
   paginatedData,
+  totalPages,
   statusStyle,
   prevPage,
   nextPage,
   exportData,
   fetchData,
+  fetchError,
 } = useInstalasiStatus()
 
 const router = useRouter()
