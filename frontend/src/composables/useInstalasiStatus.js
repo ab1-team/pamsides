@@ -211,6 +211,7 @@ export function useInstalasiStatus() {
     exportData,
     printData,
     fetchData: store.fetchData,
+    fetchError: computed(() => store.fetchError),
     isLoading: computed(() => store.isLoading),
     getCategoryByStatus: store.getCategoryByStatus,
   }
