@@ -45,18 +45,29 @@ class MonthlyBillController extends Controller
                 $query->where('billing_period_year', $request->year);
             }
 
-            $perPage = (int) $request->get('per_page', 50);
-            $perPage = max(1, min($perPage, 200));
+            $all = filter_var($request->get('all'), FILTER_VALIDATE_BOOLEAN);
 
-            $page = $query->paginate($perPage);
-            $bills = $page->getCollection();
+            if ($all) {
+                $bills = $query->get();
+                $paginatorMeta = [
+                    'mode'  => 'all',
+                    'total' => $bills->count(),
+                ];
+            } else {
+                $perPage = (int) $request->get('per_page', 50);
+                $perPage = max(1, min($perPage, 200));
 
-            $paginatorMeta = [
-                'current_page' => $page->currentPage(),
-                'last_page'    => $page->lastPage(),
-                'per_page'     => $page->perPage(),
-                'total'        => $page->total(),
-            ];
+                $page = $query->paginate($perPage);
+                $bills = $page->getCollection();
+
+                $paginatorMeta = [
+                    'mode'         => 'paginate',
+                    'current_page' => $page->currentPage(),
+                    'last_page'    => $page->lastPage(),
+                    'per_page'     => $page->perPage(),
+                    'total'        => $page->total(),
+                ];
+            }
         } catch (\Throwable $e) {
             \Log::error('MonthlyBill::index query error', [
                 'message' => $e->getMessage(),
