@@ -62,7 +62,7 @@ export const useBillingStore = defineStore('billing', () => {
         return
       }
 
-      const res = await billingService.getBills({ customer_id: customerId })
+      const res = await billingService.getAllBills({ customer_id: customerId })
       console.log('[BillingStore] fetchBillingPeriods response:', res)
 
       const monthNames = [
