@@ -171,7 +171,7 @@ const fetchBills = async () => {
     const params = {
       status: 'unpaid',
     }
-    const res = await billingService.getBills(params)
+    const res = await billingService.getAllBills(params)
     if (res.success && res.data) {
       bills.value = res.data.bills || []
     }

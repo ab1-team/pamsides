@@ -38,6 +38,11 @@ import detailPemakaianAir from '@/presentations/views/app/admin/tagihan/partials
 import DesaIndex from '@/presentations/views/app/admin/desa/DesaIndex.vue'
 import DesaCreate from '@/presentations/views/app/admin/desa/DesaCreate.vue'
 import DesaEdit from '@/presentations/views/app/admin/desa/DesaEdit.vue'
+import ArsipTagihan from '@/presentations/views/app/admin/arsipDashbord/ArsipTagihan.vue'
+import ArsipTunggakan from '@/presentations/views/app/admin/arsipDashbord/ArsipTunggakan.vue'
+import ArsipPemakaian from '@/presentations/views/app/admin/arsipDashbord/ArsipPemakaian.vue'
+import ArsipInstalasi from '@/presentations/views/app/admin/arsipDashbord/ArsipInstalasi.vue'
+import NotFoundView from '@/presentations/views/app/NotFoundView.vue'
 
 const getDashboardRoute = (role) => {
   const routes = {
@@ -299,8 +304,33 @@ const router = createRouter({
           name: 'Pelaporan',
           component: laporan,
         },
+        {
+          path: 'arsip/tagihan',
+          name: 'Arsip Tagihan',
+          component: ArsipTagihan,
+        },
+        {
+          path: 'arsip/tunggakan',
+          name: 'Arsip Tunggakan',
+          component: ArsipTunggakan,
+        },
+        {
+          path: 'arsip/pemakaian',
+          name: 'Arsip Pemakaian',
+          component: ArsipPemakaian,
+        },
+        {
+          path: 'arsip/instalasi',
+          name: 'Arsip Instalasi',
+          component: ArsipInstalasi,
+        },
+        {
+          path: ':pathMatch(.*)*',
+          name: 'NotFound',
+          component: NotFoundView,
+        },
         /* 2. DI SINI JUGA DIUBAH:
-          Rute pelaporan/preview yang lama di dalam children ini SUDAH DIHAPUS 
+          Rute pelaporan/preview yang lama di dalam children ini SUDAH DIHAPUS
           agar tidak bentrok.
         */
       ],
@@ -334,6 +364,10 @@ const router = createRouter({
       name: 'Cetak Bukti Transaksi',
       component: () =>
         import('@/presentations/views/app/admin/transaksi/jurnalUmum/cetakBuktiTransaksi.vue'),
+    },
+    {
+      path: '/:pathMatch(.*)*',
+      redirect: '/app',
     },
   ],
 })
