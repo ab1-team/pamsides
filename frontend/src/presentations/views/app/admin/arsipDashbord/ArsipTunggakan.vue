@@ -78,7 +78,7 @@ const itemsList = ref([])
 const fetchUnpaidBills = async () => {
   try {
     loading.value = true
-    const response = await billingService.getBills({ status: 'unpaid' })
+    const response = await billingService.getBills({ status: 'unpaid', all: true })
     if (response?.success && response?.data?.bills) {
       itemsList.value = response.data.bills
         .filter((bill) => Number(bill.penalty_amount) > 0)
