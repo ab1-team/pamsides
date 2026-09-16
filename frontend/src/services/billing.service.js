@@ -5,11 +5,58 @@ import api from '@/utils/axios'
  */
 export const billingService = {
   /**
-   * Ambil daftar tagihan
+   * Ambil daftar tagihan (1 halaman, sesuai response paginator backend)
    */
   async getBills(params = {}) {
     const response = await api.get('/monthly-bills', { params })
     return response.data
+  },
+
+  /**
+   * Ambil SELURUH tagihan dengan melakukan loop paging otomatis.
+   * Gunakan hanya bila konsumen benar-benar butuh daftar lengkap
+   * (mis. daftar tagihan admin, arsip, riwayat tagihan pelanggan).
+   * Backend default per_page=50 dan di-cap 200, jadi aman secara memori.
+   */
+  async getAllBills(params = {}, { pageSize = 200, maxPages = 200 } = {}) {
+    const safeParams = { ...params }
+    delete safeParams.page
+    delete safeParams.per_page
+    safeParams.per_page = pageSize
+
+    const first = await this.getBills({ ...safeParams, page: 1 })
+    if (!first?.success) {
+      return first
+    }
+
+    const firstBills = first?.data?.bills || []
+    const lastPage = first?.meta?.last_page || 1
+
+    if (lastPage <= 1) {
+      return first
+    }
+
+    const limit = Math.min(lastPage, maxPages)
+    const rest = []
+    for (let p = 2; p <= limit; p++) {
+      const next = await this.getBills({ ...safeParams, page: p })
+      const items = next?.data?.bills || []
+      rest.push(...items)
+    }
+
+    return {
+      ...first,
+      data: {
+        ...first.data,
+        bills: [...firstBills, ...rest],
+      },
+      meta: {
+        ...first.meta,
+        last_page: lastPage,
+        fetched_pages: limit,
+        total: first?.meta?.total ?? firstBills.length + rest.length,
+      },
+    }
   },
 
   /**
