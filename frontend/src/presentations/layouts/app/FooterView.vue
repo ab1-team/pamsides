@@ -1,6 +1,6 @@
 <template>
   <footer class="dashboard-footer">
-    <span class="footer-copy">© 2024 PAMSIMAS MATA AIR. Sistem Air Tanah Berkelanjutan.</span>
+    <span class="footer-copy">© 2026 PAMSIMAS MATA AIR. Sistem Air Tanah Berkelanjutan.</span>
     <div class="footer-links">
       <a href="#" class="footer-link">Kebijakan Privasi</a>
       <a href="#" class="footer-link">Ketentuan Layanan</a>

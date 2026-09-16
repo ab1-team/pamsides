@@ -28,7 +28,7 @@
           {{ formatCurrency(row.total) }}
         </span>
       </template>
-      <template #column-status="{ row }">
+      <template #column-status>
         <span
           class="px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider rounded-md bg-rose-50 text-rose-600"
         >
@@ -78,7 +78,7 @@ const itemsList = ref([])
 const fetchUnpaidBills = async () => {
   try {
     loading.value = true
-    const response = await billingService.getBills({ status: 'unpaid' })
+    const response = await billingService.getAllBills({ status: 'unpaid' })
     if (response?.success && response?.data?.bills) {
       itemsList.value = response.data.bills
         .filter((bill) => Number(bill.penalty_amount) > 0)
