@@ -77,7 +77,7 @@ const fetchUsageData = async () => {
 
     const [ticketsRes, billsRes] = await Promise.all([
       api.get('/customers/search'),
-      billingService.getBills({ year, month }),
+      billingService.getAllBills({ year, month }),
     ])
 
     const ticketsRaw = ticketsRes.data?.data

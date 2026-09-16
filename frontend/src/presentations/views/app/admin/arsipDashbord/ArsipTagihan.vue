@@ -94,7 +94,7 @@ const itemsList = ref([])
 const fetchUnpaidBills = async () => {
   try {
     loading.value = true
-    const response = await billingService.getBills({ status: 'unpaid' })
+    const response = await billingService.getAllBills({ status: 'unpaid' })
     if (response?.success && response?.data?.bills) {
       itemsList.value = response.data.bills.map((bill) => {
         const ticket = bill.customer?.ticket

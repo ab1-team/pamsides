@@ -200,7 +200,7 @@ const fetchBills = async () => {
   isLoading.value = true
   loadError.value = null
   try {
-    const res = await billingService.getBills({})
+    const res = await billingService.getAllBills({})
     console.log('[DaftarTagihan] response:', res)
     if (res?.success && res.data) {
       bills.value = Array.isArray(res.data.bills) ? res.data.bills : []
