@@ -59,8 +59,7 @@ class PelaporanService
             ->with([
                 'akunLevel2.akunLevel3' => fn($q) => $q->orderBy('kode_akun', 'ASC'),
                 'akunLevel2.akunLevel3.accountParent.amount' => function ($q) use ($tahun, $bulan) {
-                    $q->where('tahun', $tahun)
-                        ->where('bulan', '<=', $bulan);
+                    $q->where('tahun', $tahun)->where('bulan', '<=', $bulan);
                 }
             ])
         ->orderBy('kode_akun', 'ASC')
@@ -71,8 +70,13 @@ class PelaporanService
     {
         $laba_rugi = Account::where('lev1', '>=', '4')
             ->with(['amount' => function ($q) use ($tahun, $bulan) {
-                $q->where('tahun', $tahun)
-                    ->where('bulan', '<=', $bulan);
+                $q->where(function ($sq) use ($tahun, $bulan) {
+                    $sq->where('tahun', '<', $tahun)
+                        ->orWhere(function ($ssq) use ($tahun, $bulan) {
+                            $ssq->where('tahun', $tahun)
+                                ->where('bulan', '<=', $bulan);
+                        });
+                });
             }])->get();
 
         $hitung = function($acc) {

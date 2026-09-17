@@ -699,71 +699,118 @@ class PelaporanController extends Controller
         }
         $data['nama_teknisi'] = $namaTeknisi;
 
-        $query = MonthlyBill::with(['customer.user', 'customer.ticket.village'])
-            ->where('status', 'unpaid');
-
         $carbonKondisi = Carbon::parse($data['tgl_kondisi']);
+        $targetBulan = (int) ($data['bulan'] ?: $carbonKondisi->month);
+        $targetTahun = (int) $data['tahun'];
 
-        $query->where(function ($q) use ($carbonKondisi) {
-            $q->where('billing_period_year', '<', $carbonKondisi->year)
-                ->orWhere(function ($sq) use ($carbonKondisi) {
-                    $sq->where('billing_period_year', $carbonKondisi->year)
-                        ->where('billing_period_month', '<=', $carbonKondisi->month);
-                });
-        });
+        $isBulanan = isset($data['bulanan']) && $data['bulanan'] && ! empty($data['bulan']);
+
+        $query = Customer::with([
+            'user',
+            'ticket.village',
+            'monthlyBills' => function ($q) use ($targetTahun, $targetBulan) {
+                $q->where('status', 'unpaid')
+                    ->where(function ($sq) use ($targetTahun, $targetBulan) {
+                        $sq->where('billing_period_year', '<', $targetTahun)
+                            ->orWhere(function ($ssq) use ($targetTahun, $targetBulan) {
+                                $ssq->where('billing_period_year', $targetTahun)
+                                    ->where('billing_period_month', '<=', $targetBulan);
+                            });
+                    })
+                    ->with('billPayments');
+            },
+        ]);
 
         if (! empty($sub) && $sub !== 'DRPY') {
-            $query->whereHas('customer.ticket', function ($q) use ($sub) {
+            $query->whereHas('ticket', function ($q) use ($sub) {
                 $q->where('user_id', $sub);
             });
         }
 
-        if (isset($data['bulanan']) && $data['bulanan'] && ! empty($data['bulan'])) {
-            // Filter by due_date (tempo bayar) supaya match konvensi legacy:
-            // "BULAN X" = tagihan yang tgl_akhir/tempo bayarnya di bulan X.
-            $query->whereYear('due_date', $data['tahun'])
-                ->whereMonth('due_date', $data['bulan']);
-        }
+        $customers = $query->get();
 
-        $bills = $query->get();
+        $rows = [];
+        foreach ($customers as $customer) {
+            $ticket = $customer->ticket;
+            $village = $ticket?->village;
+            if (! $village && $ticket?->village_id) {
+                $village = DB::table('village')->where('id', $ticket->village_id)->first();
+            }
+            $desa = $village ? (data_get($village, 'village_name') ?: data_get($village, 'nama_desa') ?: 'Data Tidak Ada') : 'Data Tidak Ada';
+            $dusun = $village ? (data_get($village, 'hamlet_name') ?: data_get($village, 'nama_dusun') ?: 'Data Tidak Ada') : 'Data Tidak Ada';
 
-        $resultData = $bills->map(function ($bill) {
-            $customer = $bill->customer;
-            $ticket = $customer?->ticket;
+            $sdBulanLalu = 0.0;
+            $bulanIni = 0.0;
+            $dibayar = 0.0;
+            $jumlahMenunggak = 0;
 
-            $desa = 'Data Tidak Ada';
-            $dusun = 'Data Tidak Ada';
+            foreach ($customer->monthlyBills as $bill) {
+                $billBulan = (int) $bill->billing_period_month;
+                $billTahun = (int) $bill->billing_period_year;
+                $selisih = (($targetTahun - $billTahun) * 12) + ($targetBulan - $billBulan);
 
-            if ($customer) {
-                $village = $ticket?->village;
-                if (! $village && $ticket?->village_id) {
-                    $village = DB::table('village')->where('id', $ticket->village_id)->first();
+                if ($isBulanan) {
+                    if ($selisih >= 1) {
+                        $sdBulanLalu += (float) $bill->total_amount;
+                    } elseif ($selisih === 0) {
+                        $bulanIni += (float) $bill->total_amount;
+                    }
+                } else {
+                    if ($selisih > 0) {
+                        $sdBulanLalu += (float) $bill->total_amount;
+                    } elseif ($selisih === 0) {
+                        $bulanIni += (float) $bill->total_amount;
+                    }
                 }
-                if ($village) {
-                    $desa = data_get($village, 'village_name') ?: data_get($village, 'nama_desa') ?: 'Data Tidak Ada';
-                    $dusun = data_get($village, 'hamlet_name') ?: data_get($village, 'nama_dusun') ?: 'Data Tidak Ada';
+
+                if ($selisih >= 0) {
+                    $jumlahMenunggak++;
+                }
+
+                $dibayar += (float) $bill->billPayments->sum('amount_paid');
+            }
+
+            if ($isBulanan) {
+                if ($sdBulanLalu <= 0 && $bulanIni <= 0) {
+                    continue;
                 }
             }
 
-            $dibayar = $bill->status === 'paid' ? $bill->total_amount : 0;
+            if ($jumlahMenunggak > 0) {
+                $status = 'Menunggak';
+            }
 
-            return [
-                'id' => $bill->id,
+            if ($jumlahMenunggak > 1) {
+                $status = 'SP';
+            }
+
+            if ($jumlahMenunggak > 2) {
+                $status = 'SPS';
+            }
+
+            $rows[] = [
+                'id' => $customer->id,
                 'nama_desa' => strtoupper($desa),
                 'nama_dusun' => strtoupper($dusun),
-                'customer_code' => $customer?->customer_code ?? '-',
-                'activated_at' => $customer?->activated_at ? Carbon::parse($customer->activated_at)->format('d-m-Y') : '-',
-                'name' => $customer?->user?->name ?: '-',
-                'bulan_lalu' => $bill->penalty_amount,
-                'bulan_ini' => (string) ($bill->usage_charge + $bill->abodemen),
-                'sampai_bulan_ini' => $bill->total_amount,
+                'customer_code' => $customer->customer_code ?? '-',
+                'activated_at' => $customer->activated_at ? Carbon::parse($customer->activated_at)->format('d/m/Y') : '-',
+                'name' => $customer->user?->name ?: '-',
+                'bulan_lalu' => $sdBulanLalu,
+                'bulan_ini' => $bulanIni,
+                'sampai_bulan_ini' => $sdBulanLalu + $bulanIni,
                 'dibayar' => $dibayar,
-                'status' => $bill->status,
+                'status' => $status,
             ];
-        });
+        }
+
+        $resultData = collect($rows)->sortBy([
+            ['nama_desa', 'asc'],
+            ['nama_dusun', 'asc'],
+            ['name', 'asc'],
+        ])->values();
 
         $data['bulan_name'] = $this->bulanName($data['bulan']);
-        $periodeText = isset($data['bulanan']) && $data['bulanan']
+        $periodeText = $isBulanan
             ? ' ('.$data['bulan_name'].' '.$data['tahun'].')'
             : ' (Tahun '.$data['tahun'].')';
 
@@ -795,11 +842,26 @@ class PelaporanController extends Controller
         $targetBulan = $carbonKondisi->month;
         $targetTahun = $carbonKondisi->year;
 
-        $query = Customer::with(['user', 'ticket.village', 'monthlyBills' => function ($q) {
-            $q->where('status', 'unpaid');
-        }]);
+        $query = Customer::with([
+            'user',
+            'ticket.village',
+            'monthlyBills' => function ($q) use ($targetTahun, $targetBulan) {
+                $q->where('status', 'unpaid')
+                    ->where(function ($sq) use ($targetTahun, $targetBulan) {
+                        $sq->where('billing_period_year', '<', $targetTahun)
+                            ->orWhere(function ($ssq) use ($targetTahun, $targetBulan) {
+                                $ssq->where('billing_period_year', $targetTahun)
+                                    ->where('billing_period_month', '<=', $targetBulan);
+                            });
+                    })
+                    ->with('billPayments');
+            },
+        ]);
 
         $query->where('activated_at', '<=', $data['tgl_kondisi']);
+        $query->whereHas('ticket', function ($q) {
+            $q->where('status', 'completed');
+        });
 
         if (! empty($sub) && $sub !== 'DRPY') {
             $query->whereHas('ticket', function ($q) use ($sub) {
@@ -817,6 +879,7 @@ class PelaporanController extends Controller
             $bulanLalu = 0;
             $bulanIni = 0;
             $jumlahBulanTunggakan = 0;
+            $dibayar = 0;
 
             foreach ($customer->monthlyBills as $bill) {
                 $billBulan = (int) $bill->billing_period_month;
@@ -826,7 +889,7 @@ class PelaporanController extends Controller
 
                 if ($selisihBulan >= 0) {
                     $jumlahBulanTunggakan++;
-                    $nominalTagihan = (float) $bill->total_amount;
+                    $nominalTagihan = (float) $bill->total_amount + (float) $bill->penalty_amount;
 
                     if ($selisihBulan === 0) {
                         $bulanIni += $nominalTagihan;
@@ -835,6 +898,8 @@ class PelaporanController extends Controller
                     } else {
                         $sd3BulanLalu += $nominalTagihan;
                     }
+
+                    $dibayar += (float) $bill->billPayments->sum('amount_paid');
                 }
             }
 
@@ -843,14 +908,14 @@ class PelaporanController extends Controller
                 continue;
             }
 
-            if ($jumlahBulanTunggakan === 1) {
-                $kategori = 'LANCAR';
+            if ($jumlahBulanTunggakan === 0) {
+                $kategori = 'Lancar';
+            } elseif ($jumlahBulanTunggakan === 1) {
+                $kategori = 'Menunggak';
             } elseif ($jumlahBulanTunggakan === 2) {
-                $kategori = 'KURANG LANCAR';
-            } elseif ($jumlahBulanTunggakan === 3) {
-                $kategori = 'DIRAGUKAN';
+                $kategori = 'SP';
             } else {
-                $kategori = 'MACET';
+                $kategori = 'SPS';
             }
 
             $village = $ticket?->village;
@@ -869,10 +934,16 @@ class PelaporanController extends Controller
                 'bulan_lalu' => $bulanLalu,
                 'bulan_ini' => $bulanIni,
                 'total_tunggakan' => $totalTunggakan,
-                'dibayar' => 0.00,
+                'dibayar' => $dibayar,
                 'kategori' => $kategori,
             ];
         }
+
+        $resultData = collect($resultData)->sortBy([
+            ['nama_desa', 'asc'],
+            ['nama_dusun', 'asc'],
+            ['name', 'asc'],
+        ])->values()->all();
 
         $data['bulan_name'] = $this->bulanName($targetBulan);
         $periodeText = ' ('.$data['bulan_name'].' '.$targetTahun.')';
