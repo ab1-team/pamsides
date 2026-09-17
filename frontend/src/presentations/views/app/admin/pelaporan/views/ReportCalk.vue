@@ -38,7 +38,7 @@
                     <li data-block="sec-gambaran">
                         <div style="text-transform: uppercase;">Gambaran Umum</div>
                         <div style="text-align: justify">
-                    Tirto Mulo adalah Badan Usaha yang didirikan dari transformasi UPK PNPM-MPd dengan kegiatan
+                    {{ lembagaNama }} adalah Badan Usaha yang didirikan dari transformasi UPK PNPM-MPd dengan kegiatan
                     usaha Dana Bergulir Masyarakat (DBM) melalui produk usahanya SPP dan UEP. Dalam
                     perkembangannya sebagian dari laba DBM UPK PNPM-MPd kemudian sebelum ditetapkannya PP 11
                     tahun 2021 telah digunakan untuk membentuk unit usaha Perdagangan dan Produksi*. Bumdesma Lkd setelah didirikan sesuai ketentuan PP 11 tahun 2021 dilaksanakan transformasi
@@ -53,11 +53,11 @@
                     Desa adalah Badan hukum yang didirikan oleh desa dan atau bersama desa-desa guna mengelola
                     usaha, memanfaatkan aset, mengembangkan investasi dan produktivitas, menyediakan jasa
                     pelayanan, dan atau jenis usaha lainnya untuk sebesar-besarnya kesejahteraan masyarakat desa." Status inilah yang menjadi dasar hukum pelaksanaan usaha didirikan dengan kegiatan Usaha Utama
-                    DBM. Tirto Mulo didirikan di Jl. Raya Baron No. 005 Mulo Wonosari berdasarkan PERATURAN BERSAMA
-                    KEPALA DESA NOMOR $peraturan_desa dan mendapatkan Sertifikat Badan Hukum dari Menteri
-                    Hukum dan Hak Asasi Manusia No. SK Kemenkumham RI No.0 . Tirto Mulo menjalankan usaha
+                    DBM. {{ lembagaNama }} didirikan di {{ lembagaAlamat }} berdasarkan PERATURAN BERSAMA
+                    KEPALA DESA NOMOR {{ peraturanDesa }} dan mendapatkan Sertifikat Badan Hukum dari Menteri
+                    Hukum dan Hak Asasi Manusia No. {{ skKemenkumham }}. {{ lembagaNama }} menjalankan usaha
                     pinjaman Dana Bergulir Masyarakat yang masuk dalam kategori usaha mikrofinance dan berdomisili
-                    di Jl. Raya Baron No. 005 Mulo Wonosari dengan perangkat organisasi sebagai berikut:
+                    di {{ lembagaAlamat }} dengan perangkat organisasi sebagai berikut:
                         </div>
 
                     </li>
@@ -318,6 +318,26 @@
     })
 
     const showTableHeader = computed(() => props.payload?.showTableHeader !== false)
+
+const lembagaNama = computed(() => {
+  const nama = props.payload?.lembaga?.nama
+  return nama && String(nama).trim() ? nama : 'Badan Usaha'
+})
+
+const lembagaAlamat = computed(() => {
+  const alamat = props.payload?.lembaga?.alamat
+  return alamat && String(alamat).trim() ? alamat : 'Alamat belum tersedia'
+})
+
+const peraturanDesa = computed(() => {
+  const v = props.payload?.lembaga?.peraturan_desa
+  return v && String(v).trim() ? v : '—'
+})
+
+const skKemenkumham = computed(() => {
+  const v = props.payload?.lembaga?.sk_kemenkumham
+  return v && String(v).trim() ? v : '—'
+})
 </script>
 
 <style scoped>

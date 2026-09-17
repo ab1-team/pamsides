@@ -790,7 +790,8 @@ const setupCalkProbe = async () => {
     return
   }
 
-  // Probe payload: tampilkan semua blok sekaligus (isFirst + isLast + showHeader).
+  // Probe payload: tampilkan semua blok sekaligus (isFirst + isLast + showHeader)
+  // agar offset/tinggi tiap blok bisa diukur secara real.
   calkProbeData.value = {
     ...data,
     config: baseConfig,
@@ -812,9 +813,8 @@ const setupCalkProbe = async () => {
     return
   }
 
-  // Ukur tinggi total konten di dalam BaseReportLayout root.
-  // Konten = area di dalam .report-content (di luar padding BaseReportLayout).
-  const PX_PER_MM_LOCAL = 96 / 25.4
+  // === Pengukuran tinggi aktual (PX) dari probe, TANPA konversi mm/circular ===
+  const PX_PER_MM = 96 / 25.4 // 1mm = 96/25.4 px (asumsi DPI 96)
   const cfg = baseConfig || {}
   const paperSize = (cfg.paper_size || 'A4').toUpperCase()
   const orientation = cfg.orientation || 'portrait'
@@ -823,156 +823,144 @@ const setupCalkProbe = async () => {
       ? (orientation === 'landscape' ? { w: 330, h: 215 } : { w: 215, h: 330 })
       : (orientation === 'landscape' ? { w: 297, h: 210 } : { w: 210, h: 297 })
 
-  // Padding vertikal BaseReportLayout = 60px atas + 60px bawah ~= 31.75mm
-  const padV_mm = 60 / PX_PER_MM_LOCAL / 96 * 25.4 // ~15.875mm
-  const maxContentPx = (pageDimsMm.h - padV_mm * 2) * PX_PER_MM_LOCAL
+  // Tinggi kertas dalam px.
+  const pageHeightPx = pageDimsMm.h * PX_PER_MM
 
-  // Cari element tbody (atau seluruh .report-content kalau tabel tidak ada).
+  // Padding vertikal BaseReportLayout (lihat stylesheet): 60px atas + 60px bawah.
+  // Ditambah margin-top .report-content: 8px.
+  const layoutPaddingTopPx = 60
+  const layoutPaddingBottomPx = 60
+  const reportContentMarginTopPx = 8
+  const maxContentPx =
+    pageHeightPx - layoutPaddingTopPx - layoutPaddingBottomPx - reportContentMarginTopPx
+
+  // Tinggi kop surat (.surat-kop) yang ada di setiap halaman.
+  const kopEl = calkProbeEl.value.querySelector('.surat-kop')
+  const kopHeightPx = kopEl ? kopEl.offsetHeight : 0
+
+  // Tinggi blok sebelum tabel informasi (halaman pertama):
+  // judul CaLK + gambaran umum + kebijakan akuntansi.
+  // = total tinggi .report-content - offsetTop tbody - tbody height
+  const reportContentEl = calkProbeEl.value.querySelector('.report-content')
   const tbody = calkProbeEl.value.querySelector('tbody')
-  const rowsHeights = tbody
-    ? Array.from(tbody.querySelectorAll('tr')).map((tr) => tr.offsetHeight)
-    : []
-
-  // Tinggi header section "Informasi Tambahan" + heading + margin.
-  // Section heading = div "Informasi Tambahan Laporan Keuangan" + margin-top li.
-  const infoLi = calkProbeEl.value.querySelector('[data-block="sec-informasi"]')
-  let sectionHeadingPx = 0
-  if (infoLi) {
-    // Ambil tinggi heading section saja (div pertama di dalam li).
-    const headingDiv = infoLi.querySelector(':scope > div')
-    if (headingDiv) sectionHeadingPx = headingDiv.offsetHeight
+  let beforeTablePx = 0
+  if (reportContentEl && tbody) {
+    const reportContentTop = reportContentEl.getBoundingClientRect().top
+    const tbodyTop = tbody.getBoundingClientRect().top
+    beforeTablePx = Math.max(0, tbodyTop - reportContentTop)
   }
-  const liTopMargin = 12 // margin-top: 12px di <li> sec-informasi
 
-  // Tinggi fixed sections di page 1: header judul CaLK + gambaran umum + kebijakan akuntansi.
-  // Kita ukur dari semua blok [data-block] SEBELUM sec-informasi.
-  const allBlocks = Array.from(calkProbeEl.value.querySelectorAll('[data-block]'))
-  const tbodyTop = tbody ? tbody.getBoundingClientRect().top : Infinity
-  const beforeTable = allBlocks.filter((el) => el.getBoundingClientRect().top < tbodyTop)
-  const beforeTablePx = beforeTable.reduce((sum, el) => sum + el.offsetHeight, 0)
+  // Tinggi blok setelah tabel informasi (halaman terakhir):
+  // pembagian laba + penutup + tfoot (jika ada).
+  let afterTablePx = 0
+  if (tbody) {
+    const tbodyBottom = tbody.getBoundingClientRect().bottom
+    const reportContentEl2 = reportContentEl
+    if (reportContentEl2) {
+      const rcBottom = reportContentEl2.getBoundingClientRect().bottom
+      afterTablePx = Math.max(0, rcBottom - tbodyBottom)
+    }
+  }
 
-  // Tinggi footer/pembagian/penutup di page terakhir.
-  const afterTableBlocks = allBlocks.filter((el) => el.getBoundingClientRect().top > tbodyTop)
-  const afterTablePx = afterTableBlocks.reduce((sum, el) => sum + el.offsetHeight, 0)
+  // Tinggi baris tabel aktual (exclude baris separator 2px).
+  const rowsHeights = tbody
+    ? Array.from(tbody.querySelectorAll('tr')).map((tr) => tr.offsetHeight).filter((h) => h > 4)
+    : []
+  const avgRowPx = rowsHeights.length
+    ? rowsHeights.reduce((s, h) => s + h, 0) / rowsHeights.length
+    : 10 // fallback aman 10px per baris
 
-  // Tinggi rata-rata per baris (exclude baris separator 2px).
-  const meaningfulRows = rowsHeights.filter((h) => h > 4)
-  const avgRowPx = meaningfulRows.length
-    ? meaningfulRows.reduce((s, h) => s + h, 0) / meaningfulRows.length
-    : 6 // fallback 6px
-
-  // Tabel header (thead) untuk halaman 2+ (jika kita tampilkan).
+  // Tinggi thead (untuk halaman 2+ yang menampilkan header tabel).
   const theadEl = calkProbeEl.value.querySelector('thead')
   const theadPx = theadEl ? theadEl.offsetHeight : 0
 
-  // chunkSize untuk halaman 2+ (lebih besar karena tidak ada intro):
-  // maxContentPx - sectionHeadingPx - liTopMargin
-  const perPageRows = Math.max(10, Math.floor(
-    (maxContentPx - sectionHeadingPx - liTopMargin) / avgRowPx
-  ))
-  // chunkSize untuk halaman 1 (lebih kecil karena ada intro):
-  const firstPageAvail = maxContentPx - beforeTablePx
-  const firstPageRows = Math.max(5, Math.floor(
-    (firstPageAvail - sectionHeadingPx - liTopMargin) / avgRowPx
-  ))
-  // chunkSize untuk halaman terakhir (lebih kecil karena ada footer):
-  const lastPageAvail = maxContentPx - sectionHeadingPx - liTopMargin - afterTablePx
+  // Margin-top pada <li data-block="sec-informasi"> = 12px.
+  const liTopMargin = 12
+
+  // === Chunking rows murni (menghitung kop surat) ===
+  // Halaman 2+ (tengah): ada kop surat + thead + heading section + margin.
+  const perPageAvail = maxContentPx - kopHeightPx - theadPx - liTopMargin
+  const perPageRows = Math.max(1, Math.floor(perPageAvail / avgRowPx))
+
+  // Halaman pertama: ada kop surat + intro (gambaran+ kebijakan) + heading section + margin.
+  const firstPageAvail = maxContentPx - beforeTablePx - liTopMargin
+  const firstPageRows = Math.max(1, Math.floor(firstPageAvail / avgRowPx))
+
+  // Halaman terakhir: ada kop surat + thead + heading section + footer (pembagian+penutup+tfoot).
+  const lastPageAvail = maxContentPx - kopHeightPx - theadPx - liTopMargin - afterTablePx
   const lastPageRows = lastPageAvail > 0
-    ? Math.max(5, Math.floor(lastPageAvail / avgRowPx))
+    ? Math.max(1, Math.floor(lastPageAvail / avgRowPx))
     : perPageRows
 
   // Bangun pages:
   //   Page 1: rows[0..firstPageRows)
-  //   Page 2..N-1: rows[..) chunks of perPageRows
-  //   Page N: sisa rows (tidak perlu chunking khusus; tapi cek fit)
+  //   Page 2..N-1: chunk perPageRows
+  //   Page N: sisa rows (kalau muat di halaman terakhir, langsung pakai)
   const pagesNew = []
   let cursor = 0
-  let pageIdx = 0
 
-  // Page 1
-  if (allRows.length === 0) {
-    pagesNew.push({
-      payload: {
-        ...data,
-        config: baseConfig,
-        lembaga: baseLembaga,
-        rows: [],
-        calk_content: data.calk_content || '',
-        total_saldo: data.total_saldo || 0,
-        pageInfo: { current: 1, total: 1 },
-        isFirstPage: true,
-        isLastPage: true,
-        showTableHeader: true,
-      },
-      meta: baseMeta,
-    })
-  } else {
-    // Halaman pertama
-    const firstEnd = Math.min(firstPageRows, allRows.length)
-    pagesNew.push({
-      payload: {
-        ...data,
-        config: baseConfig,
-        lembaga: baseLembaga,
-        rows: allRows.slice(0, firstEnd),
-        calk_content: data.calk_content || '',
-        total_saldo: data.total_saldo || 0,
-        pageInfo: { current: 1, total: 0 }, // total diisi nanti
-        isFirstPage: true,
-        isLastPage: firstEnd >= allRows.length,
-        showTableHeader: true,
-      },
-      meta: baseMeta,
-    })
-    cursor = firstEnd
-    pageIdx = 1
+  // Halaman pertama
+  const firstEnd = Math.min(firstPageRows, allRows.length)
+  pagesNew.push({
+    payload: {
+      ...data,
+      config: baseConfig,
+      lembaga: baseLembaga,
+      rows: allRows.slice(0, firstEnd),
+      calk_content: data.calk_content || '',
+      total_saldo: data.total_saldo || 0,
+      pageInfo: { current: 1, total: 0 },
+      isFirstPage: true,
+      isLastPage: firstEnd >= allRows.length,
+      showTableHeader: true,
+    },
+    meta: baseMeta,
+  })
+  cursor = firstEnd
 
-    // Halaman 2..N-1 (chunking perPageRows)
-    while (cursor < allRows.length) {
-      // Cek apakah sisa muat di halaman terakhir (lastPageRows)
-      const remaining = allRows.length - cursor
-      if (remaining <= lastPageRows) {
-        // Halaman terakhir
-        pagesNew.push({
-          payload: {
-            ...data,
-            config: baseConfig,
-            lembaga: baseLembaga,
-            rows: allRows.slice(cursor),
-            calk_content: data.calk_content || '',
-            total_saldo: data.total_saldo || 0,
-            pageInfo: { current: pageIdx + 1, total: 0 },
-            isFirstPage: false,
-            isLastPage: true,
-            showTableHeader: false,
-          },
-          meta: baseMeta,
-        })
-        cursor = allRows.length
-        pageIdx++
-        break
-      }
+  // Halaman 2..N-1 (chunking murni perPageRows) + halaman terakhir (lastPageRows)
+  while (cursor < allRows.length) {
+    const remaining = allRows.length - cursor
 
-      // Halaman tengah: chunk perPageRows
-      const end = Math.min(cursor + perPageRows, allRows.length)
+    // Kalau sisa <= lastPageRows, langsung jadikan halaman terakhir.
+    if (remaining <= lastPageRows) {
       pagesNew.push({
         payload: {
           ...data,
           config: baseConfig,
           lembaga: baseLembaga,
-          rows: allRows.slice(cursor, end),
+          rows: allRows.slice(cursor),
           calk_content: data.calk_content || '',
           total_saldo: data.total_saldo || 0,
-          pageInfo: { current: pageIdx + 1, total: 0 },
+          pageInfo: { current: pagesNew.length + 1, total: 0 },
           isFirstPage: false,
-          isLastPage: false,
+          isLastPage: true,
           showTableHeader: false,
         },
         meta: baseMeta,
       })
-      cursor = end
-      pageIdx++
+      cursor = allRows.length
+      break
     }
+
+    // Halaman tengah: chunk perPageRows (chunking rows murni).
+    const end = Math.min(cursor + perPageRows, allRows.length)
+    pagesNew.push({
+      payload: {
+        ...data,
+        config: baseConfig,
+        lembaga: baseLembaga,
+        rows: allRows.slice(cursor, end),
+        calk_content: data.calk_content || '',
+        total_saldo: data.total_saldo || 0,
+        pageInfo: { current: pagesNew.length + 1, total: 0 },
+        isFirstPage: false,
+        isLastPage: false,
+        showTableHeader: false,
+      },
+      meta: baseMeta,
+    })
+    cursor = end
   }
 
   // Isi total

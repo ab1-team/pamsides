@@ -230,6 +230,8 @@ class PelaporanController extends Controller
                     'telepon' => $lembaga->telepon,
                     'email' => $lembaga->email,
                     'logo' => $lembaga->logo,
+                    'peraturan_desa' => $lembaga->peraturan_desa,
+                    'sk_kemenkumham' => $lembaga->sk_kemenkumham,
                 ] : null,
                 'items' => [],
             ],
@@ -261,6 +263,8 @@ class PelaporanController extends Controller
                 'telepon' => $lembaga->telepon,
                 'email' => $lembaga->email,
                 'logo' => $lembaga->logo,
+                'peraturan_desa' => $lembaga->peraturan_desa,
+                'sk_kemenkumham' => $lembaga->sk_kemenkumham,
             ] : null;
 
             $response->setData($body);
@@ -467,6 +471,8 @@ class PelaporanController extends Controller
                     'telepon' => $lembaga->telepon,
                     'email' => $lembaga->email,
                     'logo' => $lembaga->logo,
+                    'peraturan_desa' => $lembaga->peraturan_desa,
+                    'sk_kemenkumham' => $lembaga->sk_kemenkumham,
                 ] : null,
                 'periode' => [
                     'tahun' => $data['tahun'],
@@ -497,6 +503,8 @@ class PelaporanController extends Controller
                     'alamat' => $lembaga->alamat,
                     'telepon' => $lembaga->telepon,
                     'email' => $lembaga->email,
+                    'peraturan_desa' => $lembaga->peraturan_desa,
+                    'sk_kemenkumham' => $lembaga->sk_kemenkumham,
                 ] : null,
                 'periode' => [
                     'tahun' => $data['tahun'],
@@ -743,6 +751,7 @@ class PelaporanController extends Controller
             $bulanIni = 0.0;
             $dibayar = 0.0;
             $jumlahMenunggak = 0;
+            $status = 'Lancar';
 
             foreach ($customer->monthlyBills as $bill) {
                 $billBulan = (int) $bill->billing_period_month;

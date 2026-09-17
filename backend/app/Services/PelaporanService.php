@@ -70,13 +70,12 @@ class PelaporanService
     {
         $laba_rugi = Account::where('lev1', '>=', '4')
             ->with(['amount' => function ($q) use ($tahun, $bulan) {
-                $q->where(function ($sq) use ($tahun, $bulan) {
-                    $sq->where('tahun', '<', $tahun)
-                        ->orWhere(function ($ssq) use ($tahun, $bulan) {
-                            $ssq->where('tahun', $tahun)
-                                ->where('bulan', '<=', $bulan);
-                        });
-                });
+                // FIX HIGH-2: Laba/rugi tahun berjalan HANYA untuk tahun berjalan
+                // (Januari s/d bulan berjalan). Jangan ikut sertakan tahun-tahun
+                // sebelumnya, supaya tidak terjadi pencemaran data lintas tahun
+                // pada laporan laba rugi tahun berjalan.
+                $q->where('tahun', $tahun)
+                    ->where('bulan', '<=', $bulan);
             }])->get();
 
         $hitung = function($acc) {

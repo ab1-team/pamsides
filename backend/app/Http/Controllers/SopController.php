@@ -20,6 +20,8 @@ class SopController extends Controller
                 'email' => $s?->email ?? '',
                 'telepon' => $s?->telepon ?? '',
                 'domain' => $s?->domain ?? '',
+                'peraturan_desa' => $s?->peraturan_desa ?? '',
+                'sk_kemenkumham' => $s?->sk_kemenkumham ?? '',
             ],
             'sistemTagihan' => [
                 'batasTagihan' => $s?->batas_tagihan ?? 27,
@@ -46,13 +48,15 @@ class SopController extends Controller
     public function updateLembaga(Request $request)
     {
         try {
-            $data = $request->validate([
-                'nama' => 'nullable|string|max:150',
-                'alamat' => 'nullable|string',
-                'email' => 'nullable|email|max:150',
-                'telepon' => 'nullable|string|max:30',
-                'domain' => 'nullable|string|max:255',
-            ]);
+$data = $request->validate([
+            'nama' => 'nullable|string|max:150',
+            'alamat' => 'nullable|string',
+            'email' => 'nullable|email|max:150',
+            'telepon' => 'nullable|string|max:30',
+            'domain' => 'nullable|string|max:255',
+            'peraturan_desa' => 'nullable|string|max:100',
+            'sk_kemenkumham' => 'nullable|string|max:100',
+        ]);
 
             $s = Setting::firstOrNew([]);
             $s->key = $s->key ?: 'sop';
