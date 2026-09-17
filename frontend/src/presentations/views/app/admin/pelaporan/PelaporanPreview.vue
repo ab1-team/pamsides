@@ -114,7 +114,6 @@ import { useRouter, useRoute } from 'vue-router'
 import BaseButton from '@/presentations/components/ui/BaseButton.vue'
 import pelaporanService from '@/services/pelaporan.service.js'
 import { usePdfReport } from '@/composables/usePdfReport.js'
-import { useA4Paginator } from '@/composables/useA4Paginator.js'
 
 // Kelompok Utama
 import CoverView from '@/presentations/views/app/admin/pelaporan/views/ReportCover.vue'
@@ -181,8 +180,6 @@ const reportComponents = {
 const router = useRouter()
 const route = useRoute()
 const { isGenerating, downloadPdf, bulanNama } = usePdfReport()
-
-const { measure: measureA4 } = useA4Paginator()
 
 const loading = ref(true)
 const errorMsg = ref('')

@@ -758,18 +758,10 @@ class PelaporanController extends Controller
                 $billTahun = (int) $bill->billing_period_year;
                 $selisih = (($targetTahun - $billTahun) * 12) + ($targetBulan - $billBulan);
 
-                if ($isBulanan) {
-                    if ($selisih >= 1) {
-                        $sdBulanLalu += (float) $bill->total_amount;
-                    } elseif ($selisih === 0) {
-                        $bulanIni += (float) $bill->total_amount;
-                    }
-                } else {
-                    if ($selisih > 0) {
-                        $sdBulanLalu += (float) $bill->total_amount;
-                    } elseif ($selisih === 0) {
-                        $bulanIni += (float) $bill->total_amount;
-                    }
+                if ($selisih > 0) {
+                    $sdBulanLalu += (float) $bill->total_amount;
+                } elseif ($selisih === 0) {
+                    $bulanIni += (float) $bill->total_amount;
                 }
 
                 if ($selisih >= 0) {
@@ -779,10 +771,8 @@ class PelaporanController extends Controller
                 $dibayar += (float) $bill->billPayments->sum('amount_paid');
             }
 
-            if ($isBulanan) {
-                if ($sdBulanLalu <= 0 && $bulanIni <= 0) {
-                    continue;
-                }
+            if ($sdBulanLalu <= 0 && $bulanIni <= 0) {
+                continue;
             }
 
             if ($jumlahMenunggak > 0) {
@@ -869,12 +859,13 @@ class PelaporanController extends Controller
 
         $query->where('activated_at', '<=', $data['tgl_kondisi']);
         $query->whereHas('ticket', function ($q) {
-            $q->where('status', 'completed');
+            $q->whereIn('status', ['completed', 'suspended']);
         });
 
         if (! empty($sub) && $sub !== 'DRPY') {
             $query->whereHas('ticket', function ($q) use ($sub) {
-                $q->where('user_id', $sub);
+                $q->where('user_id', $sub)
+                    ->whereIn('status', ['completed', 'suspended']);
             });
         }
 
