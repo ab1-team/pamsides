@@ -33,30 +33,74 @@
         <font-awesome-icon icon="exclamation-triangle" class="text-sm!" />
         Gagal memuat data: {{ loadError }}
       </div>
-      <div
-        v-else-if="!isLoading && bills.length === 0"
-        class="px-4! py-3! bg-amber-50! border-b! border-amber-200! text-amber-700! text-xs! font-semibold! flex! items-center! gap-2!"
-      >
-        <font-awesome-icon icon="info-circle" class="text-sm!" />
-        Tidak ada tagihan di database. Pastikan data sudah di-generate di menu Transaksi → Tagihan
-        Bulanan.
-      </div>
       <DataTable
-        :data="filteredBills"
+        :data="bills"
         :columns="tableColumns"
         v-model:current-page="currentPage"
         v-model:per-page="perPage"
-        :total-pages="totalPages"
+        :total-pages="lastPage"
         :visible-pages="visiblePages"
-        :total-entries="filteredBills.length"
+        :total-entries="totalEntries"
         v-model="searchQuery"
-        search-placeholder="Cari nama pelanggan, ID, atau no. invoice..."
+        search-placeholder="Cari nama pelanggan, kode, atau no. invoice..."
         empty-title="Tagihan Tidak Ditemukan"
-        empty-message="Belum ada tagihan sama sekali atau mohon lakukan pencarian kembali."
+        empty-message="Belum ada tagihan sesuai pencarian. Coba kata kunci lain atau muat ulang."
+        :show-toolbar="false"
         no-card
         row-clickable
+        :loading="isLoading"
         @row-click="handleOpenDetail"
       >
+        <template #toolbar>
+          <div
+            class="flex! flex-col! sm:flex-row! sm:items-center! justify-between! p-3! border-b! border-slate-100! gap-3!"
+          >
+            <div class="flex! items-center! gap-3! text-xs! text-slate-500!">
+              <span class="whitespace-nowrap!">Tampilkan</span>
+              <select
+                :value="perPage"
+                @change="onPerPageChange(parseInt($event.target.value))"
+                class="bg-white! border! border-slate-200! rounded-md! px-2! py-1! outline-none! focus:border-cyan-600! transition-all! cursor-pointer! text-slate-700!"
+              >
+                <option :value="10">10</option>
+                <option :value="25">25</option>
+                <option :value="50">50</option>
+                <option :value="100">100</option>
+              </select>
+              <span class="whitespace-nowrap!">data per halaman</span>
+              <span class="hidden! sm:inline!">·</span>
+              <span class="hidden! sm:inline!">
+                Total:
+                <strong class="font-bold! text-slate-800!">{{
+                  totalEntries.toLocaleString('id-ID')
+                }}</strong>
+                tagihan
+              </span>
+            </div>
+
+            <div class="relative! flex-1! sm:w-72!">
+              <span class="absolute! left-3.5! top-1/2! -translate-y-1/2! text-sm! text-slate-400!">
+                🔍
+              </span>
+              <input
+                :value="searchQuery"
+                @input="onSearchInput($event.target.value)"
+                type="text"
+                placeholder="Cari nama, kode, atau no. invoice..."
+                class="pl-9! pr-4! py-2! bg-slate-50! border! border-slate-200! rounded-lg! text-sm! text-slate-900! w-full! hover:bg-white! hover:border-slate-300! focus:border-cyan-600! focus:bg-white! focus:outline-none! transition-all!"
+              />
+              <button
+                v-if="searchQuery"
+                @click="clearSearch"
+                class="absolute! right-2! top-1/2! -translate-y-1/2! w-6! h-6! rounded-full! hover:bg-slate-200! text-slate-400! hover:text-slate-600! transition-colors! flex! items-center! justify-center!"
+                type="button"
+              >
+                <font-awesome-icon icon="times" class="text-[10px]!" />
+              </button>
+            </div>
+          </div>
+        </template>
+
         <template #column-customer="{ row }">
           <div class="flex items-center gap-3!">
             <div
@@ -155,7 +199,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
 import { billingService } from '@/services/billing.service.js'
 import BaseButton from '@/presentations/components/ui/BaseButton.vue'
 import ContentCard from '@/presentations/components/ui/ContentCard.vue'
@@ -165,12 +209,20 @@ import detaiDaftarTagihan from './partials/detaiDaftarTagihan.vue'
 const bills = ref([])
 const isLoading = ref(false)
 const loadError = ref(null)
+
 const searchQuery = ref('')
 const currentPage = ref(1)
-const perPage = ref(10)
+const perPage = ref(25)
+
+const lastPage = ref(1)
+const totalEntries = ref(0)
 
 const selectedBill = ref(null)
 const showDetailModal = ref(false)
+const detailLoading = ref(false)
+
+let searchDebounce = null
+let inFlightToken = 0
 
 const bulanOptions = [
   'Januari',
@@ -197,11 +249,21 @@ const tableColumns = [
 ]
 
 const fetchBills = async () => {
+  const token = ++inFlightToken
   isLoading.value = true
   loadError.value = null
   try {
-    const res = await billingService.getAllBills({})
-    console.log('[DaftarTagihan] response:', res)
+    const params = {
+      page: currentPage.value,
+      per_page: perPage.value,
+    }
+    if (searchQuery.value && searchQuery.value.trim() !== '') {
+      params.q = searchQuery.value.trim()
+    }
+
+    const res = await billingService.getBills(params)
+    if (token !== inFlightToken) return
+
     if (res?.success && res.data) {
       bills.value = Array.isArray(res.data.bills) ? res.data.bills : []
     } else if (res?.data) {
@@ -209,14 +271,82 @@ const fetchBills = async () => {
     } else {
       bills.value = []
     }
+
+    const meta = res?.meta
+    if (meta && meta.mode === 'paginate') {
+      lastPage.value = Math.max(1, Number(meta.last_page) || 1)
+      totalEntries.value = Number(meta.total) || bills.value.length
+    } else {
+      lastPage.value = 1
+      totalEntries.value = bills.value.length
+    }
+
+    if (currentPage.value > lastPage.value) {
+      currentPage.value = lastPage.value
+      return
+    }
   } catch (err) {
+    if (token !== inFlightToken) return
     console.error('[DaftarTagihan] Gagal memuat daftar tagihan:', err)
     loadError.value = err.response?.data?.message || err.message || 'Gagal memuat data'
     bills.value = []
+    totalEntries.value = 0
+    lastPage.value = 1
   } finally {
-    isLoading.value = false
+    if (token === inFlightToken) {
+      isLoading.value = false
+    }
   }
 }
+
+const visiblePages = computed(() => {
+  const pages = []
+  const total = lastPage.value
+  const current = currentPage.value
+  const maxPages = 5
+
+  if (total <= maxPages) {
+    for (let i = 1; i <= total; i++) pages.push(i)
+    return pages
+  }
+
+  let start = Math.max(1, current - 2)
+  let end = Math.min(total, start + maxPages - 1)
+  if (end - start < maxPages - 1) {
+    start = Math.max(1, end - maxPages + 1)
+  }
+
+  for (let i = start; i <= end; i++) pages.push(i)
+  if (start > 1) pages.unshift('...')
+  if (end < total) pages.push(total)
+  return pages
+})
+
+const onSearchInput = (value) => {
+  searchQuery.value = value
+  if (searchDebounce) clearTimeout(searchDebounce)
+  searchDebounce = setTimeout(() => {
+    currentPage.value = 1
+    fetchBills()
+  }, 350)
+}
+
+const clearSearch = () => {
+  searchQuery.value = ''
+  if (searchDebounce) clearTimeout(searchDebounce)
+  currentPage.value = 1
+  fetchBills()
+}
+
+const onPerPageChange = (value) => {
+  perPage.value = value
+  currentPage.value = 1
+  fetchBills()
+}
+
+watch(currentPage, () => {
+  fetchBills()
+})
 
 const getInitials = (row) => {
   const name = row.customer?.user?.name || row.customer?.ticket?.applicant_name || 'PL'
@@ -297,44 +427,33 @@ const getOverdueDays = (dateStr) => {
   }
 }
 
-const filteredBills = computed(() => {
-  if (!searchQuery.value) return bills.value
-  const query = searchQuery.value.toLowerCase()
-  return bills.value.filter((b) => {
-    const name = getCustomerName(b).toLowerCase()
-    const code = (b.customer?.customer_code || '').toLowerCase()
-    const invId = `inv-${b.id}`.toLowerCase()
-    const monthName = getMonthName(b.billing_period_month).toLowerCase()
-    const year = String(b.billing_period_year)
-    return (
-      name.includes(query) ||
-      code.includes(query) ||
-      invId.includes(query) ||
-      monthName.includes(query) ||
-      year.includes(query)
-    )
-  })
-})
+const handleOpenDetail = async (row) => {
+  if (!row?.id) return
 
-const totalPages = computed(() => {
-  return Math.max(1, Math.ceil(filteredBills.value.length / perPage.value))
-})
-
-const visiblePages = computed(() => {
-  const pages = []
-  for (let i = 1; i <= Math.min(3, totalPages.value); i++) {
-    pages.push(i)
-  }
-  return pages
-})
-
-const handleOpenDetail = (row) => {
   selectedBill.value = row
   showDetailModal.value = true
+
+  try {
+    detailLoading.value = true
+    const res = await billingService.getBillDetail(row.id)
+    if (res?.success && res.data) {
+      selectedBill.value = res.data
+    } else if (res?.data) {
+      selectedBill.value = res.data
+    }
+  } catch (err) {
+    console.error('[DaftarTagihan] Gagal memuat detail tagihan:', err)
+  } finally {
+    detailLoading.value = false
+  }
 }
 
 onMounted(() => {
   fetchBills()
+})
+
+onBeforeUnmount(() => {
+  if (searchDebounce) clearTimeout(searchDebounce)
 })
 </script>
 

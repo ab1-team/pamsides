@@ -76,7 +76,17 @@
         </thead>
 
         <tbody class="divide-y! divide-slate-100!">
-          <tr v-if="data.length === 0">
+          <tr v-if="loading">
+            <td :colspan="totalColumns" class="px-4! py-12! text-center!">
+              <div class="flex! flex-col! items-center! justify-center! gap-2! text-slate-400!">
+                <font-awesome-icon icon="spinner" spin class="text-2xl! text-cyan-600!" />
+                <span class="text-xs! font-semibold! uppercase! tracking-wider!"
+                  >Memuat data...</span
+                >
+              </div>
+            </td>
+          </tr>
+          <tr v-else-if="data.length === 0">
             <td :colspan="totalColumns" class="px-4! py-4!">
               <EmptyState :title="emptyTitle" :message="emptyMessage" :icon="emptyIcon" />
             </td>
@@ -311,6 +321,10 @@ const props = defineProps({
   showEntries: {
     type: Boolean,
     default: true,
+  },
+  loading: {
+    type: Boolean,
+    default: false,
   },
   selection: {
     type: Array,
