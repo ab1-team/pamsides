@@ -583,6 +583,7 @@ const submitInstallationResult = async () => {
     Swal.fire('Gagal', 'ID Tiket tidak ditemukan.', 'error')
     return
   }
+
   if (!installForm.initial_meter_reading) {
     Swal.fire('Meter kosong', 'Masukkan angka meter awal.', 'warning')
     return
