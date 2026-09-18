@@ -59,8 +59,7 @@ class PelaporanService
             ->with([
                 'akunLevel2.akunLevel3' => fn($q) => $q->orderBy('kode_akun', 'ASC'),
                 'akunLevel2.akunLevel3.accountParent.amount' => function ($q) use ($tahun, $bulan) {
-                    $q->where('tahun', $tahun)
-                        ->where('bulan', '<=', $bulan);
+                    $q->where('tahun', $tahun)->where('bulan', '<=', $bulan);
                 }
             ])
         ->orderBy('kode_akun', 'ASC')
@@ -71,6 +70,10 @@ class PelaporanService
     {
         $laba_rugi = Account::where('lev1', '>=', '4')
             ->with(['amount' => function ($q) use ($tahun, $bulan) {
+                // FIX HIGH-2: Laba/rugi tahun berjalan HANYA untuk tahun berjalan
+                // (Januari s/d bulan berjalan). Jangan ikut sertakan tahun-tahun
+                // sebelumnya, supaya tidak terjadi pencemaran data lintas tahun
+                // pada laporan laba rugi tahun berjalan.
                 $q->where('tahun', $tahun)
                     ->where('bulan', '<=', $bulan);
             }])->get();

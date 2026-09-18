@@ -88,15 +88,22 @@ const logoUrl = computed(() => {
     color: #000000;
     font-family: Arial, Helvetica, sans-serif;
     box-sizing: border-box;
-    /* Tambahkan padding yang lebih besar agar terlihat masuk ke dalam */
-    padding: 60px 90px; 
+    /* Padding cetak standar agar isi tidak mepet ke tepi kertas */
+    padding: 60px 90px;
     margin: 0 auto;
     overflow: hidden;
     word-wrap: break-word;
     overflow-wrap: break-word;
+    display: flex;
+    flex-direction: column;
   }
 
-    /* ================= Ukuran Preview Layar Web (PORTRAIT) ================= */
+    /* ================= Ukuran Preview Layar Web (PORTRAIT) =================
+       DEFAULT: min-height A4 — halaman SELALU minimal sepanjang kertas.
+       Konten yang melebihi akan meluber (jadi lebih panjang dari A4).
+       Untuk laporan CaLK yang dipecah otomatis oleh paginator konten,
+       override dengan class .a4-fixed di parent (lihat bawah).
+    */
     .report-page.surat-page.size-a4.portrait {
       width: 210mm !important;
       min-height: 297mm;
@@ -117,6 +124,13 @@ const logoUrl = computed(() => {
       width: 330mm !important;
       min-height: 215mm;
     }
+
+    /* Mode fixed-A4: paksa tinggi = tepat A4 (untuk CaLK yang dipaginasi otomatis).
+       Konten yang melebihi akan di-handle oleh paginator, jadi tidak ada overflow. */
+    .a4-fixed .report-page.surat-page.size-a4.portrait { height: 297mm; }
+    .a4-fixed .report-page.surat-page.size-f4.portrait { height: 330mm; }
+    .a4-fixed .report-page.surat-page.size-a4.landscape { height: 210mm; }
+    .a4-fixed .report-page.surat-page.size-f4.landscape { height: 215mm; }
 
     /* ================= Pengaturan Cetak Browser (PDF) ================= */
     @media print {
@@ -193,8 +207,12 @@ const logoUrl = computed(() => {
     }
     
     .report-content {
-      margin-top: 8px; 
+      margin-top: 8px;
       font-size: 12px;
+      flex: 1 1 auto;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
     }
 
     /* ================= KUNCI OTOMATIS UNTUK SEMUA LAPORAN MASUK SINI ================= */

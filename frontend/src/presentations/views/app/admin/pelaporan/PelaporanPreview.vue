@@ -33,6 +33,28 @@
 
     <div v-if="errorMsg" class="alert-error">{{ errorMsg }}</div>
 
+    <!-- OFF-SCREEN PROBE: untuk CaLK, kita mount sekali di sini dengan SEMUA rows
+         + semua section (isFirst + isLast) supaya bisa diukur offsetTop tiap blok.
+         Hasil pengukuran dipakai untuk generate pages sesuai tinggi A4 aktual.
+         Wrapper a4-fixed memaksa BaseReportLayout di dalamnya pakai height tetap. -->
+    <div
+      v-if="calkProbeData"
+      class="a4-fixed"
+      aria-hidden="true"
+    >
+      <div
+        ref="calkProbeEl"
+        class="calk-probe"
+        :class="[reportConfig?.paper_size === 'F4' ? 'size-f4' : 'size-a4', reportConfig?.orientation || 'portrait']"
+      >
+        <component
+          :is="resolvedView"
+          :payload="calkProbeData"
+          :meta="meta"
+        />
+      </div>
+    </div>
+
     <div class="workspace-container">
 
       <div class="thumbnail-sidebar no-print" v-show="showSidebar">
@@ -175,6 +197,10 @@ const maxZoom = 3
 const zoomStep = 0.1
 let resizeObserver = null
 
+// CaLK pagination: probe off-screen
+const calkProbeEl = ref(null)
+const calkProbeData = ref(null)
+
 const zoomPercent = computed(() => Math.round(zoomLevel.value * 100))
 
 const zoomIn = () => {
@@ -279,6 +305,9 @@ const fetchPreview = async () => {
     response.value = res
     buildPages(res)
 
+    // Untuk CaLK: ukur tinggi konten aktual lalu generate pages sesuai A4.
+    await setupCalkProbe()
+
     // FIX TAMBAHAN: SET TITLE TAB BROWSER
     document.title = res?.title || 'LAPORAN'
 
@@ -308,37 +337,37 @@ const buildPages = (res) => {
     const rows = Array.isArray(data?.rows) ? data.rows : []
     const calkContent = data?.calk_content || ''
     const totalSaldo = data?.total_saldo || 0
-    const chunkSize = 35
 
     if (rows.length === 0) {
       pages.value = [{ payload: { ...data, config: baseConfig, rows: [], pageInfo: { current: 1, total: 1 }, isFirstPage: true, isLastPage: true }, meta: baseMeta }]
     } else {
-      pages.value = []
-      const totalChunks = Math.ceil(rows.length / chunkSize)
-      for (let i = 0; i < rows.length; i += chunkSize) {
-        const chunkIndex = Math.floor(i / chunkSize)
-        const isFirst = chunkIndex === 0
-        const isLast = chunkIndex === totalChunks - 1
-        pages.value.push({
-          payload: {
-            ...data,
-            config: baseConfig,
-            rows: rows.slice(i, i + chunkSize),
-            calk_content: calkContent,
-            total_saldo: totalSaldo,
-            pageInfo: { current: chunkIndex + 1, total: totalChunks },
-            isFirstPage: isFirst,
-            isLastPage: isLast,
-            showTableHeader: isFirst,
-          },
-          meta: baseMeta,
-        })
-      }
+      // Untuk CaLK, chunkSize dihitung dari probe setelah render.
+      // Kita buat SATU placeholder page dulu; setelah render probe off-screen,
+      // chunkSize dihitung dari tinggi konten aktual dan pages dipecah ulang.
+      pages.value = [{
+        payload: {
+          ...data,
+          config: baseConfig,
+          rows: rows,
+          calk_content: calkContent,
+          total_saldo: totalSaldo,
+          pageInfo: { current: 1, total: 1 },
+          isFirstPage: true,
+          isLastPage: true,
+          showTableHeader: true,
+          _allRows: rows,
+          _calkContent: calkContent,
+          _totalSaldo: totalSaldo,
+        },
+        meta: baseMeta,
+      }]
     }
-  } 
+  }
   else if (['daftar_pelanggan', 'tagihan_pelanggan', 'piutang_pelanggan'].includes(res.view_target)) {
     const items = Array.isArray(data) ? data : data?.items || []
-    const rowsPerPage = 25
+    // Tabel pelanggan biasanya lebih padat (kolom lebih banyak, padding lebih besar),
+    // jadi rowsPerPage 20 lebih aman untuk A4 dengan BaseReportLayout height tetap.
+    const rowsPerPage = 20
 
     if (items.length === 0) {
       pages.value = [{ payload: { config: baseConfig, items: [], startIndex: 0, pageInfo: { current: 1, total: 1 } }, meta: baseMeta }]
@@ -435,7 +464,9 @@ const buildPages = (res) => {
   else if (res.view_target === 'neraca_saldo') {
     const items = Array.isArray(data?.items) ? data.items : []
     const summary = data?.summary || {}
-    const chunkSize = 30
+    // Neraca Saldo punya header 2 baris dan 7 kolom (lebih lebar/padat).
+    // chunkSize 25 agar aman untuk A4 dengan BaseReportLayout height tetap.
+    const chunkSize = 25
 
     if (items.length === 0) {
       pages.value = [{ payload: { ...data, config: baseConfig, items: [] }, meta: baseMeta }]
@@ -484,7 +515,8 @@ const buildPages = (res) => {
   } 
   else if (res.view_target === 'e_budgeting') {
     const items = Array.isArray(data?.items) ? data.items : [];
-    const chunkSize = 25; // Sesuaikan jumlah baris per halaman agar tidak terpotong
+    // chunkSize konservatif untuk BaseReportLayout height tetap (A4).
+    const chunkSize = 20;
 
     if (items.length === 0) {
       pages.value = [{ payload: { ...data, config: baseConfig, items: [] }, meta: baseMeta }];
@@ -504,7 +536,7 @@ const buildPages = (res) => {
   }
   else if (res.view_target === 'laba_rugi') {
     const rawGroups = Array.isArray(data?.groups) ? data.groups : []
-    
+
     // 1. Bongkar semua grup & items menjadi satu array baris flat
     let flatRows = []
     rawGroups.forEach((group) => {
@@ -514,7 +546,7 @@ const buildPages = (res) => {
         type: group.type,
         label: group.label
       })
-      
+
       // Masukkan anak-anak akun di dalamnya jika ada
       if (Array.isArray(group.items)) {
         group.items.forEach((item) => {
@@ -526,8 +558,8 @@ const buildPages = (res) => {
       }
     })
 
-    // 2. Tentukan ukuran baris per halaman (Sesuaikan angka 25 ini jika kurang penuh/kebanyakan)
-    const chunkSize = 40 
+    // 2. chunkSize konservatif supaya muat A4 dengan BaseReportLayout height tetap.
+    const chunkSize = 30
 
     if (flatRows.length === 0) {
       pages.value = [{ payload: { ...data, config: baseConfig, flatRows: [] }, meta: baseMeta }]
@@ -548,7 +580,10 @@ const buildPages = (res) => {
   }
   else if (res.view_target === 'jurnal_transaksi') {
     const items = Array.isArray(data?.items) ? data.items : [];
-    const chunkSize = 25;
+    // Jurnal menampilkan 2 baris per item (debit + kredit), jadi chunkSize 20 item
+    // menghasilkan ~40 baris tabel. Dengan padding BaseReportLayout 60px atas/bawah,
+    // chunkSize 20 item aman untuk A4 portrait.
+    const chunkSize = 20;
     const parseNumber = (val) => parseFloat(String(val).replace(/[^0-9.-]+/g, '')) || 0;
     const totalDebitAll = items.reduce((s, i) => s + parseNumber(i?.debet?.jumlah), 0);
     const totalKreditAll = items.reduce((s, i) => s + parseNumber(i?.kredit?.jumlah), 0);
@@ -589,7 +624,8 @@ const buildPages = (res) => {
   }
   else if (res.view_target === 'piutang_komisi') {
     const items = Array.isArray(data?.items) ? data.items : [];
-    const chunkSize = 25; // Sesuaikan dengan tinggi tabel Anda
+    // chunkSize konservatif untuk BaseReportLayout height tetap (A4).
+    const chunkSize = 20;
 
     if (items.length === 0) {
       pages.value = [{ 
@@ -709,6 +745,233 @@ const collectPageElements = async () => {
   await new Promise((r) => setTimeout(r, 250))
   const els = pageRefs.value.filter(Boolean)
   return els
+}
+
+/**
+ * Setup probe off-screen untuk CaLK/TutupBukuCalk.
+ *
+ * Pendekatan: render CaLK lengkap sekali untuk mengukur:
+ *   1. Tinggi total konten (semua rows).
+ *   2. Tinggi rata-rata per baris (totalHeight / numRows).
+ *
+ * Lalu hitung chunkSize yang konsisten A4:
+ *   chunkSize = floor((maxContentPx - fixedSectionsHeight) / avgRowHeight)
+ *
+ * "FixedSectionsHeight" = tinggi section non-tabel di halaman pertama
+ * (header, gambaran umum, kebijakan akuntansi). Untuk halaman 2+ lebih kecil.
+ *
+ * Hasilnya: chunking by-rows dengan jumlah baris yang PAS untuk A4 aktual,
+ * sehingga:
+ *   - Halaman 1: intro + chunkSize rows tabel
+ *   - Halaman 2..N-1: section heading + chunkSize rows
+ *   - Halaman N: chunkSize rows + footer/pembagian/penutup
+ *
+ * Keuntungan dibanding paginator by-block:
+ *   - Tidak ada baris yang terpotong di tengah halaman.
+ *   - chunkSize konsisten dengan ukuran A4 aktual (bukan asumsi 35 baris).
+ */
+const setupCalkProbe = async () => {
+  const res = response.value
+  if (!res) return
+  const target = res.view_target
+  if (!['calk', 'calkk', 'tutup_buku_calk'].includes(target)) return
+
+  const data = res.payload || {}
+  const baseMeta = res.meta || {}
+  const baseConfig = data.config || {}
+  const baseLembaga = data.lembaga || null
+  const allRows = Array.isArray(data.rows) ? data.rows : []
+
+  if (allRows.length === 0) {
+    calkProbeData.value = null
+    return
+  }
+
+  // Probe payload: tampilkan semua blok sekaligus (isFirst + isLast + showHeader)
+  // agar offset/tinggi tiap blok bisa diukur secara real.
+  calkProbeData.value = {
+    ...data,
+    config: baseConfig,
+    lembaga: baseLembaga,
+    rows: allRows,
+    calk_content: data.calk_content || '',
+    total_saldo: data.total_saldo || 0,
+    pageInfo: { current: 1, total: 1 },
+    isFirstPage: true,
+    isLastPage: true,
+    showTableHeader: true,
+  }
+
+  await nextTick()
+  await new Promise((r) => setTimeout(r, 150))
+
+  if (!calkProbeEl.value) {
+    calkProbeData.value = null
+    return
+  }
+
+  // === Pengukuran tinggi aktual (PX) dari probe, TANPA konversi mm/circular ===
+  const PX_PER_MM = 96 / 25.4 // 1mm = 96/25.4 px (asumsi DPI 96)
+  const cfg = baseConfig || {}
+  const paperSize = (cfg.paper_size || 'A4').toUpperCase()
+  const orientation = cfg.orientation || 'portrait'
+  const pageDimsMm =
+    paperSize === 'F4'
+      ? (orientation === 'landscape' ? { w: 330, h: 215 } : { w: 215, h: 330 })
+      : (orientation === 'landscape' ? { w: 297, h: 210 } : { w: 210, h: 297 })
+
+  // Tinggi kertas dalam px.
+  const pageHeightPx = pageDimsMm.h * PX_PER_MM
+
+  // Padding vertikal BaseReportLayout (lihat stylesheet): 60px atas + 60px bawah.
+  // Ditambah margin-top .report-content: 8px.
+  const layoutPaddingTopPx = 60
+  const layoutPaddingBottomPx = 60
+  const reportContentMarginTopPx = 8
+  const maxContentPx =
+    pageHeightPx - layoutPaddingTopPx - layoutPaddingBottomPx - reportContentMarginTopPx
+
+  // Tinggi kop surat (.surat-kop) yang ada di setiap halaman.
+  const kopEl = calkProbeEl.value.querySelector('.surat-kop')
+  const kopHeightPx = kopEl ? kopEl.offsetHeight : 0
+
+  // Tinggi blok sebelum tabel informasi (halaman pertama):
+  // judul CaLK + gambaran umum + kebijakan akuntansi.
+  // = total tinggi .report-content - offsetTop tbody - tbody height
+  const reportContentEl = calkProbeEl.value.querySelector('.report-content')
+  const tbody = calkProbeEl.value.querySelector('tbody')
+  let beforeTablePx = 0
+  if (reportContentEl && tbody) {
+    const reportContentTop = reportContentEl.getBoundingClientRect().top
+    const tbodyTop = tbody.getBoundingClientRect().top
+    beforeTablePx = Math.max(0, tbodyTop - reportContentTop)
+  }
+
+  // Tinggi blok setelah tabel informasi (halaman terakhir):
+  // pembagian laba + penutup + tfoot (jika ada).
+  let afterTablePx = 0
+  if (tbody) {
+    const tbodyBottom = tbody.getBoundingClientRect().bottom
+    const reportContentEl2 = reportContentEl
+    if (reportContentEl2) {
+      const rcBottom = reportContentEl2.getBoundingClientRect().bottom
+      afterTablePx = Math.max(0, rcBottom - tbodyBottom)
+    }
+  }
+
+  // Tinggi baris tabel aktual (exclude baris separator 2px).
+  const rowsHeights = tbody
+    ? Array.from(tbody.querySelectorAll('tr')).map((tr) => tr.offsetHeight).filter((h) => h > 4)
+    : []
+  const avgRowPx = rowsHeights.length
+    ? rowsHeights.reduce((s, h) => s + h, 0) / rowsHeights.length
+    : 10 // fallback aman 10px per baris
+
+  // Tinggi thead (untuk halaman 2+ yang menampilkan header tabel).
+  const theadEl = calkProbeEl.value.querySelector('thead')
+  const theadPx = theadEl ? theadEl.offsetHeight : 0
+
+  // Margin-top pada <li data-block="sec-informasi"> = 12px.
+  const liTopMargin = 12
+
+  // === Chunking rows murni (menghitung kop surat) ===
+  // Halaman 2+ (tengah): ada kop surat + thead + heading section + margin.
+  const perPageAvail = maxContentPx - kopHeightPx - theadPx - liTopMargin
+  const perPageRows = Math.max(1, Math.floor(perPageAvail / avgRowPx))
+
+  // Halaman pertama: ada kop surat + intro (gambaran+ kebijakan) + heading section + margin.
+  const firstPageAvail = maxContentPx - beforeTablePx - liTopMargin
+  const firstPageRows = Math.max(1, Math.floor(firstPageAvail / avgRowPx))
+
+  // Halaman terakhir: ada kop surat + thead + heading section + footer (pembagian+penutup+tfoot).
+  const lastPageAvail = maxContentPx - kopHeightPx - theadPx - liTopMargin - afterTablePx
+  const lastPageRows = lastPageAvail > 0
+    ? Math.max(1, Math.floor(lastPageAvail / avgRowPx))
+    : perPageRows
+
+  // Bangun pages:
+  //   Page 1: rows[0..firstPageRows)
+  //   Page 2..N-1: chunk perPageRows
+  //   Page N: sisa rows (kalau muat di halaman terakhir, langsung pakai)
+  const pagesNew = []
+  let cursor = 0
+
+  // Halaman pertama
+  const firstEnd = Math.min(firstPageRows, allRows.length)
+  pagesNew.push({
+    payload: {
+      ...data,
+      config: baseConfig,
+      lembaga: baseLembaga,
+      rows: allRows.slice(0, firstEnd),
+      calk_content: data.calk_content || '',
+      total_saldo: data.total_saldo || 0,
+      pageInfo: { current: 1, total: 0 },
+      isFirstPage: true,
+      isLastPage: firstEnd >= allRows.length,
+      showTableHeader: true,
+    },
+    meta: baseMeta,
+  })
+  cursor = firstEnd
+
+  // Halaman 2..N-1 (chunking murni perPageRows) + halaman terakhir (lastPageRows)
+  while (cursor < allRows.length) {
+    const remaining = allRows.length - cursor
+
+    // Kalau sisa <= lastPageRows, langsung jadikan halaman terakhir.
+    if (remaining <= lastPageRows) {
+      pagesNew.push({
+        payload: {
+          ...data,
+          config: baseConfig,
+          lembaga: baseLembaga,
+          rows: allRows.slice(cursor),
+          calk_content: data.calk_content || '',
+          total_saldo: data.total_saldo || 0,
+          pageInfo: { current: pagesNew.length + 1, total: 0 },
+          isFirstPage: false,
+          isLastPage: true,
+          showTableHeader: false,
+        },
+        meta: baseMeta,
+      })
+      cursor = allRows.length
+      break
+    }
+
+    // Halaman tengah: chunk perPageRows (chunking rows murni).
+    const end = Math.min(cursor + perPageRows, allRows.length)
+    pagesNew.push({
+      payload: {
+        ...data,
+        config: baseConfig,
+        lembaga: baseLembaga,
+        rows: allRows.slice(cursor, end),
+        calk_content: data.calk_content || '',
+        total_saldo: data.total_saldo || 0,
+        pageInfo: { current: pagesNew.length + 1, total: 0 },
+        isFirstPage: false,
+        isLastPage: false,
+        showTableHeader: false,
+      },
+      meta: baseMeta,
+    })
+    cursor = end
+  }
+
+  // Isi total
+  const totalPages = pagesNew.length
+  pages.value = pagesNew.map((p, i) => ({
+    ...p,
+    payload: {
+      ...p.payload,
+      pageInfo: { ...(p.payload.pageInfo || {}), total: totalPages, current: i + 1 },
+    },
+  }))
+
+  calkProbeData.value = null
+  await nextTick()
 }
 
 onMounted(async () => {
@@ -1108,4 +1371,22 @@ onUnmounted(() => {
     overflow: visible;
   }
 }
+
+/* CaLK probe: dirender off-screen untuk pengukuran tinggi konten.
+   visibility:hidden + position:absolute agar tidak terlihat user tapi DOM & layout
+   tetap aktif sehingga offsetTop/offsetHeight terukur dengan benar.
+   Lebar & tinggi explicit supaya BaseReportLayout di dalamnya ter-render sesuai A4. */
+.calk-probe {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  visibility: hidden;
+  z-index: -1;
+  overflow: visible;
+}
+.calk-probe.size-a4.portrait { width: 210mm; }
+.calk-probe.size-f4.portrait { width: 215mm; }
+.calk-probe.size-a4.landscape { width: 297mm; }
+.calk-probe.size-f4.landscape { width: 330mm; }
 </style>

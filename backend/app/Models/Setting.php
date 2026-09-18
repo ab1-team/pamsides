@@ -14,6 +14,8 @@ class Setting extends Model
         'email',
         'telepon',
         'domain',
+        'peraturan_desa',
+        'sk_kemenkumham',
         'status_pembayaran',
         'batas_tagihan',
         'toleransi_tunggakan',
