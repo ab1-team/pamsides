@@ -5,9 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\BillPayment;
 use App\Models\Customer;
 use App\Models\MonthlyBill;
-use App\Models\Setting;
 use App\Models\Transaction;
-use App\Services\BillingService;
 use App\Services\MonthlyBillService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -21,11 +19,15 @@ class MonthlyBillController extends Controller
     public function index(Request $request)
     {
         try {
+            // Untuk LIST ringan: hanya butuh customer.user (nama + customer_code)
+            // + ticket dasar untuk kebutuhan BillingDetail/print.
+            // village + package sengaja DIBUANG dari list (tidak dipakai di tabel manapun);
+            // tersedia via endpoint /monthly-bills/{id} untuk modal yang butuh lengkap.
             $query = MonthlyBill::with([
-                'customer.user',
-                'customer.ticket.package',
-                'customer.ticket.village',
-                'billPayments',
+                'customer:id,user_id,ticket_id,customer_code',
+                'customer.user:id,name',
+                'customer.ticket:id,applicant_name,phone,address',
+                'billPayments:id,bill_id,amount_paid,paid_at,confirmed_by',
             ])->orderBy('billing_period_year', 'desc')
                 ->orderBy('billing_period_month', 'desc');
 
@@ -45,22 +47,56 @@ class MonthlyBillController extends Controller
                 $query->where('billing_period_year', $request->year);
             }
 
-            $perPage = (int) $request->get('per_page', 50);
-            $perPage = max(1, min($perPage, 200));
+            // Server-side search: nama pelanggan (user.name / ticket.applicant_name),
+            // customer_code, atau invoice id. Tetap cepat via indeks & like berawalan.
+            $q = trim((string) $request->get('q', ''));
+            if ($q !== '') {
+                $query->where(function ($w) use ($q) {
+                    $w->whereHas('customer.user', function ($u) use ($q) {
+                        $u->where('name', 'like', $q.'%');
+                    })
+                        ->orWhereHas('customer', function ($c) use ($q) {
+                            $c->where('customer_code', 'like', $q.'%')
+                                ->orWhereHas('ticket', function ($t) use ($q) {
+                                    $t->where('applicant_name', 'like', $q.'%');
+                                });
+                        });
 
-            $page = $query->paginate($perPage);
-            $bills = $page->getCollection();
+                    // Pencarian exact match invoice ID agar bisa cari "INV-123" / "123"
+                    $digits = ltrim($q, '0');
+                    if ($digits !== '' && ctype_digit($digits)) {
+                        $w->orWhere('id', (int) $digits);
+                    }
+                });
+            }
 
-            $paginatorMeta = [
-                'current_page' => $page->currentPage(),
-                'last_page'    => $page->lastPage(),
-                'per_page'     => $page->perPage(),
-                'total'        => $page->total(),
-            ];
+            $all = filter_var($request->get('all'), FILTER_VALIDATE_BOOLEAN);
+
+            if ($all) {
+                $bills = $query->get();
+                $paginatorMeta = [
+                    'mode' => 'all',
+                    'total' => $bills->count(),
+                ];
+            } else {
+                $perPage = (int) $request->get('per_page', 50);
+                $perPage = max(1, min($perPage, 200));
+
+                $page = $query->paginate($perPage);
+                $bills = $page->getCollection();
+
+                $paginatorMeta = [
+                    'mode' => 'paginate',
+                    'current_page' => $page->currentPage(),
+                    'last_page' => $page->lastPage(),
+                    'per_page' => $page->perPage(),
+                    'total' => $page->total(),
+                ];
+            }
         } catch (\Throwable $e) {
             \Log::error('MonthlyBill::index query error', [
                 'message' => $e->getMessage(),
-                'trace'   => $e->getTraceAsString(),
+                'trace' => $e->getTraceAsString(),
             ]);
 
             return response()->json([
@@ -74,21 +110,6 @@ class MonthlyBillController extends Controller
                 $customer = $b->customer;
                 $ticket = $customer?->ticket;
                 $user = $customer?->user;
-
-                $missing = [];
-
-                if (! $customer) $missing[] = 'customer';
-                elseif (! $ticket) $missing[] = 'customer.ticket';
-                elseif (! $ticket->village) $missing[] = 'customer.ticket.village';
-                elseif (! $ticket->package) $missing[] = 'customer.ticket.package';
-
-                if ($missing) {
-                    \Log::warning('MonthlyBill::index incomplete relation', [
-                        'bill_id' => $b->id ?? null,
-                        'customer_id' => $b->customer_id ?? null,
-                        'missing' => $missing,
-                    ]);
-                }
 
                 return [
                     'id' => $b->id,
@@ -119,16 +140,12 @@ class MonthlyBillController extends Controller
                         'user' => $user ? [
                             'id' => $user->id ?? null,
                             'name' => $user->name ?? null,
-                            'email' => $user->email ?? null,
                         ] : null,
                         'ticket' => $ticket ? [
                             'id' => $ticket->id ?? null,
                             'applicant_name' => $ticket->applicant_name ?? null,
-                            'nik' => $ticket->nik ?? null,
-                            'address' => $ticket->address ?? null,
                             'phone' => $ticket->phone ?? null,
-                            'village' => $ticket->village ?? null,
-                            'package' => $ticket->package ?? null,
+                            'address' => $ticket->address ?? null,
                         ] : null,
                     ] : null,
                 ];
@@ -254,7 +271,7 @@ class MonthlyBillController extends Controller
         $usageCharge = (float) ($bill->usage_charge ?? 0);
         $denda = (float) ($bill->penalty_amount ?? 0);
         $isTunggakan = $denda > 0;
-        $relasi = $bill->customer?->customer_code ?? 'Bill #' . $bill->id;
+        $relasi = $bill->customer?->customer_code ?? 'Bill #'.$bill->id;
         $userId = Auth::id();
 
         $restoredTicket = false;
@@ -273,16 +290,16 @@ class MonthlyBillController extends Controller
             // Abodemen
             if ($abodemen > 0) {
                 $trx = Transaction::create([
-                    'tgl_transaksi'        => $payment->paid_at,
-                    'account_debet'        => '1.1.01.01',
-                    'account_kredit'       => $isTunggakan ? '1.1.03.01' : '4.1.01.02',
-                    'transaction_group'    => null,
-                    'reverence_type'       => 'bill_payment',
-                    'reverence_id'         => $payment->id,
-                    'keterangan_transaksi' => 'Abodemen - ' . $relasi,
-                    'relasi'               => $relasi,
-                    'saldo'                => $abodemen,
-                    'id_user'              => $userId,
+                    'tgl_transaksi' => $payment->paid_at,
+                    'account_debet' => '1.1.01.01',
+                    'account_kredit' => $isTunggakan ? '1.1.03.01' : '4.1.01.02',
+                    'transaction_group' => null,
+                    'reverence_type' => 'bill_payment',
+                    'reverence_id' => $payment->id,
+                    'keterangan_transaksi' => 'Abodemen - '.$relasi,
+                    'relasi' => $relasi,
+                    'saldo' => $abodemen,
+                    'id_user' => $userId,
                 ]);
                 $trx->update(['urutan' => $trx->id]);
             }
@@ -290,16 +307,16 @@ class MonthlyBillController extends Controller
             // Tagihan Pemakaian
             if ($usageCharge > 0) {
                 $trx = Transaction::create([
-                    'tgl_transaksi'        => $payment->paid_at,
-                    'account_debet'        => '1.1.01.01',
-                    'account_kredit'       => $isTunggakan ? '1.1.03.01' : '4.1.01.03',
-                    'transaction_group'    => null,
-                    'reverence_type'       => 'bill_payment',
-                    'reverence_id'         => $payment->id,
-                    'keterangan_transaksi' => 'Tagihan Pemakaian - ' . $relasi,
-                    'relasi'               => $relasi,
-                    'saldo'                => $usageCharge,
-                    'id_user'              => $userId,
+                    'tgl_transaksi' => $payment->paid_at,
+                    'account_debet' => '1.1.01.01',
+                    'account_kredit' => $isTunggakan ? '1.1.03.01' : '4.1.01.03',
+                    'transaction_group' => null,
+                    'reverence_type' => 'bill_payment',
+                    'reverence_id' => $payment->id,
+                    'keterangan_transaksi' => 'Tagihan Pemakaian - '.$relasi,
+                    'relasi' => $relasi,
+                    'saldo' => $usageCharge,
+                    'id_user' => $userId,
                 ]);
                 $trx->update(['urutan' => $trx->id]);
             }
@@ -307,16 +324,16 @@ class MonthlyBillController extends Controller
             // Denda (hanya tunggakan)
             if ($denda > 0) {
                 $trx = Transaction::create([
-                    'tgl_transaksi'        => $payment->paid_at,
-                    'account_debet'        => '1.1.01.01',
-                    'account_kredit'       => '4.1.01.04',
-                    'transaction_group'    => null,
-                    'reverence_type'       => 'bill_payment',
-                    'reverence_id'         => $payment->id,
-                    'keterangan_transaksi' => 'Denda - ' . $relasi,
-                    'relasi'               => $relasi,
-                    'saldo'                => $denda,
-                    'id_user'              => $userId,
+                    'tgl_transaksi' => $payment->paid_at,
+                    'account_debet' => '1.1.01.01',
+                    'account_kredit' => '4.1.01.04',
+                    'transaction_group' => null,
+                    'reverence_type' => 'bill_payment',
+                    'reverence_id' => $payment->id,
+                    'keterangan_transaksi' => 'Denda - '.$relasi,
+                    'relasi' => $relasi,
+                    'saldo' => $denda,
+                    'id_user' => $userId,
                 ]);
                 $trx->update(['urutan' => $trx->id]);
             }
@@ -363,6 +380,7 @@ class MonthlyBillController extends Controller
 
         $items = $customers->map(function ($c) {
             $unpaid = $c->monthlyBills->where('status', 'unpaid');
+
             return [
                 'id' => $c->id,
                 'customer_code' => $c->customer_code,
@@ -375,7 +393,7 @@ class MonthlyBillController extends Controller
                 'total_unpaid' => $unpaid->sum('total_amount'),
                 'bills' => $unpaid->map(fn ($b) => [
                     'id' => $b->id,
-                    'period' => $b->billing_period_month . '/' . $b->billing_period_year,
+                    'period' => $b->billing_period_month.'/'.$b->billing_period_year,
                     'amount' => $b->total_amount,
                     'due_date' => $b->due_date,
                 ])->values(),
@@ -478,7 +496,10 @@ class MonthlyBillController extends Controller
     public function show($id)
     {
         $bill = MonthlyBill::with([
-            'customer',
+            'customer.user',
+            'customer.ticket.package',
+            'customer.ticket.village',
+            'billPayments',
         ])->findOrFail($id);
 
         return response()->json([
