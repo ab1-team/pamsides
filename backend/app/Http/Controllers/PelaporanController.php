@@ -757,11 +757,12 @@ class PelaporanController extends Controller
                 $billBulan = (int) $bill->billing_period_month;
                 $billTahun = (int) $bill->billing_period_year;
                 $selisih = (($targetTahun - $billTahun) * 12) + ($targetBulan - $billBulan);
+                $nominal = (float) $bill->total_amount + (float) $bill->penalty_amount;
 
                 if ($selisih > 0) {
-                    $sdBulanLalu += (float) $bill->total_amount;
+                    $sdBulanLalu += $nominal;
                 } elseif ($selisih === 0) {
-                    $bulanIni += (float) $bill->total_amount;
+                    $bulanIni += $nominal;
                 }
 
                 if ($selisih >= 0) {
