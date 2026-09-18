@@ -49,6 +49,7 @@
         no-card
         row-clickable
         :loading="isLoading"
+        server-side
         @row-click="handleOpenDetail"
       >
         <template #toolbar>
@@ -212,7 +213,7 @@ const loadError = ref(null)
 
 const searchQuery = ref('')
 const currentPage = ref(1)
-const perPage = ref(25)
+const perPage = ref(10)
 
 const lastPage = ref(1)
 const totalEntries = ref(0)
