@@ -326,6 +326,10 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  serverSide: {
+    type: Boolean,
+    default: false,
+  },
   selection: {
     type: Array,
     default: () => [],
@@ -469,6 +473,9 @@ const searchQuery = computed({
 })
 
 const paginatedData = computed(() => {
+  if (props.serverSide) {
+    return props.data
+  }
   const start = (effectiveCurrentPage.value - 1) * effectivePerPage.value
   const end = start + effectivePerPage.value
   return props.data.slice(start, end)
