@@ -67,15 +67,14 @@
           />
         </div>
 
-        <BaseButton
-          variant="info-gradient"
-          @click="handleApplyFilter"
-          class="w-full! lg:w-auto! lg:min-w-[140px]! rounded-xl! shadow-md! lg:self-end! h-11! text-xs md:text-sm"
-          icon="filter"
-          icon-right
-        >
-          Filter
-        </BaseButton>
+        <div class="flex-1! min-w-[120px]!">
+          <SelectSearch
+            v-model="filter.teknisi"
+            :options="[{ id: '', text: 'Pilih Teknisi' }, ...teknisiOptions.map((t) => ({ id: t.id, text: t.name }))]"
+            placeholder="Pilih Teknisi"
+            no-margin
+          />
+        </div>
       </div>
     </ContentCard>
 
@@ -86,7 +85,7 @@
       v-model:per-page="perPage"
       :total-pages="totalPages"
       :visible-pages="visiblePages"
-      :total-entries="tableData.length"
+      :total-entries="filteredData.length"
       v-model="searchQuery"
       class="mt-6!"
       search-placeholder="Cari..."
@@ -178,7 +177,7 @@
     <HasilInputModal
       :show="showHasilModal"
       :grouped-data="groupedData"
-      :filter="filter"
+      :filter="{ ...filter, cater: selectedTeknisiName }"
       @close="showHasilModal = false"
     />
 
@@ -200,7 +199,7 @@ import BaseButton from '@/presentations/components/ui/BaseButton.vue'
 import HasilInputModal from './partials/hasilInputModal.vue'
 import EditPemakaianModal from './editPemakaianAir.vue'
 import { useRouter } from 'vue-router'
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted, watch } from 'vue'
 
 const {
   filter,
@@ -209,6 +208,8 @@ const {
   perPage,
   tahunOptions,
   bulanOptions,
+  teknisiOptions,
+  selectedTeknisiName,
   tableData,
   filteredData,
   groupedData,
@@ -223,6 +224,24 @@ const {
   handleSaveEdit,
   handleDelete,
 } = usePemakaianAir()
+
+let teknisiDebounceTimer = null
+watch(
+  () => filter.value.teknisi,
+  (val) => {
+    if (teknisiDebounceTimer) clearTimeout(teknisiDebounceTimer)
+    teknisiDebounceTimer = setTimeout(() => {
+      if (val) {
+        handleApplyFilter()
+      } else {
+        refreshData()
+      }
+    }, 300)
+  },
+)
+onUnmounted(() => {
+  if (teknisiDebounceTimer) clearTimeout(teknisiDebounceTimer)
+})
 
 onMounted(() => {
   refreshData()
@@ -242,6 +261,7 @@ const handleInputPemakaian = () => {
     query: {
       tahun: filter.value.tahun,
       bulan: filter.value.bulan,
+      teknisi: filter.value.teknisi,
     },
   })
 }
@@ -252,6 +272,7 @@ const handleCetakFormInput = () => {
     query: {
       tahun: filter.value.tahun,
       bulan: filter.value.bulan,
+      teknisi: filter.value.teknisi,
     },
   }).href
   window.open(url, '_blank')

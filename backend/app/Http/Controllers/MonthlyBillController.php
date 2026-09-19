@@ -188,17 +188,38 @@ class MonthlyBillController extends Controller
         $request->validate([
             'month' => 'nullable|integer|between:1,12',
             'year' => 'nullable|integer|min:2000',
+            'user_id' => 'nullable|integer|exists:users,id',
         ]);
+
+        $authUser = Auth::user();
+        $requestedUserId = $request->get('user_id');
+
+        // Authorization:
+        // - Admin boleh query user_id siapa saja (atau tanpa filter = semua teknisi)
+        // - Teknisi HANYA boleh query miliknya sendiri; ignore user_id lain
+        if ($authUser->role === 'teknisi') {
+            $userId = (int) $authUser->id;
+        } elseif ($authUser->role === 'admin') {
+            $userId = $requestedUserId ? (int) $requestedUserId : null;
+        } else {
+            return response()->json([
+                'success' => false,
+                'message' => 'Anda tidak memiliki akses ke data pemakaian.',
+            ], 403);
+        }
 
         $month = $request->get('month', Carbon::now()->month);
         $year = $request->get('year', Carbon::now()->year);
 
-        // Hanya pelanggan yang tiketnya sudah aktif/berjalan (bukan draft/pending)
-        $customers = Customer::with(['user', 'ticket.package', 'ticket.village'])
-            ->whereHas('ticket', function ($q) {
+        $query = Customer::with(['user', 'ticket.package', 'ticket.village', 'ticket.user'])
+            ->whereHas('ticket', function ($q) use ($userId) {
                 $q->whereIn('status', ['surveyed', 'unpaid', 'processing', 'completed', 'suspended']);
-            })
-            ->get();
+                if (! empty($userId)) {
+                    $q->where('user_id', $userId);
+                }
+            });
+
+        $customers = $query->get();
 
         $items = $customers->map(function ($customer) use ($month, $year) {
             $reading = $customer->meterReadings()
@@ -240,6 +261,8 @@ class MonthlyBillController extends Controller
                 'due_date' => $bill?->due_date,
                 'reading_photo' => $reading?->photo_url ?: null,
                 'reading_recorded_at' => $reading?->recorded_at,
+                'technician_id' => $customer->ticket?->user_id,
+                'technician_name' => $customer->ticket?->user?->name,
             ];
         });
 

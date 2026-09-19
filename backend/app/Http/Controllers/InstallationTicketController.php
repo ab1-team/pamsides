@@ -19,16 +19,31 @@ class InstallationTicketController extends Controller
     public function index(Request $request)
     {
         try {
-            $query = InstallationTicket::with([
-                'package.tariffBlocks',
-                'package',
-                'survey.surveyor',
-                'user',
-                'village',
-                'customer.meterReadings',
-                'customer.monthlyBills',
-                'payments',
-            ])->orderBy('created_at', 'desc');
+            // Untuk `?all=1` (dipakai store frontend untuk dashboard instalasi),
+            // skip eager-load berat (payments, meterReadings, monthlyBills) — ribuan tiket
+            // akan membebani memory DB & response payload. Cukup field minimum.
+            $wantsAll = $request->boolean('all');
+
+            $relations = $wantsAll
+                ? [
+                    'package:id,name',
+                    'village:id,village_name',
+                    'customer:id,customer_code,ticket_id',
+                    'survey.surveyor:id,name',
+                    'user:id,name',
+                ]
+                : [
+                    'package.tariffBlocks',
+                    'package',
+                    'survey.surveyor',
+                    'user',
+                    'village',
+                    'customer.meterReadings',
+                    'customer.monthlyBills',
+                    'payments',
+                ];
+
+            $query = InstallationTicket::with($relations)->orderBy('created_at', 'desc');
 
             if ($request->has('search') && ! empty($request->search)) {
                 $q = $request->search;
@@ -42,7 +57,18 @@ class InstallationTicketController extends Controller
                 || $request->status === 'draft';
 
             if ($request->has('status') && ! $wantsGrouped) {
-                $query->where('status', $request->status);
+                $statuses = $request->status;
+                if (is_string($statuses)) {
+                    $statuses = array_filter(
+                        array_map('trim', explode(',', $statuses)),
+                        fn ($v) => $v !== '',
+                    );
+                }
+                if (! empty($statuses) && is_array($statuses)) {
+                    count($statuses) > 1
+                        ? $query->whereIn('status', $statuses)
+                        : $query->where('status', $statuses[0]);
+                }
             }
 
             if ($wantsGrouped) {
@@ -72,7 +98,7 @@ class InstallationTicketController extends Controller
                             'user_id' => $item->user_id,
                             'order_date' => $item->order_date,
                             'status' => $item->status,
-                            'payments' => $item->payments,
+                            'payments' => $item->payments ?? null,
                             'customer' => $item->customer,
                         ];
                     })->values();
@@ -91,9 +117,13 @@ class InstallationTicketController extends Controller
 
                 $tickets = $grouped;
             } else {
-                $perPage = (int) $request->get('per_page', 10);
-                $perPage = max(1, min($perPage, 200));
-                $tickets = $query->paginate($perPage);
+                if ($wantsAll) {
+                    $tickets = $query->get();
+                } else {
+                    $perPage = (int) $request->get('per_page', 10);
+                    $perPage = max(1, min($perPage, 200));
+                    $tickets = $query->paginate($perPage);
+                }
             }
 
             return response()->json([
