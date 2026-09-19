@@ -74,9 +74,10 @@ import { computed, nextTick, onMounted, onBeforeUnmount, ref, shallowRef } from 
 import { useRoute } from 'vue-router'
 import ReportView from '@/presentations/views/app/admin/tagihan/partials/ReportCetakForm.vue'
 import { usePemakaianAir } from '@/composables/usePemakaianAir'
+import { PER_PAGE_ROWS } from '@/utils/reportConfig'
 
 const route = useRoute()
-const { tableData, filter, refreshData, groupedData } = usePemakaianAir()
+const { tableData, filter, refreshData, groupedData, resolveCaterLabel } = usePemakaianAir()
 
 const isLoading = ref(true)
 const errorMsg = ref('')
@@ -126,18 +127,35 @@ const buildPages = () => {
     return
   }
 
-  pages.value = entries.map(([dusun, members], i) => ({
+  const groupedChunks = []
+  entries.forEach(([dusun, members]) => {
+    const dusunChunks = []
+    for (let i = 0; i < members.length; i += PER_PAGE_ROWS) {
+      dusunChunks.push({
+        dusun,
+        items: members.slice(i, i + PER_PAGE_ROWS),
+        startIndex: i,
+      })
+    }
+    groupedChunks.push({ dusun, chunks: dusunChunks })
+  })
+
+  const flatChunks = groupedChunks.flatMap((g) => g.chunks)
+
+  pages.value = flatChunks.map((chunk, i) => ({
     payload: {
       config: PAGE_CONFIG,
-      dusun,
-      items: members,
+      dusun: chunk.dusun,
+      items: chunk.items,
       filter: { ...filter.value },
       lembaga: defaultLembaga(),
+      startIndex: chunk.startIndex,
+      showMeta: chunk.startIndex === 0,
     },
     meta: {
-      dusun,
+      dusun: chunk.dusun,
       page: i + 1,
-      total: entries.length,
+      total: flatChunks.length,
     },
   }))
 }
@@ -177,6 +195,8 @@ onMounted(async () => {
   try {
     if (route.query.tahun) filter.value.tahun = parseInt(route.query.tahun)
     if (route.query.bulan) filter.value.bulan = route.query.bulan
+    if (route.query.teknisi) filter.value.teknisi = route.query.teknisi
+    if (route.query.cater) filter.value.cater = resolveCaterLabel(route.query.cater)
 
     document.title = `Cetak Form Input`
 

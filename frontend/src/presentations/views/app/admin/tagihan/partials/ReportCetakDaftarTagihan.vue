@@ -1,59 +1,69 @@
 <template>
   <BaseReportLayout :lembaga="lembaga" :config="payload?.config" :no-kop="true">
-    <div class="page-header">
-      <h2>DAFTAR TAGIHAN PEMAKAIAN AIR</h2>
-      <h2 class="mt-1 mb-0 leading-tight " style="font-size: 19px;">
-        "TIRTO MULO" BUMDes BANGUN KENCANA
-      </h2>
-      <p class="page-subtitle"style="font-size: 14px;">KALURAHAN MULO KAPANEWON WONOSARI</p>
-            <hr class="kop-single-divider">
+    <template v-if="showMeta">
+      <div class="page-header">
+        <h2>DAFTAR TAGIHAN PEMAKAIAN AIR</h2>
+        <h2 class="mt-1 mb-0 leading-tight " style="font-size: 19px;">
+          "TIRTO MULO" BUMDes BANGUN KENCANA
+        </h2>
+        <p class="page-subtitle" style="font-size: 14px;">KALURAHAN MULO KAPANEWON WONOSARI</p>
+        <hr class="kop-single-divider">
+      </div>
 
-    </div>
-    
-
-    <div class="meta-grid">
-      <div class="meta-col">
-        <div class="meta-row">
-          <span class="meta-label">Bulan Pemakaian</span>
-          <span class="meta-sep">:</span>
-          <span class="meta-value">{{ filter.bulan || '-' }} {{ filter.tahun || '' }}</span>
+      <div class="meta-grid">
+        <div class="meta-col">
+          <div class="meta-row">
+            <span class="meta-label">Bulan Pemakaian</span>
+            <span class="meta-sep">:</span>
+            <span class="meta-value">{{ filter.bulan || '-' }} {{ filter.tahun || '' }}</span>
+          </div>
+          <div class="meta-row">
+            <span class="meta-label">Cater</span>
+            <span class="meta-sep">:</span>
+            <span class="meta-value">{{ filter.cater || 'Admin' }}</span>
+          </div>
         </div>
-        <div class="meta-row">
-          <span class="meta-label">Cater</span>
-          <span class="meta-sep">:</span>
-          <span class="meta-value">{{ filter.cater || 'Admin' }}</span>
+        <div class="meta-col meta-col-right">
+          <div class="meta-row">
+            <span class="meta-label">Tgl Akhir Pembayaran</span>
+            <span class="meta-sep">:</span>
+            <span class="meta-value">{{ tanggalAkhir }}</span>
+          </div>
+          <div class="meta-row">
+            <span class="meta-label">Dusun</span>
+            <span class="meta-sep">:</span>
+            <span class="meta-value">{{ dusun }}</span>
+          </div>
         </div>
       </div>
-      <div class="meta-col meta-col-right">
-        <div class="meta-row">
-          <span class="meta-label">Tgl Akhir Pembayaran</span>
-          <span class="meta-sep">:</span>
-          <span class="meta-value">{{ tanggalAkhir }}</span>
-        </div>
-        <div class="meta-row">
-          <span class="meta-label">Dusun</span>
-          <span class="meta-sep">:</span>
-          <span class="meta-value">{{ dusun }}</span>
-        </div>
-      </div>
-    </div>
+    </template>
 
-    <table class="data-table">
+    <table class="data-table data-table-fixed">
+      <colgroup>
+        <col style="width: 5%">
+        <col style="width: 25%">
+        <col style="width: 17%">
+        <col style="width: 8%">
+        <col style="width: 8%">
+        <col style="width: 13%">
+        <col style="width: 10%">
+        <col style="width: 18%">
+      </colgroup>
       <thead>
         <tr>
-          <th width="4%" class="text-center">No</th>
-          <th width="22%" class="text-left">Nama</th>
-          <th width="16%" class="text-center">No. Induk</th>
-          <th width="7%" class="text-center">Awal</th>
-          <th width="7%" class="text-center">Akhir</th>
-          <th width="12%" class="text-center">Pemakaian</th>
-          <th width="11%" class="text-center">Status</th>
-          <th width="15%" class="text-right">Total</th>
+          <th class="text-center">No</th>
+          <th class="text-left">Nama</th>
+          <th class="text-center">No. Induk</th>
+          <th class="text-center">Awal</th>
+          <th class="text-center">Akhir</th>
+          <th class="text-center">Pemakaian</th>
+          <th class="text-center">Status</th>
+          <th class="text-center">Total</th>
         </tr>
       </thead>
       <tbody>
         <tr v-for="(item, idx) in items" :key="item.id">
-          <td class="text-center">{{ idx + 1 }}</td>
+          <td class="text-center">{{ startIndex + idx + 1 }}</td>
           <td class="text-left">{{ item.nama }}</td>
           <td class="text-center">{{ item.customer_code || item.id }}</td>
           <td class="text-center">{{ Number(item.meterAwal || 0).toLocaleString('id-ID') }}</td>
@@ -71,6 +81,17 @@
         </tr>
         <tr v-if="!items || items.length === 0">
           <td colspan="8" class="empty">Tidak ada data pelanggan pada dusun ini.</td>
+        </tr>
+        <tr v-if="isLastPage && items && items.length > 0" class="total-row">
+          <td colspan="7" class="text-center" style="font-weight: 700;">Total</td>
+          <td class="text-right" style="font-weight: 700;">
+            {{
+              Number(totalTagihan).toLocaleString('id-ID', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })
+            }}
+          </td>
         </tr>
       </tbody>
     </table>
@@ -90,6 +111,10 @@ const items = computed(() => props.payload?.items || [])
 const dusun = computed(() => props.payload?.dusun || '-')
 const filter = computed(() => props.payload?.filter || {})
 const lembaga = computed(() => props.payload?.lembaga || {})
+const startIndex = computed(() => Number(props.payload?.startIndex || 0))
+const showMeta = computed(() => props.payload?.showMeta !== false)
+const isLastPage = computed(() => props.payload?.isLastPage === true)
+const totalTagihan = computed(() => Number(props.payload?.totalTagihan || 0))
 
 const bulans = [
   'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
@@ -141,7 +166,17 @@ const tanggalAkhir = computed(() => {
 .data-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 12px; /* Set font size tabel menjadi 12px */
+  font-size: 12px;
+}
+
+.data-table-fixed {
+  table-layout: fixed;
+}
+
+.data-table-fixed th,
+.data-table-fixed td {
+  box-sizing: border-box;
+  padding: 2px 4px;
 }
 
 .data-table th,
@@ -206,6 +241,14 @@ const tanggalAkhir = computed(() => {
   font-style: italic;
   padding: 16px !important;
   color: #000000;
+}
+
+.total-row td {
+  border: 1px solid #000;
+  font-size: 13px;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  background: #f9fafb;
 }
 
 /* Override padding BaseReportLayout untuk cetak daftar tagihan (lebih ramping) */
