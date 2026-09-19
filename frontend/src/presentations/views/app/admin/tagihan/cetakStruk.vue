@@ -78,13 +78,13 @@ import { usePemakaianAir } from '@/composables/usePemakaianAir'
 
 const route = useRoute()
 const uiStore = useUiStore()
-const { tableData, filter, refreshData } = usePemakaianAir()
+const { tableData, filter, refreshData, teknisiOptions, resolveCaterLabel } = usePemakaianAir()
 
 const caterName = computed(() => {
-  const id = route.query.cater
-  if (!id) return uiStore.userData?.nama || 'Admin'
-  if (String(uiStore.userData?.id) === String(id)) return uiStore.userData?.nama || 'Admin'
-  return 'Admin'
+  const raw = route.query.cater
+  if (!raw) return uiStore.userData?.nama || 'Admin'
+  if (String(uiStore.userData?.id) === String(raw)) return uiStore.userData?.nama || 'Admin'
+  return resolveCaterLabel(raw) || 'Admin'
 })
 
 const isLoading = ref(true)
@@ -215,7 +215,8 @@ onMounted(async () => {
   try {
     if (route.query.tahun) filter.value.tahun = parseInt(route.query.tahun)
     if (route.query.bulan) filter.value.bulan = route.query.bulan
-    if (route.query.cater) filter.value.cater = route.query.cater
+    if (route.query.teknisi) filter.value.teknisi = route.query.teknisi
+    if (route.query.cater) filter.value.cater = resolveCaterLabel(route.query.cater)
 
     document.title = `Cetak Struk`
 

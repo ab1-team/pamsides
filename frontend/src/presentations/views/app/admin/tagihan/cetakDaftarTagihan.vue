@@ -75,9 +75,10 @@ import { computed, nextTick, onMounted, onBeforeUnmount, onUnmounted, ref, shall
 import { useRoute } from 'vue-router'
 import ReportView from '@/presentations/views/app/admin/tagihan/partials/ReportCetakDaftarTagihan.vue'
 import { usePemakaianAir } from '@/composables/usePemakaianAir'
+import { PER_PAGE_ROWS } from '@/utils/reportConfig'
 
 const route = useRoute()
-const { tableData, filter, refreshData, groupedData } = usePemakaianAir()
+const { tableData, filter, refreshData, groupedData, resolveCaterLabel } = usePemakaianAir()
 
 const isLoading = ref(true)
 const errorMsg = ref('')
@@ -134,18 +135,41 @@ const buildPages = () => {
     pages.value = []
     return
   }
-  pages.value = entries.map(([dusun, members], i) => ({
+
+  const groupedChunks = []
+  entries.forEach(([dusun, members]) => {
+    const totalTagihan = members.reduce((sum, it) => sum + Number(it.tagihan || 0), 0)
+    const dusunChunks = []
+    for (let i = 0; i < members.length; i += PER_PAGE_ROWS) {
+      dusunChunks.push({
+        dusun,
+        items: members.slice(i, i + PER_PAGE_ROWS),
+        startIndex: i,
+        isLast: i + PER_PAGE_ROWS >= members.length,
+        totalTagihan,
+      })
+    }
+    groupedChunks.push({ dusun, chunks: dusunChunks, total: members.length })
+  })
+
+  const flatChunks = groupedChunks.flatMap((g) => g.chunks)
+
+  pages.value = flatChunks.map((chunk, i) => ({
     payload: {
       config: PAGE_CONFIG,
-      dusun,
-      items: members,
+      dusun: chunk.dusun,
+      items: chunk.items,
       filter: { ...filter.value },
       lembaga: defaultLembaga(),
+      startIndex: chunk.startIndex,
+      showMeta: chunk.startIndex === 0,
+      isLastPage: chunk.isLast,
+      totalTagihan: chunk.totalTagihan,
     },
     meta: {
-      dusun,
+      dusun: chunk.dusun,
       page: i + 1,
-      total: entries.length,
+      total: flatChunks.length,
     },
   }))
 }
@@ -191,6 +215,8 @@ onMounted(async () => {
   try {
     if (route.query.tahun) filter.value.tahun = parseInt(route.query.tahun)
     if (route.query.bulan) filter.value.bulan = route.query.bulan
+    if (route.query.teknisi) filter.value.teknisi = route.query.teknisi
+    if (route.query.cater) filter.value.cater = resolveCaterLabel(route.query.cater)
 
     document.title = `Cetak Daftar Tagihan`
 
