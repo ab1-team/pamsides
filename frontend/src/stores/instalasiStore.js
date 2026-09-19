@@ -40,8 +40,19 @@ export const useInstalasiStore = defineStore('instalasi', () => {
     try {
       isLoading.value = true
       fetchError.value = null
-      const response = await ticketService.getTickets({ per_page: 200 })
-      if (response?.success && response?.data?.data) {
+      const response = await ticketService.getTickets({ all: 1 })
+
+      if (!response?.success) {
+        const msg = response?.message || 'Gagal memuat data tiket.'
+        fetchError.value = msg
+        throw new Error(msg)
+      }
+
+      const tickets = Array.isArray(response?.data)
+        ? response.data
+        : response?.data?.data || []
+
+      if (Array.isArray(tickets)) {
         const freshMap = {
           permohonan: [],
           pasang_baru: [],
@@ -50,7 +61,7 @@ export const useInstalasiStore = defineStore('instalasi', () => {
           cabut: [],
         }
 
-        response.data.data.forEach((ticket) => {
+        tickets.forEach((ticket) => {
           const status = ticket.status
           let category = null
 
@@ -62,9 +73,9 @@ export const useInstalasiStore = defineStore('instalasi', () => {
 
           if (!category) return
 
-          const latestCustomer = [...(ticket.customer || [])].sort(
-            (a, b) => (b.id || 0) - (a.id || 0),
-          )[0]
+          const latestCustomer = Array.isArray(ticket.customer)
+            ? [...ticket.customer].sort((a, b) => (b.id || 0) - (a.id || 0))[0]
+            : ticket.customer
 
           freshMap[category].push({
             id:
@@ -112,6 +123,8 @@ export const useInstalasiStore = defineStore('instalasi', () => {
         })
 
         dataMap.value = freshMap
+      } else {
+        fetchError.value = 'Format data tiket tidak dikenali.'
       }
     } catch (error) {
       console.error('Failed to fetch installation statuses:', error)

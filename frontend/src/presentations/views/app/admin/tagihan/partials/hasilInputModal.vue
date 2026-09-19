@@ -39,7 +39,7 @@
           <div class="flex flex-col! gap-y-1! text-sm!">
             <div class="flex items-center! gap-2!">
               <span class="text-slate-500! whitespace-nowrap! w-28!">Cater</span>
-              <span class="font-semibold! text-slate-700!">: {{ filter.cater || 'Admin' }}</span>
+              <span class="font-semibold! text-slate-700!">: {{ filter.cater || '-' }}</span>
             </div>
             <div class="flex items-center! gap-2!">
               <span class="text-slate-500! whitespace-nowrap! w-28!">Maksimal Bayar</span>
@@ -215,7 +215,6 @@
 <script setup>
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { useUiStore } from '@/stores/uiStore'
 
 const props = defineProps({
   show: {
@@ -235,7 +234,6 @@ const props = defineProps({
 const emit = defineEmits(['close'])
 
 const router = useRouter()
-const uiStore = useUiStore()
 
 const searchQuery = ref('')
 const selectedIds = ref([])
@@ -308,8 +306,10 @@ const buildReportQuery = () => {
     tahun: props.filter?.tahun || '',
     bulan: props.filter?.bulan || '',
   }
-  const cater = uiStore.userData?.id || props.filter?.cater
-  if (cater) query.cater = cater
+  const teknisiId = props.filter?.teknisi
+  const teknisiName = props.filter?.cater
+  if (teknisiId) query.teknisi = teknisiId
+  if (teknisiName) query.cater = teknisiName
   return query
 }
 

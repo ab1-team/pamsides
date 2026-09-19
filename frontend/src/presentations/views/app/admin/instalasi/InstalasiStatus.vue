@@ -99,6 +99,7 @@
             :no-card="true"
             :show-entries="false"
             :row-clickable="true"
+            :loading="isLoading"
             @row-click="handleRowClick"
           >
             <template #toolbar-actions>
@@ -215,9 +216,19 @@
           </div>
         </div>
 
-        <div class="divide-y! divide-slate-50! bg-white!">
+        <div class="divide-y! divide-slate-50! bg-white! relative! min-h-[80px]!">
+          <div
+            v-if="isLoading"
+            class="flex! flex-col! items-center! justify-center! gap-2! py-10! text-slate-400!"
+          >
+            <font-awesome-icon icon="spinner" spin class="text-xl! text-indigo-500!" />
+            <span class="text-[10px]! font-semibold! uppercase! tracking-wider!"
+              >Memuat data...</span
+            >
+          </div>
           <div
             v-for="row in paginatedData"
+            v-else
             :key="row.id"
             @click="handleRowClick(row)"
             class="flex! items-center! gap-3! px-4! py-2.5! hover:bg-slate-50/80! transition-colors! cursor-pointer!"
@@ -304,6 +315,7 @@ const {
   exportData,
   fetchData,
   fetchError,
+  isLoading,
 } = useInstalasiStatus()
 
 const router = useRouter()

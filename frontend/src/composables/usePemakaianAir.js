@@ -3,6 +3,7 @@ import { STATUS_TYPES, STATUS_COLORS } from '@/types/pemakaianAir'
 import { billingService } from '@/services/billing.service'
 import { confirmDelete } from '@/utils/deleteHandler'
 import { MySwal } from '@/utils/swal'
+import api from '@/utils/axios'
 
 export function usePemakaianAir() {
   const bulanOptions = [
@@ -46,7 +47,10 @@ export function usePemakaianAir() {
   const filter = ref({
     tahun: new Date().getFullYear(),
     bulan: bulanOptions[new Date().getMonth()],
+    teknisi: '',
   })
+  const teknisiOptions = ref([])
+  const teknisiError = ref('')
   const searchQuery = ref('')
   const currentPage = ref(1)
   const perPage = ref(10)
@@ -80,16 +84,65 @@ export function usePemakaianAir() {
     return idx >= 0 ? idx + 1 : new Date().getMonth() + 1
   }
 
+  const selectedTeknisi = computed(() => {
+    if (!filter.value.teknisi) return null
+    return teknisiOptions.value.find((t) => String(t.id) === String(filter.value.teknisi)) || null
+  })
+
+  const selectedTeknisiName = computed(() => selectedTeknisi.value?.name || 'Admin')
+
+  const resolveCaterLabel = (rawValue) => {
+    if (rawValue === '' || rawValue == null) return ''
+    const asString = String(rawValue).trim()
+    if (/^\d+$/.test(asString)) {
+      const match = teknisiOptions.value.find((t) => String(t.id) === asString)
+      if (match) return match.name
+    }
+    return asString
+  }
+
+  // Ambil daftar teknisi dari backend (admin-only endpoint)
+  const loadTeknisiOptions = async () => {
+    teknisiError.value = ''
+    try {
+      const res = await api.get('/users', { params: { role: 'teknisi' } })
+      const raw = Array.isArray(res?.data) ? res.data : res?.data?.data || []
+      teknisiOptions.value = raw.map((u) => ({ id: u.id, name: u.name }))
+    } catch (err) {
+      teknisiOptions.value = []
+      if (err?.response?.status === 403) {
+        teknisiError.value = 'Anda tidak memiliki akses untuk melihat daftar teknisi.'
+      } else {
+        teknisiError.value = 'Gagal memuat daftar teknisi.'
+      }
+      console.error('Gagal memuat daftar teknisi:', err)
+    }
+  }
+
   // Data dinamis dari API
   const loadTableData = async () => {
     try {
       isLoading.value = true
       const monthIndex = parseMonth(filter.value.bulan)
       const yearVal = parseYear(filter.value.tahun)
+      const params = {
+        month: monthIndex,
+        year: yearVal,
+      }
+      if (filter.value.teknisi) {
+        params.user_id = filter.value.teknisi
+      }
 
-      const res = await billingService.getUsageList({ month: monthIndex, year: yearVal })
+      const res = await billingService.getUsageList(params)
       if (res?.success && Array.isArray(res.data)) {
-        tableData.value = res.data.map((item) => {
+        const sorted = [...res.data].sort((a, b) =>
+          String(a.nama || a.customer_name || '').localeCompare(
+            String(b.nama || b.customer_name || ''),
+            'id-ID',
+            { sensitivity: 'base' },
+          ),
+        )
+        tableData.value = sorted.map((item) => {
           const name = item.nama || item.customer_name || '-'
           const statusLabel =
             String(item.status || '').toUpperCase() === 'PAID'
@@ -117,6 +170,8 @@ export function usePemakaianAir() {
             status: statusLabel,
             package_name: item.package_name || '-',
             reading_photo: item.reading_photo || null,
+            technician_id: item.technician_id || null,
+            technician_name: item.technician_name || null,
           }
         })
       }
@@ -164,10 +219,27 @@ export function usePemakaianAir() {
   })
 
   const visiblePages = computed(() => {
+    const total = totalPages.value
+    const current = currentPage.value
+    const maxPages = 5
     const pages = []
-    for (let i = 1; i <= Math.min(3, totalPages.value); i++) {
-      pages.push(i)
+
+    if (total <= maxPages) {
+      for (let i = 1; i <= total; i++) pages.push(i)
+      return pages
     }
+
+    let start = Math.max(1, current - 2)
+    let end = Math.min(total, start + maxPages - 1)
+    if (end - start < maxPages - 1) {
+      start = Math.max(1, end - maxPages + 1)
+    }
+
+    for (let i = start; i <= end; i++) pages.push(i)
+
+    if (start > 1) pages.unshift('...')
+    if (end < total) pages.push(total)
+
     return pages
   })
 
@@ -206,7 +278,7 @@ export function usePemakaianAir() {
   }
 
   onMounted(() => {
-    loadTableData()
+    loadTeknisiOptions()
   })
 
   return {
@@ -222,6 +294,9 @@ export function usePemakaianAir() {
     // Pilihan opsi
     tahunOptions,
     bulanOptions,
+    teknisiOptions,
+    selectedTeknisiName,
+    resolveCaterLabel,
 
     // Data
     tableData,
@@ -245,5 +320,6 @@ export function usePemakaianAir() {
     handleEdit,
     handleSaveEdit,
     handleDelete,
+    teknisiError,
   }
 }
