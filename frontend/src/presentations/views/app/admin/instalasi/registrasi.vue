@@ -298,22 +298,23 @@
             <h2 class="text-base! font-bold! text-slate-800!">Detail Layanan</h2>
           </div>
 
-          <AppDatePicker
-            v-model="form.tanggalOrder"
-            label="Tanggal Order"
-            placeholder="Pilih tanggal order"
-          />
+<div class="grid! grid-cols-1! sm:grid-cols-2! gap-3! mb-3!">
+            <AppDatePicker
+              v-model="form.tanggalOrder"
+              label="Tanggal Order"
+              placeholder="Pilih tanggal order"
+            />
+            <SelectSearch
+              v-model="form.user_id"
+              :options="caterUsersOptionsFormatted"
+              label="Nama Cater"
+              placeholder="Pilih Petugas Cater"
+              searchable
+            />
+          </div>
 
           <div class="space-y-4!">
-            <div class="grid! grid-cols-1! sm:grid-cols-2! gap-3!">
-              <SelectSearch
-                v-model="form.user_id"
-                :options="caterUsersOptionsFormatted"
-                label="Nama Cater"
-                placeholder="Pilih Petugas Cater"
-                searchable
-              />
-
+            <div class="grid! grid-cols-1! sm:grid-cols-3! gap-3!">
               <SelectSearch
                 v-model="form.package_id"
                 :options="packagesOptionsFormatted"
@@ -321,6 +322,19 @@
                 placeholder="Pilih Paket"
                 searchable
               />
+               <BaseInput
+                v-model="form.rw"
+                label="RW"
+                placeholder="02"
+                maxlength="10"
+              />
+              <BaseInput
+                v-model="form.rt"
+                label="RT"
+                placeholder="01"
+                maxlength="10"
+              />
+             
             </div>
 
             <Transition
@@ -676,6 +690,8 @@ const isMustFullyPaid = ref(true)
 
 const form = ref({
   tanggalOrder: new Date(),
+  rt: '',
+  rw: '',
   user_id: '',
   package_id: '',
   nominal: 0,
@@ -924,6 +940,8 @@ const clearCustomer = () => {
   selectedCustomer.value = null
   customerSearch.value = ''
   form.value.tanggalOrder = new Date()
+  form.value.rt = ''
+  form.value.rw = ''
   form.value.user_id = ''
   form.value.package_id = ''
   form.value.nominal = 0
@@ -1042,6 +1060,8 @@ const handleSubmit = async () => {
       lat: parseFloat(form.value.lat),
       lng: parseFloat(form.value.lng),
       nominal: Number(String(form.value.nominal ?? 0).replace(',', '.')) || 0,
+      rt: form.value.rt,
+      rw: form.value.rw,
     }
 
     const response = await api.post('/installation-tickets', payload)
@@ -1084,6 +1104,8 @@ const handleSubmit = async () => {
         selectedCustomer.value = null
         customerSearch.value = ''
         form.value.tanggalOrder = new Date()
+        form.value.rt = ''
+        form.value.rw = ''
         form.value.user_id = ''
         form.value.package_id = ''
         form.value.nominal = 0

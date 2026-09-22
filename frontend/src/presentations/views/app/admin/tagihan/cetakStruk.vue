@@ -143,7 +143,15 @@ const buildPages = () => {
   }
 
   const mapCustomer = (customer) => {
-    const alamat = [customer.dusun, customer.rt ? `RT. ${customer.rt}` : null]
+    const rtVal = customer.rt
+    const rtStr = rtVal === null || rtVal === undefined ? '' : String(rtVal).trim()
+    const rtIsMissing =
+      rtStr === '' ||
+      rtStr === '-' ||
+      rtStr.toLowerCase() === 'null' ||
+      rtStr.toLowerCase() === 'undefined'
+    const rtLabel = rtIsMissing ? 'RT. 00' : `RT. ${rtStr}`
+    const alamat = [customer.dusun, rtLabel]
       .filter(Boolean)
       .join(', ') || customer.alamat || '-'
     return {

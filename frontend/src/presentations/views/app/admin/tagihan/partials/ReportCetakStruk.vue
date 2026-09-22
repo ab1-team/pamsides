@@ -67,10 +67,10 @@
           </div>
 
           <div class="cat">
-            SELURUH PELANGGAN AIR "Tirto Mulo" WAJIB MEMATUHI SEGALA KETENTUAN MANAJEMEN PENGELOLAAN OLEH
-            BUMDes BANGUN KENCANA MULO, SESUAI DENGAN PERATURAN DESA MULO NOMOR 3 TAHUN 2018.<br>
-            KELUHAN PELANGGAN HUBUNGI WA 0882-1673-8479 (ISWANTO) 0878-0484-5880 (NURLI).<br>
-            NB. TERLAMBAT 2 BULAN AKAN DITERBITKAN SURAT PERINGATAN, TERLAMBAT 3 BULAN AKAN DITERBITKAN SURAT PEMUTUSAN SEMENTARA.
+            Seluruh pelanggan "Tirto Mulo" wajib mematuhi segala ketentuan manajemen pengelolaan oleh
+            BUMDes BANGUN KENCANA MULO, sesuai dengan Peraturan Desa Mulo Nomor 3 Tahun 2018.<br>
+            Keluhan pelanggan bisa WA Nomor 0882-1673-8479 (Iswanto) 0878-0484-5880 (Nurli).<br>
+            NB. Terlambat 2 bulan akan diterbitkan Surat Peringatan, Terlambat 3 bulan akan diterbitkan Surat Pemutusan Sementara.
           </div>
         </div>
       </div>
@@ -161,8 +161,8 @@ const bilang = (val) => {
 .lbl-meta { font-weight: normal !important; width: 65px; }
 
 .header-center { display: flex; align-items: center; gap: 12px; flex: 1; justify-content: flex-start; padding-left: 90px; }
-.logo-l { width: 35px; height: 28px; background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%230284c7"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>'); background-size: contain; background-repeat: no-repeat; flex-shrink: 0; }
-.logo-r { width: 35px; height: 28px; background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23f59e0b"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>'); background-size: contain; background-repeat: no-repeat; flex-shrink: 0; }
+.logo-l { width: 48px; height: 48px; background-image: url('/logo2.png'); background-size: contain; background-repeat: no-repeat; background-position: center; flex-shrink: 0; }
+.logo-r { width: 48px; height: 48px; background-image: url('/logo1.png'); background-size: contain; background-repeat: no-repeat; background-position: center; flex-shrink: 0; }
 
 .t { text-align: center; font-size: 9.5px; font-weight: 700; text-transform: uppercase; }
 .tm { 

@@ -164,7 +164,7 @@ const loadLembaga = async () => {
   try {
     const res = await sopService.getAll()
     const data = res?.data ?? res?.payload ?? res
-    const lembaga = { ...(data?.lembaga || {}) }
+    const lembaga = { ...data?.lembaga }
     const logo = data?.logo?.logo
     if (logo) lembaga.logo = logo
     return lembaga

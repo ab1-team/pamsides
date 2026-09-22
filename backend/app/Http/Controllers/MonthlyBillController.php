@@ -248,6 +248,8 @@ class MonthlyBillController extends Controller
                 'nama' => optional($customer->user)->name ?? $customer->ticket?->applicant_name,
                 'nik' => $customer->ticket?->nik,
                 'alamat' => $customer->ticket?->address,
+                'rt' => $customer->ticket?->rt,
+                'rw' => $customer->ticket?->rw,
                 'dusun' => $customer->ticket?->village?->hamlet_name,
                 'desa' => $customer->ticket?->village?->village_name,
                 'package_name' => $customer->ticket?->package?->name,

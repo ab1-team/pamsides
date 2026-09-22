@@ -1,4 +1,4 @@
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed } from 'vue'
 import { STATUS_TYPES, STATUS_COLORS } from '@/types/pemakaianAir'
 import { billingService } from '@/services/billing.service'
 import { confirmDelete } from '@/utils/deleteHandler'
@@ -158,6 +158,8 @@ export function usePemakaianAir() {
             avatarColor: buildAvatarColor(item.id ?? name),
             customer_code: item.customer_code || '-',
             alamat: item.alamat || '-',
+            rt: item.rt || '-',
+            rw: item.rw || '-',
             dusun: item.dusun || '-',
             desa: item.desa || '-',
             meterAwal: Number(item.meter_awal ?? item.meter_reading_start ?? 0),
@@ -277,10 +279,6 @@ export function usePemakaianAir() {
     })
   }
 
-  onMounted(() => {
-    loadTeknisiOptions()
-  })
-
   return {
     // State
     filter,
@@ -321,5 +319,6 @@ export function usePemakaianAir() {
     handleSaveEdit,
     handleDelete,
     teknisiError,
+    loadTeknisiOptions,
   }
 }
