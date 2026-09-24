@@ -31,7 +31,7 @@
           <tbody>
             <tr align="center">
               <td>{{ item.customer.nama }}</td>
-              <td>{{ item.customer.customer_code || item.customer.id }}</td>
+              <td>{{ item.customer.noUrut }}</td>
               <td>{{ item.customer.alamat }}</td>
               <td>{{ Number(item.customer.meterAwal || 0).toLocaleString('id-ID') }}</td>
               <td>{{ Number(item.customer.meterAkhir || 0).toLocaleString('id-ID') }}</td>
@@ -52,8 +52,8 @@
           </div>
           <div class="ttd">
             <div>{{ tempat }}, {{ tanggalCetak }}</div>
-            <div class="sp">Bendahara</div>
-            <div class="nb">Puput Wening Ngati, S.IP</div>
+            <div class="sp">{{ payload?.bendahara?.nama_jabatan || 'Bendahara' }}</div>
+            <div class="nb">{{ payload?.bendahara?.name || '_________________' }}</div>
           </div>
         </div>
 
@@ -93,8 +93,9 @@ const buildRincian = (c) => {
   const tagihan = Number(c.tagihan || 0)
   const abodemen = Number(c.abodemen || 0)
   const denda = Number(c.denda || 0)
+  const pemakaianAir = Number(c.pemakaian_charge ?? c.pemakaianCharge ?? 0)
   return {
-    pemakaianAir: Math.max(0, tagihan - abodemen - denda),
+    pemakaianAir,
     bebanTetap: abodemen,
     denda,
     total: tagihan,
@@ -116,32 +117,53 @@ const periodeText = computed(() => {
 const rupiah = (val) => Number(val || 0).toLocaleString('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 
 const tempat = 'Mulo'
-const tanggalCetak = new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })
 
-const SATUAN = ['', 'Satu', 'Dua', 'Tiga', 'Empat', 'Lima', 'Enam', 'Tujuh', 'Delapan', 'Sembilan', 'Sepuluh', 'Sebelas']
+const bulanId = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember']
+
+const tanggalCetak = computed(() => {
+  const f = props.payload?.filter || {}
+  const tahun = Number(f.tahun) || new Date().getFullYear()
+  const bulanStr = String(f.bulan || '').trim()
+  const bulanIdx = bulanId.findIndex((b) => b.toLowerCase() === bulanStr.toLowerCase())
+  if (bulanIdx === -1) {
+    return new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })
+  }
+  const lastDay = new Date(tahun, bulanIdx + 1, 0).getDate()
+  return `${lastDay} ${bulanId[bulanIdx]} ${tahun}`
+})
+
+const SATUAN = ['', 'Satu', 'Dua', 'Tiga', 'Empat', 'Lima', 'Enam', 'Tujuh', 'Delapan', 'Sembilan']
 const BELASAN = ['Sepuluh', 'Sebelas', 'Dua Belas', 'Tiga Belas', 'Empat Belas', 'Lima Belas', 'Enam Belas', 'Tujuh Belas', 'Delapan Belas', 'Sembilan Belas']
 
 const tigaDigit = (n) => {
   if (n === 0) return ''
-  if (n < 12) return SATUAN[n]
+  if (n < 10) return SATUAN[n]
   if (n < 20) return BELASAN[n - 10]
   if (n < 100) {
     const puluh = SATUAN[Math.floor(n / 10)]
     const sisa = n % 10
     return sisa === 0 ? `${puluh} Puluh` : `${puluh} Puluh ${SATUAN[sisa]}`
   }
-  const ratus = SATUAN[Math.floor(n / 100)]
+  const ratus = Math.floor(n / 100) === 1 ? 'Seratus' : `${SATUAN[Math.floor(n / 100)]} Ratus`
   const sisa = n % 100
-  return sisa === 0 ? `${ratus} Ratus` : `${ratus} Ratus ${tigaDigit(sisa)}`
+  return sisa === 0 ? ratus : `${ratus} ${tigaDigit(sisa)}`
 }
 
 const bilang = (val) => {
   const n = Math.floor(Number(val) || 0)
   if (n === 0) return 'Nol Rupiah'
-  const ribu = Math.floor(n / 1000)
-  const sisa = n % 1000
   const bagian = []
-  if (ribu > 0) bagian.push((tigaDigit(ribu) + ' Ribu').trim())
+  const juta = Math.floor(n / 1000000)
+  const ribu = Math.floor((n % 1000000) / 1000)
+  const sisa = n % 1000
+  if (juta > 0) bagian.push((juta === 1 ? 'Satu Juta' : `${tigaDigit(juta)} Juta`).trim())
+  if (ribu > 0) {
+    if (ribu === 1) {
+      bagian.push('Seribu')
+    } else {
+      bagian.push((tigaDigit(ribu) + ' Ribu').trim())
+    }
+  }
   if (sisa > 0) bagian.push(tigaDigit(sisa).trim())
   return (bagian.join(' ') + ' Rupiah').trim()
 }
@@ -204,9 +226,9 @@ const bilang = (val) => {
 .terbilang-row { border-top: none !important; }
 .i { font-style: italic; text-transform: capitalize; }
 
-.ttd { width: 180px; text-align: center; font-size: 11px; margin-left: auto; }
+.ttd { width: 180px; text-align: center; font-size: 11px; margin-left: auto; padding-top: 15px; }
 .sp { margin-bottom: 35px; }
-.nb { font-weight: 700; text-decoration: underline; }
+.nb { font-weight: 700; }
 
 /* Bottom Section (Transfer & Catatan) */
 .bottom-section { display: flex; justify-content: space-between; align-items: flex-end; gap: 15px; margin-top: 2px; }

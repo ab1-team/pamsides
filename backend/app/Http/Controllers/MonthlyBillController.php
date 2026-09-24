@@ -242,6 +242,36 @@ class MonthlyBillController extends Controller
                 default => 'PENDING',
             };
 
+            $penalty = (float) ($bill?->penalty_amount ?? 0);
+            $baseTotal = (float) ($bill?->total_amount ?? 0);
+
+            // Tambahan penalty runtime: tagihan bulan sebelumnya (N-1) yang masih unpaid
+            // dan sudah lewat due_date -> kena late_penalty paket (selaras logika apk lama).
+            $prevDate = Carbon::create($year, $month, 1)->subMonthsNoOverflow();
+            $prevBill = MonthlyBill::where('customer_id', $customer->id)
+                ->where('billing_period_year', $prevDate->year)
+                ->where('billing_period_month', $prevDate->month)
+                ->first();
+
+            $customerActivatedAt = $customer->activated_at ? Carbon::parse($customer->activated_at) : null;
+
+            if ($prevBill && strtolower($prevBill->status) === 'unpaid' && $prevBill->due_date) {
+                $customerEligible = ! $customerActivatedAt
+                    || $customerActivatedAt->lt(Carbon::create($prevDate->year, $prevDate->month, 1)->endOfMonth());
+                if ($customerEligible) {
+                    $due = Carbon::parse($prevBill->due_date)->endOfDay();
+                    if (Carbon::now()->gt($due)) {
+                        $latePenalty = (float) ($customer->ticket?->package?->late_penalty ?? 0);
+                        if ($latePenalty > 0) {
+                            $penalty += $latePenalty;
+                            if ($baseTotal > 0) {
+                                $baseTotal += $latePenalty;
+                            }
+                        }
+                    }
+                }
+            }
+
             return [
                 'id' => $customer->id,
                 'customer_code' => $customer->customer_code,
@@ -256,8 +286,9 @@ class MonthlyBillController extends Controller
                 'meter_awal' => $bill?->meter_reading_start ?? $customer->initial_meter_reading,
                 'meter_akhir' => $bill?->meter_reading_end ?? $reading?->meter_value,
                 'pemakaian' => $bill?->usage_m3,
-                'tagihan' => $bill?->total_amount,
-                'denda' => $bill?->penalty_amount,
+                'pemakaian_charge' => $bill?->usage_charge ?? 0,
+                'tagihan' => $baseTotal > 0 ? $baseTotal : (($bill?->usage_charge ?? 0) + ($bill?->abodemen ?? 0) + $penalty),
+                'denda' => $penalty,
                 'abodemen' => $bill?->abodemen,
                 'status' => $statusLabel,
                 'due_date' => $bill?->due_date,

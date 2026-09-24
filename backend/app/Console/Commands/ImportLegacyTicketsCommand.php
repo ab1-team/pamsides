@@ -249,13 +249,14 @@ class ImportLegacyTicketsCommand extends Command
                 $newId = $existingMax + (int) $lu->id;
                 try {
                     User::create([
-                        'id'         => $newId,
-                        'name'       => trim((string) $lu->nama),
-                        'email'      => "legacy_{$lu->id}_{$role}@pamsides.local",
-                        'password'   => \Hash::make('legacy'),
-                        'role'       => $role,
-                        'created_at' => now(),
-                        'updated_at' => now(),
+                        'id'          => $newId,
+                        'name'        => trim((string) $lu->nama),
+                        'email'       => "legacy_{$lu->id}_{$role}@pamsides.local",
+                        'password'    => \Hash::make('legacy'),
+                        'role'        => $role,
+                        'jabatan_id'  => (int) ($lu->jabatan ?? 0) ?: null,
+                        'created_at'  => now(),
+                        'updated_at'  => now(),
                     ]);
                 } catch (\Throwable) {
                     // Kalau ID bentrok (existing user dengan ID sama), ambil ID existing

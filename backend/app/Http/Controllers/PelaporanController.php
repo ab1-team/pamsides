@@ -20,6 +20,7 @@ use App\Services\PelaporanService;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 class PelaporanController extends Controller
@@ -488,8 +489,17 @@ class PelaporanController extends Controller
     {
         $lembaga = Setting::first();
 
-        $data['bulan_name'] = $this->bulanName($data['bulan']);
-        $periodeText = ' ('.$data['bulan_name'].' '.$data['tahun'].')';
+        $tahun = $data['tahun'];
+        $bulan = $data['bulan'];
+        $data['bulan_name'] = $this->bulanName($bulan);
+        $periodeText = ' ('.$data['bulan_name'].' '.$tahun.')';
+
+        $endOfMonth = Carbon::create($tahun, (int) $bulan, 1)->endOfMonth();
+        $bulanName = strtoupper($data['bulan_name']);
+        $bulanTitle = $bulanName ? ucfirst(strtolower($bulanName)) : '';
+        $subJudul = $endOfMonth->format('d').' '.$bulanTitle.' '.$tahun;
+
+        $direktur = User::findByJabatan('Direktur');
 
         return response()->json([
             'success' => true,
@@ -503,6 +513,7 @@ class PelaporanController extends Controller
                     'alamat' => $lembaga->alamat,
                     'telepon' => $lembaga->telepon,
                     'email' => $lembaga->email,
+                    'logo' => $lembaga->logo,
                     'peraturan_desa' => $lembaga->peraturan_desa,
                     'sk_kemenkumham' => $lembaga->sk_kemenkumham,
                 ] : null,
@@ -512,7 +523,15 @@ class PelaporanController extends Controller
                     'bulan_name' => strtoupper($data['bulan_name']),
                     'tanggal_surat' => $data['tahun'].'-'.str_pad($data['bulan'], 2, '0', STR_PAD_LEFT).'-01',
                 ],
+                'sub_judul' => $subJudul,
                 'nomor_surat' => '001/LP/'.str_pad($data['bulan'], 2, '0', STR_PAD_LEFT).'/'.$data['tahun'],
+                'direktur' => $direktur ? [
+                    'id'           => $direktur->id,
+                    'name'         => $direktur->name,
+                    'email'        => $direktur->email,
+                    'jabatan_id'   => $direktur->jabatan_id,
+                    'nama_jabatan' => $direktur->jabatan?->nama_jabatan ?? 'Direktur',
+                ] : null,
             ],
         ]);
     }
@@ -968,36 +987,57 @@ class PelaporanController extends Controller
         $data['bulan_name'] = $this->bulanName($bulan);
         $periodeText = ' ('.$data['bulan_name'].' '.$tahun.')';
 
-        $trx = Transaction::with(['accountDebet', 'accountKredit'])
-            ->whereYear('tgl_transaksi', $tahun)
-            ->whereMonth('tgl_transaksi', $bulan)
-            ->orderBy('tgl_transaksi', 'ASC')
-            ->orderBy('id', 'ASC')
-            ->get();
+        $cacheKey = "jurnal_transaksi:{$tahun}:".str_pad((string) $bulan, 2, '0', STR_PAD_LEFT);
+        $cacheTtl = 300;
 
-        $items = $trx->map(function ($t) {
+        $payload = Cache::remember($cacheKey, $cacheTtl, function () use ($data, $tahun, $bulan) {
+            $bulanInt = (int) $bulan;
+            $start = sprintf('%04d-%02d-01', $tahun, $bulanInt);
+            $endYear = $bulanInt === 12 ? $tahun + 1 : $tahun;
+            $endMonth = $bulanInt === 12 ? 1 : $bulanInt + 1;
+            $end = sprintf('%04d-%02d-01', $endYear, $endMonth);
+
+            $rows = \DB::table('transactions')
+                ->select('transactions.id', 'transactions.tgl_transaksi', 'transactions.account_debet', 'transactions.account_kredit', 'transactions.saldo')
+                ->where('transactions.tgl_transaksi', '>=', $start)
+                ->where('transactions.tgl_transaksi', '<', $end)
+                ->orderBy('transactions.tgl_transaksi', 'ASC')
+                ->orderBy('transactions.id', 'ASC')
+                ->get();
+
+            $accountCodes = $rows->pluck('account_debet')
+                ->merge($rows->pluck('account_kredit'))
+                ->filter()
+                ->unique()
+                ->values();
+
+            $accounts = \DB::table('accounts')
+                ->select('kode_akun', 'nama_akun')
+                ->whereIn('kode_akun', $accountCodes)
+                ->get()
+                ->keyBy('kode_akun');
+
+            $items = $rows->map(function ($t) use ($accounts) {
+                return [
+                    'id' => $t->id,
+                    'tgl' => $t->tgl_transaksi,
+                    'debet' => [
+                        'kode' => $t->account_debet,
+                        'nama' => $accounts[$t->account_debet]->nama_akun ?? '-',
+                        'jumlah' => (float) $t->saldo,
+                    ],
+                    'kredit' => [
+                        'kode' => $t->account_kredit,
+                        'nama' => $accounts[$t->account_kredit]->nama_akun ?? '-',
+                        'jumlah' => (float) $t->saldo,
+                    ],
+                ];
+            })->values();
+
+            $totalDebit = (float) $items->sum(fn ($i) => $i['debet']['jumlah']);
+            $totalKredit = (float) $items->sum(fn ($i) => $i['kredit']['jumlah']);
+
             return [
-                'id' => $t->id,
-                'tgl' => $t->tgl_transaksi,
-                'debet' => [
-                    'kode' => $t->account_debet,
-                    'nama' => $t->accountDebet?->nama_akun ?? '-',
-                    'jumlah' => (float) $t->saldo,
-                ],
-                'kredit' => [
-                    'kode' => $t->account_kredit,
-                    'nama' => $t->accountKredit?->nama_akun ?? '-',
-                    'jumlah' => (float) $t->saldo,
-                ],
-            ];
-        })->values();
-
-        return response()->json([
-            'success' => true,
-            'view_target' => 'jurnal_transaksi',
-            'title' => 'Jurnal Transaksi'.$periodeText,
-            'meta' => $data,
-            'payload' => [
                 'config' => $this->paperConfig('jurnal_transaksi'),
                 'periode' => [
                     'tahun' => $tahun,
@@ -1005,7 +1045,19 @@ class PelaporanController extends Controller
                     'bulan_name' => strtoupper($data['bulan_name']),
                 ],
                 'items' => $items,
-            ],
+                'totals' => [
+                    'debit' => $totalDebit,
+                    'kredit' => $totalKredit,
+                ],
+            ];
+        });
+
+        return response()->json([
+            'success' => true,
+            'view_target' => 'jurnal_transaksi',
+            'title' => 'Jurnal Transaksi'.$periodeText,
+            'meta' => $data,
+            'payload' => $payload,
         ]);
     }
 
@@ -1392,6 +1444,12 @@ class PelaporanController extends Controller
         $accKodeKomisi = '2.1.02.02';
         $accKodeBebanKomisi = '5.1.02.04';
 
+        $bulanInt = (int) $bulan;
+        $endYear = $bulanInt === 12 ? $tahun + 1 : $tahun;
+        $endMonth = $bulanInt === 12 ? 1 : $bulanInt + 1;
+        $tglDari = sprintf('%04d-%02d-01', $tahun, $bulanInt);
+        $tglSampai = date('Y-m-t', strtotime($tglDari));
+
         $billPayments = BillPayment::with([
             'transactions',
             'bill.customer.user',
@@ -1400,8 +1458,8 @@ class PelaporanController extends Controller
             ->whereHas('bill', function ($q) {
                 $q->where('status', 'paid');
             })
-            ->whereYear('paid_at', $tahun)
-            ->whereMonth('paid_at', $bulan)
+            ->whereDate('paid_at', '>=', $tglDari)
+            ->whereDate('paid_at', '<=', $tglSampai)
             ->get();
 
         $penerimaIds = $billPayments->map(fn ($bp) => $bp->transactions->pluck('penerima_komisi_id'))
@@ -1515,11 +1573,17 @@ class PelaporanController extends Controller
             'kredit' => (float) ($saldoSebelum->k ?? 0) + $saldoAwalTahun['kredit'],
         ];
 
+        $bulanInt = (int) $bulan;
+        $start = sprintf('%04d-%02d-01', $tahun, $bulanInt);
+        $endYear = $bulanInt === 12 ? $tahun + 1 : $tahun;
+        $endMonth = $bulanInt === 12 ? 1 : $bulanInt + 1;
+        $end = sprintf('%04d-%02d-01', $endYear, $endMonth);
+
         $trx = Transaction::where(function ($q) use ($kodeAkun) {
             $q->where('account_debet', $kodeAkun)->orWhere('account_kredit', $kodeAkun);
         })
-            ->whereYear('tgl_transaksi', $tahun)
-            ->whereMonth('tgl_transaksi', $bulan)
+            ->where('tgl_transaksi', '>=', $start)
+            ->where('tgl_transaksi', '<', $end)
             ->orderBy('tgl_transaksi', 'ASC')
             ->orderBy('id', 'ASC')
             ->get()

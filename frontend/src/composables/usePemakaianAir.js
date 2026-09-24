@@ -165,6 +165,7 @@ export function usePemakaianAir() {
             meterAwal: Number(item.meter_awal ?? item.meter_reading_start ?? 0),
             meterAkhir: Number(item.meter_akhir ?? item.meter_reading_end ?? 0),
             pemakaian: Number(item.pemakaian ?? item.usage_m3 ?? 0),
+            pemakaian_charge: Number(item.pemakaian_charge ?? item.usage_charge ?? 0),
             tagihan: Number(item.tagihan ?? item.total_amount ?? 0),
             denda: Number(item.denda ?? item.penalty_amount ?? 0),
             abodemen: Number(item.abodemen ?? 0),

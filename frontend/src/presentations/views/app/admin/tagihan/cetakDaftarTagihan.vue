@@ -2,6 +2,9 @@
   <div class="preview-shell" :class="orientationClass">
     <div class="preview-toolbar no-print">
       <div class="toolbar-left">
+        <button class="toolbar-menu-btn no-print" @click="showSidebar = !showSidebar" title="Tampilkan / sembunyikan thumbnail">
+          <span></span><span></span><span></span>
+        </button>
         <h3 class="title">
           Daftar Tagihan {{ filter.bulan }} {{ filter.tahun }}
         </h3>
@@ -11,13 +14,27 @@
         <div class="page-indicator" v-if="pages.length > 0">
           <span>Halaman {{ activePage + 1 }} / {{ pages.length }}</span>
         </div>
+
+        <div class="zoom-controls no-print" v-if="pages.length > 0">
+          <button class="zoom-btn" @click="zoomOut" :disabled="zoomLevel <= minZoom" title="Zoom Out">
+            <span>−</span>
+          </button>
+          <span
+            class="zoom-percent active"
+            @click="resetZoom"
+            title="Reset zoom"
+          >{{ zoomPercent }}%</span>
+          <button class="zoom-btn" @click="zoomIn" :disabled="zoomLevel >= maxZoom" title="Zoom In">
+            <span>+</span>
+          </button>
+        </div>
       </div>
     </div>
 
     <div v-if="errorMsg" class="alert-error no-print">{{ errorMsg }}</div>
 
     <div class="workspace-container">
-      <div class="thumbnail-sidebar no-print">
+      <div class="thumbnail-sidebar no-print" v-show="showSidebar">
         <div
           v-for="(page, i) in pages"
           :key="'thumb-' + i"
@@ -28,11 +45,15 @@
           <div class="thumb-paper">
             <div class="thumb-scale-container">
               <component
+                v-if="shouldRenderThumb(i)"
                 :is="ReportView"
                 :payload="page.payload"
                 :meta="page.meta"
                 class="thumb-real-component"
               />
+              <div v-else class="thumb-placeholder">
+                <span>{{ i + 1 }}</span>
+              </div>
             </div>
             <div class="thumb-overlay"></div>
           </div>
@@ -51,9 +72,8 @@
             class="report-page-wrap"
             :id="'report-page-' + i"
             :style="{
-              width: pageNaturalWidth(i) + 'px',
-              transform: pageScale(i) < 1 ? 'scale(' + pageScale(i) + ')' : undefined,
-              marginBottom: pageScale(i) < 1 ? (pageNaturalHeight(i) * (pageScale(i) - 1)) + 'px' : '24px',
+              width: pageScaledWidth(PAGE_CONFIG) + 'px',
+              '--page-scale': pageScale(PAGE_CONFIG),
             }"
           >
             <component
@@ -71,14 +91,17 @@
 </template>
 
 <script setup>
-import { computed, nextTick, onMounted, onBeforeUnmount, onUnmounted, ref, shallowRef } from 'vue'
+import { computed, nextTick, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import ReportView from '@/presentations/views/app/admin/tagihan/partials/ReportCetakDaftarTagihan.vue'
 import { usePemakaianAir } from '@/composables/usePemakaianAir'
+import { usePdfPreview, THUMB_RENDER_BUFFER } from '@/composables/usePdfPreview'
 import { PER_PAGE_ROWS } from '@/utils/reportConfig'
 
 const route = useRoute()
 const { tableData, filter, refreshData, groupedData, resolveCaterLabel } = usePemakaianAir()
+
+const PAGE_CONFIG = { paper_size: 'A4', orientation: 'portrait' }
 
 const isLoading = ref(true)
 const errorMsg = ref('')
@@ -86,8 +109,26 @@ const pages = ref([])
 const reportRoot = ref(null)
 const stageEl = ref(null)
 const activePage = ref(0)
-const stageWidth = ref(0)
-let resizeObserver = null
+const showSidebar = ref(true)
+
+const shouldRenderThumb = (i) => {
+  return Math.abs(i - activePage.value) <= THUMB_RENDER_BUFFER
+}
+
+const {
+  zoomLevel,
+  zoomPercent,
+  minZoom,
+  maxZoom,
+  zoomIn,
+  zoomOut,
+  resetZoom,
+  pageNaturalWidth,
+  pageNaturalHeight,
+  pageScale,
+  pageScaledWidth,
+  pageScaledHeight,
+} = usePdfPreview(stageEl, PAGE_CONFIG)
 
 const selectedIdSet = computed(() => {
   const fromStorage = sessionStorage.getItem('cetak_print_ids_daftar')
@@ -97,26 +138,6 @@ const selectedIdSet = computed(() => {
   if (fromStorage) sessionStorage.removeItem('cetak_print_ids_daftar')
   return ids.length > 0 ? new Set(ids) : null
 })
-
-const PAGE_CONFIG = { paper_size: 'A4', orientation: 'portrait' }
-const PX_PER_MM = 96 / 25.4
-
-const pageDimsMm = () => {
-  const cfg = PAGE_CONFIG
-  const isLandscape = cfg.orientation === 'landscape'
-  const w = (cfg.paper_size || 'A4').toUpperCase() === 'F4' ? 215 : 210
-  const h = (cfg.paper_size || 'A4').toUpperCase() === 'F4' ? 330 : 297
-  return isLandscape ? { w: h, h: w } : { w, h }
-}
-
-const pageNaturalWidth = () => pageDimsMm().w * PX_PER_MM
-const pageNaturalHeight = () => pageDimsMm().h * PX_PER_MM
-
-const pageScale = () => {
-  if (!stageWidth.value) return 1
-  const available = stageWidth.value - 48
-  return Math.max(0.9, Math.min(1, available / pageNaturalWidth()))
-}
 
 const orientationClass = computed(() => PAGE_CONFIG.orientation)
 
@@ -226,27 +247,12 @@ onMounted(async () => {
     if (pages.value.length === 0) {
       errorMsg.value = 'Tidak ada data tagihan untuk periode ini.'
     }
-
-    await nextTick()
-    if (stageEl.value) {
-      stageWidth.value = stageEl.value.clientWidth
-      resizeObserver = new ResizeObserver((entries) => {
-        for (const entry of entries) {
-          stageWidth.value = entry.contentRect.width
-        }
-      })
-      resizeObserver.observe(stageEl.value)
-    }
   } catch (err) {
     console.error(err)
     errorMsg.value = err?.message || 'Gagal memuat data'
   } finally {
     isLoading.value = false
   }
-})
-
-onBeforeUnmount(() => {
-  if (resizeObserver) resizeObserver.disconnect()
 })
 </script>
 
@@ -284,12 +290,102 @@ onBeforeUnmount(() => {
   gap: 14px;
 }
 
+.zoom-controls {
+  display: flex;
+  align-items: center;
+  background: #2c2e31;
+  padding: 4px;
+  border-radius: 9px;
+  user-select: none;
+}
+
+.zoom-btn {
+  width: 30px;
+  height: 30px;
+  border-radius: 77px;
+  color: #f8fafc;
+  border: none;
+  font-size: 1.2rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s ease;
+}
+
+.zoom-btn:hover {
+  background: #525050;
+}
+
+.zoom-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.zoom-percent {
+  min-width: 56px;
+  text-align: center;
+  color: #f8fafc;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0px 10px;
+  border-radius: 999px;
+  background: transparent;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.zoom-percent.active {
+  background: #242424;
+  color: #ffffff;
+  border-radius: 0;
+}
+
 .title {
   font-size: 0.95rem;
   font-weight: 600;
   margin: 0;
   color: #f8fafc;
   letter-spacing: 0.5px;
+}
+
+.toolbar-menu-btn {
+  display: inline-flex;
+  flex-direction: column;
+  justify-content: space-between;
+  width: 28px;
+  height: 22px;
+  padding: 4px 4px;
+  background: transparent;
+  border: 1px solid #475569;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-right: 12px;
+}
+.toolbar-menu-btn span {
+  display: block;
+  width: 100%;
+  height: 2px;
+  background: #f8fafc;
+  border-radius: 1px;
+  transition: background 0.15s ease;
+}
+.toolbar-menu-btn:hover {
+  background: #525050;
+  border-color: #94a3b8;
+}
+
+.thumb-placeholder {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f1f5f9;
+  color: #64748b;
+  font-size: 24px;
+  font-weight: 700;
 }
 
 .page-indicator {
@@ -317,7 +413,36 @@ onBeforeUnmount(() => {
   align-items: center;
   gap: 18px;
   overflow-y: auto;
+  overflow-x: hidden;
   user-select: none;
+  scrollbar-width: thin;
+  scrollbar-color: #5a5e63 #1f2123;
+}
+
+.thumbnail-sidebar::-webkit-scrollbar {
+  width: 14px;
+  height: 14px;
+}
+
+.thumbnail-sidebar::-webkit-scrollbar-track {
+  background: #1f2123;
+  border-radius: 8px;
+  margin: 4px 0;
+}
+
+.thumbnail-sidebar::-webkit-scrollbar-thumb {
+  background: #5a5e63;
+  border-radius: 8px;
+  border: 3px solid #1f2123;
+  min-height: 40px;
+}
+
+.thumbnail-sidebar::-webkit-scrollbar-thumb:hover {
+  background: #7a7e83;
+}
+
+.thumbnail-sidebar::-webkit-scrollbar-thumb:active {
+  background: #38bdf8;
 }
 
 .thumb-wrapper {
@@ -420,34 +545,75 @@ onBeforeUnmount(() => {
   flex: 1 1 0;
   min-width: 0;
   height: 100%;
-  overflow-y: auto;
-  overflow-x: hidden;
+  overflow: auto;
   padding: 10px 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
   background: #2c2e31;
   scroll-behavior: smooth;
+  position: relative;
+}
+
+.preview-stage::-webkit-scrollbar {
+  width: 14px;
+  height: 14px;
+}
+.preview-stage::-webkit-scrollbar-track {
+  background: #1f2123;
+  border-radius: 8px;
+  margin: 4px 0;
+}
+.preview-stage::-webkit-scrollbar-track:horizontal {
+  margin: 0 4px;
+}
+.preview-stage::-webkit-scrollbar-thumb {
+  background: #5a5e63;
+  border-radius: 8px;
+  border: 3px solid #1f2123;
+  min-height: 40px;
+  min-width: 40px;
+}
+.preview-stage::-webkit-scrollbar-thumb:hover {
+  background: #7a7e83;
+}
+.preview-stage::-webkit-scrollbar-thumb:active {
+  background: #38bdf8;
+}
+.preview-stage {
+  scrollbar-width: thin;
+  scrollbar-color: #5a5e63 #1f2123;
 }
 
 .report-root {
   display: flex;
   flex-direction: column;
   gap: 24px;
-  width: 100%;
   align-items: center;
+  padding: 0 16px;
+  width: max-content;
+  min-width: 100%;
+  margin: 0 auto;
 }
 
 .report-page-wrap {
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
-  width: 100%;
-  transform-origin: top center;
+  display: block;
+  position: relative;
+  flex-shrink: 0;
+  margin-bottom: 24px;
+  overflow: hidden;
+}
+
+.report-page-wrap:last-child {
+  margin-bottom: 0;
 }
 
 .report-page-wrap :deep(.report-page) {
   margin: 0 auto !important;
+  transform-origin: top center;
+  transform: scale(var(--page-scale, 1));
+}
+
+.report-page-wrap :deep(.report-page.surat-page.size-a4.portrait) {
+  min-height: 0;
+  height: 297mm;
 }
 
 .alert-error {
