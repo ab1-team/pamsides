@@ -68,15 +68,11 @@
           <div class="thumb-paper">
             <div class="thumb-scale-container">
               <component
-                v-if="shouldRenderThumb(i)"
                 :is="resolvedView"
                 :payload="page.payload"
                 :meta="page.meta"
                 class="thumb-real-component"
               />
-              <div v-else class="thumb-placeholder">
-                <span>{{ i + 1 }}</span>
-              </div>
             </div>
             <div class="thumb-overlay"></div>
           </div>
@@ -91,22 +87,19 @@
             v-for="(page, i) in pages"
             :key="i"
             class="report-page-wrap"
-            :id="'report-page-' + i"
             :style="{
-              width: pageScaledWidth(i) + 'px',
-              height: (pageNaturalHeight(i) * pageScale(i)) + 'px',
-              '--page-scale': pageScale(i),
+              width: pageNaturalWidth(i) + 'px',
+              zoom: pageScale(i) !== 1 ? pageScale(i) : undefined,
               marginBottom: pageMarginBottom(i),
             }"
           >
             <component
-              v-if="shouldRenderPage(i)"
               :is="resolvedView"
+              :id="'report-page-' + i"
               :payload="page.payload"
               :meta="page.meta"
               :ref="(el) => registerPageRef(el, i)"
             />
-            <div v-else class="page-placeholder"></div>
           </div>
         </div>
       </div>
@@ -117,7 +110,6 @@
 
 <script setup>
 import { computed, nextTick, onMounted, onUnmounted, onBeforeUnmount, ref, shallowRef, watch } from 'vue'
-import { THUMB_RENDER_BUFFER, PAGE_RENDER_BUFFER } from '@/composables/usePdfPreview.js'
 import { useRouter, useRoute } from 'vue-router'
 import BaseButton from '@/presentations/components/ui/BaseButton.vue'
 import pelaporanService from '@/services/pelaporan.service.js'
@@ -192,13 +184,6 @@ const { isGenerating, downloadPdf, bulanNama } = usePdfReport()
 const loading = ref(true)
 const errorMsg = ref('')
 const showSidebar = ref(true)
-
-const shouldRenderThumb = (i) => {
-  return Math.abs(i - activePage.value) <= THUMB_RENDER_BUFFER
-}
-const shouldRenderPage = (i) => {
-  return Math.abs(i - activePage.value) <= PAGE_RENDER_BUFFER
-}
 const response = ref(null)
 const pages = ref([])
 const reportRoot = ref(null)
@@ -279,11 +264,9 @@ const pageScale = (i) => {
   return baseFit * zoomLevel.value
 }
 
-const pageScaledWidth = (i) => {
-  return pageNaturalWidth(i) * pageScale(i)
-}
-
 const pageMarginBottom = (i) => {
+  // CSS zoom menskalakan layout box sekaligus visual, jadi flex gap 24px
+  // dari .report-root sudah cukup untuk jarak visual antar halaman di semua zoom level.
   return '0px'
 }
 
@@ -474,7 +457,7 @@ const buildPages = (res) => {
       const total = pages.value.length
       pages.value = pages.value.map((p) => ({
         ...p,
-        payload: { ...p.payload, pageInfo: { ...p.payload.pageInfo, total } }
+        payload: { ...p.payload, pageInfo: { ...(p.payload.pageInfo || {}), total } }
       }))
     }
   }
@@ -645,9 +628,9 @@ const buildPages = (res) => {
     const chunkSize = 20;
 
     if (items.length === 0) {
-      pages.value = [{
-        payload: { ...data, config: baseConfig, items: [] },
-        meta: baseMeta
+      pages.value = [{ 
+        payload: { ...data, config: baseConfig, items: [] }, 
+        meta: baseMeta 
       }];
     } else {
       pages.value = [];
@@ -983,7 +966,7 @@ const setupCalkProbe = async () => {
     ...p,
     payload: {
       ...p.payload,
-      pageInfo: { ...p.payload.pageInfo, total: totalPages, current: i + 1 },
+      pageInfo: { ...(p.payload.pageInfo || {}), total: totalPages, current: i + 1 },
     },
   }))
 
@@ -1207,19 +1190,7 @@ onUnmounted(() => {
   border: 2px solid #475569;
   border-radius: 3px;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
-  overflow: hidden;
-}
-
-.thumb-placeholder {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #f1f5f9;
-  color: #64748b;
-  font-size: 24px;
-  font-weight: 700;
+  overflow: hidden; 
 }
 
 .thumb-wrapper:hover .thumb-paper {
@@ -1270,13 +1241,16 @@ onUnmounted(() => {
   flex: 1 1 0;
   min-width: 0;
   height: 100%;
-  overflow: auto;
+  overflow-y: auto;
+  overflow-x: auto;
 
   padding: 10px 0px 10px;
 
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
   background: #2c2e31;
   scroll-behavior: smooth;
-  position: relative;
 }
 
 /* Custom scrollbar untuk .preview-stage (Webkit/Chromium) */
@@ -1350,52 +1324,26 @@ onUnmounted(() => {
 .report-root {
   display: flex;
   flex-direction: column;
-   gap: 24px;
+  gap: 24px;
 
   width: max-content;
   min-width: 100%;
   align-items: center;
-  padding: 16px;
-  margin: 0 auto;
+  padding: 0 16px;
+
 }
 
 .report-page-wrap {
-  display: block;
-  position: relative;
-  flex-shrink: 0;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  width: 100%;
   page-break-after: always;
   break-after: page;
-  margin-left: auto;
-  margin-right: auto;
-  margin-bottom: 40px;
-  background: #ffffff;
-  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.45), 0 0 0 1px #475569;
-  border-radius: 2px;
-  overflow: hidden;
-}
-.report-page-wrap :deep(.report-page) {
-  margin: 0 auto !important;
-  position: absolute;
-  top: 0;
-  left: 50%;
-  transform-origin: top center;
-  transform: translateX(-50%) scale(var(--page-scale, 1));
 }
 .report-page-wrap:last-child {
   page-break-after: auto;
   break-after: auto;
-  margin-bottom: 0;
-}
-.page-placeholder {
-  width: 100%;
-  height: 100%;
-  background: #f8fafc;
-  border: 1px dashed #cbd5e1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #64748b;
-  font-size: 14px;
 }
 .alert-error {
   background: #fee2e2;

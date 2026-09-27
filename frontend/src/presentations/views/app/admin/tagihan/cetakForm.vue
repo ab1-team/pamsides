@@ -569,10 +569,14 @@ onMounted(async () => {
   flex-shrink: 0;
   margin-bottom: 24px;
   overflow: hidden;
+  page-break-after: always;
+  break-after: page;
 }
 
 .report-page-wrap:last-child {
   margin-bottom: 0;
+  page-break-after: auto;
+  break-after: auto;
 }
 
 .report-page-wrap :deep(.report-page) {
@@ -610,6 +614,21 @@ onMounted(async () => {
   .preview-stage {
     padding: 0;
     overflow: visible;
+  }
+  .report-root {
+    gap: 0 !important;
+    padding: 0 !important;
+  }
+  .report-page-wrap :deep(.report-page.surat-page.size-a4.portrait) {
+    transform: none !important;
+    margin: 0 !important;
+    width: 210mm !important;
+    min-height: 297mm !important;
+    height: 297mm !important;
+  }
+  @page {
+    size: A4 portrait;
+    margin: 0;
   }
 }
 </style>

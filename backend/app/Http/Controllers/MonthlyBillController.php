@@ -221,7 +221,16 @@ class MonthlyBillController extends Controller
 
         $customers = $query->get();
 
-        $items = $customers->map(function ($customer) use ($month, $year) {
+        // Batch-load prev bills (bulan N-1) untuk semua customer sekaligus.
+        // Tanpa ini, query `prevBill` di dalam closure akan jalan N kali (N+1).
+        $prevDate = Carbon::create($year, $month, 1)->subMonthsNoOverflow();
+        $prevBills = MonthlyBill::whereIn('customer_id', $customers->pluck('id'))
+            ->where('billing_period_year', $prevDate->year)
+            ->where('billing_period_month', $prevDate->month)
+            ->get()
+            ->keyBy('customer_id');
+
+        $items = $customers->map(function ($customer) use ($month, $year, $prevBills, $prevDate) {
             $reading = $customer->meterReadings()
                 ->where('reading_month', $month)
                 ->where('reading_year', $year)
@@ -247,11 +256,7 @@ class MonthlyBillController extends Controller
 
             // Tambahan penalty runtime: tagihan bulan sebelumnya (N-1) yang masih unpaid
             // dan sudah lewat due_date -> kena late_penalty paket (selaras logika apk lama).
-            $prevDate = Carbon::create($year, $month, 1)->subMonthsNoOverflow();
-            $prevBill = MonthlyBill::where('customer_id', $customer->id)
-                ->where('billing_period_year', $prevDate->year)
-                ->where('billing_period_month', $prevDate->month)
-                ->first();
+            $prevBill = $prevBills->get($customer->id);
 
             $customerActivatedAt = $customer->activated_at ? Carbon::parse($customer->activated_at) : null;
 

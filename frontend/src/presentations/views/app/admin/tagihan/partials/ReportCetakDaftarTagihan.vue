@@ -254,6 +254,23 @@ const tanggalAkhir = computed(() => {
   background: #f9fafb;
 }
 
+/* Header tabel berulang di setiap halaman saat print */
+.data-table thead {
+  display: table-header-group;
+}
+
+/* Cegah satu baris tabel terpotong di antara halaman */
+.data-table tbody tr {
+  page-break-inside: avoid;
+  break-inside: avoid;
+}
+
+/* Baris total (hanya di halaman terakhir) selalu menyatu */
+.total-row {
+  page-break-inside: avoid;
+  break-inside: avoid;
+}
+
 /* Override padding BaseReportLayout untuk cetak daftar tagihan (lebih ramping) */
 </style>
 

@@ -186,6 +186,17 @@ const showMeta = computed(() => props.payload?.showMeta !== false)
 .form-row td {
   padding: 2px 4px !important;
 }
+
+/* Header tabel berulang di setiap halaman saat print */
+.data-table thead {
+  display: table-header-group;
+}
+
+/* Cegah satu baris form terpotong di antara halaman */
+.data-table tbody tr {
+  page-break-inside: avoid;
+  break-inside: avoid;
+}
 </style>
 
 <style>

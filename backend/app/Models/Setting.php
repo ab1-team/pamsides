@@ -10,6 +10,7 @@ class Setting extends Model
         'key',
         'value',
         'nama',
+        'nama_lembaga',
         'alamat',
         'email',
         'telepon',

@@ -43,7 +43,7 @@
           <div>Dengan Hormat,</div>
           
           <div style="margin-top: 4px;">
-            Bersama ini kami sampaikan Laporan Keuangan BUMDes BANGUN KENCANA MULO, Sampai dengan {{ payload?.sub_judul || tanggalSurat }}
+            Bersama ini kami sampaikan Laporan Keuangan {{ payload?.lembaga?.nama_lembaga || payload?.lembaga?.nama || 'BUMDes' }}, Sampai dengan {{ payload?.sub_judul || tanggalSurat }}
             sebagai berikut:
           </div>
           
@@ -71,7 +71,7 @@
               <td width="40%"></td>
               <td width="60%" align="center">
                 <div>
-                  {{ payload?.usaha?.nama_usaha ||'BUMDes BANGUN KENCANA MULO'}}
+                  {{ payload?.lembaga?.nama_lembaga || payload?.lembaga?.nama || payload?.usaha?.nama_usaha || 'BUMDes' }}
                 </div>
                 <div style="margin-bottom: 65px;">
                   {{ payload?.direktur?.nama_jabatan || payload?.dir_utama?.j?.nama_jabatan || payload?.dir?.j?.nama_jabatan || 'Direktur' }},
