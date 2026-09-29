@@ -72,6 +72,15 @@ Route::middleware(['auth:sanctum', 'role:admin,surveyor'])->group(function () {
 
 /*
 |--------------------------------------------------------------------------
+| Lookup penandatangan berdasarkan nama jabatan (shared semua role login)
+|--------------------------------------------------------------------------
+*/
+Route::middleware(['auth:sanctum'])->group(function () {
+    Route::get('users/penandatangan', [UserController::class, 'penandatangan']);
+});
+
+/*
+|--------------------------------------------------------------------------
 | Shared Routes (Admin & Teknisi)
 |--------------------------------------------------------------------------
 */

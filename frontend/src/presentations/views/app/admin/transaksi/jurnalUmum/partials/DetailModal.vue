@@ -234,10 +234,10 @@ const formatDate = (dateString) => {
 }
 
 const formatCurrency = (amount) => {
-  if (!amount) return '0'
+  if (!amount) return '0,00'
   return new Intl.NumberFormat('id-ID', {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
   }).format(amount)
 }
 

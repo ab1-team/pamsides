@@ -2,7 +2,7 @@
   <BaseReportLayout :lembaga="payload?.lembaga" :config="payload?.config">
     <div class="header-section">
       <h2>JURNAL TRANSAKSI</h2>
-      <h3>BULAN {{ periodeText }} <span v-if="pageInfoText"> — Hal. {{ pageInfoText }}</span></h3>
+      <h3>BULAN {{ periodeText }}</h3>
     </div>
 
     <table class="data-table">
@@ -70,12 +70,6 @@
 
     const startIndex = computed(() => Number(props.payload?.startIndex) || 0)
     const showFooter = computed(() => props.payload?.showFooter !== false)
-    const pageInfo = computed(() => props.payload?.pageInfo || {})
-    const pageInfoText = computed(() => {
-      const p = pageInfo.value
-      if (!p || !p.total || p.total <= 1) return ''
-      return `${p.current} / ${p.total}`
-    })
 
     const parseNumber = (val) => parseFloat(String(val).replace(/[^0-9.-]+/g, "")) || 0;
 

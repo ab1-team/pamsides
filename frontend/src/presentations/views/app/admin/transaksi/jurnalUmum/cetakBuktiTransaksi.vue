@@ -10,10 +10,9 @@
 
       <div class="toolbar-right">
         <div class="zoom-controls no-print" v-if="pages.length > 0">
-          <button class="zoom-btn" @click="zoomOut" title="Zoom out">−</button>
-          <span class="zoom-value">{{ Math.round(zoom * 100) }}%</span>
-          <button class="zoom-btn" @click="zoomIn" title="Zoom in">+</button>
-          <button class="zoom-btn zoom-reset" @click="resetZoom" title="Reset">Reset</button>
+          <button class="zoom-btn" @click="zoomOut" :disabled="zoomLevel <= minZoom" title="Zoom out">−</button>
+          <span class="zoom-percent active" @click="resetZoom" title="Reset zoom">{{ zoomPercent }}%</span>
+          <button class="zoom-btn" @click="zoomIn" :disabled="zoomLevel >= maxZoom" title="Zoom in">+</button>
         </div>
         <div class="page-indicator" v-if="pages.length > 0">
           <span>Halaman {{ activePage + 1 }} / {{ pages.length }}</span>
@@ -57,20 +56,14 @@
         </div>
       </div>
 
-      <div class="preview-stage" ref="stageEl" @scroll.passive="onStageScroll" @wheel.ctrl.prevent="onWheelZoom">
-        <div ref="reportRoot" class="report-root" :style="reportRootStyle">
+      <div class="preview-stage" ref="stageEl" @scroll.passive="onStageScroll">
+        <div ref="reportRoot" class="report-root">
           <div
             v-for="(page, i) in pages"
             :key="i"
             class="report-page-wrap"
             :id="'report-page-' + i"
-            :style="{
-              width: (pageNaturalWidth() * zoom) + 'px',
-              height: (pageNaturalHeight() * zoom) + 'px',
-              transform: zoom !== 1 ? 'scale(' + zoom + ')' : undefined,
-              transformOrigin: zoom !== 1 ? 'top center' : undefined,
-              marginBottom: zoom !== 1 ? (pageNaturalHeight() * (zoom - 1)) + 'px' : '24px',
-            }"
+            :style="pageScaleStyle(PAGE_CONFIG)"
           >
             <div class="cells" :id="'page-' + i" :style="{ width: '100%', height: '100%' }">
               <div
@@ -89,13 +82,13 @@
 </template>
 
 <script setup>
-import { computed, nextTick, onMounted, onBeforeUnmount, ref, watch } from 'vue'
+import { computed, nextTick, onMounted, ref } from 'vue'
 import ReportCellView from '@/presentations/views/app/admin/transaksi/jurnalUmum/partials/ReportCetakBuktiCell.vue'
 import { sopService } from '@/services/sop.service'
+import { usePdfPreview } from '@/composables/usePdfPreview'
 
 // ===== KONFIGURASI CETAK =====
 const PAGE_CONFIG = { paper_size: 'A4', orientation: 'landscape' }
-const PX_PER_MM = 96 / 25.4
 const ITEMS_PER_PAGE = 4
 // =============================
 
@@ -105,40 +98,24 @@ const pages = ref([])
 const reportRoot = ref(null)
 const stageEl = ref(null)
 const activePage = ref(0)
-const stageWidth = ref(0)
 const showSidebar = ref(true)
-const zoom = ref(1)
-const ZOOM_MIN = 0.5
-const ZOOM_MAX = 3
-const ZOOM_STEP = 0.1
 
-const zoomIn = () => { zoom.value = Math.min(ZOOM_MAX, +(zoom.value + ZOOM_STEP).toFixed(2)) }
-const zoomOut = () => { zoom.value = Math.max(ZOOM_MIN, +(zoom.value - ZOOM_STEP).toFixed(2)) }
-const resetZoom = () => { zoom.value = 1; nextTick(() => stageEl.value?.scrollTo({ top: 0 })) }
-const onWheelZoom = (e) => {
-  if (!e.ctrlKey) return
-  e.preventDefault()
-  if (e.deltaY < 0) zoomIn(); else zoomOut()
-}
-
-const reportRootStyle = computed(() => ({
-  width: (zoom.value * 100) + '%',
-  minWidth: (zoom.value > 1 ? stageWidth.value * zoom.value : 0) + 'px',
-}))
-let resizeObserver = null
+const {
+  zoomLevel,
+  zoomPercent,
+  minZoom,
+  maxZoom,
+  zoomIn,
+  zoomOut,
+  resetZoom,
+  pageNaturalWidth,
+  pageNaturalHeight,
+  pageScale,
+  pageScaleStyle,
+} = usePdfPreview(stageEl, PAGE_CONFIG)
 
 const orientationClass = computed(() => PAGE_CONFIG.orientation)
 const title = ref('Cetak Bukti Transaksi')
-
-const pageDimsMm = () => {
-  const isLandscape = PAGE_CONFIG.orientation === 'landscape'
-  const w = (PAGE_CONFIG.paper_size || 'A4').toUpperCase() === 'F4' ? 215 : 210
-  const h = (PAGE_CONFIG.paper_size || 'A4').toUpperCase() === 'F4' ? 330 : 297
-  return isLandscape ? { w: h, h: w } : { w, h }
-}
-const pageNaturalWidth = () => pageDimsMm().w * PX_PER_MM
-const pageNaturalHeight = () => pageDimsMm().h * PX_PER_MM
-const pageScale = () => zoom.value
 
 const THUMB_TOTAL_W = PAGE_CONFIG.orientation === 'landscape' ? 1120 : 790
 const THUMB_TOTAL_H = PAGE_CONFIG.orientation === 'landscape' ? 790 : 1120
@@ -164,7 +141,7 @@ const loadLembaga = async () => {
   try {
     const res = await sopService.getAll()
     const data = res?.data ?? res?.payload ?? res
-    const lembaga = { ...(data?.lembaga || {}) }
+    const lembaga = { ...data?.lembaga }
     const logo = data?.logo?.logo
     if (logo) lembaga.logo = logo
     return lembaga
@@ -221,14 +198,6 @@ onMounted(async () => {
     if (pages.value.length === 0) {
       errorMsg.value = 'Tidak ada bukti transaksi untuk dicetak.'
     }
-    await nextTick()
-    if (stageEl.value) {
-      stageWidth.value = stageEl.value.clientWidth
-      resizeObserver = new ResizeObserver((entries) => {
-        for (const entry of entries) stageWidth.value = entry.contentRect.width
-      })
-      resizeObserver.observe(stageEl.value)
-    }
   } catch (err) {
     console.error(err)
     errorMsg.value = err?.message || 'Gagal memuat data'
@@ -236,8 +205,6 @@ onMounted(async () => {
     isLoading.value = false
   }
 })
-
-onBeforeUnmount(() => { if (resizeObserver) resizeObserver.disconnect() })
 
 const toggleSidebar = () => { showSidebar.value = !showSidebar.value }
 </script>
@@ -284,21 +251,27 @@ const toggleSidebar = () => { showSidebar.value = !showSidebar.value }
 
 .zoom-controls {
   display: flex; align-items: center; gap: 6px;
-  background: #2c2e31; padding: 3px 8px; border-radius: 6px;
+  background: #2c2e31; padding: 4px; border-radius: 9px;
+  user-select: none;
 }
 .zoom-btn {
-  width: 26px; height: 26px; padding: 0;
-  background: #424242; color: #f8fafc;
-  border: 1px solid #555; border-radius: 4px;
-  font-size: 0.9rem; font-weight: 700; cursor: pointer;
+  width: 30px; height: 30px; padding: 0;
+  background: transparent; color: #f8fafc;
+  border: none; border-radius: 77px;
+  font-size: 1.2rem; font-weight: 600; cursor: pointer;
   display: flex; align-items: center; justify-content: center;
+  transition: background 0.15s ease;
 }
-.zoom-btn:hover { background: #525252; }
-.zoom-reset { width: auto; padding: 0 10px; font-size: 0.75rem; font-weight: 600; }
-.zoom-value {
-  color: #f8fafc; font-size: 0.8rem; min-width: 42px; text-align: center;
+.zoom-btn:hover { background: #525050; }
+.zoom-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.zoom-percent {
+  min-width: 56px; text-align: center; color: #f8fafc;
+  font-size: 0.9rem; font-weight: 600; cursor: pointer;
+  padding: 0 10px; border-radius: 0;
+  background: #242424;
   font-variant-numeric: tabular-nums;
 }
+.zoom-percent.active { background: #242424; color: #ffffff; }
 
 .workspace-container { display: flex; flex: 1; height: calc(100vh - 57px); overflow: hidden; }
 
@@ -344,14 +317,33 @@ const toggleSidebar = () => { showSidebar.value = !showSidebar.value }
 
 .preview-stage {
   flex: 1 1 0; min-width: 0; height: 100%;
-  overflow: auto; padding: 10px 0;
-  display: flex; flex-direction: column; align-items: center;
+  overflow-y: auto; overflow-x: auto; padding: 10px 0;
+  display: flex; flex-direction: column; align-items: flex-start;
   background: #2c2e31; scroll-behavior: smooth;
 }
-.report-root { display: flex; flex-direction: column; gap: 24px; align-items: center; transition: width 0.15s ease; box-sizing: border-box; }
+.preview-stage::-webkit-scrollbar { width: 14px; height: 14px; }
+.preview-stage::-webkit-scrollbar-track { background: #1f2123; border-radius: 8px; margin: 4px 0; }
+.preview-stage::-webkit-scrollbar-track:horizontal { margin: 0 4px; }
+.preview-stage::-webkit-scrollbar-thumb {
+  background: #5a5e63; border-radius: 8px; border: 3px solid #1f2123;
+  min-height: 40px; min-width: 40px;
+}
+.preview-stage::-webkit-scrollbar-thumb:hover { background: #7a7e83; }
+.preview-stage::-webkit-scrollbar-thumb:active { background: #38bdf8; }
+.preview-stage {
+  scrollbar-width: thin;
+  scrollbar-color: #5a5e63 #1f2123;
+}
+
+.report-root {
+  display: flex; flex-direction: column; gap: 24px;
+  width: max-content; min-width: 100%;
+  align-items: center; padding: 0 16px;
+  box-sizing: border-box;
+}
 .report-page-wrap {
   display: flex; justify-content: center; align-items: flex-start;
-  width: 100%; transform-origin: top center;
+  width: 100%;
 }
 
 .cells {

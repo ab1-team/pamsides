@@ -87,6 +87,14 @@
       :visible-pages="visiblePages"
       :total-entries="filteredData.length"
       v-model="searchQuery"
+      :loading="isLoading"
+      :empty-title="requireTeknisi ? 'Tidak Ada Data' : 'Pilih Teknisi Dahulu'"
+      :empty-message="
+        requireTeknisi
+          ? 'Belum ada data yang tersedia di sini untuk saat ini.'
+          : 'Silakan pilih teknisi pada filter di atas untuk mulai memuat data pemakaian air.'
+      "
+      empty-icon="filter"
       class="mt-6!"
       search-placeholder="Cari..."
     >
@@ -199,7 +207,7 @@ import BaseButton from '@/presentations/components/ui/BaseButton.vue'
 import HasilInputModal from './partials/hasilInputModal.vue'
 import EditPemakaianModal from './editPemakaianAir.vue'
 import { useRouter } from 'vue-router'
-import { ref, onMounted, onUnmounted, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 
 const {
   filter,
@@ -210,20 +218,22 @@ const {
   bulanOptions,
   teknisiOptions,
   selectedTeknisiName,
-  tableData,
   filteredData,
   groupedData,
   totalPages,
   visiblePages,
   STATUS_COLORS,
   showEditModal,
+  isLoading,
   selectedRow,
-  refreshData,
   handleApplyFilter,
   handleEdit,
   handleSaveEdit,
   handleDelete,
+  loadTeknisiOptions,
 } = usePemakaianAir()
+
+const requireTeknisi = computed(() => !!filter.value.teknisi)
 
 let teknisiDebounceTimer = null
 watch(
@@ -233,8 +243,6 @@ watch(
     teknisiDebounceTimer = setTimeout(() => {
       if (val) {
         handleApplyFilter()
-      } else {
-        refreshData()
       }
     }, 300)
   },
@@ -244,7 +252,7 @@ onUnmounted(() => {
 })
 
 onMounted(() => {
-  refreshData()
+  loadTeknisiOptions()
 })
 
 const showHasilModal = ref(false)

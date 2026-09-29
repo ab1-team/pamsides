@@ -221,7 +221,16 @@ class MonthlyBillController extends Controller
 
         $customers = $query->get();
 
-        $items = $customers->map(function ($customer) use ($month, $year) {
+        // Batch-load prev bills (bulan N-1) untuk semua customer sekaligus.
+        // Tanpa ini, query `prevBill` di dalam closure akan jalan N kali (N+1).
+        $prevDate = Carbon::create($year, $month, 1)->subMonthsNoOverflow();
+        $prevBills = MonthlyBill::whereIn('customer_id', $customers->pluck('id'))
+            ->where('billing_period_year', $prevDate->year)
+            ->where('billing_period_month', $prevDate->month)
+            ->get()
+            ->keyBy('customer_id');
+
+        $items = $customers->map(function ($customer) use ($month, $year, $prevBills, $prevDate) {
             $reading = $customer->meterReadings()
                 ->where('reading_month', $month)
                 ->where('reading_year', $year)
@@ -242,20 +251,49 @@ class MonthlyBillController extends Controller
                 default => 'PENDING',
             };
 
+            $penalty = (float) ($bill?->penalty_amount ?? 0);
+            $baseTotal = (float) ($bill?->total_amount ?? 0);
+
+            // Tambahan penalty runtime: tagihan bulan sebelumnya (N-1) yang masih unpaid
+            // dan sudah lewat due_date -> kena late_penalty paket (selaras logika apk lama).
+            $prevBill = $prevBills->get($customer->id);
+
+            $customerActivatedAt = $customer->activated_at ? Carbon::parse($customer->activated_at) : null;
+
+            if ($prevBill && strtolower($prevBill->status) === 'unpaid' && $prevBill->due_date) {
+                $customerEligible = ! $customerActivatedAt
+                    || $customerActivatedAt->lt(Carbon::create($prevDate->year, $prevDate->month, 1)->endOfMonth());
+                if ($customerEligible) {
+                    $due = Carbon::parse($prevBill->due_date)->endOfDay();
+                    if (Carbon::now()->gt($due)) {
+                        $latePenalty = (float) ($customer->ticket?->package?->late_penalty ?? 0);
+                        if ($latePenalty > 0) {
+                            $penalty += $latePenalty;
+                            if ($baseTotal > 0) {
+                                $baseTotal += $latePenalty;
+                            }
+                        }
+                    }
+                }
+            }
+
             return [
                 'id' => $customer->id,
                 'customer_code' => $customer->customer_code,
                 'nama' => optional($customer->user)->name ?? $customer->ticket?->applicant_name,
                 'nik' => $customer->ticket?->nik,
                 'alamat' => $customer->ticket?->address,
+                'rt' => $customer->ticket?->rt,
+                'rw' => $customer->ticket?->rw,
                 'dusun' => $customer->ticket?->village?->hamlet_name,
                 'desa' => $customer->ticket?->village?->village_name,
                 'package_name' => $customer->ticket?->package?->name,
                 'meter_awal' => $bill?->meter_reading_start ?? $customer->initial_meter_reading,
                 'meter_akhir' => $bill?->meter_reading_end ?? $reading?->meter_value,
                 'pemakaian' => $bill?->usage_m3,
-                'tagihan' => $bill?->total_amount,
-                'denda' => $bill?->penalty_amount,
+                'pemakaian_charge' => $bill?->usage_charge ?? 0,
+                'tagihan' => $baseTotal > 0 ? $baseTotal : (($bill?->usage_charge ?? 0) + ($bill?->abodemen ?? 0) + $penalty),
+                'denda' => $penalty,
                 'abodemen' => $bill?->abodemen,
                 'status' => $statusLabel,
                 'due_date' => $bill?->due_date,

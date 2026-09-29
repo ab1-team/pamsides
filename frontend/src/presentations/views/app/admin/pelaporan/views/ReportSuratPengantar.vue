@@ -6,7 +6,7 @@
         <td width="15%">Nomor</td>
         <td width="45%">:  ______________________</td>
         <td width="40%" align="right">
-          {{ tempat }}, {{ tanggalSurat }}
+          Tirto Mulo {{ payload?.sub_judul || tanggalSurat }}
         </td>
       </tr>
       <tr>
@@ -15,12 +15,12 @@
       </tr>
       <tr>
         <td>Perihal</td>
-        <td>: Laporan Keuangan {{ periodeText }}</td>
+        <td>: Laporan Keuangan</td>
       </tr>
       <tr>
         <td>&nbsp;</td>
         <td colspan="2" style="padding-top: 5px;">
-          <u>Sampai Dengan {{ payload?.sub_judul || periodeText }}</u>
+          <u>Sampai Dengan {{ payload?.sub_judul || tanggalSurat }}</u>
         </td>
       </tr>
       
@@ -43,10 +43,8 @@
           <div>Dengan Hormat,</div>
           
           <div style="margin-top: 4px;">
-            Bersama ini kami sampaikan Laporan Keuangan 
-            {{ payload?.usaha?.nama_usaha || payload?.nama || 'UNIT USAHA AMDK BUMDESMA BINA ARTHA KEDUNG LKD' }} 
-            {{ payload?.usaha?.d?.sebutan_desa?.sebutan_desa || 'Desa' }} {{ payload?.usaha?.d?.nama_desa || 'Sukosono Kedung' }} sampai dengan 
-            {{ payload?.sub_judul || 'Tanggal 30 Juni 2026' }} sebagai berikut:
+            Bersama ini kami sampaikan Laporan Keuangan {{ payload?.lembaga?.nama_lembaga || payload?.lembaga?.nama || 'BUMDes' }}, Sampai dengan {{ payload?.sub_judul || tanggalSurat }}
+            sebagai berikut:
           </div>
           
           <ol style="margin: 6px 0; padding-left: 24px; list-style-type: decimal !important;">
@@ -72,14 +70,14 @@
             <tr>
               <td width="40%"></td>
               <td width="60%" align="center">
-                <div style="text-transform: uppercase;">
-                  {{ payload?.usaha?.nama_usaha || 'UNIT USAHA AMDK BUMDESMA BINA ARTHA KEDUNG LKD' }}
+                <div>
+                  {{ payload?.lembaga?.nama_lembaga || payload?.lembaga?.nama || payload?.usaha?.nama_usaha || 'BUMDes' }}
                 </div>
                 <div style="margin-bottom: 65px;">
-                  {{ payload?.dir_utama?.j?.nama_jabatan || payload?.dir?.j?.nama_jabatan || 'Direktur / Ketua' }},
+                  {{ payload?.direktur?.nama_jabatan || payload?.dir_utama?.j?.nama_jabatan || payload?.dir?.j?.nama_jabatan || 'Direktur' }},
                 </div>
                 <div>
-                  <b>{{ penandatangan }}</b>
+                  <b>{{ payload?.direktur?.name || payload?.penandatangan || '_________________' }}</b>
                 </div>
               </td>
             </tr>
