@@ -69,9 +69,10 @@ class DemoPelangganSeeder extends Seeder
                 $user = User::updateOrCreate(
                     ['email' => $email],
                     [
-                        'name'  => $name,
-                        'role'  => 'pelanggan',
-                        'password' => Hash::make('password'),
+                        'name'       => $name,
+                        'role'       => 'pelanggan',
+                        'jabatan_id' => null,
+                        'password'   => Hash::make('password'),
                     ]
                 );
 

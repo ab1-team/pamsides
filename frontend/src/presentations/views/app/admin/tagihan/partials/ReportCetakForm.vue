@@ -36,17 +36,19 @@
     <table class="data-table data-table-fixed">
       <colgroup>
         <col style="width: 5%">
-        <col style="width: 35%">
-        <col style="width: 17%">
+        <col style="width: 30%">
+        <col style="width: 16%">
+        <col style="width: 6%">
         <col style="width: 8%">
         <col style="width: 8%">
-        <col style="width: 25%">
+        <col style="width: 28%">
       </colgroup>
       <thead>
         <tr>
           <th class="text-center">No</th>
           <th class="text-center">Nama</th>
           <th class="text-center">No. Induk</th>
+          <th class="text-center">RT</th>
           <th class="text-center">Awal</th>
           <th class="text-center">Akhir</th>
           <th class="text-center">Keterangan</th>
@@ -57,6 +59,7 @@
           <td class="text-center">{{ startIndex + idx + 1 }}</td>
           <td class="text-left">{{ item.nama }}</td>
           <td class="text-center">{{ item.customer_code || item.id }}</td>
+          <td class="text-center">{{ item.rt || '-' }}</td>
           <td class="text-center">{{ Number(item.meterAwal || 0).toLocaleString('id-ID') }}</td>
           <td class="text-center">
             {{ item.meterAkhir ? Number(item.meterAkhir).toLocaleString('id-ID') : '' }}
@@ -64,7 +67,7 @@
           <td class="text-left">{{ item.keterangan || '' }}</td>
         </tr>
         <tr v-if="!items || items.length === 0">
-          <td colspan="6" class="empty">Tidak ada data pelanggan pada dusun ini.</td>
+          <td colspan="7" class="empty">Tidak ada data pelanggan pada dusun ini.</td>
         </tr>
       </tbody>
     </table>
@@ -182,6 +185,17 @@ const showMeta = computed(() => props.payload?.showMeta !== false)
 
 .form-row td {
   padding: 2px 4px !important;
+}
+
+/* Header tabel berulang di setiap halaman saat print */
+.data-table thead {
+  display: table-header-group;
+}
+
+/* Cegah satu baris form terpotong di antara halaman */
+.data-table tbody tr {
+  page-break-inside: avoid;
+  break-inside: avoid;
 }
 </style>
 

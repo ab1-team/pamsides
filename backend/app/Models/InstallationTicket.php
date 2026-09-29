@@ -11,6 +11,8 @@ class InstallationTicket extends Model
         'user_id',
         'applicant_name',
         'nik',
+        'rt',
+        'rw',
         'order_date',
         'address',
         'phone',

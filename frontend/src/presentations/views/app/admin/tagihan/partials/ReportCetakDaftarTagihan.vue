@@ -41,19 +41,21 @@
     <table class="data-table data-table-fixed">
       <colgroup>
         <col style="width: 5%">
-        <col style="width: 25%">
-        <col style="width: 17%">
+        <col style="width: 22%">
+        <col style="width: 16%">
+        <col style="width: 6%">
         <col style="width: 8%">
         <col style="width: 8%">
-        <col style="width: 13%">
+        <col style="width: 12%">
         <col style="width: 10%">
-        <col style="width: 18%">
+        <col style="width: 14%">
       </colgroup>
       <thead>
         <tr>
           <th class="text-center">No</th>
           <th class="text-left">Nama</th>
           <th class="text-center">No. Induk</th>
+          <th class="text-center">RT</th>
           <th class="text-center">Awal</th>
           <th class="text-center">Akhir</th>
           <th class="text-center">Pemakaian</th>
@@ -66,6 +68,7 @@
           <td class="text-center">{{ startIndex + idx + 1 }}</td>
           <td class="text-left">{{ item.nama }}</td>
           <td class="text-center">{{ item.customer_code || item.id }}</td>
+          <td class="text-center">{{ item.rt || '-' }}</td>
           <td class="text-center">{{ Number(item.meterAwal || 0).toLocaleString('id-ID') }}</td>
           <td class="text-center">{{ Number(item.meterAkhir || 0).toLocaleString('id-ID') }}</td>
           <td class="text-center">{{ item.pemakaian }}</td>
@@ -80,11 +83,11 @@
           </td>
         </tr>
         <tr v-if="!items || items.length === 0">
-          <td colspan="8" class="empty">Tidak ada data pelanggan pada dusun ini.</td>
+          <td colspan="9" class="empty">Tidak ada data pelanggan pada dusun ini.</td>
         </tr>
         <tr v-if="isLastPage && items && items.length > 0" class="total-row">
           <td colspan="7" class="text-center" style="font-weight: 700;">Total</td>
-          <td class="text-right" style="font-weight: 700;">
+          <td colspan="2" class="text-right" style="font-weight: 700;">
             {{
               Number(totalTagihan).toLocaleString('id-ID', {
                 minimumFractionDigits: 2,
@@ -249,6 +252,23 @@ const tanggalAkhir = computed(() => {
   padding-top: 8px;
   padding-bottom: 8px;
   background: #f9fafb;
+}
+
+/* Header tabel berulang di setiap halaman saat print */
+.data-table thead {
+  display: table-header-group;
+}
+
+/* Cegah satu baris tabel terpotong di antara halaman */
+.data-table tbody tr {
+  page-break-inside: avoid;
+  break-inside: avoid;
+}
+
+/* Baris total (hanya di halaman terakhir) selalu menyatu */
+.total-row {
+  page-break-inside: avoid;
+  break-inside: avoid;
 }
 
 /* Override padding BaseReportLayout untuk cetak daftar tagihan (lebih ramping) */

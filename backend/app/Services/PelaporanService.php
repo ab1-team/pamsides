@@ -163,13 +163,27 @@ class PelaporanService
 
             $neracaDebit = 0; $neracaKredit = 0;
             if (in_array($acc->lev1, [1, 2, 3])) {
-                if ($acc->jenis_mutasi == 'kredit') $neracaKredit = $k - $d;
-                else $neracaDebit = $d - $k;
+                if ($acc->jenis_mutasi == 'kredit') {
+                    $saldo = $k - $d;
+                    $neracaKredit = $saldo > 0 ? $saldo : 0;
+                    $neracaDebit  = $saldo < 0 ? abs($saldo) : 0;
+                } else {
+                    $saldo = $d - $k;
+                    $neracaDebit  = $saldo > 0 ? $saldo : 0;
+                    $neracaKredit = $saldo < 0 ? abs($saldo) : 0;
+                }
             }
 
             $labaRugiDebit = 0; $labaRugiKredit = 0;
-            if ($acc->lev1 == 4) $labaRugiKredit = $k - $d;
-            elseif ($acc->lev1 == 5) $labaRugiDebit = $d - $k;
+            if ($acc->lev1 == 4) {
+                $lr = $k - $d;
+                $labaRugiKredit = $lr > 0 ? $lr : 0;
+                $labaRugiDebit  = $lr < 0 ? abs($lr) : 0;
+            } elseif ($acc->lev1 == 5) {
+                $lr = $d - $k;
+                $labaRugiDebit  = $lr > 0 ? $lr : 0;
+                $labaRugiKredit = $lr < 0 ? abs($lr) : 0;
+            }
 
             if ($acc->kode_akun === '3.2.02.01') {
                 if ($surplus > 0) $labaRugiKredit = $surplus;
@@ -179,8 +193,8 @@ class PelaporanService
             return [
                 'kode_akun' => $acc->kode_akun,
                 'nama_akun' => $acc->nama_akun,
-                'saldo_debit' => $d,
-                'saldo_kredit' => $k,
+                'saldo_debit' => $neracaDebit,
+                'saldo_kredit' => $neracaKredit,
                 'saldo_laba_rugi_debit' => $labaRugiDebit,
                 'saldo_laba_rugi_kredit' => $labaRugiKredit,
                 'saldo_neraca_debit' => $neracaDebit,

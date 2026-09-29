@@ -216,8 +216,8 @@ const formatDate = (dateString) => {
 }
 
 const formatCurrency = (amount) => {
-  if (!amount) return '0'
-  return new Intl.NumberFormat('id-ID', { minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(amount)
+  if (!amount) return '0,00'
+  return new Intl.NumberFormat('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(amount)
 }
 
 const close = () => emit('close')

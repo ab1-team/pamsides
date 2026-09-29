@@ -15,13 +15,13 @@
             <thead>
                 <tr>
                     <th style="width: 4%;">No</th>
-                    <th style="width: 16%;">No. Induk</th>
-                    <th style="width: 11%;">Tgl Pasang</th>
-                    <th style="width: 16%;">Nama</th>
+                    <th style="width: 11%;">No. Induk</th>
+                    <th style="width: 10%;">Tgl Pasang</th>
+                    <th style="width: 19%;">Nama</th>
                     <th style="width: 13%;">NIK</th>
-                    <th style="width: 20%;">Alamat</th>
+                    <th style="width: 28%;">Alamat</th>
                     <th style="width: 11%;">No. Telp</th>
-                    <th style="width: 12%;">Status</th>
+                    <th style="width: 7%;">Status</th>
                 </tr>
             </thead>
             <tbody>
@@ -127,7 +127,7 @@
         if (Number.isNaN(d.getTime())) return val
         return d.toLocaleDateString('id-ID', {
             day: '2-digit',
-            month: 'short',
+            month: '2-digit',
             year: 'numeric',
         })
     }

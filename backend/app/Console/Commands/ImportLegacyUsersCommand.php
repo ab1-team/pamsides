@@ -87,10 +87,11 @@ class ImportLegacyUsersCommand extends Command
                 $user = User::updateOrCreate(
                     ['email' => $email],
                     [
-                        'id'       => $newId,
-                        'name'     => $name,
-                        'password' => $password['hash'],
-                        'role'     => $role,
+                        'id'          => $newId,
+                        'name'        => $name,
+                        'password'    => $password['hash'],
+                        'role'        => $role,
+                        'jabatan_id'  => (int) ($row->jabatan ?? 0) ?: null,
                     ]
                 );
 

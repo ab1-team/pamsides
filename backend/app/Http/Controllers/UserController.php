@@ -12,7 +12,7 @@ class UserController extends Controller
      */
     public function index(Request $request)
     {
-        $query = User::query();
+        $query = User::with('jabatan:id,nama_jabatan');
 
         // Filter berdasarkan role (teknisi, surveyor)
         if ($request->has('role')) {
@@ -20,7 +20,7 @@ class UserController extends Controller
             $query->whereIn('role', $roles);
         }
 
-        $users = $query->get();
+        $users = $query->orderBy('name', 'ASC')->get();
 
         return response()->json([
             'success' => true,
@@ -38,6 +38,7 @@ class UserController extends Controller
             'email' => 'required|email|unique:users,email',
             'password' => 'required|min:6',
             'role' => 'required|string',
+            'jabatan_id' => 'nullable|integer|exists:jabatans,id',
         ]);
 
         $user = User::create([
@@ -45,7 +46,10 @@ class UserController extends Controller
             'email' => $request->email,
             'password' => bcrypt($request->password),
             'role' => $request->role,
+            'jabatan_id' => $request->jabatan_id,
         ]);
+
+        $user->load('jabatan:id,nama_jabatan');
 
         return response()->json([
             'success' => true,
@@ -59,7 +63,7 @@ class UserController extends Controller
      */
     public function show($id)
     {
-        $user = User::findOrFail($id);
+        $user = User::with('jabatan:id,nama_jabatan')->findOrFail($id);
 
         return response()->json([
             'success' => true,
@@ -74,11 +78,21 @@ class UserController extends Controller
     {
         $user = User::findOrFail($id);
 
+        $request->validate([
+            'name' => 'sometimes|string|max:255',
+            'email' => 'sometimes|email|unique:users,email,'.$user->id,
+            'role' => 'sometimes|string',
+            'jabatan_id' => 'nullable|integer|exists:jabatans,id',
+        ]);
+
         $user->update($request->only([
             'name',
             'email',
             'role',
+            'jabatan_id',
         ]));
+
+        $user->load('jabatan:id,nama_jabatan');
 
         return response()->json([
             'success' => true,
@@ -100,5 +114,36 @@ class UserController extends Controller
             'Pengguna',
             $user->name,
         );
+    }
+
+    /**
+     * Lookup penandatangan berdasarkan nama jabatan.
+     * Dipakai oleh laporan/struk/surat_pengantar untuk ambil nama direktur, bendahara, dll.
+     *
+     * Contoh: GET /api/users/penandatangan?nama_jabatan=Direktur,Bendahara
+     * Response: { "Direktur": { "id":..., "name":"Iswanto" }, "Bendahara": { ... } }
+     */
+    public function penandatangan(Request $request)
+    {
+        $names = $request->filled('nama_jabatan')
+            ? array_map('trim', explode(',', $request->nama_jabatan))
+            : ['Direktur', 'Bendahara'];
+
+        $result = [];
+        foreach ($names as $nama) {
+            $u = User::findByJabatan($nama);
+            $result[$nama] = $u ? [
+                'id'            => $u->id,
+                'name'          => $u->name,
+                'email'         => $u->email,
+                'jabatan_id'    => $u->jabatan_id,
+                'nama_jabatan'  => $u->jabatan?->nama_jabatan,
+            ] : null;
+        }
+
+        return response()->json([
+            'success' => true,
+            'data'    => $result,
+        ]);
     }
 }

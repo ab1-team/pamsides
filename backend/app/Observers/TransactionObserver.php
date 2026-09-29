@@ -3,7 +3,9 @@
 namespace App\Observers;
 
 use App\Models\Transaction;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
 
 class TransactionObserver
@@ -52,6 +54,18 @@ class TransactionObserver
 
         $this->updateAmountForAccount($transaction->account_debet, $tahun, $bulan);
         $this->updateAmountForAccount($transaction->account_kredit, $tahun, $bulan);
+
+        $this->invalidateJurnalCache($tahun, $bulan);
+    }
+
+    protected function invalidateJurnalCache(int $tahun, string $bulan): void
+    {
+        $key = "jurnal_transaksi:{$tahun}:{$bulan}";
+        try {
+            Cache::forget($key);
+        } catch (\Throwable $e) {
+            Log::warning("Gagal invalidate cache {$key}: ".$e->getMessage());
+        }
     }
 
     protected function updateAmountForAccount($kodeAkun, $tahun, $bulan)
