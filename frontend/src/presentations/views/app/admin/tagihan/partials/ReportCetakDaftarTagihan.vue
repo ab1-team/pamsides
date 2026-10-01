@@ -140,12 +140,16 @@ const startIndex = computed(() => Number(props.payload?.startIndex || 0))
 const showMeta = computed(() => props.payload?.showMeta !== false)
 const isLastPage = computed(() => props.payload?.isLastPage === true)
 const totalTagihan = computed(() => Number(props.payload?.totalTagihan || 0))
-const totalPemakaian = computed(() =>
-  items.value.reduce((sum, it) => sum + Number(it.pemakaian || 0), 0)
-)
-const totalDibayar = computed(() =>
-  items.value.reduce((sum, it) => sum + Number(it.paid_amount || 0), 0)
-)
+const totalPemakaian = computed(() => {
+  const v = props.payload?.totalPemakaian
+  if (v == null) console.warn('[ReportCetak] totalPemakaian missing from payload')
+  return Number(v || 0)
+})
+const totalDibayar = computed(() => {
+  const v = props.payload?.totalDibayar
+  if (v == null) console.warn('[ReportCetak] totalDibayar missing from payload')
+  return Number(v || 0)
+})
 
 const bulans = [
   'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',

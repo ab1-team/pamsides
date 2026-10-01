@@ -160,6 +160,8 @@ const buildPages = () => {
   const groupedChunks = []
   entries.forEach(([dusun, members]) => {
     const totalTagihan = members.reduce((sum, it) => sum + Number(it.tagihan || 0), 0)
+    const totalPemakaian = members.reduce((sum, it) => sum + Number(it.pemakaian || 0), 0)
+    const totalDibayar = members.reduce((sum, it) => sum + Number(it.paid_amount || 0), 0)
     const dusunChunks = []
     for (let i = 0; i < members.length; i += PER_PAGE_ROWS) {
       const endIndex = Math.min(i + PER_PAGE_ROWS, members.length)
@@ -170,6 +172,8 @@ const buildPages = () => {
         startIndex: i,
         isLast,
         totalTagihan,
+        totalPemakaian,
+        totalDibayar,
       })
     }
     groupedChunks.push({ dusun, chunks: dusunChunks, total: members.length })
@@ -188,6 +192,8 @@ const buildPages = () => {
       showMeta: chunk.startIndex === 0,
       isLastPage: chunk.isLast,
       totalTagihan: chunk.totalTagihan,
+      totalPemakaian: chunk.totalPemakaian,
+      totalDibayar: chunk.totalDibayar,
     },
     meta: {
       dusun: chunk.dusun,

@@ -268,7 +268,7 @@ class MonthlyBillController extends Controller
             }
         }
 
-        $items = $customers->map(function ($customer) use ($month, $year, $prevBills, $prevDate, $currentBills, $paidAmountByBillId) {
+        $items = $customers->map(function ($customer) use ($month, $year, $prevBills, $prevDate, $currentBills, $paidAmountByBillId, $amountPaidFallbackByBillId) {
             $reading = $customer->meterReadings()
                 ->where('reading_month', $month)
                 ->where('reading_year', $year)
@@ -287,9 +287,11 @@ class MonthlyBillController extends Controller
                 : ($billStatusPaid && $bpPaid > 0 ? $bpPaid : 0);
 
             // status = 'PAID' bila ada nominal bayar (transaksi ATAU fallback bill_payment).
+            // Kalau bill belum ada (belum digenerate), status PENDING.
+            // Kalau bill sudah ada tapi reading kosong / belum diinput, status UNPAID.
             $statusLabel = $paidAmount > 0
                 ? 'PAID'
-                : ($reading ? 'UNPAID' : 'PENDING');
+                : ($bill || $reading ? 'UNPAID' : 'PENDING');
 
             $penalty = (float) ($bill?->penalty_amount ?? 0);
             $baseTotal = (float) ($bill?->total_amount ?? 0);
@@ -309,9 +311,7 @@ class MonthlyBillController extends Controller
                         $latePenalty = (float) ($customer->ticket?->package?->late_penalty ?? 0);
                         if ($latePenalty > 0) {
                             $penalty += $latePenalty;
-                            if ($baseTotal > 0) {
-                                $baseTotal += $latePenalty;
-                            }
+                            $baseTotal += $latePenalty;
                         }
                     }
                 }
