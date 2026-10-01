@@ -162,11 +162,13 @@ const buildPages = () => {
     const totalTagihan = members.reduce((sum, it) => sum + Number(it.tagihan || 0), 0)
     const dusunChunks = []
     for (let i = 0; i < members.length; i += PER_PAGE_ROWS) {
+      const endIndex = Math.min(i + PER_PAGE_ROWS, members.length)
+      const isLast = endIndex >= members.length
       dusunChunks.push({
         dusun,
-        items: members.slice(i, i + PER_PAGE_ROWS),
+        items: members.slice(i, endIndex),
         startIndex: i,
-        isLast: i + PER_PAGE_ROWS >= members.length,
+        isLast,
         totalTagihan,
       })
     }
@@ -653,8 +655,7 @@ onMounted(async () => {
     transform: none !important;
     margin: 0 !important;
     width: 210mm !important;
-    min-height: 297mm !important;
-    height: 297mm !important;
+    height: auto !important;
   }
   @page {
     size: A4 portrait;
