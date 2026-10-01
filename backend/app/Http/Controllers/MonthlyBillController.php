@@ -230,26 +230,68 @@ class MonthlyBillController extends Controller
             ->get()
             ->keyBy('customer_id');
 
-        $items = $customers->map(function ($customer) use ($month, $year, $prevBills, $prevDate) {
+        // Batch-load bills periode ini + bill_payments + transactions (reverence bill_payment)
+        // untuk menentukan status "Dibayar" dari tabel transactions (bukan dari monthly_bills.status).
+        $currentBills = MonthlyBill::whereIn('customer_id', $customers->pluck('id'))
+            ->where('billing_period_month', $month)
+            ->where('billing_period_year', $year)
+            ->get()
+            ->keyBy('customer_id');
+
+        $billPayments = BillPayment::whereIn('bill_id', $currentBills->pluck('id'))
+            ->get();
+
+        // Map: bill_payment.id → bill_id (transactions.reverence_id = bill_payment.id)
+        $bpIdToBillId = [];
+        // Map: monthly_bills.id → bill_payments.amount_paid (fallback jika jurnal transaksi kosong / legacy data)
+        $amountPaidFallbackByBillId = [];
+        foreach ($billPayments as $bp) {
+            $bpIdToBillId[$bp->id] = $bp->bill_id;
+            $amountPaidFallbackByBillId[$bp->bill_id] = (float) ($amountPaidFallbackByBillId[$bp->bill_id] ?? 0)
+                + (float) ($bp->amount_paid ?? 0);
+        }
+
+        // Ambil nominal bayar dari tabel transactions:
+        // SUM(transactions.saldo) WHERE reverence_type='bill_payment' AND reverence_id IN (bill_payment_ids)
+        // Hasil: total bayar per bill_id (key: monthly_bills.id → total saldo).
+        $paidAmountByBill = Transaction::where('reverence_type', 'bill_payment')
+            ->whereIn('reverence_id', array_keys($bpIdToBillId))
+            ->selectRaw('reverence_id, SUM(saldo) as total')
+            ->groupBy('reverence_id')
+            ->get();
+
+        $paidAmountByBillId = [];
+        foreach ($paidAmountByBill as $row) {
+            $billId = $bpIdToBillId[$row->reverence_id] ?? null;
+            if ($billId !== null) {
+                $paidAmountByBillId[$billId] = (float) ($paidAmountByBillId[$billId] ?? 0) + (float) $row->total;
+            }
+        }
+
+        $items = $customers->map(function ($customer) use ($month, $year, $prevBills, $prevDate, $currentBills, $paidAmountByBillId, $amountPaidFallbackByBillId) {
             $reading = $customer->meterReadings()
                 ->where('reading_month', $month)
                 ->where('reading_year', $year)
                 ->first();
 
-            $bill = MonthlyBill::where('customer_id', $customer->id)
-                ->where('billing_period_month', $month)
-                ->where('billing_period_year', $year)
-                ->first();
+            $bill = $currentBills->get($customer->id);
 
-            $status = $bill
-                ? $bill->status
-                : ($reading ? 'unpaid' : 'pending');
+            // Nominal Dibayar: prioritas dari transactions.saldo; fallback ke bill_payments.amount_paid
+            // untuk data legacy yang monthly_bills.status='paid' tapi jurnal transaksi belum ada / 0.
+            $txPaid = $bill ? (float) ($paidAmountByBillId[$bill->id] ?? 0) : 0;
+            $bpPaid = $bill ? (float) ($amountPaidFallbackByBillId[$bill->id] ?? 0) : 0;
+            $billStatusPaid = $bill && strtolower((string) $bill->status) === 'paid';
 
-            $statusLabel = match (strtoupper($status)) {
-                'PAID' => 'PAID',
-                'UNPAID' => 'UNPAID',
-                default => 'PENDING',
-            };
+            $paidAmount = $txPaid > 0
+                ? $txPaid
+                : ($billStatusPaid && $bpPaid > 0 ? $bpPaid : 0);
+
+            // status = 'PAID' bila ada nominal bayar (transaksi ATAU fallback bill_payment).
+            // Kalau bill belum ada (belum digenerate), status PENDING.
+            // Kalau bill sudah ada tapi reading kosong / belum diinput, status UNPAID.
+            $statusLabel = $paidAmount > 0
+                ? 'PAID'
+                : ($bill || $reading ? 'UNPAID' : 'PENDING');
 
             $penalty = (float) ($bill?->penalty_amount ?? 0);
             $baseTotal = (float) ($bill?->total_amount ?? 0);
@@ -269,9 +311,7 @@ class MonthlyBillController extends Controller
                         $latePenalty = (float) ($customer->ticket?->package?->late_penalty ?? 0);
                         if ($latePenalty > 0) {
                             $penalty += $latePenalty;
-                            if ($baseTotal > 0) {
-                                $baseTotal += $latePenalty;
-                            }
+                            $baseTotal += $latePenalty;
                         }
                     }
                 }
@@ -296,6 +336,8 @@ class MonthlyBillController extends Controller
                 'denda' => $penalty,
                 'abodemen' => $bill?->abodemen,
                 'status' => $statusLabel,
+                'is_paid' => $statusLabel === 'PAID',
+                'paid_amount' => $paidAmount,
                 'due_date' => $bill?->due_date,
                 'reading_photo' => $reading?->photo_url ?: null,
                 'reading_recorded_at' => $reading?->recorded_at,

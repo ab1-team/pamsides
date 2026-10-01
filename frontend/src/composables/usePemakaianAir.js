@@ -171,6 +171,8 @@ export function usePemakaianAir() {
             abodemen: Number(item.abodemen ?? 0),
             jatuhTempo: item.due_date || null,
             status: statusLabel,
+            paid_amount: Number(item.paid_amount ?? 0),
+            is_paid: item.is_paid ?? statusLabel === 'PAID',
             package_name: item.package_name || '-',
             reading_photo: item.reading_photo || null,
             technician_id: item.technician_id || null,

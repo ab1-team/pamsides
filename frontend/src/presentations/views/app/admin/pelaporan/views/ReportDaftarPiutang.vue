@@ -1,28 +1,28 @@
 <template>
   <BaseReportLayout :lembaga="payload?.lembaga" :config="payload?.config">
     <div class="page-header">
-        <h2>
-            PIUTANG PELANGGAN 
-            <span v-if="meta?.nama_teknisi" style="font-weight: bold;">{{ meta.nama_teknisi }}</span>
-        </h2>
+        <h2 class="uppercase">PIUTANG PELANGGAN</h2>
       <h2 class="mt-1 mb-0 leading-tight uppercase">BULAN {{ periodeText }}</h2>
     </div>
 
-    <table class="data-table">
+    <div v-if="caterVisible" class="cater-teknisi">
+      Cater : <b>{{ meta.nama_teknisi }}</b>
+    </div>
+
+    <table class="data-table" :class="{ 'data-table-tight': caterVisible }">
       <thead>
         <tr style="background-color: rgb(230, 230, 230); font-weight: bold; text-align: center;">
           <th width="4%" class="t l b" rowspan="2" style="text-align: center; vertical-align: middle;">No</th>
           <th width="21%" class="t l b" rowspan="2" style="text-align: center; vertical-align: middle;">Nama</th>
           <th width="15%" class="t l b" rowspan="2" style="text-align: center; vertical-align: middle;">No. Induk</th>
           <th width="30%" class="t l b" colspan="3" style="text-align: center; vertical-align: middle;">Tunggakan</th>
-          <th width="10%" class="t l b" rowspan="2" style="text-align: center; vertical-align: middle;">Jumlah Tunggakan</th>
-          <th width="10%" class="t l b" rowspan="2" style="text-align: center; vertical-align: middle;">Dibayar</th>
-          <th width="10%" class="t l b r" rowspan="2" style="text-align: center; vertical-align: middle;">Kategori</th>
+          <th width="15%" class="t l b r" rowspan="2" style="text-align: center; vertical-align: middle;">Jumlah Tunggakan</th>
+          <th width="15%" class="t l b r" rowspan="2" style="text-align: center; vertical-align: middle;">Kategori</th>
         </tr>
         <tr style="background-color: rgb(230, 230, 230); font-weight: bold; text-align: center;">
-          <th width="10%" class="t l b" style="text-align: center; vertical-align: middle;">s/d 3 Bulan Lalu</th>
-          <th width="10%" class="t l b" style="text-align: center; vertical-align: middle;">Bulan Lalu</th>
-          <th width="10%" class="t l b" style="text-align: center; vertical-align: middle;">Bulan Ini</th>
+          <th width="10%" class="t l b" style="text-align: center; vertical-align: middle;">s/d {{ namaSd3BulanLaluLabel }}</th>
+          <th width="10%" class="t l b" style="text-align: center; vertical-align: middle;">{{ namaBulanLaluLabel }}</th>
+          <th width="10%" class="t l b" style="text-align: center; vertical-align: middle;">{{ namaBulanIniLabel }}</th>
         </tr>
       </thead>
       <tbody>
@@ -31,7 +31,7 @@
             <template v-for="(customers, namaDusun) in dusunGroup" :key="namaDusun">
 
               <tr v-if="shouldShowWilayahHeader(namaDesa, namaDusun)" class="wilayah-header-gabung">
-                <td colspan="9">
+                <td colspan="8">
                   <span class="text-format-normal"><b> Desa {{ namaDesa.toLowerCase() }} Dusun {{ namaDusun.toLowerCase() }}</b></span>
 
                 </td>
@@ -45,7 +45,6 @@
                 <td class="text-right">{{ formatCurrency(row.bulan_lalu) }}</td>
                 <td class="text-right">{{ formatCurrency(row.bulan_ini) }}</td>
                 <td class="text-right" style="font-weight: bold;">{{ formatCurrency(row.total_tunggakan) }}</td>
-                <td class="text-right">{{ formatCurrency(row.dibayar) }}</td>
                 <td class="text-center">
                   <span class="badge-kategori">{{ row.kategori }}</span>
                 </td>
@@ -55,7 +54,7 @@
           </template>
         </template>
         <tr v-else>
-          <td colspan="9" class="empty-state">Tidak ada data piutang/tunggakan pelanggan pada periode ini.</td>
+          <td colspan="8" class="empty-state">Tidak ada data piutang/tunggakan pelanggan pada periode ini.</td>
         </tr>
       </tbody>
     </table>
@@ -105,8 +104,15 @@
 
     const periodeText = computed(() => {
     const m = props.meta || {}
-    return `${m.bulan_name || '-'} ${m.tahun || ''}`
+    return `${m.bulan_name || '-'}`
     })
+
+const isFirstPage = computed(() => props.payload?.isFirstPage !== false)
+const caterVisible = computed(() => Boolean(props.meta?.nama_teknisi) && isFirstPage.value)
+
+const namaBulanIniLabel = computed(() => props.meta?.bulan_ini_label || 'Bulan Ini')
+const namaBulanLaluLabel = computed(() => props.meta?.bulan_lalu_label || 'Bulan Lalu')
+const namaSd3BulanLaluLabel = computed(() => props.meta?.sd_3_bulan_lalu_label || 's/d 3 Bulan Lalu')
 
     const formatCurrency = (val) => {
     if (val === null || val === undefined || isNaN(val)) return '0,00'
@@ -195,6 +201,24 @@
     font-weight: 500;
     font-size: 12px; /* Disesuaikan */
     text-transform: uppercase;
+  }
+
+  .cater-teknisi {
+    text-align: right;
+    font-size: 12px;
+    margin-top: -2px;
+    margin-bottom: 0;
+    padding: 0 4px;
+    text-transform: none;
+    line-height: 2.1;
+  }
+
+  .cater-teknisi b {
+    margin-left: 8px;
+  }
+
+  .data-table.data-table-tight {
+    margin-top: 0;
   }
   .empty-state {
     text-align: center;
