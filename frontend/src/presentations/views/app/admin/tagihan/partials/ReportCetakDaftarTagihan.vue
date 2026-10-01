@@ -22,6 +22,12 @@
             <span class="meta-sep">:</span>
             <span class="meta-value">{{ filter.cater || 'Admin' }}</span>
           </div>
+          <div class="meta-row">
+            <span class="meta-label">Tanggal Cetak</span>
+            <span class="meta-sep">:</span>
+            <span class="meta-value">{{ tanggalCetak }}, Pukul {{ jamCetak }}</span>
+          </div>
+          
         </div>
         <div class="meta-col meta-col-right">
           <div class="meta-row">
@@ -40,14 +46,14 @@
 
     <table class="data-table data-table-fixed">
       <colgroup>
-        <col style="width: 5%">
-        <col style="width: 22%">
-        <col style="width: 16%">
         <col style="width: 6%">
-        <col style="width: 8%">
-        <col style="width: 8%">
+        <col style="width: 23%">
+        <col style="width: 14%">
+        <col style="width: 5%">
+        <col style="width: 7%">
+        <col style="width: 7%">
         <col style="width: 12%">
-        <col style="width: 10%">
+        <col style="width: 14%">
         <col style="width: 14%">
       </colgroup>
       <thead>
@@ -59,8 +65,8 @@
           <th class="text-center">Awal</th>
           <th class="text-center">Akhir</th>
           <th class="text-center">Pemakaian</th>
-          <th class="text-center">Status</th>
-          <th class="text-center">Total</th>
+          <th class="text-center">Dibayar</th>
+          <th class="text-center">Belum Dibayar</th>
         </tr>
       </thead>
       <tbody>
@@ -71,8 +77,15 @@
           <td class="text-center">{{ item.rt || '-' }}</td>
           <td class="text-center">{{ Number(item.meterAwal || 0).toLocaleString('id-ID') }}</td>
           <td class="text-center">{{ Number(item.meterAkhir || 0).toLocaleString('id-ID') }}</td>
-          <td class="text-center">{{ item.pemakaian }}</td>
-          <td class="text-center uppercase">{{ item.status }}</td>
+          <td class="text-center">{{ item.pemakaian }} - {{ String(item.status || '').toUpperCase() === 'PAID' ? 'L' : 'B' }}</td>
+          <td class="text-right col-dibayar">
+            {{
+              Number(item.paid_amount || 0).toLocaleString('id-ID', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })
+            }}
+          </td>
           <td class="text-right">
             {{
               Number(item.tagihan || 0).toLocaleString('id-ID', {
@@ -86,8 +99,17 @@
           <td colspan="9" class="empty">Tidak ada data pelanggan pada dusun ini.</td>
         </tr>
         <tr v-if="isLastPage && items && items.length > 0" class="total-row">
-          <td colspan="7" class="text-center" style="font-weight: 700;">Total</td>
-          <td colspan="2" class="text-right" style="font-weight: 700;">
+          <td colspan="6" class="text-center" style="font-weight: 700;">Total</td>
+          <td class="text-center" style="font-weight: 700;">{{ totalPemakaian }}</td>
+          <td class="text-right col-dibayar" style="font-weight: 700;">
+            {{
+              Number(totalDibayar).toLocaleString('id-ID', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })
+            }}
+          </td>
+          <td class="text-right" style="font-weight: 700;">
             {{
               Number(totalTagihan).toLocaleString('id-ID', {
                 minimumFractionDigits: 2,
@@ -118,6 +140,16 @@ const startIndex = computed(() => Number(props.payload?.startIndex || 0))
 const showMeta = computed(() => props.payload?.showMeta !== false)
 const isLastPage = computed(() => props.payload?.isLastPage === true)
 const totalTagihan = computed(() => Number(props.payload?.totalTagihan || 0))
+const totalPemakaian = computed(() => {
+  const v = props.payload?.totalPemakaian
+  if (v == null) console.warn('[ReportCetak] totalPemakaian missing from payload')
+  return Number(v || 0)
+})
+const totalDibayar = computed(() => {
+  const v = props.payload?.totalDibayar
+  if (v == null) console.warn('[ReportCetak] totalDibayar missing from payload')
+  return Number(v || 0)
+})
 
 const bulans = [
   'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
@@ -130,6 +162,23 @@ const bulanIndex = (val) => {
   const idx = bulans.findIndex((b) => b.toLowerCase() === String(val).toLowerCase())
   return idx >= 0 ? idx + 1 : null
 }
+
+const now = new Date()
+
+const tanggalCetak = computed(() =>
+  now.toLocaleDateString('id-ID', {
+    day: '2-digit',
+    month: 'long',
+    year: 'numeric',
+  })
+)
+
+const jamCetak = computed(() =>
+  now.toLocaleTimeString('id-ID', {
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+)
 
 const tanggalAkhir = computed(() => {
   const withDue = items.value.find((it) => it.jatuhTempo)
@@ -180,12 +229,31 @@ const tanggalAkhir = computed(() => {
 .data-table-fixed td {
   box-sizing: border-box;
   padding: 2px 4px;
+  vertical-align: middle;
+}
+
+.data-table-fixed th {
+  white-space: nowrap;
+}
+
+.data-table-fixed td {
+  white-space: normal;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  font-size: 11px;
+  line-height: 1.2;
+}
+
+.data-table-fixed td.col-dibayar {
+  text-align: right !important;
+  padding-right: 6px !important;
 }
 
 .data-table th,
 .data-table td {
   border: 1px solid #000;
-  font-size: 12px; /* Memastikan isi tabel 12px */
+  font-size: 11px;
+  line-height: 1.2;
 }
 .meta-col-right {
   text-align: left;
@@ -259,6 +327,10 @@ const tanggalAkhir = computed(() => {
   display: table-header-group;
 }
 
+.data-table tfoot {
+  display: table-footer-group;
+}
+
 /* Cegah satu baris tabel terpotong di antara halaman */
 .data-table tbody tr {
   page-break-inside: avoid;
@@ -269,13 +341,37 @@ const tanggalAkhir = computed(() => {
 .total-row {
   page-break-inside: avoid;
   break-inside: avoid;
+  page-break-before: avoid;
+  break-before: avoid;
 }
 
-/* Override padding BaseReportLayout untuk cetak daftar tagihan (lebih ramping) */
+/* Page-break setelah .report-page */
+.report-page,
+.report-page.surat-page {
+  page-break-after: always;
+  break-after: page;
+}
+
+.report-page:last-child {
+  page-break-after: auto;
+  break-after: auto;
+}
 </style>
 
 <style>
 .report-page.surat-page {
-  padding: 60px 90px !important;
+  padding: 60px !important;
+}
+
+@media print {
+  .report-page.surat-page {
+    padding: 0 !important;
+  }
+  .report-page.surat-page.size-a4.portrait {
+    width: 210mm !important;
+    height: 297mm !important;
+    min-height: 297mm !important;
+    margin: 0 !important;
+  }
 }
 </style>

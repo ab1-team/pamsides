@@ -858,7 +858,7 @@ class PelaporanController extends Controller
         if (! empty($sub) && $sub !== 'DRPY' && $sub !== 'null' && $sub !== 'undefined') {
             $userTeknisi = User::find($sub);
             if ($userTeknisi) {
-                $namaTeknisi = strtoupper($userTeknisi->name);
+                $namaTeknisi = $userTeknisi->name;
             }
         }
         $data['nama_teknisi'] = $namaTeknisi;
@@ -915,7 +915,9 @@ class PelaporanController extends Controller
 
                 if ($selisihBulan >= 0) {
                     $jumlahBulanTunggakan++;
-                    $nominalTagihan = (float) $bill->total_amount + (float) $bill->penalty_amount;
+                    $paid = (float) $bill->billPayments->sum('amount_paid');
+                    $dibayar += $paid;
+                    $nominalTagihan = max(((float) $bill->total_amount + (float) $bill->penalty_amount) - $paid, 0);
 
                     if ($selisihBulan === 0) {
                         $bulanIni += $nominalTagihan;
@@ -924,8 +926,6 @@ class PelaporanController extends Controller
                     } else {
                         $sd3BulanLalu += $nominalTagihan;
                     }
-
-                    $dibayar += (float) $bill->billPayments->sum('amount_paid');
                 }
             }
 
@@ -972,7 +972,19 @@ class PelaporanController extends Controller
         ])->values()->all();
 
         $data['bulan_name'] = $this->bulanName($targetBulan);
-        $periodeText = ' ('.$data['bulan_name'].' '.$targetTahun.')';
+        $data['tahun'] = $targetTahun;
+        $data['bulan_ini_label'] = $data['bulan_name'];
+
+        $bulanLaluInt = $targetBulan === 1 ? 12 : $targetBulan - 1;
+        $data['bulan_lalu_label'] = $this->bulanName($bulanLaluInt);
+
+        $bulanSd = $targetBulan - 2;
+        if ($bulanSd <= 0) {
+            $bulanSd += 12;
+        }
+        $data['sd_3_bulan_lalu_label'] = $this->bulanName($bulanSd);
+
+        $periodeText = ' ('.$data['bulan_name'].')';
 
         return response()->json([
             'success' => true,

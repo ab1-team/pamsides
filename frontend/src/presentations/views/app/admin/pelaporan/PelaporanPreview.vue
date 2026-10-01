@@ -370,7 +370,7 @@ const buildPages = (res) => {
     const rowsPerPage = 20
 
     if (items.length === 0) {
-      pages.value = [{ payload: { config: baseConfig, items: [], startIndex: 0, pageInfo: { current: 1, total: 1 } }, meta: baseMeta }]
+      pages.value = [{ payload: { config: baseConfig, items: [], startIndex: 0, pageInfo: { current: 1, total: 1 }, isFirstPage: true }, meta: baseMeta }]
     } else {
       // Kelompokkan items berdasarkan Desa + Dusun, lalu chunk per-group
       // supaya header desa/dusun tidak muncul dua kali di halaman yang berbeda
@@ -455,9 +455,9 @@ const buildPages = (res) => {
 
       // Isi total pages
       const total = pages.value.length
-      pages.value = pages.value.map((p) => ({
+      pages.value = pages.value.map((p, i) => ({
         ...p,
-        payload: { ...p.payload, pageInfo: { ...(p.payload.pageInfo || {}), total } }
+        payload: { ...p.payload, pageInfo: { ...(p.payload.pageInfo || {}), total }, isFirstPage: i === 0 }
       }))
     }
   }

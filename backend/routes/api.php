@@ -168,6 +168,7 @@ Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
     Route::get('monthly-bills/{id}', [MonthlyBillController::class, 'show']);
     Route::delete('monthly-bills/{id}', [MonthlyBillController::class, 'destroy']);
     Route::post('monthly-bills/generate', [MonthlyBillController::class, 'generate']);
+    Route::post('monthly-bills/{id}/pay', [MonthlyBillController::class, 'pay']);
 
     Route::get('reports/installations', [InstallationTicketController::class, 'report']);
     Route::get('reports/bills', [MonthlyBillController::class, 'report']);
