@@ -82,10 +82,7 @@ class InstallationTicketController extends Controller
                         if (! $item->package) $missing[] = 'package';
                         if (! $item->village) $missing[] = 'village';
                         if ($missing) {
-                            \Log::warning('InstallationTicket::index incomplete relation', [
-                                'ticket_id' => $item->id,
-                                'missing' => $missing,
-                            ]);
+                            // incomplete relation detected (log was removed)
                         }
 
                         return [
@@ -131,11 +128,6 @@ class InstallationTicketController extends Controller
                 'data' => $tickets,
             ]);
         } catch (\Throwable $e) {
-            \Log::error('InstallationTicket::index error', [
-                'message' => $e->getMessage(),
-                'trace'   => $e->getTraceAsString(),
-            ]);
-
             return response()->json([
                 'success' => false,
                 'message' => 'Gagal memuat data tiket: '.$e->getMessage(),
