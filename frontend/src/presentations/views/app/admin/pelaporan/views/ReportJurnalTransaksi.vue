@@ -1,6 +1,6 @@
 <template>
-  <BaseReportLayout :lembaga="payload?.lembaga" :config="payload?.config">
-    <div class="header-section">
+  <BaseReportLayout :lembaga="payload?.lembaga" :config="payload?.config" :no-meta-header="!isFirstPage">
+    <div v-if="isFirstPage" class="header-section">
       <h2>JURNAL TRANSAKSI</h2>
       <h3>BULAN {{ periodeText }}</h3>
     </div>
@@ -21,7 +21,7 @@
       <tbody>
         <template v-for="(item, index) in payload.items" :key="item.id + '-' + index">
           <tr>
-            <td class="text-center">{{ startIndex + index + 1 }}</td>
+            <td class="text-center">{{ (payload?.startIndex ?? 0) + index + 1 }}</td>
             <td class="text-center">{{ formatDate(item.tgl) }}</td>
             <td class="text-center">{{ item.id }}</td>
             <td class="text-center">{{ item.debet.kode }}</td>
@@ -68,8 +68,8 @@
       return `${(p.bulan_name || '').toUpperCase()} ${p.tahun || ''}`
     })
 
-    const startIndex = computed(() => Number(props.payload?.startIndex) || 0)
     const showFooter = computed(() => props.payload?.showFooter !== false)
+    const isFirstPage = computed(() => props.payload?.isFirstPage !== false)
 
     const parseNumber = (val) => parseFloat(String(val).replace(/[^0-9.-]+/g, "")) || 0;
 
@@ -80,9 +80,7 @@
           kredit: Number(props.payload.totals.kredit) || 0,
         }
       }
-      const items = Array.isArray(props.payload?.allItems) && props.payload.allItems.length > 0
-        ? props.payload.allItems
-        : props.payload.items
+      const items = Array.isArray(props.payload?.items) ? props.payload.items : []
       return {
         debit: items.reduce((s, i) => s + parseNumber(i?.debet?.jumlah), 0),
         kredit: items.reduce((s, i) => s + parseNumber(i?.kredit?.jumlah), 0),

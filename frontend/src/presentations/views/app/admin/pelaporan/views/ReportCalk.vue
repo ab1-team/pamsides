@@ -1,7 +1,7 @@
 <template>
-    <BaseReportLayout :lembaga="payload?.lembaga" :config="payload?.config">
+    <BaseReportLayout :lembaga="payload?.lembaga" :config="payload?.config" :no-meta-header="!isFirstPage">
         <div ref="rootEl" class="calk-root">
-            <div class="header-section" data-block="header" style="text-align:center;margin-bottom:15px;font-family:sans-serif;">
+            <div v-if="isFirstPage" class="header-section" data-block="header" style="text-align:center;margin-bottom:15px;font-family:sans-serif;">
                 <h2 style="margin:0;font-size:14pt;font-weight:bold;text-transform:uppercase;color:#000;">
                     CATATAN ATAS LAPORAN KEUANGAN
                 </h2>

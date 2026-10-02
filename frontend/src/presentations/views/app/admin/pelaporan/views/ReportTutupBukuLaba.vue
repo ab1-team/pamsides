@@ -1,6 +1,6 @@
 <template>
-  <BaseReportLayout :lembaga="payload?.lembaga" :config="payload?.config">
-    <div class="header-section" style="text-align:center; margin-bottom:12px; font-family:sans-serif;">
+  <BaseReportLayout :lembaga="payload?.lembaga" :config="payload?.config" :no-meta-header="!isFirstPage">
+    <div v-if="isFirstPage" class="header-section" style="text-align:center; margin-bottom:12px; font-family:sans-serif;">
       <h2 style="margin:0; font-size:14pt; font-weight:bold; text-transform:uppercase; color:#000;">
         LAPORAN LABA RUGI
       </h2>
@@ -70,6 +70,12 @@ const rows = computed(() => {
     return out
   }
   return []
+})
+
+const isFirstPage = computed(() => {
+  const info = props.payload?.pageInfo
+  if (info) return info.current === 1
+  return props.payload?.isFirstPage !== false
 })
 
 const periodeText = computed(() => {

@@ -3,7 +3,8 @@
     class="report-page surat-page"
     :class="[
       configPaperSize === 'F4' ? 'size-f4' : 'size-a4',
-      configOrientation === 'landscape' ? 'landscape' : 'portrait'
+      configOrientation === 'landscape' ? 'landscape' : 'portrait',
+      noMetaHeader ? 'no-meta-header' : ''
     ]"
   >
     <div v-if="!noKop" class="surat-kop">
@@ -55,6 +56,7 @@ const props = defineProps({
   lembaga: { type: Object, default: () => ({}) },
   config: { type: Object, default: () => ({ paper_size: 'A4', orientation: 'portrait' }) },
   noKop: { type: Boolean, default: false },
+  noMetaHeader: { type: Boolean, default: false },
 })
 
 const configPaperSize = computed(() => {
@@ -202,12 +204,12 @@ const logoUrl = computed(() => {
       border: 0;
       border-top: 2.5px solid #888888;
       margin-top: 0.1px;
-      margin-bottom: 15px;
+      margin-bottom: 4px;
       width: 100%;
     }
-    
+
     .report-content {
-      margin-top: 8px;
+      margin-top: 0;
       font-size: 12px;
       flex: 1 1 auto;
       display: flex;
@@ -216,12 +218,24 @@ const logoUrl = computed(() => {
     }
 
     /* ================= KUNCI OTOMATIS UNTUK SEMUA LAPORAN MASUK SINI ================= */
-    
+
     /* Aturan Header Judul Laporan */
     :deep(.page-header) {
       text-align: center;
       margin-top: 5px;
       margin-bottom: 12px;
+    }
+
+    /* Halaman lanjutan (tanpa page-header): nempelkan tabel tepat di bawah garis kop */
+    .no-meta-header .surat-kop {
+      margin-bottom: 0 !important;
+      padding-bottom: 0 !important;
+    }
+    .no-meta-header .kop-single-divider {
+      margin-bottom: 4px !important;
+    }
+    .no-meta-header .report-content {
+      margin-top: 2px !important;
     }
     :deep(.page-header h2) {
       margin: 0;
@@ -289,4 +303,12 @@ const logoUrl = computed(() => {
     :deep(.footer-sign p) {
       margin: 1px 0;
     }
+</style>
+
+<style>
+/* Halaman lanjutan (no-meta-header): tabel nempel ke garis kop */
+.report-page.no-meta-header .data-table,
+.report-page.no-meta-header .data-table-tight {
+  margin-top: 0 !important;
+}
 </style>

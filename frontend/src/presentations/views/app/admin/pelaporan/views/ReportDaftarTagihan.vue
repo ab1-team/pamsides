@@ -1,15 +1,17 @@
 <template>
-  <BaseReportLayout :lembaga="payload?.lembaga" :config="payload?.config">
-    <div class="page-header">
-        <h2>TAGIHAN PELANGGAN 
-            <span v-if="meta?.nama_teknisi" style="font-weight: bold;">{{ meta.nama_teknisi }}</span>
-        </h2>
+  <BaseReportLayout :lembaga="payload?.lembaga" :config="payload?.config" :no-meta-header="!isFirstPage">
+    <div v-if="isFirstPage" class="page-header">
+        <h2>TAGIHAN PELANGGAN</h2>
       <h2 class="mt-1 mb-0 leading-tight uppercase">
         BULAN {{ periodeText }}
       </h2>
     </div>
 
-    <table class="data-table">
+    <div v-if="caterVisible" class="cater-teknisi">
+      Cater : <b>{{ namaTeknisiFormatted }}</b>
+    </div>
+
+    <table class="data-table" :class="{ 'data-table-tight': caterVisible }">
       <thead>
         <tr style="background-color: rgb(230, 230, 230); font-weight: bold; text-align: center;">
           <th width="4%" class="t l b" rowspan="2" align="center" style="text-align: center; vertical-align: middle;">No</th>
@@ -115,6 +117,19 @@
     return `TAHUN ${m.tahun || ''}`
   })
 
+  const isFirstPage = computed(() => props.payload?.isFirstPage !== false)
+  const caterVisible = computed(() => Boolean(props.meta?.nama_teknisi) && isFirstPage.value)
+
+  const namaTeknisiFormatted = computed(() => {
+    const raw = props.meta?.nama_teknisi
+    if (!raw) return ''
+    return String(raw)
+      .toLowerCase()
+      .split(/\s+/)
+      .map((w) => (w ? w[0].toUpperCase() + w.slice(1) : ''))
+      .join(' ')
+  })
+
 
   const formatCurrency = (val) => {
     if (val === null || val === undefined || isNaN(val)) return '0,00'
@@ -138,7 +153,8 @@
 <style scoped>
   .page-header {
     text-align: center;
-    margin-bottom: 15px;
+    margin-top: 0;
+    margin-bottom: 0;
   }
   .page-header h2 {
     font-size: 14pt; /* Disesuaikan agar seragam */
@@ -151,7 +167,7 @@
   .data-table {
     width: 100%;
     border-collapse: collapse;
-    margin-top: 15px;
+    margin-top: 4px;
     table-layout: fixed; /* Ditambahkan agar lebar kolom konsisten */
   }
 
@@ -210,6 +226,23 @@
     font-style: italic;
     font-size: 12px;
     border: 1px solid #000000;
+  }
+
+  .cater-teknisi {
+    text-align: right;
+    font-size: 13px;
+    margin-top: -2px;
+    margin-bottom: 0;
+    padding: 0 4px;
+    text-transform: none;
+    line-height: 2.1;
+  }
+  .cater-teknisi b {
+    margin-left: 8px;
+  }
+
+  .data-table.data-table-tight {
+    margin-top: 0;
   }
 
   .footer-container {

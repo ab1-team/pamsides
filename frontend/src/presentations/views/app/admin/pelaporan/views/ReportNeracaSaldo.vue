@@ -1,6 +1,6 @@
 <template>
-    <BaseReportLayout :lembaga="payload?.lembaga" :config="payload?.config">
-        <div class="header-section" style="text-align:center;margin-bottom:15px;font-family:sans-serif;">
+    <BaseReportLayout :lembaga="payload?.lembaga" :config="payload?.config" :no-meta-header="!isFirstPage">
+        <div v-if="isFirstPage" class="header-section" style="text-align:center;margin-bottom:15px;font-family:sans-serif;">
             <h2 style="margin:0;font-size:14pt;font-weight:bold;text-transform:uppercase;color:#000;">
                 NERACA
             </h2>
@@ -158,6 +158,8 @@
 
         return `${(p.bulan_name || '').toUpperCase()} ${p.tahun || ''}`
     })
+
+    const isFirstPage = computed(() => props.payload?.isFirstPage !== false)
 
     const format = (value) => {
         const angka = Number(value || 0)

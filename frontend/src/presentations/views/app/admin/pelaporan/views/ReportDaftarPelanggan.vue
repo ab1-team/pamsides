@@ -1,17 +1,20 @@
 <template>
-    <BaseReportLayout :lembaga="payload?.lembaga" :config="payload?.config">
+    <BaseReportLayout :lembaga="payload?.lembaga" :config="payload?.config" :no-meta-header="!isFirstPage">
 
-        <div class="main-report-header">
+        <div v-if="isFirstPage" class="main-report-header">
             <h2>
                 DAFTAR PELANGGAN
-                <span v-if="meta?.nama_teknisi" style="font-weight: bold;"> {{ meta.nama_teknisi }}</span>
             </h2>
             <h2 class="mt-0 mb-0 leading-tight uppercase">
                 BULAN {{ periodeText }}
             </h2>
         </div>
 
-        <table class="data-table">
+        <div v-if="caterVisible" class="cater-teknisi">
+            Cater : <b>{{ namaTeknisiFormatted }}</b>
+        </div>
+
+        <table class="data-table" :class="{ 'data-table-tight': caterVisible }">
             <thead>
                 <tr>
                     <th style="width: 4%;">No</th>
@@ -121,6 +124,19 @@
         return `${m.bulan_name || '-'} ${m.tahun || ''}`
     })
 
+    const isFirstPage = computed(() => props.payload?.isFirstPage !== false)
+    const caterVisible = computed(() => Boolean(props.meta?.nama_teknisi) && isFirstPage.value)
+
+    const namaTeknisiFormatted = computed(() => {
+        const raw = props.meta?.nama_teknisi
+        if (!raw) return ''
+        return String(raw)
+            .toLowerCase()
+            .split(/\s+/)
+            .map((w) => (w ? w[0].toUpperCase() + w.slice(1) : ''))
+            .join(' ')
+    })
+
     const formatDate = (val) => {
         if (!val) return '-'
         const d = new Date(val)
@@ -146,8 +162,8 @@
 <style scoped>
     .main-report-header {
         text-align: center;
-        margin-top: 5px;
-        margin-bottom: 15px;
+        margin-top: 0;
+        margin-bottom: 0;
     }
 
     .main-report-header h2 {
@@ -163,6 +179,7 @@
     .data-table {
         width: 100%;
         border-collapse: collapse;
+        margin-top: 4px;
         margin-bottom: 20px;
         table-layout: fixed;
     }
@@ -222,6 +239,23 @@
         padding: 20px;
         font-style: italic;
         font-size: 12px;
+    }
+
+    .cater-teknisi {
+        text-align: right;
+        font-size: 13px;
+        margin-top: -2px;
+        margin-bottom: 0;
+        padding: 0 4px;
+        text-transform: none;
+        line-height: 2.1;
+    }
+    .cater-teknisi b {
+        margin-left: 8px;
+    }
+
+    .data-table.data-table-tight {
+        margin-top: 0;
     }
 
     .footer-container {

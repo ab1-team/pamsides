@@ -1,6 +1,6 @@
 <template>
-    <BaseReportLayout :lembaga="payload?.lembaga" :config="payload?.config">
-        <div class="header-section"
+    <BaseReportLayout :lembaga="payload?.lembaga" :config="payload?.config" :no-meta-header="!isFirstPage">
+        <div v-if="isFirstPage" class="header-section"
             style="text-align: center; margin-bottom: 15px; font-family: sans-serif; color: #000;">
             <h2 style="margin: 0; font-size: 13pt; font-weight: bold; text-transform: uppercase; color: #000;">
                 BUKU BESAR {{ payload?.nama_akun || '' }}
@@ -10,7 +10,7 @@
             </h3>
 
         </div>
-        <div style="text-align: right; font-size: 10pt; margin-top: 5px; margin-bottom: 0px; color: #000;">
+        <div v-if="isFirstPage" style="text-align: right; font-size: 10pt; margin-top: 5px; margin-bottom: 0px; color: #000;">
             Kode Akun : {{ payload?.kode_akun || '-' }}
         </div>
 
@@ -63,7 +63,7 @@
                 </template>
 
                 <tr v-for="(trx, index) in tableData" :key="trx.id + '-' + index">
-                    <td class="text-center">{{ index + 1 }}</td>
+                    <td class="text-center">{{ (payload?.startIndex ?? 0) + index + 1 }}</td>
                     <td class="text-center">{{ trx.tgl }}</td>
                     <td class="text-center">{{ trx.ref_id }}</td>
                     <td>{{ trx.keterangan }}</td>
@@ -126,6 +126,7 @@
 
     const showHeader = computed(() => props.payload?.showHeader !== false)
     const showFooter = computed(() => props.payload?.showFooter !== false)
+    const isFirstPage = computed(() => props.payload?.isFirstPage !== false)
 
     const saldoAwalTahun = computed(() => {
         const data = props.payload?.saldo_awal_tahun || {
@@ -164,7 +165,10 @@
     })
 
     const tableData = computed(() => {
-        let currentSaldo = initialSaldo.value
+        // Pakai startRunningSaldo dari chunk payload (saldo kumulatif dari chunk sebelumnya)
+        // agar saldo antar halaman konsisten. Fallback ke initialSaldo untuk halaman 1.
+        const startSaldo = Number(props.payload?.startRunningSaldo)
+        let currentSaldo = Number.isFinite(startSaldo) ? startSaldo : initialSaldo.value
         const kodeAkun = String(props.payload?.kode_akun || '')
 
         return (props.payload?.transactions || []).map((trx) => {
@@ -199,8 +203,9 @@
         })
     })
 
-    const totalDebitBulanIni = computed(() => tableData.value.reduce((s, i) => s + i.debit, 0))
-    const totalKreditBulanIni = computed(() => tableData.value.reduce((s, i) => s + i.kredit, 0))
+    // Total dari backend (sudah dihitung dari semua transaksi, bukan per-chunk)
+    const totalDebitBulanIni = computed(() => Number(props.payload?.total_debit_bulan_ini ?? tableData.value.reduce((s, i) => s + i.debit, 0)))
+    const totalKreditBulanIni = computed(() => Number(props.payload?.total_kredit_bulan_ini ?? tableData.value.reduce((s, i) => s + i.kredit, 0)))
 
     // Total kumulatif menggunakan saldo awal (tahun/lalu) + mutasi bulan ini
     // Ganti bagian computed ini agar sinkron dengan baris footer
@@ -213,9 +218,13 @@
         return Number(saldoAwalTahun.value.kredit || 0) + Number(saldoBulanLalu.value.kredit || 0) +
             totalKreditBulanIni.value;
     });
-    const finalSaldo = computed(() => tableData.value.length ?
-        tableData.value[tableData.value.length - 1].running_saldo :
-        initialSaldo.value)
+    const finalSaldo = computed(() => {
+        const fromPayload = Number(props.payload?.final_saldo)
+        if (Number.isFinite(fromPayload)) return fromPayload
+        return tableData.value.length ?
+            tableData.value[tableData.value.length - 1].running_saldo :
+            initialSaldo.value
+    })
 
     const periodeText = computed(() =>
         `${(props.payload?.periode?.bulan_name || '').toUpperCase()} ${props.payload?.periode?.tahun || ''}`)
