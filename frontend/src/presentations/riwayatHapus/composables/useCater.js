@@ -36,7 +36,6 @@ export function useCater(router) {
 
   // Fungsi-fungsi penanganan aksi
   const handleEdit = (row) => {
-    console.log('Edit Cater:', row)
     if (router) {
       router.push(`/app/data-cater/edit/${row.id}`)
     }

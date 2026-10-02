@@ -94,11 +94,6 @@ class MonthlyBillController extends Controller
                 ];
             }
         } catch (\Throwable $e) {
-            \Log::error('MonthlyBill::index query error', [
-                'message' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-            ]);
-
             return response()->json([
                 'success' => false,
                 'message' => 'Gagal memuat daftar tagihan: '.$e->getMessage(),
@@ -150,11 +145,6 @@ class MonthlyBillController extends Controller
                     ] : null,
                 ];
             } catch (\Throwable $e) {
-                \Log::warning('MonthlyBill::index map error', [
-                    'bill_id' => $b->id ?? null,
-                    'error' => $e->getMessage(),
-                ]);
-
                 return [
                     'id' => $b->id ?? null,
                     'customer_id' => $b->customer_id ?? null,
@@ -377,16 +367,68 @@ class MonthlyBillController extends Controller
         $relasi = $bill->customer?->customer_code ?? 'Bill #'.$bill->id;
         $userId = Auth::id();
 
-        $restoredTicket = false;
+        // Akun DEBET (kas masuk) mengikuti metode pembayaran:
+        //   - cash     → 1.1.01.01 (Kas Tunai)
+        //   - transfer → 1.1.01.03 (Kas di Bank BRI)
+        // Default ke Kas Tunai supaya aman untuk data lama / null.
+        $paymentMethod = $request->input('payment_method', 'cash');
+        $accountDebetKas = $paymentMethod === 'transfer' ? '1.1.01.03' : '1.1.01.01';
 
-        DB::transaction(function () use ($bill, $request, $abodemen, $usageCharge, $denda, $isTunggakan, $relasi, $userId, &$restoredTicket) {
+        // Tanggal pembayaran: pakai dari FE kalau ada & valid, fallback ke now().
+        $paidAtDate = $request->filled('paid_at_date')
+            ? \Carbon\Carbon::parse($request->paid_at_date)->startOfDay()
+            : \Carbon\Carbon::now();
+
+        // Deteksi ADVANCE PAYMENT: bayar SEBELUM hari toleransi_tunggakan di
+        // BULAN PEMAKAIAN tagihan (billing_period_month/year).
+        //   - bayar < threshold  → ADVANCE (piutang overdue_bill di-hapus)
+        //   - bayar >= threshold → NORMAL
+        //   - bayar di bulan lain → NORMAL (threshold dihitung di bulan pemakaian)
+        $toleransiTgl = (int) (\App\Models\Setting::first()?->toleransi_tunggakan ?? 0);
+        $isAdvancePayment = false;
+        $thresholdDate = null;
+        if ($toleransiTgl >= 1) {
+            $thresholdYear = (int) ($bill->billing_period_year ?? 0);
+            $thresholdMonth = (int) ($bill->billing_period_month ?? 0);
+            // Fallback ke due_date kalau billing_period tidak ada (legacy data).
+            if ($thresholdYear < 1 || $thresholdMonth < 1) {
+                $dueRef = \Carbon\Carbon::parse($bill->due_date);
+                $thresholdYear = $dueRef->year;
+                $thresholdMonth = $dueRef->month;
+            }
+            $daysInThresholdMonth = \Carbon\Carbon::create($thresholdYear, $thresholdMonth, 1)->daysInMonth;
+            $effectiveDay = min($toleransiTgl, $daysInThresholdMonth);
+            $thresholdDate = \Carbon\Carbon::create($thresholdYear, $thresholdMonth, $effectiveDay)->startOfDay();
+            $isAdvancePayment = $paidAtDate->lt($thresholdDate);
+        }
+
+        // Akun kredit saat ADVANCE → pendapatan langsung (4.1.01.02 / 4.1.01.03),
+        // bukan piutang 1.1.03.01, karena uang sudah diterima SEBELUM overdue_bill.
+        $revenueAbodemen = $isAdvancePayment ? '4.1.01.02' : ($isTunggakan ? '1.1.03.01' : '4.1.01.02');
+        $revenuePemakaian = $isAdvancePayment ? '4.1.01.03' : ($isTunggakan ? '1.1.03.01' : '4.1.01.03');
+
+        $restoredTicket = false;
+        $overdueDeletedCount = 0;
+        // Sufiks metode bayar di keterangan jurnal supaya saat cetak laporan
+        // kas / buku besar, sumber dana (Tunai vs Transfer BRI) jelas terlihat.
+        $methodLabel = $paymentMethod === 'transfer' ? 'Transfer BRI' : 'Tunai';
+
+        // Advance payment: hapus jurnal piutang overdue_bill yang sudah tercatat
+        // untuk bill ini (reference ke bill.id).
+        if ($isAdvancePayment) {
+            $overdueDeletedCount = \App\Models\Transaction::where('reverence_type', 'overdue_bill')
+                ->where('reverence_id', $bill->id)
+                ->delete();
+        }
+
+        DB::transaction(function () use ($bill, $request, $paidAtDate, $abodemen, $usageCharge, $denda, $isTunggakan, $isAdvancePayment, $revenueAbodemen, $revenuePemakaian, $relasi, $userId, $accountDebetKas, $methodLabel, &$restoredTicket) {
             $bill->update(['status' => 'paid']);
 
             $payment = BillPayment::create([
                 'bill_id' => $bill->id,
                 'amount_paid' => $request->amount_paid ?? $bill->total_amount,
                 'confirmed_by' => $userId,
-                'paid_at' => now(),
+                'paid_at' => $paidAtDate,
             ]);
 
             // ── Jurnal Pembayaran ──
@@ -394,12 +436,12 @@ class MonthlyBillController extends Controller
             if ($abodemen > 0) {
                 $trx = Transaction::create([
                     'tgl_transaksi' => $payment->paid_at,
-                    'account_debet' => '1.1.01.01',
-                    'account_kredit' => $isTunggakan ? '1.1.03.01' : '4.1.01.02',
+                    'account_debet' => $accountDebetKas,
+                    'account_kredit' => $revenueAbodemen,
                     'transaction_group' => null,
                     'reverence_type' => 'bill_payment',
                     'reverence_id' => $payment->id,
-                    'keterangan_transaksi' => 'Abodemen - '.$relasi,
+                    'keterangan_transaksi' => 'Abodemen - '.$relasi.' ('.$methodLabel.')',
                     'relasi' => $relasi,
                     'saldo' => $abodemen,
                     'id_user' => $userId,
@@ -411,12 +453,12 @@ class MonthlyBillController extends Controller
             if ($usageCharge > 0) {
                 $trx = Transaction::create([
                     'tgl_transaksi' => $payment->paid_at,
-                    'account_debet' => '1.1.01.01',
-                    'account_kredit' => $isTunggakan ? '1.1.03.01' : '4.1.01.03',
+                    'account_debet' => $accountDebetKas,
+                    'account_kredit' => $revenuePemakaian,
                     'transaction_group' => null,
                     'reverence_type' => 'bill_payment',
                     'reverence_id' => $payment->id,
-                    'keterangan_transaksi' => 'Tagihan Pemakaian - '.$relasi,
+                    'keterangan_transaksi' => 'Tagihan Pemakaian - '.$relasi.' ('.$methodLabel.')',
                     'relasi' => $relasi,
                     'saldo' => $usageCharge,
                     'id_user' => $userId,
@@ -428,12 +470,12 @@ class MonthlyBillController extends Controller
             if ($denda > 0) {
                 $trx = Transaction::create([
                     'tgl_transaksi' => $payment->paid_at,
-                    'account_debet' => '1.1.01.01',
+                    'account_debet' => $accountDebetKas,
                     'account_kredit' => '4.1.01.04',
                     'transaction_group' => null,
                     'reverence_type' => 'bill_payment',
                     'reverence_id' => $payment->id,
-                    'keterangan_transaksi' => 'Denda - '.$relasi,
+                    'keterangan_transaksi' => 'Denda - '.$relasi.' ('.$methodLabel.')',
                     'relasi' => $relasi,
                     'saldo' => $denda,
                     'id_user' => $userId,

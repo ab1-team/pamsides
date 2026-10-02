@@ -115,7 +115,6 @@ export function usePemakaianAir() {
       } else {
         teknisiError.value = 'Gagal memuat daftar teknisi.'
       }
-      console.error('Gagal memuat daftar teknisi:', err)
     }
   }
 
@@ -181,7 +180,6 @@ export function usePemakaianAir() {
         })
       }
     } catch (err) {
-      console.error('Gagal memuat data pemakaian air:', err)
       MySwal.fire({
         icon: 'error',
         title: 'Gagal Memuat Data',
@@ -253,9 +251,9 @@ export function usePemakaianAir() {
     currentPage.value = 1
     return loadTableData()
   }
-  const handleCetakFormInput = () => console.log('Cetak Form Input')
-  const handleHasilInput = () => console.log('Hasil Input')
-  const handleInputPemakaian = () => console.log('Input Pemakaian')
+  const handleCetakFormInput = () => { /* debug log removed */ }
+  const handleHasilInput = () => { /* debug log removed */ }
+  const handleInputPemakaian = () => { /* debug log removed */ }
   const handleEdit = (row) => {
     selectedRow.value = { ...row }
     showEditModal.value = true

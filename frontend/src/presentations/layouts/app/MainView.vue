@@ -109,7 +109,6 @@ const handleLogout = async () => {
         await axios.post('/logout')
       }
     } catch (error) {
-      console.error('Logout error:', error)
     } finally {
       const userData = JSON.parse(localStorage.getItem('user_data') || '{}')
       const userName = userData.name || ''

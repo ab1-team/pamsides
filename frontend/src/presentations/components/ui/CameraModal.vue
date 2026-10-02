@@ -133,7 +133,6 @@ const startCamera = async () => {
       loading.value = false
     }
   } catch (err) {
-    console.error('Camera Access Error:', err)
     alert('Gagal mengakses kamera. Pastikan izin kamera sudah diberikan.')
     closeModal()
   }

@@ -177,7 +177,7 @@
               class="flex! flex-wrap! items-center! gap-x-2! gap-y-0.5! text-blue-50! text-[10px]! sm:text-xs! mt-0.5! opacity-90!"
             >
               <span class="font-mono! font-bold!">NIK: {{ selectedCustomer.nik || '-' }}</span>
-              <span class="hidden! sm:inline!">·</span>
+              <span class="hidden! sm:inline!">Â·</span>
               <span class="truncate!">
                 Status:
                 <span class="font-bold! text-white!">{{
@@ -250,8 +250,8 @@
         >
           {{
             selectedCustomer.status === 'Suspended'
-              ? 'Pendaftaran Ditolak — Pelanggan Dalam Status Blokir'
-              : 'Pendaftaran Ditolak — Pelanggan Sudah Dicabut'
+              ? 'Pendaftaran Ditolak â€” Pelanggan Dalam Status Blokir'
+              : 'Pendaftaran Ditolak â€” Pelanggan Sudah Dicabut'
           }}
         </h3>
         <p
@@ -356,7 +356,7 @@
                   >
                     <div>Blok</div>
                     <div class="text-center!">Volume</div>
-                    <div class="text-right!">Harga / m³</div>
+                    <div class="text-right!">Harga / mÂ³</div>
                   </div>
 
                   <div
@@ -380,8 +380,8 @@
 
                     <div class="text-center! text-xs! font-bold! text-slate-600!">
                       {{ parseFloat(block.usage_min_m3).toFixed(0) }} -
-                      {{ block.usage_max_m3 ? parseFloat(block.usage_max_m3).toFixed(0) : '∞' }}
-                      <span class="text-[10px]! text-slate-400! font-normal!">m³</span>
+                      {{ block.usage_max_m3 ? parseFloat(block.usage_max_m3).toFixed(0) : 'âˆž' }}
+                      <span class="text-[10px]! text-slate-400! font-normal!">mÂ³</span>
                     </div>
 
                     <div class="text-right! text-xs! font-extrabold! text-blue-600!">
@@ -784,10 +784,8 @@ const fetchCustomers = async (search = '') => {
 
     customerOptions.value = customers
     if (import.meta.env.DEV) {
-      console.debug('[register-dropdown] customers loaded:', customers.length)
     }
   } catch (err) {
-    console.error('Gagal ambil customer:', err)
   }
 }
 
@@ -797,7 +795,6 @@ const fetchPackages = async () => {
     const res = await api.get('/installation-packages')
     packages.value = res.data?.data || res.data || []
   } catch (err) {
-    console.error('Gagal mengambil paket data:', err)
   }
 }
 
@@ -807,7 +804,6 @@ const fetchCaterUsers = async () => {
     const res = await api.get('/users?role=teknisi')
     caterUsers.value = res.data?.data || res.data || []
   } catch (err) {
-    console.error('Gagal memuat pengguna cater:', err)
     caterUsers.value = []
   }
 }
@@ -839,7 +835,6 @@ const fetchVillages = async () => {
     const res = await api.get('/villages')
     villageOptions.value = res.data?.data || res.data || []
   } catch (err) {
-    console.error('Gagal mengambil data desa dari database:', err)
   }
 }
 
@@ -854,7 +849,6 @@ const fetchPaymentMode = async () => {
       isMustFullyPaid.value = raw === true || raw === 1 || raw === '1'
     }
   } catch (err) {
-    console.error('Gagal membaca payment mode dari settings, default bisa dicicil.', err)
     isMustFullyPaid.value = false
   }
 }
@@ -866,7 +860,6 @@ const fetchPasangBaruMode = async () => {
     if (pb === undefined || pb === null) return
     isMustFullyPaid.value = pb === true || pb === 1 || pb === '1'
   } catch (err) {
-    console.error('Gagal membaca mode pasang baru dari SOP:', err)
   }
 }
 
@@ -1117,7 +1110,6 @@ const handleSubmit = async () => {
       })
     }
   } catch (err) {
-    console.error('Gagal mengirim registrasi instalasi:', err.response?.data || err)
 
     const errorMessage =
       err.response?.data?.message || 'Gagal mendaftarkan instalasi. Silakan coba lagi.'

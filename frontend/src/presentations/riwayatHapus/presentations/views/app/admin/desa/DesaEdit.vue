@@ -150,7 +150,6 @@ const getDetail = async () => {
     // set option desa biar SelectSearch bisa nampilin
     desaOptions.value = [{ id: data.village_name, text: data.village_name }]
   } catch (err) {
-    console.error('Gagal ambil detail:', err)
   }
 }
 
@@ -187,7 +186,6 @@ const handleSave = async () => {
       router.push('/app/data-desa')
     })
   } catch (err) {
-    console.error(err)
 
     Swal.fire('Error', 'Gagal update data', 'error')
   }

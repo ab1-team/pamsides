@@ -137,11 +137,10 @@ onMounted(async () => {
       text: item.name,
     }))
   } catch (err) {
-    console.error('Gagal load provinsi', err)
   }
 })
 
-// PILIH PROVINSI → LOAD KABUPATEN
+// PILIH PROVINSI â†’ LOAD KABUPATEN
 watch(
   () => form.value.provinsi,
   async (val) => {
@@ -165,12 +164,11 @@ watch(
         text: item.name,
       }))
     } catch (err) {
-      console.error('Gagal load kabupaten', err)
     }
   },
 )
 
-// PILIH KABUPATEN → LOAD KECAMATAN
+// PILIH KABUPATEN â†’ LOAD KECAMATAN
 watch(
   () => form.value.kabupaten,
   async (val) => {
@@ -192,12 +190,11 @@ watch(
         text: item.name,
       }))
     } catch (err) {
-      console.error('Gagal load kecamatan', err)
     }
   },
 )
 
-// PILIH KECAMATAN → LOAD DESA
+// PILIH KECAMATAN â†’ LOAD DESA
 watch(
   () => form.value.kecamatan,
   async (val) => {
@@ -216,7 +213,6 @@ watch(
         text: item.name,
       }))
     } catch (err) {
-      console.error('Gagal load desa', err)
     }
   },
 )
@@ -283,7 +279,6 @@ const handleSave = async () => {
       router.push('/app/data-desa')
     })
   } catch (err) {
-    console.error('Detail Error Server:', err.response?.data)
 
     // Tampilkan pesan error validasi spesifik dari Laravel jika ada
     let msg = err.response?.data?.message || 'Gagal menyimpan data'

@@ -216,7 +216,6 @@ const handleLogin = async () => {
       throw new Error(res.message || 'Login Gagal')
     }
   } catch (error) {
-    console.error('Login Error Details:', error)
     const errorMessage = error.response?.data?.message || 'Email atau password salah.'
 
     MySwal.fire({
