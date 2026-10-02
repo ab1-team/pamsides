@@ -457,7 +457,7 @@ const buildPages = (res) => {
       const total = pages.value.length
       pages.value = pages.value.map((p, i) => ({
         ...p,
-        payload: { ...p.payload, pageInfo: { ...(p.payload.pageInfo || {}), total }, isFirstPage: i === 0 }
+        payload: { ...p.payload, pageInfo: { ...p.payload.pageInfo, total }, isFirstPage: i === 0 }
       }))
     }
   }
@@ -966,7 +966,7 @@ const setupCalkProbe = async () => {
     ...p,
     payload: {
       ...p.payload,
-      pageInfo: { ...(p.payload.pageInfo || {}), total: totalPages, current: i + 1 },
+      pageInfo: { ...p.payload.pageInfo, total: totalPages, current: i + 1 },
     },
   }))
 

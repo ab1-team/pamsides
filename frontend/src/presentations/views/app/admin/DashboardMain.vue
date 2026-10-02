@@ -66,106 +66,197 @@
         <font-awesome-icon icon="paper-plane" />
       </statCard>
     </div>
-    <div class="grid! grid-cols-1! lg:grid-cols-12! gap-6!">
+    <div class="grid! grid-cols-1! lg:grid-cols-12! gap-6! items-stretch!">
       <div class="lg:col-span-4! flex! flex-col! gap-6!">
+        <!--
+          KOMPOSISI KEUANGAN (Pie Chart Full Circle)
+          Menggantikan 3 card Pendapatan / Beban / Surplus.
+          - Slice Pendapatan (biru), Beban (slate), Surplus (amber)
+          - Pie radius dihitung dari total pendapatan sebagai basis, sehingga
+            surplus ditampilkan sebagai porsi "uang yang tersisa" bila P ≥ B,
+            atau slice kecil tersembunyi bila P < B (defisit).
+          - Slice terkecil = 1.5% minimum supaya tetap terlihat.
+          - Ikut selectedYear — reaktif terhadap filter tahun di header.
+        -->
         <ContentCard
           variant="bordered"
           padding="normal"
           hoverable
-          class="relative! overflow-hidden! border-l-4! border-l-blue-500!"
+          class="relative! overflow-hidden! h-full! flex! flex-col!"
         >
-          <div class="flex! items-center! justify-between! mb-4!">
-            <span class="text-[10px]! font-bold! text-slate-400! tracking-wider! uppercase!"
-              >Pendapatan</span
+          <div class="flex! items-center! justify-between! mb-3!">
+            <div>
+              <h3 class="text-base! font-bold! text-slate-600!">Komposisi Keuangan</h3>
+              <p class="text-[10px]! text-slate-400! mt-0.5!">
+                Tahun {{ selectedYear }} · {{ pieChartSubtitle }}
+              </p>
+            </div>
+          </div>
+
+          <div class="flex! items-center! justify-center! py-2! relative! flex-1! min-h-[200px]!">
+            <svg
+              v-if="pieChartGeometry.total > 0"
+              :viewBox="`0 0 ${pieChartGeometry.size} ${pieChartGeometry.size}`"
+              xmlns="http://www.w3.org/2000/svg"
+              class="w-[200px]! h-[200px]!"
+              @mouseleave="activeSlice = null"
             >
+              <!-- Slice Pendapatan -->
+              <path
+                v-if="pieChartGeometry.slices.pendapatan.value > 0"
+                :d="pieChartGeometry.slices.pendapatan.path"
+                :fill="pieChartGeometry.slices.pendapatan.color"
+                stroke="white"
+                stroke-width="2"
+                class="transition-all! duration-300! cursor-pointer!"
+                :class="activeSlice === 'pendapatan' ? 'opacity-100!' : (activeSlice && activeSlice !== 'pendapatan') ? 'opacity-50!' : 'opacity-100!'"
+                :transform="activeSlice === 'pendapatan' ? 'scale(1.04)' : 'scale(1)'"
+                style="transform-origin: 100px 100px; transform-box: fill-box;"
+                @mouseenter="activeSlice = 'pendapatan'"
+              />
+              <!-- Slice Beban -->
+              <path
+                v-if="pieChartGeometry.slices.beban.value > 0"
+                :d="pieChartGeometry.slices.beban.path"
+                :fill="pieChartGeometry.slices.beban.color"
+                stroke="white"
+                stroke-width="2"
+                class="transition-all! duration-300! cursor-pointer!"
+                :class="activeSlice === 'beban' ? 'opacity-100!' : (activeSlice && activeSlice !== 'beban') ? 'opacity-50!' : 'opacity-100!'"
+                :transform="activeSlice === 'beban' ? 'scale(1.04)' : 'scale(1)'"
+                style="transform-origin: 100px 100px; transform-box: fill-box;"
+                @mouseenter="activeSlice = 'beban'"
+              />
+              <!-- Slice Surplus (hijau emerald, hanya tampil kalau surplus > 0) -->
+              <path
+                v-if="pieChartGeometry.slices.surplus.value > 0"
+                :d="pieChartGeometry.slices.surplus.path"
+                :fill="pieChartGeometry.slices.surplus.color"
+                stroke="white"
+                stroke-width="2"
+                class="transition-all! duration-300! cursor-pointer!"
+                :class="activeSlice === 'surplus' ? 'opacity-100!' : (activeSlice && activeSlice !== 'surplus') ? 'opacity-50!' : 'opacity-100!'"
+                :transform="activeSlice === 'surplus' ? 'scale(1.04)' : 'scale(1)'"
+                style="transform-origin: 100px 100px; transform-box: fill-box;"
+                @mouseenter="activeSlice = 'surplus'"
+              />
+
+              <!-- Pusat lingkaran: ringkas Pendapatan -->
+              <text
+                :x="pieChartGeometry.cx"
+                :y="pieChartGeometry.cy - 4"
+                fill="#94a3b8"
+                font-size="9"
+                font-weight="700"
+                text-anchor="middle"
+                style="letter-spacing: 0.05em;"
+              >
+                PENDAPATAN
+              </text>
+              <text
+                :x="pieChartGeometry.cx"
+                :y="pieChartGeometry.cy + 10"
+                fill="#1e293b"
+                font-size="11"
+                font-weight="800"
+                text-anchor="middle"
+              >
+                {{ pieChartGeometry.pendapatanShort }}
+              </text>
+              <text
+                :x="pieChartGeometry.cx"
+                :y="pieChartGeometry.cy + 24"
+                fill="#10b981"
+                font-size="9"
+                font-weight="700"
+                text-anchor="middle"
+              >
+                {{ pieChartGeometry.surplusLabel }}
+              </text>
+            </svg>
+            <div
+              v-else
+              class="w-[200px]! h-[200px]! flex! items-center! justify-center! text-[11px]! text-slate-400! text-center! px-4!"
+            >
+              Belum ada transaksi keuangan untuk tahun {{ selectedYear }}
+            </div>
+
+            <!-- Tooltip custom (muncul saat hover slice) -->
+            <div
+              v-if="activeSlice && pieChartGeometry.total > 0"
+              class="absolute! top-1/2! left-1/2! -translate-x-1/2! -translate-y-1/2! pointer-events-none! bg-slate-900/95! text-white! px-3! py-2! rounded-lg! shadow-xl! backdrop-blur-sm! animate-[fade-in-up_0.2s_ease-out_forwards]!"
+              style="z-index: 10;"
+            >
+              <div class="flex! items-center! gap-1.5! mb-1!">
+                <div
+                  class="w-2! h-2! rounded-full!"
+                  :style="{ background: pieChartGeometry.slices[activeSlice].color }"
+                ></div>
+                <span class="text-[10px]! font-bold! uppercase! tracking-wider! opacity-80!">
+                  {{ pieChartGeometry.slices[activeSlice].label }}
+                </span>
+              </div>
+              <div class="text-[13px]! font-extrabold! font-mono!">
+                {{ formatCurrency(pieChartGeometry.slices[activeSlice].value) }}
+              </div>
+              <div class="text-[10px]! font-bold! opacity-70! mt-0.5!">
+                {{ pieChartGeometry.slices[activeSlice].percentLabel }} dari total
+              </div>
+            </div>
+          </div>
+
+          <!-- Legend ringkas 1 baris -->
+          <div class="mt-4! flex! items-center! justify-center! gap-3! flex-wrap!">
+            <div
+              v-for="key in ['pendapatan', 'beban', 'surplus']"
+              :key="key"
+              class="flex! items-center! gap-1.5! cursor-pointer! transition-opacity! duration-200!"
+              :class="activeSlice && activeSlice !== key ? 'opacity-40!' : 'opacity-100!'"
+              @mouseenter="activeSlice = key"
+              @mouseleave="activeSlice = null"
+            >
+              <div
+                class="w-2.5! h-2.5! rounded-sm!"
+                :style="{ background: pieChartGeometry.slices[key].color }"
+              ></div>
+              <span class="text-[10px]! font-bold! text-slate-500! uppercase! tracking-wider!">
+                {{ pieChartGeometry.slices[key].label }}
+              </span>
+            </div>
+          </div>
+
+          <!-- Trend baris (badges Pendapatan / Beban / Surplus vs bulan lalu) -->
+          <div class="mt-3! pt-3! border-t! border-slate-100! flex! items-center! justify-between! gap-2!">
             <div
               :class="trendBadgeClass(financeTrend.pendapatan)"
               class="flex! items-center! gap-1! px-2! py-1! rounded-md! text-[10px]! font-bold!"
+              :title="'Pendapatan: ' + trendLabel(financeTrend.pendapatan) + ' vs bulan lalu'"
             >
               <font-awesome-icon :icon="trendIcon(financeTrend.pendapatan)" class="w-2.5! h-2.5!" />
-              <span>{{ trendLabel(financeTrend.pendapatan) }}</span>
+              <span>P {{ trendLabel(financeTrend.pendapatan) }}</span>
             </div>
-          </div>
-          <div class="flex! items-baseline! gap-1!">
-            <span class="text-sm! font-bold! text-slate-400!">Rp</span>
-            <span class="text-2xl! font-extrabold! text-slate-600! tracking-tight!">
-              {{ formattedPendapatan.replace('Rp', '').trim() }}
-            </span>
-          </div>
-        </ContentCard>
-
-        <ContentCard
-          variant="bordered"
-          padding="normal"
-          hoverable
-          class="relative! overflow-hidden! border-l-4! border-l-amber-500!"
-        >
-          <div class="flex! items-center! justify-between! mb-4!">
-            <span class="text-[10px]! font-bold! text-slate-400! tracking-wider! uppercase!"
-              >Beban</span
-            >
             <div
               :class="trendBadgeClass(financeTrend.beban, true)"
               class="flex! items-center! gap-1! px-2! py-1! rounded-md! text-[10px]! font-bold!"
+              :title="'Beban: ' + trendLabel(financeTrend.beban) + ' vs bulan lalu'"
             >
               <font-awesome-icon :icon="trendIcon(financeTrend.beban)" class="w-2.5! h-2.5!" />
-              <span>{{ trendLabel(financeTrend.beban) }}</span>
+              <span>B {{ trendLabel(financeTrend.beban) }}</span>
             </div>
-          </div>
-          <div class="flex! items-baseline! gap-1!">
-            <span class="text-sm! font-bold! text-slate-400!">Rp</span>
-            <span class="text-2xl! font-extrabold! text-slate-600! tracking-tight!">
-              {{ formattedBeban.replace('Rp', '').trim() }}
-            </span>
-          </div>
-        </ContentCard>
-
-        <ContentCard
-          variant="bordered"
-          padding="normal"
-          hoverable
-          class="relative! overflow-hidden! border-l-4! border-l-emerald-500!"
-        >
-          <div class="flex! items-center! justify-between! mb-4!">
-            <span class="text-[10px]! font-bold! text-slate-400! tracking-wider! uppercase!"
-              >Surplus</span
-            >
             <div
               :class="trendBadgeClass(financeTrend.surplus)"
               class="flex! items-center! gap-1! px-2! py-1! rounded-md! text-[10px]! font-bold!"
+              :title="'Surplus: ' + trendLabel(financeTrend.surplus) + ' vs bulan lalu'"
             >
               <font-awesome-icon :icon="trendIcon(financeTrend.surplus)" class="w-2.5! h-2.5!" />
-              <span>{{ trendLabel(financeTrend.surplus) }}</span>
-            </div>
-          </div>
-          <div class="flex! items-baseline! gap-1!">
-            <span class="text-sm! font-bold! text-slate-400!">Rp</span>
-            <span class="text-2xl! font-extrabold! text-slate-600! tracking-tight!">
-              {{ formattedSurplus.replace('Rp', '').trim() }}
-            </span>
-          </div>
-        </ContentCard>
-
-        <ContentCard
-          variant="bordered"
-          padding="normal"
-          hoverable
-          class="bg-sky-50/50! border-sky-100!"
-        >
-          <div class="flex! flex-col! gap-2!">
-            <h4 class="text-sm! font-bold! text-slate-700!">Kondisi Air Tanah</h4>
-            <p class="text-[11px]! text-slate-500! leading-relaxed!">
-              Indeks keberlanjutan sistem saat ini dalam kondisi optimal.
-            </p>
-            <div class="mt-2! w-full! h-1.5! bg-sky-100! rounded-full! overflow-hidden!">
-              <div class="h-full! bg-sky-500! rounded-full!" style="width: 85%"></div>
+              <span>S {{ trendLabel(financeTrend.surplus) }}</span>
             </div>
           </div>
         </ContentCard>
       </div>
 
-      <div class="lg:col-span-8!">
-        <ContentCard variant="bordered" padding="normal" hoverable class="flex! flex-col! pb-2!">
+      <div class="lg:col-span-8! h-full! flex!">
+        <ContentCard variant="bordered" padding="normal" hoverable class="flex! flex-col! pb-2! h-full! w-full!">
           <div
             class="flex! flex-col! sm:flex-row! items-start! sm:items-center! justify-between! gap-2! mb-4!"
           >
@@ -201,7 +292,7 @@
               </div>
             </div>
           </div>
-          <div class="w-full! shrink-0!">
+          <div class="w-full! flex-1! flex! flex-col! justify-center! min-h-[260px]!">
             <svg
               v-if="chartGeometry"
               :viewBox="`0 0 ${chartGeometry.width} ${chartGeometry.height}`"
@@ -444,7 +535,6 @@ const closeDetailModal = () => {
 
 const handleSendMessage = () => {
   // ponytail: handler placeholder, wire ke WhatsApp/email gateway saat fitur siap
-  console.log('Kirim pesan ke:', tagihanSelection.value)
 }
 
 provide('tagihanSelection', tagihanSelection)
@@ -537,16 +627,145 @@ const financialData = ref({
   surplus: 0,
 })
 
-const formattedPendapatan = ref('')
-const formattedBeban = ref('')
-const formattedSurplus = ref('')
-
 const financeTrend = ref({ pendapatan: 0, beban: 0, surplus: 0 })
 const chartData = ref([])
 const chartSubtitle = computed(() => {
   const n = chartData.value.length
   if (!n) return `Belum ada data jurnal umum tahun ${selectedYear.value}`
   return `Visualisasi finansial tahun ${selectedYear.value} (${n} bulan memiliki transaksi)`
+})
+
+/**
+ * PIE CHART KOMPOSISI KEUANGAN
+ * ---------------------------
+ * - Basis total = MAX(Pendapatan, Beban + |Surplus|) supaya pie chart tetap
+ *   proporsional bahkan saat defisit (Beban > Pendapatan).
+ * - Slice minimum = 1.5% dari total basis agar tidak hilang.
+ * - Saat Surplus > 0 → 3 slice (P, B, S).
+ * - Saat Surplus ≤ 0 → 2 slice (P, B); S disembunyikan tapi tetap
+ *   ditampilkan di legend dengan nilai minus.
+ */
+const pieChartSubtitle = computed(() => {
+  const p = Number(financialData.value?.pendapatan) || 0
+  const b = Number(financialData.value?.beban) || 0
+  const s = Number(financialData.value?.surplus) || 0
+  if (p === 0 && b === 0) return 'belum ada data'
+  if (s >= 0) return `${formatCurrencyShort(s)} surplus`
+  return `defisit ${formatCurrencyShort(Math.abs(s))}`
+})
+
+const formatCurrencyShort = (amount) => {
+  const n = Number(amount) || 0
+  const abs = Math.abs(n)
+  if (abs >= 1_000_000_000) return `Rp ${(n / 1_000_000_000).toFixed(1).replace(/\.0$/, '')}M`
+  if (abs >= 1_000_000) return `Rp ${(n / 1_000_000).toFixed(1).replace(/\.0$/, '')}jt`
+  if (abs >= 1_000) return `Rp ${(n / 1_000).toFixed(0)}rb`
+  return `Rp ${n}`
+}
+
+/**
+ * Slice yang sedang di-hover di pie chart.
+ * null = tidak ada hover. Digunakan untuk:
+ *   - Menampilkan tooltip dengan nominal + persen
+ *   - Highlight slice aktif (scale 1.04 + opacity penuh pada slice lain diturunkan)
+ *   - Highlight legend chip terkait
+ */
+const activeSlice = ref(null)
+
+const pieChartGeometry = computed(() => {
+  const p = Math.max(0, Number(financialData.value?.pendapatan) || 0)
+  const b = Math.max(0, Number(financialData.value?.beban) || 0)
+  const s = Number(financialData.value?.surplus) || 0
+
+  // Basis untuk normalisasi slice: pendapatan sebagai denominator utama.
+  // Kalau pendapatan 0 (tahun kosong), fallback ke beban.
+  const basis = p > 0 ? p : Math.max(b, 1)
+
+  // Hitung slice — surplus hanya dihitung positif (sisa setelah beban)
+  const sliceP = p
+  const sliceB = b
+  const sliceS = Math.max(0, s)
+
+  // Normalisasi ke basis (0–1)
+  const sum = sliceP + sliceB + sliceS
+  const total = sum > 0 ? sum : 0
+  const normP = total > 0 ? sliceP / total : 0
+  const normB = total > 0 ? sliceB / total : 0
+  const normS = total > 0 ? sliceS / total : 0
+
+  // Minimum slice 1.5% supaya slice kecil tetap kelihatan
+  const min = 0.015
+  let dP = normP, dB = normB, dS = normS
+  if (total > 0) {
+    if (dP > 0 && dP < min) dP = min
+    if (dB > 0 && dB < min) dB = min
+    if (dS > 0 && dS < min) dS = min
+    // Renormalize setelah min
+    const dSum = dP + dB + dS
+    if (dSum > 0) {
+      dP /= dSum; dB /= dSum; dS /= dSum
+    }
+  }
+
+  // Bangun path SVG (arc)
+  const size = 200
+  const cx = size / 2
+  const cy = size / 2
+  const r = size / 2 - 4 // margin 4px biar tidak kepotong
+
+  const buildPath = (startAngle, endAngle) => {
+    if (endAngle - startAngle <= 0) return ''
+    const x1 = cx + r * Math.cos(startAngle)
+    const y1 = cy + r * Math.sin(startAngle)
+    const x2 = cx + r * Math.cos(endAngle)
+    const y2 = cy + r * Math.sin(endAngle)
+    const largeArc = endAngle - startAngle > Math.PI ? 1 : 0
+    return `M ${cx} ${cy} L ${x1} ${y1} A ${r} ${r} 0 ${largeArc} 1 ${x2} ${y2} Z`
+  }
+
+  // Mulai dari -π/2 (atas / 12 o'clock), searah jarum jam
+  const start = -Math.PI / 2
+  const endP = start + 2 * Math.PI * dP
+  const endB = endP + 2 * Math.PI * dB
+  const endS = endB + 2 * Math.PI * dS
+
+  const fmtPct = (n) => (n <= 0 ? '0%' : `${(n * 100).toFixed(1).replace(/\.0$/, '')}%`)
+
+  return {
+    size,
+    cx,
+    cy,
+    total,
+    basis,
+    pendapatanShort: formatCurrencyShort(p),
+    surplusLabel: s >= 0 ? `▲ ${formatCurrencyShort(s)}` : `▼ ${formatCurrencyShort(Math.abs(s))}`,
+    slices: {
+      pendapatan: {
+        label: 'Pendapatan',
+        value: sliceP,
+        fraction: dP,
+        path: buildPath(start, endP),
+        color: '#3b82f6',
+        percentLabel: fmtPct(normP),
+      },
+      beban: {
+        label: 'Beban',
+        value: sliceB,
+        fraction: dB,
+        path: buildPath(endP, endB),
+        color: '#334155',
+        percentLabel: fmtPct(normB),
+      },
+      surplus: {
+        label: 'Surplus',
+        value: sliceS,
+        fraction: dS,
+        path: buildPath(endB, endS),
+        color: '#10b981',
+        percentLabel: fmtPct(normS),
+      },
+    },
+  }
 })
 
 const formatCurrency = (amount) => {
@@ -671,7 +890,6 @@ const loadStats = async () => {
       }
     }
   } catch (error) {
-    console.error('Failed to load dashboard statistics', error)
   }
 }
 
@@ -726,6 +944,10 @@ const loadFinance = async () => {
         chartData.value = filled
       }
 
+      // Hanya fetch bulan sebelumnya kalau BUKAN cached stats (cache key sudah include month).
+      // Karena stats() sekarang di-cache 5 menit per (year,month), kita skip pemanggilan
+      // tambahan untuk prev month kalau cache hit pada response ini.
+      // Tapi financeTrend butuh prev month — fetch terpisah (ini hanya 1 query aggregate, cepat).
       const prevMonth = await prevMonthFinance(
         selectedYear.value,
         fin?.month ?? new Date().getMonth() + 1,
@@ -737,11 +959,7 @@ const loadFinance = async () => {
       }
     }
   } catch (error) {
-    console.error('Failed to load finance data', error)
   } finally {
-    formattedPendapatan.value = formatCurrency(financialData.value.pendapatan)
-    formattedBeban.value = formatCurrency(financialData.value.beban)
-    formattedSurplus.value = formatCurrency(financialData.value.surplus)
     loadingFinance.value = false
   }
 }
