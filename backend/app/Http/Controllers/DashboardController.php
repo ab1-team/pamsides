@@ -5,123 +5,425 @@ namespace App\Http\Controllers;
 use App\Models\Customer;
 use App\Models\InstallationTicket;
 use App\Models\MonthlyBill;
+use App\Models\Setting;
 use App\Models\Transaction;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class DashboardController extends Controller
 {
+    /**
+     * TTL cache untuk statistik dashboard.
+     * - Stat umum: 60 detik (data berubah saat bayar / tiket baru)
+     * - Finance chart & available_years: 5 menit (lebih stabil)
+     */
+    private const STATS_CACHE_TTL  = 60;   // detik
+    private const FINANCE_CACHE_TTL = 300;  // detik (5 menit)
+    private const YEARS_CACHE_TTL   = 3600; // 1 jam
+
     public function statistics(Request $request)
     {
         $now   = now();
         $year  = (int) $request->query('year', $now->year);
         $month = (int) $request->query('month', $now->month);
+        $todayYmd = $now->toDateString();
 
-        // Jumlah pelanggan aktif
-        $totalCustomers = Customer::count();
+        // ─── CACHE 1: stat-global (independent of year/month) ───
+        $statsGlobal = Cache::remember(
+            'dashboard:stats:global:' . $todayYmd,
+            self::STATS_CACHE_TTL,
+            function () {
+                return [
+                    'total_customers' => Customer::count(),
+                    'tickets_by_status' => InstallationTicket::selectRaw('status, count(*) as total')
+                        ->groupBy('status')
+                        ->pluck('total', 'status')
+                        ->all(),
+                    'bills_unpaid' => MonthlyBill::where('status', 'unpaid')->count(),
+                    'pemakaian_count' => InstallationTicket::where('status', 'completed')->count(),
+                    'tunggakan_total' => MonthlyBill::where('status', 'unpaid')
+                        ->where('penalty_amount', '>', 0)
+                        ->count(),
+                    'latest_tickets' => InstallationTicket::with('package:id,name')
+                        ->orderBy('created_at', 'desc')
+                        ->limit(5)
+                        ->get(['id', 'applicant_name', 'status', 'package_id', 'created_at']),
+                    'overdue_bills' => MonthlyBill::with([
+                        'customer:id,user_id,customer_code',
+                        'customer.user:id,name',
+                    ])
+                        ->where('status', 'unpaid')
+                        ->where('due_date', '<=', now()->toDateString())
+                        ->orderBy('due_date')
+                        ->limit(5)
+                        ->get([
+                            'id', 'customer_id', 'billing_period_year', 'billing_period_month',
+                            'total_amount', 'penalty_amount', 'due_date', 'status',
+                        ]),
+                ];
+            }
+        );
 
-        // Tiket per status
-        $ticketsByStatus = InstallationTicket::selectRaw('status, count(*) as total')
-            ->groupBy('status')
-            ->pluck('total', 'status');
+        // ─── CACHE 2: finance data (per year+month) ───
+        $financeData = Cache::remember(
+            "dashboard:finance:{$year}:{$month}",
+            self::FINANCE_CACHE_TTL,
+            function () use ($year, $month) {
+                // Pakai range tanggal supaya index tgl_transaksi optimal
+                $start = Carbon::create($year, $month, 1)->startOfMonth()->toDateString();
+                $end   = Carbon::create($year, $month, 1)->endOfMonth()->toDateString();
 
-        // Pendapatan bulan ini (tagihan yang sudah paid)
-        $revenueThisMonth = MonthlyBill::where('billing_period_year', $year)
+                // Aggregate pendapatan + beban dalam 1 query (bukan 2)
+                $monthAgg = Transaction::selectRaw(
+                    "COALESCE(SUM(CASE WHEN account_kredit LIKE '4.%' THEN saldo ELSE 0 END), 0) AS pendapatan,"
+                    . " COALESCE(SUM(CASE WHEN account_debet  LIKE '5.%' THEN saldo ELSE 0 END), 0) AS beban"
+                )
+                    ->whereBetween('tgl_transaksi', [$start, $end])
+                    ->first();
+
+                $pendapatan = (float) ($monthAgg->pendapatan ?? 0);
+                $beban      = (float) ($monthAgg->beban ?? 0);
+
+                // Chart per bulan dalam 1 tahun
+                $yearStart = Carbon::create($year, 1, 1)->startOfYear()->toDateString();
+                $yearEnd   = Carbon::create($year, 12, 31)->endOfYear()->toDateString();
+
+                $rowsPendapatan = Transaction::selectRaw(
+                    "MONTH(tgl_transaksi) AS m,"
+                    . " COALESCE(SUM(saldo), 0) AS total"
+                )
+                    ->whereBetween('tgl_transaksi', [$yearStart, $yearEnd])
+                    ->where('account_kredit', 'like', '4.%')
+                    ->groupBy(DB::raw('MONTH(tgl_transaksi)'))
+                    ->pluck('total', 'm');
+
+                $rowsBeban = Transaction::selectRaw(
+                    "MONTH(tgl_transaksi) AS m,"
+                    . " COALESCE(SUM(saldo), 0) AS total"
+                )
+                    ->whereBetween('tgl_transaksi', [$yearStart, $yearEnd])
+                    ->where('account_debet', 'like', '5.%')
+                    ->groupBy(DB::raw('MONTH(tgl_transaksi)'))
+                    ->pluck('total', 'm');
+
+                $chart = [];
+                for ($m = 1; $m <= 12; $m++) {
+                    $p = (float) ($rowsPendapatan[$m] ?? 0);
+                    $b = (float) ($rowsBeban[$m] ?? 0);
+                    $chart[] = [
+                        'year'       => $year,
+                        'month'      => $m,
+                        'pendapatan' => $p,
+                        'beban'      => $b,
+                        'surplus'    => $p - $b,
+                    ];
+                }
+
+                return [
+                    'finance' => [
+                        'pendapatan' => $pendapatan,
+                        'beban'      => $beban,
+                        'surplus'    => $pendapatan - $beban,
+                        'year'       => $year,
+                        'month'      => $month,
+                    ],
+                    'finance_chart' => $chart,
+                ];
+            }
+        );
+
+        // ─── CACHE 3: available_years (jarang berubah) ───
+        $availableYears = Cache::remember(
+            'dashboard:available_years',
+            self::YEARS_CACHE_TTL,
+            function () {
+                return Transaction::selectRaw('DISTINCT YEAR(tgl_transaksi) as y')
+                    ->whereNotNull('tgl_transaksi')
+                    ->orderBy('y')
+                    ->pluck('y')
+                    ->map(fn ($y) => (int) $y)
+                    ->values()
+                    ->all();
+            }
+        );
+
+        // Revenue bulan ini (ringan, index ada)
+        $revenueThisMonth = MonthlyBill::where('status', 'paid')
+            ->where('billing_period_year', $year)
             ->where('billing_period_month', $month)
-            ->where('status', 'paid')
             ->sum('total_amount');
 
-        // Tagihan bulan ini (semua status unpaid, semua periode)
-        $billsThisMonth = MonthlyBill::where('status', 'unpaid')
-            ->selectRaw('status, count(*) as total')
-            ->groupBy('status')
-            ->pluck('total', 'status');
-
-        // Pemakaian bulan ini = total tiket completed
-        $pemakaianThisMonth = InstallationTicket::where('status', 'completed')->count();
-
-        // Tunggakan total = tagihan unpaid yang punya denda (penalty_amount > 0)
-        $tunggakanTotal = MonthlyBill::where('status', 'unpaid')
-            ->where('penalty_amount', '>', 0)
-            ->count();
-
-        // Tiket terbaru
-        $latestTickets = InstallationTicket::with('package')
-            ->orderBy('created_at', 'desc')
-            ->limit(5)
-            ->get();
-
-        // Tagihan jatuh tempo (unpaid & due_date <= hari ini)
-        $overdueBills = MonthlyBill::with('customer.user')
-            ->where('status', 'unpaid')
-            ->where('due_date', '<=', $now->toDateString())
-            ->orderBy('due_date')
-            ->limit(5)
-            ->get();
-
-        // Keuangan bulan ini dari jurnal umum (akun pendapatan 4.x di-kredit, akun beban 5.x di-debet)
-        $pendapatanThisMonth = Transaction::whereYear('tgl_transaksi', $year)
-            ->whereMonth('tgl_transaksi', $month)
-            ->where('account_kredit', 'like', '4.%')
-            ->sum('saldo');
-
-        $bebanThisMonth = Transaction::whereYear('tgl_transaksi', $year)
-            ->whereMonth('tgl_transaksi', $month)
-            ->where('account_debet', 'like', '5.%')
-            ->sum('saldo');
-
-        $surplusThisMonth = $pendapatanThisMonth - $bebanThisMonth;
-
-        // Riwayat keuangan per bulan dari jurnal umum pada tahun fiskal $year
-        $monthlyRows = Transaction::selectRaw('YEAR(tgl_transaksi) as y, MONTH(tgl_transaksi) as m,
-                COALESCE(SUM(CASE WHEN account_kredit LIKE ? THEN saldo ELSE 0 END), 0) as pendapatan,
-                COALESCE(SUM(CASE WHEN account_debet LIKE ? THEN saldo ELSE 0 END), 0) as beban', ['4.%', '5.%'])
-            ->whereYear('tgl_transaksi', $year)
-            ->groupBy(DB::raw('YEAR(tgl_transaksi)'), DB::raw('MONTH(tgl_transaksi)'))
-            ->orderBy(DB::raw('YEAR(tgl_transaksi)'))
-            ->orderBy(DB::raw('MONTH(tgl_transaksi)'))
-            ->get();
-
-        $financeChart = $monthlyRows->map(function ($r) {
-            $p = (float) $r->pendapatan;
-            $b = (float) $r->beban;
-            return [
-                'year'      => (int) $r->y,
-                'month'     => (int) $r->m,
-                'pendapatan'=> $p,
-                'beban'     => $b,
-                'surplus'   => $p - $b,
-            ];
-        })->values();
-
-        $availableYears = Transaction::selectRaw('DISTINCT YEAR(tgl_transaksi) as y')
-            ->whereNotNull('tgl_transaksi')
-            ->orderBy('y')
-            ->pluck('y')
-            ->map(fn ($y) => (int) $y)
-            ->values();
+        // Kompatibilitas dengan frontend lama: bills_this_month.unpaid
+        $billsThisMonth = ['unpaid' => $statsGlobal['bills_unpaid']];
 
         return response()->json([
             'success' => true,
-            'data'    => [
-                'total_customers'   => $totalCustomers,
-                'tickets_by_status' => $ticketsByStatus,
-                'revenue_this_month'=> $revenueThisMonth,
-                'bills_this_month'  => $billsThisMonth,
-                'pemakaian_count'   => $pemakaianThisMonth,
-                'tunggakan_total'   => $tunggakanTotal,
-                'latest_tickets'    => $latestTickets,
-                'overdue_bills'     => $overdueBills,
-                'finance'           => [
-                    'pendapatan' => $pendapatanThisMonth,
-                    'beban'      => $bebanThisMonth,
-                    'surplus'    => $surplusThisMonth,
-                    'year'       => $year,
-                    'month'      => $month,
-                ],
-                'finance_chart'     => $financeChart,
-                'available_years'   => $availableYears,
+            'data'    => array_merge($statsGlobal, [
+                'revenue_this_month' => $revenueThisMonth,
+                'bills_this_month'   => $billsThisMonth,
+                'finance'            => $financeData['finance'],
+                'finance_chart'      => $financeData['finance_chart'],
+                'available_years'    => $availableYears,
+            ]),
+        ]);
+    }
+
+    /**
+     * Endpoint RINGAN khusus untuk popup 4 kotak dashboard.
+     * Filter & paginasi dilakukan di SERVER sehingga frontend tidak perlu
+     * menarik semua data dan filter client-side (yang menyebabkan loop
+     * getAllBills() sebelumnya menarik ratusan halaman).
+     *
+     * Query params:
+     *   - type     : instalasi | tunggakan | tagihan | pemakaian (wajib)
+     *   - search   : string pencarian (opsional)
+     *   - page     : halaman (default 1)
+     *   - per_page : rows per page (default 10, max 50)
+     *
+     * Response shape seragam: { success, data: [...], meta: { ... } }
+     */
+    public function popupData(Request $request)
+    {
+        $type    = (string) $request->query('type', '');
+        $perPage = max(1, min((int) $request->query('per_page', 10), 50));
+        $page    = max(1, (int) $request->query('page', 1));
+        $search  = trim((string) $request->query('search', ''));
+
+        switch ($type) {
+            case 'instalasi':
+                return $this->popupInstalasi($perPage, $page, $search);
+            case 'tunggakan':
+                return $this->popupTunggakan($perPage, $page, $search);
+            case 'tagihan':
+                return $this->popupTagihan($perPage, $page, $search);
+            case 'pemakaian':
+                return $this->popupPemakaian($request, $perPage, $page, $search);
+            default:
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Tipe popup tidak dikenali. Gunakan: instalasi | tunggakan | tagihan | pemakaian.',
+                ], 422);
+        }
+    }
+
+    /**
+     * Arsip Instalasi: tiket dengan status draft / pending / surveyed / unpaid.
+     * Hanya SELECT field minimum + filter server-side.
+     */
+    private function popupInstalasi(int $perPage, int $page, string $search)
+    {
+        $query = InstallationTicket::query()
+            ->whereIn('status', ['draft', 'pending', 'surveyed', 'unpaid'])
+            ->orderBy('created_at', 'desc');
+
+        if ($search !== '') {
+            $query->where(function ($w) use ($search) {
+                $w->where('applicant_name', 'like', $search . '%')
+                    ->orWhere('nik', 'like', $search . '%');
+            });
+        }
+
+        $total = (clone $query)->count();
+        $rows = $query->forPage($page, $perPage)
+            ->get(['id', 'applicant_name', 'address', 'status', 'created_at']);
+
+        $items = $rows->map(fn ($t) => [
+            'id'           => $t->id,
+            'nomorInduk'   => 'INS-' . str_pad((string) $t->id, 5, '0', STR_PAD_LEFT),
+            'customer'     => $t->applicant_name ?: '-',
+            'alamat'       => $t->address ?: '-',
+            'tanggalOrder' => $t->created_at ? $t->created_at->toDateString() : '-',
+            'status'       => $t->status,
+        ])->values();
+
+        return response()->json([
+            'success' => true,
+            'data'    => $items,
+            'meta'    => [
+                'current_page' => $page,
+                'last_page'    => (int) max(1, ceil($total / $perPage)),
+                'per_page'     => $perPage,
+                'total'        => $total,
+            ],
+        ]);
+    }
+
+    /**
+     * Arsip Tunggakan: tagihan unpaid + penalty_amount > 0.
+     * Eager load minimum + paginasi server-side (TIDAK loop halaman).
+     */
+    private function popupTunggakan(int $perPage, int $page, string $search)
+    {
+        $query = MonthlyBill::query()
+            ->with([
+                'customer:id,user_id,ticket_id,customer_code',
+                'customer.user:id,name',
+                'customer.ticket:id,applicant_name,address',
+            ])
+            ->where('status', 'unpaid')
+            ->where('penalty_amount', '>', 0)
+            ->orderBy('due_date', 'asc');
+
+        if ($search !== '') {
+            $query->where(function ($w) use ($search) {
+                $w->whereHas('customer.user', fn ($u) => $u->where('name', 'like', $search . '%'))
+                    ->orWhereHas('customer', fn ($c) => $c->where('customer_code', 'like', $search . '%'))
+                    ->orWhereHas('customer.ticket', fn ($t) => $t->where('applicant_name', 'like', $search . '%'));
+            });
+        }
+
+        $total = (clone $query)->count();
+        $rows = $query->forPage($page, $perPage)->get();
+
+        $items = $rows->map(function ($b) {
+            $totalAmt = (float) $b->total_amount;
+            $denda = (float) $b->penalty_amount;
+            return [
+                'id'           => $b->id,
+                'nomorInduk'   => $b->customer?->customer_code ?: '-',
+                'customer'     => $b->customer?->ticket?->applicant_name
+                    ?? $b->customer?->user?->name ?? '-',
+                'alamat'       => $b->customer?->ticket?->address ?: '-',
+                'periodeLabel' => $b->billing_period_month
+                    ? sprintf('%02d/%d', $b->billing_period_month, $b->billing_period_year)
+                    : '-',
+                'tagihan'      => max(0, $totalAmt - $denda),
+                'denda'        => $denda,
+                'total'        => $totalAmt,
+                'status'       => 'Belum Lunas',
+            ];
+        })->values();
+
+        return response()->json([
+            'success' => true,
+            'data'    => $items,
+            'meta'    => [
+                'current_page' => $page,
+                'last_page'    => (int) max(1, ceil($total / $perPage)),
+                'per_page'     => $perPage,
+                'total'        => $total,
+            ],
+        ]);
+    }
+
+    /**
+     * Arsip Tagihan: SEMUA tagihan unpaid (tanpa filter denda).
+     */
+    private function popupTagihan(int $perPage, int $page, string $search)
+    {
+        $query = MonthlyBill::query()
+            ->with([
+                'customer:id,user_id,ticket_id,customer_code',
+                'customer.user:id,name',
+                'customer.ticket:id,applicant_name,address',
+            ])
+            ->where('status', 'unpaid')
+            ->orderBy('due_date', 'asc');
+
+        if ($search !== '') {
+            $query->where(function ($w) use ($search) {
+                $w->whereHas('customer.user', fn ($u) => $u->where('name', 'like', $search . '%'))
+                    ->orWhereHas('customer', fn ($c) => $c->where('customer_code', 'like', $search . '%'))
+                    ->orWhereHas('customer.ticket', fn ($t) => $t->where('applicant_name', 'like', $search . '%'));
+            });
+        }
+
+        $total = (clone $query)->count();
+        $rows = $query->forPage($page, $perPage)->get();
+
+        $items = $rows->map(fn ($b) => [
+            'id'           => $b->id,
+            'nomorInduk'   => $b->customer?->customer_code ?: '-',
+            'customer'     => $b->customer?->ticket?->applicant_name
+                ?? $b->customer?->user?->name ?? '-',
+            'alamat'       => $b->customer?->ticket?->address ?: '-',
+            'periode'      => $b->billing_period_month,
+            'tahun'        => $b->billing_period_year,
+            'periodeLabel' => $b->billing_period_month
+                ? sprintf('%02d/%d', $b->billing_period_month, $b->billing_period_year)
+                : '-',
+            'total'        => (float) $b->total_amount,
+            'denda'        => (float) $b->penalty_amount,
+            'jatuhTempo'   => $b->due_date?->toDateString(),
+            'status'       => $b->status,
+        ])->values();
+
+        return response()->json([
+            'success' => true,
+            'data'    => $items,
+            'meta'    => [
+                'current_page' => $page,
+                'last_page'    => (int) max(1, ceil($total / $perPage)),
+                'per_page'     => $perPage,
+                'total'        => $total,
+            ],
+        ]);
+    }
+
+    /**
+     * Arsip Pemakaian: pemakaian air bulan ini.
+     * Anti-N+1: ambil semua customer + tagihan sekaligus.
+     */
+    private function popupPemakaian(Request $request, int $perPage, int $page, string $search)
+    {
+        $now   = now();
+        $month = (int) $request->query('month', $now->month);
+        $year  = (int) $request->query('year',  $now->year);
+
+        $customers = Customer::with(['user:id,name', 'ticket:id,applicant_name,address'])
+            ->whereHas('ticket', fn ($q) => $q->whereIn('status', [
+                'surveyed', 'unpaid', 'processing', 'completed', 'suspended',
+            ]))
+            ->get(['id', 'user_id', 'ticket_id', 'customer_code']);
+
+        $bills = MonthlyBill::whereIn('customer_id', $customers->pluck('id'))
+            ->where('billing_period_year', $year)
+            ->where('billing_period_month', $month)
+            ->get()
+            ->keyBy('customer_id');
+
+        $items = $customers->map(function ($c) use ($bills, $month, $year) {
+            $bill = $bills->get($c->id);
+            return [
+                'id'               => $c->id,
+                'nomorInduk'       => $c->customer_code ?: '-',
+                'customer'         => $c->user?->name ?? $c->ticket?->applicant_name ?? '-',
+                'alamat'           => $c->ticket?->address ?: '-',
+                'periodeLabel'     => $bill
+                    ? sprintf('%02d/%d', $bill->billing_period_month, $bill->billing_period_year)
+                    : sprintf('%02d/%d', $month, $year),
+                'meter_awal'       => $bill?->meter_reading_start,
+                'meter_akhir'      => $bill?->meter_reading_end,
+                'pemakaian'        => $bill?->usage_m3,
+                'pemakaian_charge' => $bill?->usage_charge,
+                'abodemen'         => $bill?->abodemen,
+                'denda'            => $bill?->penalty_amount ?? 0,
+                'total'            => $bill?->total_amount ?? 0,
+                'status'           => $bill?->status ?? 'pending',
+            ];
+        })->values();
+
+        if ($search !== '') {
+            $q = mb_strtolower($search);
+            $items = $items->filter(fn ($i) => str_contains(mb_strtolower($i['customer']), $q)
+                || str_contains(mb_strtolower($i['nomorInduk']), $q))->values();
+        }
+
+        $total = $items->count();
+        $rows = $items->forPage($page, $perPage)->values();
+
+        return response()->json([
+            'success' => true,
+            'data'    => $rows,
+            'meta'    => [
+                'current_page' => $page,
+                'last_page'    => (int) max(1, ceil($total / $perPage)),
+                'per_page'     => $perPage,
+                'total'        => $total,
             ],
         ]);
     }
@@ -155,5 +457,142 @@ class DashboardController extends Controller
             'success' => true,
             'message' => 'Notifikasi ditutup',
         ]);
+    }
+
+    /**
+     * Auto-generate piutang/abodemen/denda untuk tagihan menunggak.
+     *
+     * Dipanggil dari frontend setiap kali halaman dashboard di-mount.
+     * - Hanya jalan bila hari ini == `toleransi_tunggakan` (tanggal di
+     *   kolom SOP, range 1-28) DAN proses untuk bulan ini belum pernah
+     *   dijalankan (cache `auto_gen_overdue_{YYYY-MM}_{userId}`).
+     * - Menjalankan command `billing:generate-overdue-transactions`
+     *   dengan `--tanggal=today` dan `--force=false`.
+     * - Hasil dikembalikan ke frontend untuk ditampilkan di pop up.
+     *
+     * Catatan: bila dijalankan berulang pada hari yang sama untuk user
+     * berbeda, command akan skip tagihan yang sudah punya jurnal
+     * overdue_bill (lihat flag `--force=false`). Aman.
+     */
+    public function autoGenerateOverdue(Request $request)
+    {
+        $userId  = auth()->id();
+        $today   = now();
+        $todayYmd = $today->toDateString();
+        $todayYm = $today->format('Y-m');
+
+        $setting  = Setting::first();
+        $scheduledDay = (int) ($setting?->toleransi_tunggakan ?? 0);
+
+        // 1) Kalau SOP belum di-set / 0 → tidak ada generate otomatis.
+        if ($scheduledDay < 1 || $scheduledDay > 28) {
+            return response()->json([
+                'success' => true,
+                'ran'     => false,
+                'reason'  => 'Toleransi menunggak belum dikonfigurasi.',
+                'scheduled_day' => $scheduledDay,
+                'today_day'     => (int) $today->format('d'),
+                'date'          => $todayYmd,
+            ]);
+        }
+
+        // 2) Hanya jalan di tanggal yang sesuai SOP.
+        $todayDay = (int) $today->format('d');
+        if ($todayDay !== $scheduledDay) {
+            return response()->json([
+                'success' => true,
+                'ran'     => false,
+                'reason'  => 'Hari ini bukan tanggal generate yang dijadwalkan.',
+                'scheduled_day' => $scheduledDay,
+                'today_day'     => $todayDay,
+                'date'          => $todayYmd,
+            ]);
+        }
+
+        // 3) Idempotent per (bulan, user). Pertama kali buka dashboard
+        //    pada bulan ini & user ini → execute. Berikutnya → skip.
+        $runCacheKey = 'auto_gen_overdue_' . $todayYm . '_' . $userId;
+        $alreadyRan = Cache::get($runCacheKey, false);
+
+        if ($alreadyRan) {
+            // Ambil hasil terakhir dari cache notifikasi (kalau ada).
+            $lastNotif = Cache::get('overdue_gen_notification');
+            return response()->json([
+                'success'        => true,
+                'ran'           => false,
+                'reason'        => 'Generate sudah pernah dijalankan bulan ini untuk akun Anda.',
+                'scheduled_day' => $scheduledDay,
+                'today_day'     => $todayDay,
+                'date'          => $todayYmd,
+                'previous'      => $lastNotif,
+            ]);
+        }
+
+        // 4) Eksekusi command (sama seperti endpoint /tunggakan/generate).
+        $start   = microtime(true);
+        $opts    = ['--tanggal' => $todayYmd];
+
+        try {
+            $exit   = Artisan::call('billing:generate-overdue-transactions', $opts);
+            $output = Artisan::output();
+        } catch (\Throwable $e) {
+            Log::error('autoGenerateOverdue gagal: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'ran'     => false,
+                'message' => 'Gagal menjalankan generate: ' . $e->getMessage(),
+                'scheduled_day' => $scheduledDay,
+                'today_day'     => $todayDay,
+                'date'          => $todayYmd,
+            ], 500);
+        }
+
+        $duration = (int) ((microtime(true) - $start) * 1000);
+
+        // Tandai sudah pernah dijalankan untuk (bulan, user) selama 35 hari.
+        Cache::put($runCacheKey, true, now()->addDays(35));
+
+        // Reset flag dismiss notifikasi supaya pop up baru bisa muncul.
+        Cache::forget('overdue_gen_dismissed_' . $userId);
+
+        // Susun payload untuk pop up frontend. Hitung ringkasan dari DB
+        // agar frontend tidak perlu parsing output Artisan.
+        $processed = (int) Transaction::where('reverence_type', 'overdue_bill')
+            ->whereDate('tgl_transaksi', $todayYmd)
+            ->where('account_debet', '1.1.03.01')
+            ->where('account_kredit', '4.1.01.02') // Tunggakan Abodemen
+            ->distinct()
+            ->count('reverence_id');
+
+        $processedUsage = (int) Transaction::where('reverence_type', 'overdue_bill')
+            ->whereDate('tgl_transaksi', $todayYmd)
+            ->where('account_debet', '1.1.03.01')
+            ->where('account_kredit', '4.1.01.03') // Tunggakan Pemakaian / denda
+            ->distinct()
+            ->count('reverence_id');
+
+        $totalUnpaid = (int) MonthlyBill::where('status', 'unpaid')->count();
+        $totalOverdue = (int) MonthlyBill::where('status', 'unpaid')
+            ->where('due_date', '<', $todayYmd)
+            ->count();
+
+        $payload = [
+            'success'        => true,
+            'ran'            => true,
+            'date'           => $todayYmd,
+            'scheduled_day'  => $scheduledDay,
+            'today_day'      => $todayDay,
+            'duration_ms'    => $duration,
+            'exit_code'      => $exit,
+            'output'         => trim($output),
+            'summary'        => [
+                'tagihan_dengan_abodemen_tungakan' => $processed,
+                'tagihan_dengan_pemakaian_tungakan' => $processedUsage,
+                'total_unpaid'        => $totalUnpaid,
+                'total_overdue'       => $totalOverdue,
+            ],
+        ];
+
+        return response()->json($payload);
     }
 }
