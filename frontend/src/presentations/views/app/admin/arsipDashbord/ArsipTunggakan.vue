@@ -3,15 +3,18 @@
   <div class="h-full bg-white flex flex-col pt-2 pb-4">
     <DataTable
       v-model="searchQuery"
-      :data="filteredData"
+      :data="itemsList"
       :columns="columns"
       title="Detail Arsip Tunggakan"
       searchPlaceholder="Cari nama atau nomor induk..."
       v-model:current-page="currentPage"
       v-model:per-page="perPage"
-      :total-entries="filteredData.length"
-      :show-entries="false"
+      :total-entries="serverTotal"
+      :total-pages="totalPages"
+      :show-entries="true"
       :no-card="true"
+      server-side
+      :loading="loading"
     >
       <template #column-tagihan="{ row }">
         <span class="font-semibold text-slate-700">
@@ -40,9 +43,9 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import DataTable from '@/presentations/components/ui/DataTable.vue'
-import billingService from '@/services/billing.service'
+import dashboardService from '@/services/dashboard.service'
 
 const formatCurrency = (amount) => {
   return new Intl.NumberFormat('id-ID', {
@@ -54,8 +57,10 @@ const formatCurrency = (amount) => {
 
 const searchQuery = ref('')
 const currentPage = ref(1)
-const perPage = ref(8)
+const perPage = ref(10)
 const loading = ref(false)
+const serverTotal = ref(0)
+const totalPages = ref(1)
 
 const columns = [
   { key: 'nomorInduk', title: 'Nomor Induk' },
@@ -68,41 +73,25 @@ const columns = [
   { key: 'status', title: 'Status' },
 ]
 
-const monthNames = [
-  '', 'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
-  'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember',
-]
-
 const itemsList = ref([])
 
+// Pakai endpoint ringan DashboardController::popupData?type=tunggakan
+// (filter & paginasi di SERVER — sebelumnya getAllBills() menarik semua halaman)
 const fetchUnpaidBills = async () => {
   try {
     loading.value = true
-    const response = await billingService.getAllBills({ status: 'unpaid' })
-    if (response?.success && response?.data?.bills) {
-      itemsList.value = response.data.bills
-        .filter((bill) => Number(bill.penalty_amount) > 0)
-        .map((bill) => {
-        const ticket = bill.customer?.ticket
-        const total = Number(bill.total_amount) || 0
-        const denda = Number(bill.penalty_amount) || 0
-        const tagihan = Math.max(0, total - denda)
-        return {
-          id: bill.id,
-          nomorInduk: bill.customer?.customer_code || '-',
-          customer: ticket?.applicant_name || '-',
-          alamat: ticket?.address || '-',
-          periodeLabel: bill.billing_period_month
-            ? `${monthNames[bill.billing_period_month]} ${bill.billing_period_year}`
-            : '-',
-          tagihan,
-          denda,
-          total,
-        }
-      })
+    const response = await dashboardService.getPopupData('tunggakan', {
+      page: currentPage.value,
+      per_page: perPage.value,
+      search: searchQuery.value,
+    })
+    if (response?.success) {
+      itemsList.value = response.data || []
+      serverTotal.value = response.meta?.total ?? itemsList.value.length
+      totalPages.value = response.meta?.last_page ?? 1
     }
   } catch (error) {
-    console.error('Failed to fetch unpaid bills', error)
+    // silent
   } finally {
     loading.value = false
   }
@@ -112,13 +101,18 @@ onMounted(() => {
   fetchUnpaidBills()
 })
 
-const filteredData = computed(() => {
-  const query = searchQuery.value.toLowerCase()
-  if (!query) return itemsList.value
+// Re-fetch saat user ganti halaman, ubah per_page, atau mengetik search
+// (searchQuery: debounce di watch manual karena default v-model langsung emit tiap ketukan)
+let searchTimer = null
+watch(searchQuery, () => {
+  clearTimeout(searchTimer)
+  searchTimer = setTimeout(() => {
+    currentPage.value = 1 // reset ke page 1 saat search berubah
+    fetchUnpaidBills()
+  }, 300)
+})
 
-  return itemsList.value.filter(
-    (item) =>
-      item.customer.toLowerCase().includes(query) || item.nomorInduk.toLowerCase().includes(query),
-  )
+watch([currentPage, perPage], () => {
+  fetchUnpaidBills()
 })
 </script>
