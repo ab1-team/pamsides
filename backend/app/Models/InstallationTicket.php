@@ -56,6 +56,16 @@ class InstallationTicket extends Model
         return $this->belongsTo(Village::class, 'village_id');
     }
 
+    /**
+     * Snapshot paket lama untuk tiket ini, diurutkan dari yang terbaru.
+     * Paket aktif saat ini tetap dibaca dari `$this->package`.
+     */
+    public function history()
+    {
+        return $this->hasMany(InstallationTicketHistory::class, 'installation_ticket_id')
+            ->orderByDesc('created_at');
+    }
+
     public function getTotalFeeAttribute(): float
     {
         return (float) ($this->package?->installation_fee ?? 0);
