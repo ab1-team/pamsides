@@ -667,7 +667,6 @@ const fetchStats = async () => {
       stats.percentage = stats.total > 0 ? Math.round((stats.done / stats.total) * 100) : 0
     }
   } catch (error) {
-    console.error('Gagal mengambil data pending:', error)
   } finally {
     stats.loading = false
   }
@@ -706,7 +705,6 @@ const fetchResults = async () => {
       resultsData.value = res.data.data
     }
   } catch (error) {
-    console.error('Gagal mengambil data hasil input:', error)
   } finally {
     loadingResults.value = false
   }

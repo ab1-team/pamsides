@@ -213,7 +213,6 @@ watch(
           if (detail) applyAutofill(detail)
         }
       } catch (e) {
-        console.error('Error checking NIK:', e)
         nikExists.value = null
       } finally {
         nikChecking.value = false
@@ -259,7 +258,6 @@ const handleSave = async () => {
   try {
     isLoading.value = true
 
-    console.log('DATA DIKIRIM : ', finalData)
 
     await customerService.createCustomer(finalData)
 
@@ -297,9 +295,7 @@ const handleSave = async () => {
       router.push('/app/data-pelanggan')
     }
   } catch (error) {
-    console.error('Error saving customer:', error)
 
-    console.log(error.response?.data)
 
     Swal.fire({
       title: 'Gagal!',

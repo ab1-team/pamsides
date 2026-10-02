@@ -1,5 +1,5 @@
 <template>
-  <BaseReportLayout :lembaga="payload?.lembaga" :config="payload?.config">
+  <BaseReportLayout :lembaga="payload?.lembaga" :config="payload?.config" :payload="payload">
     <div class="page-header">
         <h2 class="uppercase">PIUTANG PELANGGAN</h2>
       <h2 class="mt-1 mb-0 leading-tight uppercase">BULAN {{ periodeText }}</h2>

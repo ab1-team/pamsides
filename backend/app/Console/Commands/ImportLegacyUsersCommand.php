@@ -16,7 +16,7 @@ class ImportLegacyUsersCommand extends Command
 
     protected $description = 'Import users dari DB lama (admin/surveyor/teknisi only - exclude pelanggan)';
 
-    /** Map jabatan (positions.id) → role enum DB baru */
+    /** Map jabatan (positions.id) â†’ role enum DB baru */
     private array $jabatanToRole = [
         1 => 'admin',     // Direktur
         2 => 'admin',     // Sekertaris
@@ -32,7 +32,7 @@ class ImportLegacyUsersCommand extends Command
     {
         $isDryRun = (bool) $this->option('dry-run');
 
-        $this->info('=== Import Users: DB Lama → DB Baru ===');
+        $this->info('=== Import Users: DB Lama â†’ DB Baru ===');
         if ($isDryRun) {
             $this->warn('MODE DRY-RUN: tidak ada perubahan data.');
         }
@@ -72,7 +72,7 @@ class ImportLegacyUsersCommand extends Command
 
                 if ($isDryRun) {
                     $this->line(sprintf(
-                        "\n  [#%d→+%d] %s | username=%s | role=%s | email=%s | pass=%s",
+                        "\n  [#%dâ†’+%d] %s | username=%s | role=%s | email=%s | pass=%s",
                         $row->id, $existingMaxId + ($row->id - $legacyUsers->min('id')) + 1,
                         $name, $username ?: '(empty)', $role, $email,
                         $password['mode']
@@ -103,7 +103,6 @@ class ImportLegacyUsersCommand extends Command
                 $bar->advance();
             } catch (\Throwable $e) {
                 $errors[] = ['legacy_id' => $row->id, 'nama' => $row->nama ?? '-', 'error' => $e->getMessage()];
-                Log::error('Import user gagal', ['legacy_id' => $row->id, 'error' => $e->getMessage()]);
                 $bar->advance();
             }
         }
@@ -151,8 +150,8 @@ class ImportLegacyUsersCommand extends Command
      * Resolve password dari hash legacy.
      * Return ['hash' => bcrypt, 'mode' => 'bcrypt-legacy' | 'plain-legacy' | 'placeholder'].
      * bcrypt-legacy: pakai hash langsung (format $2y$ atau $2b$)
-     * plain-legacy : hash MD5/non-bcrypt → bcrypt ulang pakai password plain (placeholder)
-     * placeholder  : hash kosong/null → bcrypt "password" (default, harus reset)
+     * plain-legacy : hash MD5/non-bcrypt â†’ bcrypt ulang pakai password plain (placeholder)
+     * placeholder  : hash kosong/null â†’ bcrypt "password" (default, harus reset)
      */
     private function resolvePassword(?string $legacyHash): array
     {
@@ -160,10 +159,10 @@ class ImportLegacyUsersCommand extends Command
             return ['hash' => Hash::make('password'), 'mode' => 'placeholder'];
         }
         if (preg_match('/^\$2[aby]\$/', $legacyHash)) {
-            // bcrypt legacy → pakai langsung (kompatibel dengan Laravel)
+            // bcrypt legacy â†’ pakai langsung (kompatibel dengan Laravel)
             return ['hash' => $legacyHash, 'mode' => 'bcrypt-legacy'];
         }
-        // Plain / md5 / sha1 → hash ulang sebagai placeholder, wajib reset nanti
+        // Plain / md5 / sha1 â†’ hash ulang sebagai placeholder, wajib reset nanti
         return ['hash' => Hash::make('password'), 'mode' => "plain-legacy(was:" . substr($legacyHash, 0, 8) . "...)"];
     }
 }

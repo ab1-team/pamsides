@@ -69,7 +69,7 @@
                 <option :value="100">100</option>
               </select>
               <span class="whitespace-nowrap!">data per halaman</span>
-              <span class="hidden! sm:inline!">·</span>
+              <span class="hidden! sm:inline!">Â·</span>
               <span class="hidden! sm:inline!">
                 Total:
                 <strong class="font-bold! text-slate-800!">{{
@@ -81,7 +81,7 @@
 
             <div class="relative! flex-1! sm:w-72!">
               <span class="absolute! left-3.5! top-1/2! -translate-y-1/2! text-sm! text-slate-400!">
-                🔍
+                ðŸ”
               </span>
               <input
                 :value="searchQuery"
@@ -134,7 +134,7 @@
             <span class="text-slate-400! font-normal!">
               {{ formatNumber(row.meter_reading_start) }}
             </span>
-            <span class="text-slate-300!">→</span>
+            <span class="text-slate-300!">â†’</span>
             <span class="text-cyan-600! font-bold!">
               {{ formatNumber(row.meter_reading_end) }}
             </span>
@@ -144,7 +144,7 @@
         <template #column-usage="{ row }">
           <span class="text-sm! font-bold! text-slate-800!">
             {{ row.usage_m3 || 0 }}
-            <span class="text-[10px]! text-slate-400! font-medium!">m³</span>
+            <span class="text-[10px]! text-slate-400! font-medium!">mÂ³</span>
           </span>
         </template>
 
@@ -188,7 +188,7 @@
     </ContentCard>
 
     <div class="text-center py-8 text-[10px] text-slate-400 font-semibold tracking-[2px] uppercase">
-      PAMSIMAS · LAYANAN AIR BERSIH MASYARAKAT
+      PAMSIMAS Â· LAYANAN AIR BERSIH MASYARAKAT
     </div>
 
     <detaiDaftarTagihan
@@ -288,7 +288,6 @@ const fetchBills = async () => {
     }
   } catch (err) {
     if (token !== inFlightToken) return
-    console.error('[DaftarTagihan] Gagal memuat daftar tagihan:', err)
     loadError.value = err.response?.data?.message || err.message || 'Gagal memuat data'
     bills.value = []
     totalEntries.value = 0
@@ -402,7 +401,6 @@ const formatDueDate = (dateStr) => {
     ]
     return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`
   } catch (err) {
-    console.error('Error formatting due date:', err)
     return dateStr
   }
 }
@@ -423,7 +421,6 @@ const getOverdueDays = (dateStr) => {
     if (diffDays === 0) return 'Jatuh tempo hari ini'
     return `Tersisa ${Math.abs(diffDays)} hari`
   } catch (err) {
-    console.error('Error calculating overdue days:', err)
     return ''
   }
 }
@@ -443,7 +440,6 @@ const handleOpenDetail = async (row) => {
       selectedBill.value = res.data
     }
   } catch (err) {
-    console.error('[DaftarTagihan] Gagal memuat detail tagihan:', err)
   } finally {
     detailLoading.value = false
   }

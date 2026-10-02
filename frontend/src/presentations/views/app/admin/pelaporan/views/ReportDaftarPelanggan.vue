@@ -1,5 +1,5 @@
 <template>
-    <BaseReportLayout :lembaga="payload?.lembaga" :config="payload?.config">
+    <BaseReportLayout :lembaga="payload?.lembaga" :config="payload?.config" :payload="payload">
 
         <div class="main-report-header">
             <h2>

@@ -343,7 +343,6 @@ const fetchDashboardData = async () => {
       ],
     }
   } catch (err) {
-    console.error('Failed to fetch dashboard data:', err)
   } finally {
     loading.value = false
   }

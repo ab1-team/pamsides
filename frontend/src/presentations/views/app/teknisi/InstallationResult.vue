@@ -29,7 +29,7 @@
           <div>
             <h4 class="text-lg! font-bold! text-slate-800!">{{ ticketData.applicant_name }}</h4>
             <p class="text-xs! text-slate-500! font-bold!">
-              Tiket #{{ ticketData.id }} • {{ ticketData.address }}
+              Tiket #{{ ticketData.id }} â€¢ {{ ticketData.address }}
             </p>
           </div>
           <div class="ml-auto! text-right!">
@@ -74,7 +74,7 @@
                 />
                 <span
                   class="absolute! right-5! top-1/2! -translate-y-1/2! text-slate-400! font-black!"
-                  >m³</span
+                  >mÂ³</span
                 >
               </div>
             </div>
@@ -151,9 +151,9 @@
               <div>
                 <h5 class="text-xs! font-black! text-amber-800! uppercase! mb-1!">Panduan Foto</h5>
                 <ul class="text-xs! text-amber-700! space-y-1! font-medium!">
-                  <li>• Nomor meteran terlihat jelas</li>
-                  <li>• Sambungan pipa tampak utuh</li>
-                  <li>• Pencahayaan cukup terang</li>
+                  <li>â€¢ Nomor meteran terlihat jelas</li>
+                  <li>â€¢ Sambungan pipa tampak utuh</li>
+                  <li>â€¢ Pencahayaan cukup terang</li>
                 </ul>
               </div>
             </div>
@@ -242,7 +242,6 @@ const fetchTicketData = async () => {
       }
     }
   } catch (error) {
-    console.error('Failed to fetch ticket:', error)
     Toast.fire({ icon: 'error', title: 'Gagal memuat data tiket' })
   }
 }
@@ -298,7 +297,6 @@ const submitInstallation = async () => {
 
     router.push('/app')
   } catch (error) {
-    console.error('Submit error:', error)
     Toast.fire({ icon: 'error', title: 'Gagal menyimpan data instalasi' })
   } finally {
     isSubmitting.value = false

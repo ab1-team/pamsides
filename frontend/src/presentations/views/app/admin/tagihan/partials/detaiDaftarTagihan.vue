@@ -29,7 +29,7 @@
                 <p
                   class="text-[10px] md:text-xs! text-cyan-100/80! font-semibold! uppercase! tracking-wide!"
                 >
-                  Invoice ID: INV-{{ bill?.id }} · Periode
+                  Invoice ID: INV-{{ bill?.id }} Â· Periode
                   {{ getMonthName(bill?.billing_period_month) }} {{ bill?.billing_period_year }}
                 </p>
               </div>
@@ -124,7 +124,7 @@
                     <div>
                       <span class="text-slate-400! font-bold! block! mb-0.5!">Stand Awal Awal</span>
                       <span class="font-bold! text-slate-700!">
-                        {{ bill?.customer?.initial_meter_reading || 0 }} m³
+                        {{ bill?.customer?.initial_meter_reading || 0 }} mÂ³
                       </span>
                     </div>
                     <div>
@@ -183,7 +183,7 @@
                         <div class="flex! items-center! justify-between! py-1!">
                           <span class="text-slate-500! font-semibold!">Stand Meter Bulan Ini</span>
                           <span class="font-bold! text-slate-800! text-right!">
-                            {{ bill?.meter_reading_start }} m³ → {{ bill?.meter_reading_end }} m³
+                            {{ bill?.meter_reading_start }} mÂ³ â†’ {{ bill?.meter_reading_end }} mÂ³
                           </span>
                         </div>
 
@@ -192,7 +192,7 @@
                         >
                           <span class="text-cyan-700! font-bold!">Total Volume Pemakaian</span>
                           <span class="font-extrabold! text-cyan-700! text-right!">
-                            {{ bill?.usage_m3 || 0 }} m³
+                            {{ bill?.usage_m3 || 0 }} mÂ³
                           </span>
                         </div>
 
@@ -363,7 +363,6 @@ const formatDate = (dateStr) => {
     ]
     return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`
   } catch (err) {
-    console.error('Error formatting date:', err)
     return dateStr
   }
 }
@@ -440,13 +439,13 @@ const handlePrint = () => {
   <div class="header">
     <h1>INVOICE TAGIHAN AIR</h1>
     <p>PAMSIDES - Sistem Manajemen Air Bersih</p>
-    <p style="margin-top:6px">No: INV-${props.bill.id} · ${month} ${year}</p>
+    <p style="margin-top:6px">No: INV-${props.bill.id} Â· ${month} ${year}</p>
   </div>
   <div class="row"><span class="label">Pelanggan</span><span>${customer}</span></div>
   <div class="row"><span class="label">Kode Pelanggan</span><span>${props.bill.customer?.customer_code || '-'}</span></div>
   <div class="row"><span class="label">Periode</span><span>${month} ${year}</span></div>
-  <div class="row"><span class="label">Stand Meter</span><span>${props.bill.meter_reading_start || 0} → ${props.bill.meter_reading_end || 0} m³</span></div>
-  <div class="row"><span class="label">Volume Pemakaian</span><span>${usage} m³</span></div>
+  <div class="row"><span class="label">Stand Meter</span><span>${props.bill.meter_reading_start || 0} â†’ ${props.bill.meter_reading_end || 0} mÂ³</span></div>
+  <div class="row"><span class="label">Volume Pemakaian</span><span>${usage} mÂ³</span></div>
   <div class="row"><span class="label">Jatuh Tempo</span><span>${formatDate(props.bill.due_date)}</span></div>
   <div class="row total"><span>Total Tagihan</span><span>Rp. ${total}</span></div>
   <div class="footer">Dicetak pada ${date}</div>

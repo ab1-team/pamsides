@@ -17,6 +17,8 @@ class Setting extends Model
         'domain',
         'peraturan_desa',
         'sk_kemenkumham',
+        'calk',
+        'calk_point_a',
         'status_pembayaran',
         'batas_tagihan',
         'toleransi_tunggakan',
@@ -29,6 +31,7 @@ class Setting extends Model
         'status_pembayaran' => 'boolean',
         'batas_tagihan' => 'integer',
         'toleransi_tunggakan' => 'integer',
+        'calk' => 'array',
     ];
 
     public function villages()

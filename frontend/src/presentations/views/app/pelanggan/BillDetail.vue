@@ -149,7 +149,7 @@
                       </div>
                     </div>
                     <p class="text-[9px]! lg:text-[11px]! text-left! opacity-60! leading-relaxed!">
-                      #{{ customer.customer_code }} • {{ customer.address }}
+                      #{{ customer.customer_code }} â€¢ {{ customer.address }}
                     </p>
                   </div>
                 </div>
@@ -172,7 +172,7 @@
                     Total Pemakaian
                   </h4>
                   <div class="text-xl! lg:text-3xl! font-black! text-slate-800!">
-                    {{ bill.usage_m3 }} <span class="text-[10px]! lg:text-sm! opacity-30!">m³</span>
+                    {{ bill.usage_m3 }} <span class="text-[10px]! lg:text-sm! opacity-30!">mÂ³</span>
                   </div>
                 </div>
 
@@ -194,7 +194,7 @@
                     </div>
                     <span class="text-sm! lg:text-lg! font-black! text-slate-700!"
                       >{{ bill.previous_meter_reading || 0 }}
-                      <span class="text-[9px]! opacity-30!">m³</span></span
+                      <span class="text-[9px]! opacity-30!">mÂ³</span></span
                     >
                   </div>
                   <div
@@ -212,7 +212,7 @@
                     </div>
                     <span class="text-sm! lg:text-lg! font-black! text-slate-900!"
                       >{{ bill.current_meter_reading || 0 }}
-                      <span class="text-[9px]! opacity-30!">m³</span></span
+                      <span class="text-[9px]! opacity-30!">mÂ³</span></span
                     >
                   </div>
                 </div>
@@ -382,7 +382,6 @@ const shareInvoice = async () => {
       })
     }
   } catch (err) {
-    console.error('Error sharing:', err)
   }
 }
 
@@ -417,7 +416,7 @@ const breakdownItems = computed(() => {
   return [
     {
       name: 'Biaya Air',
-      sub: `${bill.value.usage_m3} m³ x Pemakaian`,
+      sub: `${bill.value.usage_m3} mÂ³ x Pemakaian`,
       price: bill.value.usage_charge || 0,
       icon: 'tint',
     },
@@ -446,7 +445,6 @@ const fetchBillDetail = async () => {
       customer.value = response.data.customer
     }
   } catch (error) {
-    console.error('Failed to fetch bill detail:', error)
   } finally {
     loading.value = false
   }

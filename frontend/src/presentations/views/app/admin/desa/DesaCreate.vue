@@ -129,7 +129,6 @@ onMounted(async () => {
       text: item.name,
     }))
   } catch (err) {
-    console.error('Gagal load provinsi', err)
   }
 })
 
@@ -156,7 +155,6 @@ watch(
         text: item.name,
       }))
     } catch (err) {
-      console.error('Gagal load kabupaten', err)
     }
   },
 )
@@ -182,7 +180,6 @@ watch(
         text: item.name,
       }))
     } catch (err) {
-      console.error('Gagal load kecamatan', err)
     }
   },
 )
@@ -205,7 +202,6 @@ watch(
         text: item.name,
       }))
     } catch (err) {
-      console.error('Gagal load desa', err)
     }
   },
 )
@@ -293,7 +289,6 @@ const handleSave = async () => {
       router.push('/app/data-desa')
     }
   } catch (err) {
-    console.error('Detail Error Server:', err.response?.data)
 
     let msg = err.response?.data?.message || 'Gagal menyimpan data'
     if (err.response?.data?.errors) {

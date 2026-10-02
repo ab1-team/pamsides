@@ -169,8 +169,8 @@ export function useInstalasiStatus() {
     },
   )
 
-  const exportData = () => console.log('Export Excel for', activeLabel.value)
-  const printData = () => console.log('Print Table for', activeLabel.value)
+  const exportData = () => { /* debug log removed */ }
+  const printData = () => { /* debug log removed */ }
 
   return {
     activeStatus: computed({

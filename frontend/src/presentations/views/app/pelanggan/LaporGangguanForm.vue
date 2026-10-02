@@ -125,9 +125,9 @@
             <div>
               <h5 class="text-sm! font-black! text-amber-800! mb-2!">Catatan Penting</h5>
               <ul class="text-xs! text-amber-700! space-y-1! font-medium!">
-                <li>• Laporan akan ditindaklanjuti maksimal 1x24 jam</li>
-                <li>• Untuk gangguan darurat, hubungi hotline: (0274) 889-123</li>
-                <li>• Pastikan nomor telepon yang Anda berikan aktif</li>
+                <li>â€¢ Laporan akan ditindaklanjuti maksimal 1x24 jam</li>
+                <li>â€¢ Untuk gangguan darurat, hubungi hotline: (0274) 889-123</li>
+                <li>â€¢ Pastikan nomor telepon yang Anda berikan aktif</li>
               </ul>
             </div>
           </div>
@@ -300,7 +300,6 @@ const submitReport = async () => {
 
     router.push('/app')
   } catch (error) {
-    console.error('Submit error:', error)
     Toast.fire({ icon: 'error', title: 'Gagal mengirim laporan' })
   } finally {
     isSubmitting.value = false

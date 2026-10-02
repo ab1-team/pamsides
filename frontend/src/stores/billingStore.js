@@ -25,12 +25,27 @@ export const useBillingStore = defineStore('billing', () => {
       (period) => period.type !== 'paid' && period.status !== 'LUNAS',
     )
 
+    // Urutkan dari paling lama → paling baru berdasarkan (billing_period_year, billing_period_month).
+    // Pembayaran harus dilakukan urut dari tagihan paling lama; kalau list acak,
+    // teknisi bisa "kecolongan" membayar bulan baru padahal bulan lama masih nunggak.
+    const sorted = [...unpaidPeriods].sort((a, b) => {
+      const ya = Number(a.billing_period_year)
+      const ma = Number(a.billing_period_month)
+      const yb = Number(b.billing_period_year)
+      const mb = Number(b.billing_period_month)
+      if (Number.isFinite(ya) && Number.isFinite(yb)) {
+        if (ya !== yb) return ya - yb
+        if (Number.isFinite(ma) && Number.isFinite(mb)) return ma - mb
+      }
+      return 0
+    })
+
     if (!searchQuery.value) {
-      return unpaidPeriods
+      return sorted
     }
 
     const query = searchQuery.value.toLowerCase()
-    return unpaidPeriods.filter(
+    return sorted.filter(
       (period) =>
         period.customerName.toLowerCase().includes(query) ||
         period.customerId.toLowerCase().includes(query) ||
@@ -51,6 +66,37 @@ export const useBillingStore = defineStore('billing', () => {
     return overduePeriods.value.reduce((total, period) => total + period.amount, 0)
   })
 
+  /**
+   * Cek apakah ada tagihan unpaid lain yang period-nya LEBIH LAMA dari `period`.
+   * Kunci pembanding: `billing_period_year` + `billing_period_month` (ASC → kecil = lebih lama).
+   * Field `billing_period_year` & `billing_period_month` sudah ada di setiap
+   * `period` hasil mapping `fetchBillingPeriods`.
+   *
+   * Return true kalau ada period lain (selain `period`) yang:
+   *   - status unpaid
+   *   - year lebih kecil, atau year sama tapi month lebih kecil
+   *
+   * Dipakai untuk disable bayar dari tagihan yang lebih baru kalau ada tagihan
+   * lebih lama yang belum lunas (alur pembayaran harus dari yang terlama).
+   */
+  const hasOlderUnpaidPeriod = (period) => {
+    if (!period) return false
+    const targetYear = Number(period.billing_period_year)
+    const targetMonth = Number(period.billing_period_month)
+    if (!Number.isFinite(targetYear) || !Number.isFinite(targetMonth)) return false
+    return billingPeriods.value.some((p) => {
+      if (!p || p.id === period.id) return false
+      if (p.status === 'paid' || p.status === 'LUNAS') return false
+      const y = Number(p.billing_period_year)
+      const m = Number(p.billing_period_month)
+      if (!Number.isFinite(y) || !Number.isFinite(m)) return false
+      // Lebih lama = year lebih kecil, atau year sama tapi month lebih kecil
+      if (y < targetYear) return true
+      if (y === targetYear && m < targetMonth) return true
+      return false
+    })
+  }
+
   // Fungsi-fungsi aksi (Actions)
   const fetchBillingPeriods = async (customerId) => {
     loading.value = true
@@ -63,7 +109,6 @@ export const useBillingStore = defineStore('billing', () => {
       }
 
       const res = await billingService.getAllBills({ customer_id: customerId })
-      console.log('[BillingStore] fetchBillingPeriods response:', res)
 
       const monthNames = [
         'Januari',
@@ -117,6 +162,12 @@ export const useBillingStore = defineStore('billing', () => {
             meterAkhir: bill.meter_reading_end || 0,
             pemakaian: bill.usage_m3 || 0,
             dueDate: bill.due_date || null,
+            // Field pembanding period (year+month) untuk sort ASC & deteksi
+            // "ada tagihan lebih lama yang belum dibayar" → disable tombol bayar
+            // kalau bukan bulan paling lama. Tanpa ini, hasOlderUnpaidPeriod
+            // selalu return false karena Number(undefined) = NaN.
+            billing_period_year: Number(bill.billing_period_year),
+            billing_period_month: Number(bill.billing_period_month),
             payments: bill.bill_payments
               ? bill.bill_payments.map((p) => ({
                   id: p.id,
@@ -130,7 +181,6 @@ export const useBillingStore = defineStore('billing', () => {
       }
     } catch (err) {
       error.value = 'Gagal memuat data billing'
-      console.error('Error fetching billing periods:', err)
     } finally {
       loading.value = false
     }
@@ -159,13 +209,30 @@ export const useBillingStore = defineStore('billing', () => {
         }
       }
 
+      // Petakan metode pembayaran dari FE → backend.
+      // FE pakai kode: 'cash' | 'transfer_bri' (BRI adalah rekening bank tujuan).
+      // Backend validator hanya menerima: 'cash' | 'transfer' (lihat MonthlyBillController::pay).
+      const feMethod = paymentData?.paymentMethod
+      const backendMethod =
+        feMethod === 'transfer_bri' ? 'transfer' : feMethod === 'cash' ? 'cash' : null
+
+      // FE harus selalu menyertakan paymentMethod (BillingForm memvalidasi ini
+      // sebelum emit). Kalau entah bagaimana tidak ada, gagal cepat — JANGAN
+      // kirim request dengan payment_method null ke backend (validator backend
+      // 'nullable' akan menerima null, tapi artinya metode jadi tidak tercatat).
+      if (!backendMethod) {
+        return {
+          success: false,
+          message: 'Metode pembayaran belum dipilih (Tunai atau Transfer BRI).',
+        }
+      }
+
       const payload = {
-        payment_method: 'cash',
+        payment_method: backendMethod,
         amount_paid: Number(paymentData.pembayaran || paymentData.amount || 0),
       }
 
       const res = await billingService.confirmPayment(periodId, payload)
-      console.log('[BillingStore] confirmPayment response:', res)
 
       if (!res?.success) {
         return {
@@ -211,7 +278,6 @@ export const useBillingStore = defineStore('billing', () => {
       }
     } catch (err) {
       error.value = 'Gagal menyimpan pembayaran'
-      console.error('[BillingStore] Error saving payment:', err)
       return {
         success: false,
         message: err.response?.data?.message || 'Gagal menyimpan pembayaran',
@@ -232,14 +298,12 @@ export const useBillingStore = defineStore('billing', () => {
 
     try {
       const res = await customerService.searchActive({ search: query })
-      console.log('[BillingStore] search response:', res)
       if (res?.success && res.data) {
         searchResults.value = res.data
       } else {
         searchResults.value = []
       }
     } catch (err) {
-      console.error('[BillingStore] Failed to search customers', err)
       searchResults.value = []
     }
   }
@@ -247,7 +311,6 @@ export const useBillingStore = defineStore('billing', () => {
   const selectCustomer = async (customer) => {
     const customerId = customer?.id ?? customer?.customer_id ?? null
     if (!customerId) {
-      console.warn('[BillingStore] selectCustomer: customer.id missing', customer)
       return
     }
     selectedCustomer.value = customer
@@ -335,6 +398,7 @@ export const useBillingStore = defineStore('billing', () => {
     currentPeriod,
     overduePeriods,
     totalOverdueAmount,
+    hasOlderUnpaidPeriod,
 
     // Aksi
     fetchBillingPeriods,

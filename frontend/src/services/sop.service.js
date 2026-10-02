@@ -67,6 +67,73 @@ export const sopService = {
     const response = await api.post('/settings/sop/whatsapp', payload)
     return response.data
   },
+
+  /**
+   * ============================================================
+   * CALK (Catatan Atas Laporan Keuangan)
+   * Konsep diadaptasi dari aplikasi sidbm (SopController::calk).
+   * ============================================================
+   */
+
+  /**
+   * Ambil konfigurasi CALK.
+   * Response.data: {
+   *   peraturan_desa, D.1.d.1/2/3 (%), D.2.a/b/c (nominal), point_a
+   * }
+   */
+  async getCalk() {
+    const response = await api.get('/settings/sop/calk')
+    return response.data
+  },
+
+  /**
+   * Simpan konfigurasi CALK.
+   * Payload: {
+   *   peraturan_desa, bantuan_rumah_tangga, pengembangan_kapasitas,
+   *   pelatihan_masyarakat, peningkatan_modal, penambahan_investasi, pendirian_unit_usaha
+   * }
+   */
+  async saveCalk(payload) {
+    const response = await api.post('/settings/sop/calk', payload)
+    return response.data
+  },
+
+  /**
+   * Ambil Point A (Gambaran Umum) kustom CALK.
+   */
+  async getCustomCalk() {
+    const response = await api.get('/settings/sop/custom-calk')
+    return response.data
+  },
+
+  /**
+   * Simpan Point A (Gambaran Umum) kustom CALK.
+   * Payload: { point_a: string (HTML) }
+   */
+  async saveCustomCalk(payload) {
+    const response = await api.post('/settings/sop/custom-calk', payload)
+    return response.data
+  },
+
+  /**
+   * Ambil catatan "Lain-lain" CALK per tanggal.
+   * @param {string} tanggal format YYYY-MM-DD
+   */
+  async getCalkCatatan(tanggal) {
+    const response = await api.get('/settings/sop/calk-catatan', {
+      params: { tanggal },
+    })
+    return response.data
+  },
+
+  /**
+   * Simpan catatan "Lain-lain" CALK per tanggal.
+   * Payload: { tanggal: 'YYYY-MM-DD', catatan: string (HTML) }
+   */
+  async saveCalkCatatan(payload) {
+    const response = await api.post('/settings/sop/calk-catatan', payload)
+    return response.data
+  },
 }
 
 export default sopService

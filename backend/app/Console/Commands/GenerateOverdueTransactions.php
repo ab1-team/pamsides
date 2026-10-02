@@ -30,7 +30,7 @@ class GenerateOverdueTransactions extends Command
 
         $overdueBills = MonthlyBill::where('status', 'unpaid')
             ->where('due_date', '<', $thresholdDate)
-            ->with('customer')
+            ->with(['customer.user'])
             ->get();
 
         if ($overdueBills->isEmpty()) {
@@ -65,11 +65,16 @@ class GenerateOverdueTransactions extends Command
                     $existing->delete();
                 }
 
-                $relasi = $bill->customer?->customer_code ?? 'Bill #' . $bill->id;
-                $abodemen = (float) ($bill->abodemen ?? 0);
-                $usageCharge = (float) ($bill->usage_charge ?? 0);
+                $relasi       = $bill->customer?->customer_code ?? ('Bill #' . $bill->id);
+                $customerName = $bill->customer?->user?->name
+                    ?? $bill->customer?->ticket?->applicant_name
+                    ?? 'Tanpa Nama';
+                $abodemen     = (float) ($bill->abodemen ?? 0);
+                $usageCharge  = (float) ($bill->usage_charge ?? 0);
 
                 $tglTransaksi = $today;
+                $keteranganSuffix = 'bulan ' . $this->periodLabelLong($bill) .
+                    ' an. ' . $customerName . ' (' . $relasi . ')';
 
                 if ($abodemen > 0) {
                     $trx = Transaction::create([
@@ -79,7 +84,7 @@ class GenerateOverdueTransactions extends Command
                         'transaction_group'    => null,
                         'reverence_type'       => 'overdue_bill',
                         'reverence_id'         => $bill->id,
-                        'keterangan_transaksi' => 'Tunggakan Abodemen - ' . $relasi . ' (' . $this->periodLabel($bill) . ')',
+                        'keterangan_transaksi' => 'Piutang Abodemen ' . $keteranganSuffix,
                         'relasi'               => $relasi,
                         'saldo'                => $abodemen,
                         'id_user'              => $systemUser->id,
@@ -95,7 +100,7 @@ class GenerateOverdueTransactions extends Command
                         'transaction_group'    => null,
                         'reverence_type'       => 'overdue_bill',
                         'reverence_id'         => $bill->id,
-                        'keterangan_transaksi' => 'Tunggakan Pemakaian - ' . $relasi . ' (' . $this->periodLabel($bill) . ')',
+                        'keterangan_transaksi' => 'Piutang Denda ' . $keteranganSuffix,
                         'relasi'               => $relasi,
                         'saldo'                => $usageCharge,
                         'id_user'              => $systemUser->id,
@@ -117,17 +122,32 @@ class GenerateOverdueTransactions extends Command
             return self::SUCCESS;
         } catch (\Throwable $e) {
             DB::rollBack();
-            Log::error('GenerateOverdueTransactions failed', ['error' => $e->getMessage()]);
             $this->error('Gagal: ' . $e->getMessage());
             $this->storeNotification('error', 'Generate tagihan menunggak gagal. Sistem akan mencoba ulang otomatis besok.', 0);
             return self::FAILURE;
         }
     }
 
+    /**
+     * Label singkat: "Sep 2026"
+     */
     private function periodLabel($bill)
     {
         $months = ['', 'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Ags', 'Sep', 'Okt', 'Nov', 'Des'];
         return ($months[$bill->billing_period_month] ?? '') . ' ' . $bill->billing_period_year;
+    }
+
+    /**
+     * Label panjang: "September 2026" (dipakai di keterangan_transaksi).
+     */
+    private function periodLabelLong($bill)
+    {
+        $months = [
+            1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April',
+            5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus',
+            9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember',
+        ];
+        return ($months[(int) $bill->billing_period_month] ?? '') . ' ' . $bill->billing_period_year;
     }
 
     private function storeNotification(string $type, string $message, int $count)

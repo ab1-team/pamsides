@@ -64,7 +64,6 @@ class TransactionObserver
         try {
             Cache::forget($key);
         } catch (\Throwable $e) {
-            Log::warning("Gagal invalidate cache {$key}: ".$e->getMessage());
         }
     }
 

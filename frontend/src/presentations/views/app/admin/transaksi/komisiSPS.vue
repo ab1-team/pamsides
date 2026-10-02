@@ -46,7 +46,7 @@
               :readonly="true"
             />
             <span v-if="unpaidInfo" class="text-[11px]! text-slate-500! mt-1!">
-              {{ unpaidInfo.bill_count }} tagihan unpaid • Pelanggan
+              {{ unpaidInfo.bill_count }} tagihan unpaid â€¢ Pelanggan
               {{ unpaidInfo.customer?.customer_code || '-' }}
             </span>
           </div>
@@ -109,7 +109,7 @@
       <div class="flex! flex-col! gap-4! lg:sticky! lg:top-8!">
         <ContentCard variant="minimal" padding="normal" hoverable>
           <div class="flex! gap-3! items-start!">
-            <div class="text-base! flex-shrink-0! mt-0.5!">ℹ️</div>
+            <div class="text-base! flex-shrink-0! mt-0.5!">â„¹ï¸</div>
             <div class="text-xs! text-slate-600! leading-relaxed!">
               <strong>Bantuan Komisi SPS</strong><br />
               Pilih pelanggan untuk menampilkan total tagihan unpaid. Nominal akan
@@ -139,7 +139,7 @@
                   {{ row.customer?.customer_code || row.id }}
                 </span>
                 <span class="text-slate-500!">
-                  {{ row.customer?.nama || '-' }} • {{ row.bill_count }} Tagihan
+                  {{ row.customer?.nama || '-' }} â€¢ {{ row.bill_count }} Tagihan
                 </span>
               </div>
               <span class="font-mono! font-semibold! text-slate-800!">
@@ -262,7 +262,6 @@ const loadCustomers = async (q = '') => {
       customers.value = res.data || []
     }
   } catch (e) {
-    console.error('Gagal memuat pelanggan:', e)
     uiStore.error(e?.response?.data?.message || 'Gagal memuat daftar pelanggan.')
   } finally {
     isLoadingCustomers.value = false
@@ -278,7 +277,6 @@ const loadCashAccounts = async () => {
     }
 
   } catch (e) {
-    console.error('Gagal memuat akun kas:', e)
     uiStore.error(e?.response?.data?.message || 'Gagal memuat akun kas.')
   } finally {
     isLoadingCash.value = false
@@ -303,7 +301,6 @@ const loadPenerimaKomisi = async () => {
       }
     }
   } catch (e) {
-    console.error('Gagal memuat penerima komisi:', e)
     uiStore.error(
       e?.response?.data?.message || 'Gagal memuat daftar penerima komisi.',
     )
@@ -360,7 +357,6 @@ const onCustomersChange = async (customerIds) => {
       ? relasiNames.join(', ')
       : `${summary.length} pelanggan`
   } catch (e) {
-    console.error('Gagal memuat tagihan:', e)
     uiStore.error(e?.response?.data?.message || 'Gagal memuat tagihan pelanggan.')
   }
 }
@@ -389,7 +385,7 @@ const simpanTransaksi = async () => {
       const processed = res.data?.bill_count || 0
       success(
         'Berhasil!',
-        `Transaksi komisi SPS disimpan untuk ${processed} Tagihan (${form.customerIds.length} pelanggan). Nominal komisi: ${formatRp(nominalKomisi)}. Jurnal 5.1.02.04 → 2.1.02.02 terposting otomatis.`,
+        `Transaksi komisi SPS disimpan untuk ${processed} Tagihan (${form.customerIds.length} pelanggan). Nominal komisi: ${formatRp(nominalKomisi)}. Jurnal 5.1.02.04 â†’ 2.1.02.02 terposting otomatis.`,
       )
       form.customerIds = []
       form.relasi = ''
@@ -404,7 +400,6 @@ const simpanTransaksi = async () => {
       error('Gagal', res.message || 'Gagal menyimpan transaksi.')
     }
   } catch (e) {
-    console.error('Error menyimpan transaksi:', e)
     error(
       'Kesalahan',
       e?.response?.data?.message || 'Gagal menyimpan transaksi.',

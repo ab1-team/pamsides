@@ -204,7 +204,6 @@ onMounted(async () => {
       alamat_lengkap: data.address || '',
     }
   } catch (error) {
-    console.error('Error fetching customer:', error)
 
     Swal.fire({
       title: 'Gagal!',
@@ -248,7 +247,6 @@ const handleSave = async () => {
     uiStore.success('Data pelanggan berhasil diperbarui')
     router.push('/app/data-pelanggan')
   } catch (error) {
-    console.error('Error updating customer:', error)
     // Error handled globally
   } finally {
     isLoading.value = false

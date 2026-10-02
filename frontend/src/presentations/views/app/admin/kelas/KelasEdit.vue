@@ -105,7 +105,7 @@
             >
               <span
                 class="sm:hidden! text-[10px]! font-bold! text-slate-400! uppercase! tracking-wider!"
-                >Rentang Volume (m³)</span
+                >Rentang Volume (mÂ³)</span
               >
               <div class="flex items-center gap-3! w-full sm:w-auto!">
                 <div class="relative! w-full sm:w-24!">
@@ -129,7 +129,7 @@
                     step="0.01"
                     v-model="block.to"
                     @input="updateNextBlockFrom(index)"
-                    :placeholder="index === blocks.length - 1 ? '∞' : '0'"
+                    :placeholder="index === blocks.length - 1 ? 'âˆž' : '0'"
                     class="w-full! text-center! py-2.5! bg-white! border! border-slate-200! rounded-xl! text-sm! font-bold! text-slate-700! focus:outline-none! focus:border-blue-500! focus:ring-4! focus:ring-blue-500/5! transition-all!"
                   />
                   <span
@@ -140,7 +140,7 @@
                     v-if="index === blocks.length - 1 && !block.to"
                     class="absolute! right-3! top-1/2! -translate-y-1/2! text-[10px]! font-bold! text-blue-500! uppercase! pointer-events-none!"
                   >
-                    ∞ Bebas
+                    âˆž Bebas
                   </div>
                 </div>
               </div>
@@ -149,7 +149,7 @@
             <div class="sm:px-2! w-full!">
               <span
                 class="sm:hidden! block! mb-1.5! text-[10px]! font-bold! text-slate-400! uppercase! tracking-wider!"
-                >Harga per m³</span
+                >Harga per mÂ³</span
               >
               <MaksMoneyInput v-model="block.price" placeholder="0" no-margin />
             </div>
@@ -273,7 +273,6 @@ const fetchKelasData = async (id) => {
       }))
     }
   } catch (error) {
-    console.error('Error fetching package data:', error)
     Swal.fire('Error', 'Gagal mengambil data paket', 'error')
   }
 }

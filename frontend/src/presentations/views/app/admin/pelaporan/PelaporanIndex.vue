@@ -223,7 +223,6 @@ const fetchMasterFilterPelaporan = async () => {
       selectedTahun.value = String(thnSekarang)
     }
   } catch (error) {
-    console.error('Gagal memuat master filter pelaporan:', error)
   }
 }
 
@@ -249,7 +248,6 @@ const fetchSubLaporanDinamis = async (fileJenisLaporan) => {
       }
     }
   } catch (error) {
-    console.error(`Gagal memuat sub laporan untuk ${fileJenisLaporan}:`, error)
   }
 }
 
@@ -316,7 +314,6 @@ const handleExcel = async () => {
     link.click()
     link.remove()
   } catch (error) {
-    console.error('Gagal mengunduh berkas Excel:', error)
   }
 }
 
@@ -326,10 +323,8 @@ const handleSimpanSaldo = async () => {
     const res = await pelaporanService.simpanSaldo(payload)
 
     if (res.success) {
-      console.log('Saldo akhir berhasil disimpan ke database:', res.message)
     }
   } catch (error) {
-    console.error('Gagal menyimpan saldo akhir:', error)
   }
 }
 </script>

@@ -17,7 +17,7 @@
 
         <div class="zoom-controls no-print" v-if="pages.length > 0">
           <button class="zoom-btn" @click="zoomOut" :disabled="zoomLevel <= minZoom" title="Zoom Out">
-            <span>−</span>
+            <span>âˆ’</span>
           </button>
           <span
             class="zoom-percent active"
@@ -128,7 +128,6 @@ const fetchPenandatangan = async () => {
     })
     bendahara.value = res?.data?.data?.Bendahara ?? null
   } catch (err) {
-    console.warn('Gagal fetch penandatangan bendahara:', err?.message || err)
     bendahara.value = null
   }
 }
@@ -272,7 +271,6 @@ onMounted(async () => {
       errorMsg.value = 'Tidak ada data pelanggan untuk periode ini.'
     }
   } catch (err) {
-    console.error(err)
     errorMsg.value = err?.message || 'Gagal memuat data'
   } finally {
     isLoading.value = false

@@ -47,13 +47,17 @@
                 <h4 class="text-xs! font-black! text-slate-800! leading-tight!">
                   Toleransi Menunggak
                 </h4>
-                <p class="text-[10px]! text-slate-400!">Batas bulan tunggakan.</p>
+                <p class="text-[10px]! text-slate-400!">
+                  Tanggal generate piutang tiap bulan (1-28).
+                </p>
               </div>
             </div>
             <BaseInput
               v-model="form.toleransiTunggakan"
-              placeholder="0 Bulan"
+              placeholder="1-28"
               type="number"
+              :min="1"
+              :max="28"
               size="md"
               prefix-icon="history"
               :no-margin="true"
@@ -79,13 +83,20 @@
         </div>
         <div>
           <h4 class="text-xs! font-black! text-indigo-900! uppercase! tracking-widest! mb-1!">
-            Otomatisasi Status Sistem
+            Otomatisasi Generate Piutang
           </h4>
           <p class="text-[11px]! font-medium! text-slate-500! leading-relaxed!">
+            Nilai <strong class="text-indigo-700!">Toleransi Menunggak</strong> di atas
+            adalah <strong>tanggal</strong> (1-28) di setiap bulan yang dijadwalkan
+            sistem untuk <strong>generate jurnal piutang/abodemen/denda</strong>
+            secara background. Saat admin membuka dashboard pada tanggal tersebut,
+            sistem otomatis menjalankan command generate dan menampilkan pop up
+            berisi ringkasan tagihan yang diproses ke transaksi.
+            <br />
             Instalasi <span class="text-indigo-600! font-bold!">AKTIF</span> yang melewati batas
-            toleransi tunggakan di atas akan otomatis diubah menjadi
-            <span class="text-rose-600! font-bold!">BLOKIR</span>. Sistem akan memberikan perintah
-            penutupan air sementara hingga seluruh tunggakan dilunasi.
+            toleransi tunggakan akan diubah menjadi
+            <span class="text-rose-600! font-bold!">BLOKIR</span> hingga seluruh
+            tunggakan dilunasi.
           </p>
         </div>
       </div>
