@@ -92,7 +92,7 @@
                   v-if="!block.usage_max_m3"
                   class="absolute! -right-6! -top-6! w-12! h-12! bg-blue-500/10! rounded-full! flex! items-center! justify-center! rotate-12!"
                 >
-                  <span class="text-blue-500! font-black! text-lg!">∞</span>
+                  <span class="text-blue-500! font-black! text-lg!">âˆž</span>
                 </div>
 
                 <div class="flex items-center justify-between mb-2!">
@@ -114,8 +114,8 @@
                       Volume
                     </div>
                     <div class="text-sm! font-black! text-slate-800! whitespace-nowrap!">
-                      {{ block.usage_min_m3 }} - {{ block.usage_max_m3 || '∞' }}
-                      <span class="text-[10px]! text-slate-400! font-bold! ml-0.5!">m³</span>
+                      {{ block.usage_min_m3 }} - {{ block.usage_max_m3 || 'âˆž' }}
+                      <span class="text-[10px]! text-slate-400! font-bold! ml-0.5!">mÂ³</span>
                     </div>
                   </div>
                   <div class="space-y-0.5!">
@@ -208,7 +208,6 @@ const fetchData = async () => {
       items.value = res.data
     }
   } catch (error) {
-    console.error('Error fetching packages:', error)
     Swal.fire('Error', 'Gagal mengambil data paket', 'error')
   } finally {
     loading.value = false

@@ -64,7 +64,6 @@ export function usePelanggan(router = null) {
 
       tableData.value = aggregated.map(mapRow)
     } catch (error) {
-      console.error('Error fetching customers:', error)
       MySwal.fire({
         title: 'Gagal!',
         text: 'Tidak dapat mengambil data pelanggan.',

@@ -23,7 +23,7 @@
         <ContentCard variant="default" padding="normal" hoverable>
           <div class="flex items-center gap-2.5 mb-5! pb-4 border-b border-gray-100">
             <div class="w-8 h-8 rounded-lg flex items-center justify-center text-sm bg-cyan-100">
-              💸
+              ðŸ’¸
             </div>
             <div class="flex flex-col">
               <span class="text-base font-bold text-gray-800">Laba Dibagihkan</span>
@@ -56,7 +56,7 @@
         <ContentCard variant="default" padding="normal" hoverable>
           <div class="flex items-center gap-2.5 mb-5! pb-4 border-b border-gray-100">
             <div class="w-8 h-8 rounded-lg flex items-center justify-center text-sm bg-teal-50">
-              🏦
+              ðŸ¦
             </div>
             <div class="flex flex-col">
               <span class="text-base font-bold text-gray-800">Laba Ditahan</span>
@@ -224,7 +224,6 @@ const loadBookStatus = async (year) => {
     bookClosed.value = false
     return false
   } catch (e) {
-    console.error('Gagal cek status:', e)
     bookClosed.value = false
     return false
   } finally {
@@ -242,7 +241,6 @@ const calculateAllocation = async (year) => {
       )
     }
   } catch (e) {
-    console.error('Gagal hitung alokasi:', e)
     uiStore.error(e?.response?.data?.message || 'Gagal memuat perhitungan alokasi.')
   }
 }
@@ -257,7 +255,6 @@ const loadExistingAllocation = async (year) => {
       )
     }
   } catch (e) {
-    console.error('Gagal load alokasi existing:', e)
   }
 }
 
@@ -314,7 +311,6 @@ const handleSimpan = async () => {
       uiStore.error(res?.message || 'Gagal menyimpan alokasi laba.')
     }
   } catch (e) {
-    console.error('Error simpan alokasi:', e)
     uiStore.error(e?.response?.data?.message || 'Terjadi kesalahan saat menyimpan alokasi.')
   } finally {
     isSaving.value = false

@@ -21,7 +21,6 @@ export function useDesa(router) {
         telepon: item.phone,
       }))
     } catch (err) {
-      console.error('Gagal ambil desa:', err)
     }
   }
 

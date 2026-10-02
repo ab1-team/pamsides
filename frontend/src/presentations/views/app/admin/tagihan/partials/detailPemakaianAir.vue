@@ -159,13 +159,13 @@
               <p class="text-[8px]! font-black! text-slate-400! uppercase! tracking-wider! mb-0.5!">
                 METER AWAL
               </p>
-              <p class="text-xs! font-bold! text-slate-700!">{{ formatMeter(row.meterAwal) }} m³</p>
+              <p class="text-xs! font-bold! text-slate-700!">{{ formatMeter(row.meterAwal) }} mÂ³</p>
             </div>
             <div class="pl-3! border-l! border-slate-200!">
               <p class="text-[8px]! font-black! text-slate-400! uppercase! tracking-wider! mb-0.5!">
                 PAKAI LALU
               </p>
-              <p class="text-xs! font-bold! text-cyan-600!">{{ formatMeter(row.usageLalu) }} m³</p>
+              <p class="text-xs! font-bold! text-cyan-600!">{{ formatMeter(row.usageLalu) }} mÂ³</p>
             </div>
           </div>
         </div>
@@ -314,7 +314,6 @@ const fetchData = async () => {
       })
     }
   } catch (error) {
-    console.error('Gagal mengambil data pelanggan:', error)
   } finally {
     isLoading.value = false
   }

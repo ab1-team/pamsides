@@ -1,5 +1,5 @@
 <template>
-  <BaseReportLayout :lembaga="payload?.lembaga" :config="payload?.config">
+  <BaseReportLayout :lembaga="payload?.lembaga" :config="payload?.config" :payload="payload">
     <div class="page-header">
         <h2>TAGIHAN PELANGGAN 
             <span v-if="meta?.nama_teknisi" style="font-weight: bold;">{{ meta.nama_teknisi }}</span>

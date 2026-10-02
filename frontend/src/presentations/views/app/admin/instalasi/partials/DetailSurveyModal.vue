@@ -228,13 +228,11 @@ const formatDate = (dateStr) => {
       minute: '2-digit',
     }).format(d)
   } catch (err) {
-    console.error('Error formatting date:', err)
     return dateStr
   }
 }
 
 const handleImageError = (e) => {
-  console.error('Failed to load image:', e.target.src)
   e.target.style.display = 'none'
 }
 

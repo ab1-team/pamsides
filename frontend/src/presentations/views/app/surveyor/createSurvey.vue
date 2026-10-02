@@ -293,7 +293,6 @@ const handleCameraCapture = async (file) => {
     formData.photo = compressed
     photoPreview.value = URL.createObjectURL(compressed)
   } catch (err) {
-    console.error(err)
     uiStore.error('Gagal memproses foto.')
   } finally {
     uiStore.setLoading(false)
@@ -352,7 +351,6 @@ const submitSurvey = async () => {
       await fetchPendingTickets()
     }
   } catch (err) {
-    console.error(err)
     uiStore.error('Gagal mengirim data survey. Coba lagi.')
   } finally {
     isSubmitting.value = false

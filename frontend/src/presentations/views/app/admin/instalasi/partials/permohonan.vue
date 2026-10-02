@@ -304,7 +304,6 @@ const handleCameraCapture = async (file) => {
     photoPreview.value = URL.createObjectURL(compressed)
     photoSource.value = 'camera'
   } catch (err) {
-    console.error(err)
     uiStore.error('Gagal memproses foto.')
   } finally {
     uiStore.setLoading(false)
@@ -354,14 +353,7 @@ const submitSurvey = async () => {
     isSubmitting.value = true
     uiStore.setLoading(true)
 
-    console.log('Submitting survey:', {
-      ticketId: customer.value.ticketId,
-      distance: formData.distance_to_pipe_m,
-      notes: formData.material_notes,
-      photo: formData.photo,
-      photoSize: formData.photo?.size,
-      photoType: formData.photo?.type,
-    })
+    // Submitting survey (debug log removed)
 
     const submitData = new FormData()
     submitData.append('distance_to_pipe_m', Math.round(formData.distance_to_pipe_m))
@@ -376,7 +368,6 @@ const submitSurvey = async () => {
       path: `/app/instalasi/status/pasang-baru/${encodeURIComponent(kodeInstalasi)}`,
     })
   } catch (err) {
-    console.error('Survey submit error:', err)
     uiStore.error('Gagal menyimpan survey.')
   } finally {
     isSubmitting.value = false
