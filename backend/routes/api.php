@@ -12,6 +12,7 @@ use App\Http\Controllers\GenerateAmountController;
 use App\Http\Controllers\InstallationPackageController;
 use App\Http\Controllers\InstallationResultController;
 use App\Http\Controllers\InstallationTicketController;
+use App\Http\Controllers\InstallationTicketHistoryController;
 use App\Http\Controllers\InventoryController;
 use App\Http\Controllers\JurnalUmumController;
 use App\Http\Controllers\MeterReadingController;
@@ -33,6 +34,7 @@ use App\Http\Controllers\WaterTariffBlockController;
 use App\Http\Controllers\AccountController;
 use App\Http\Controllers\AlokasiLabaController;
 use App\Http\Controllers\KomisiSPSController;
+use App\Http\Controllers\SignatureController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -87,8 +89,12 @@ Route::middleware(['auth:sanctum'])->group(function () {
 Route::middleware(['auth:sanctum', 'role:admin,teknisi'])->group(function () {
     Route::get('meter-readings/completed', [MeterReadingController::class, 'completed']);
     Route::get('dashboard/statistics', [DashboardController::class, 'statistics']);
+    // Endpoint ringan khusus popup 4 kotak di dashboard admin.
+    // Filter & paginasi di SERVER → frontend tidak perlu loop halaman.
+    Route::get('dashboard/popup-data', [DashboardController::class, 'popupData']);
     Route::get('dashboard/notification', [DashboardController::class, 'getNotification']);
     Route::post('dashboard/notification/dismiss', [DashboardController::class, 'dismissNotification']);
+    Route::post('dashboard/auto-generate-overdue', [DashboardController::class, 'autoGenerateOverdue']);
 
     Route::get('meter-readings/pending', [MeterReadingController::class, 'index']);
     Route::post('meter-readings', [MeterReadingController::class, 'store']);
@@ -125,6 +131,23 @@ Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
         Route::post('/sistem-tagihan', [SopController::class, 'updateSistemTagihan']);
         Route::post('/logo', [SopController::class, 'updateLogo']);
         Route::post('/whatsapp', [SopController::class, 'updateWhatsapp']);
+
+        // CALK (Catatan Atas Laporan Keuangan)
+        Route::get('/calk', [SopController::class, 'getCalk']);
+        Route::post('/calk', [SopController::class, 'updateCalk']);
+        Route::get('/custom-calk', [SopController::class, 'getCustomCalk']);
+        Route::post('/custom-calk', [SopController::class, 'updateCustomCalk']);
+        Route::get('/calk-catatan', [SopController::class, 'getCalkCatatan']);
+        Route::post('/calk-catatan', [SopController::class, 'updateCalkCatatan']);
+    });
+
+    // Tanda tangan digital - pengaturan template + gambar per jenis laporan.
+    // Konsep seperti SIUPK-Next: SignatureTemplateService + SignatureImageService.
+    Route::prefix('settings/signatures')->group(function () {
+        Route::get('/', [SignatureController::class, 'index']);
+        Route::put('/', [SignatureController::class, 'updateTemplates']);
+        Route::post('/image', [SignatureController::class, 'storeImage']);
+        Route::delete('/image', [SignatureController::class, 'destroyImage']);
     });
 
     Route::get('amount', [AmountController::class, 'show']);
@@ -147,6 +170,10 @@ Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
     Route::post('installation-tickets/{installationTicket}/payment', [PaymentController::class, 'store']);
     Route::post('installation-tickets/{installationTicket}/advance-stage', [InstallationTicketController::class, 'advanceStage']);
     Route::post('installation-tickets/{installationTicket}/activate', [ActivationController::class, 'activate']);
+
+    // Riwayat perubahan paket + endpoint update paket pelanggan
+    Route::get('installation-tickets/{installationTicket}/history', [InstallationTicketHistoryController::class, 'index']);
+    Route::post('installation-tickets/{installationTicket}/change-package', [InstallationTicketHistoryController::class, 'changePackage']);
 
     // Survey CRUD (Admin)
     Route::get('survey-results', [SurveyResultController::class, 'index']);
