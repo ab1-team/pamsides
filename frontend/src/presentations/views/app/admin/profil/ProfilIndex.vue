@@ -59,7 +59,7 @@
               <font-awesome-icon icon="file-image" class="text-[10px]! shrink-0!" />
               <span class="truncate!">{{ avatarFile?.name || avatarFileName || 'Foto tersimpan' }}</span>
               <span v-if="avatarFile" class="text-slate-400! shrink-0!">
-                • {{ (avatarFile.size / 1024).toFixed(1) }} KB
+                â€¢ {{ (avatarFile.size / 1024).toFixed(1) }} KB
               </span>
             </span>
           </div>
@@ -334,7 +334,6 @@ const loadProfile = async () => {
     const res = await profileService.getMe()
     const data = res?.data || res
     if (!data) {
-      console.warn('[ProfilIndex] /me returned empty data', res)
       return
     }
 
@@ -360,7 +359,6 @@ const loadProfile = async () => {
     identity.birth_date = ticket.birth_date || id.birth_date || ''
     identity.address = ticket.address || id.address || ''
   } catch (error) {
-    console.error('[ProfilIndex] failed to load profile', error)
     showErrorToast(error)
   }
 }

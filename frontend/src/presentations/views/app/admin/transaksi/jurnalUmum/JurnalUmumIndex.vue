@@ -211,7 +211,7 @@
 
       <ContentCard variant="minimal" padding="normal" hoverable>
         <div class="flex gap-3 items-start">
-          <div class="text-base flex-shrink-0 mt-0.5">ℹ️</div>
+          <div class="text-base flex-shrink-0 mt-0.5">â„¹ï¸</div>
           <div class="text-xs text-slate-600 leading-relaxed">
             <strong>Butuh Bantuan?</strong><br />
             Pastikan nominal sesuai bukti transaksi fisik. Periksa saldo kas sebelum menyimpan.
@@ -479,7 +479,6 @@ const fetchJenisTransaksi = async () => {
       ]
     }
   } catch (error) {
-    console.error('Gagal mengambil jenis transaksi:', error)
   }
 }
 
@@ -490,7 +489,6 @@ const fetchAccounts = async () => {
       accounts.value = response.data.data?.accounts || []
     }
   } catch (error) {
-    console.error('Gagal mengambil data akun:', error)
   }
 }
 
@@ -502,7 +500,6 @@ const regenerateAmount = async () => {
       tahun: now.getFullYear()
     })
   } catch (error) {
-    console.error('Gagal regenerate amount:', error)
   }
 }
 
@@ -541,7 +538,6 @@ const fetchTransactions = async (page = 1) => {
       }
     }
   } catch (error) {
-    console.error('Gagal mengambil data transaksi:', error)
   } finally {
     loading.value = false
   }
@@ -561,7 +557,6 @@ const fetchAllTransactions = async () => {
       transactions.value = response.data.data.data
     }
   } catch (error) {
-    console.error('Gagal mengambil data transaksi:', error)
   } finally {
     loading.value = false
   }
@@ -591,7 +586,6 @@ const fetchBukuBesar = async () => {
       }
     }
   } catch (error) {
-    console.error('Gagal mengambil buku besar:', error)
   }
 }
 
@@ -638,7 +632,6 @@ const fetchSaldoSumberDana = async (kodeAkun) => {
     })
     saldoSumberDana.value = response.data.success ? Number(response.data.data.saldo) || 0 : 0
   } catch (error) {
-    console.error('Gagal mengambil saldo akun:', error)
     saldoSumberDana.value = 0
   }
 }
@@ -762,7 +755,6 @@ async function deleteTransaction(id) {
         })
       }
     } catch (error) {
-      console.error('Error deleting transaction:', error)
       let errorMessage = 'Terjadi kesalahan saat menghapus transaksi.'
       if (error.response && error.response.data && error.response.data.message) {
         errorMessage = error.response.data.message
@@ -873,7 +865,6 @@ async function handleSubmit() {
       })
     }
   } catch (error) {
-    console.error('Error saving transaction:', error)
     let errorMessage = 'Terjadi kesalahan saat menyimpan transaksi.'
     if (error.response && error.response.data && error.response.data.message) {
       errorMessage = error.response.data.message

@@ -73,7 +73,7 @@
             <span class="text-slate-400! font-normal!">
               {{ row.meter_reading_start?.toLocaleString('id-ID') || 0 }}
             </span>
-            <span class="text-slate-300!">→</span>
+            <span class="text-slate-300!">â†’</span>
             <span class="text-cyan-600! font-bold!">
               {{ row.meter_reading_end?.toLocaleString('id-ID') || 0 }}
             </span>
@@ -83,7 +83,7 @@
         <template #column-usage="{ row }">
           <span class="text-sm! font-bold! text-slate-800!">
             {{ row.usage_m3 || 0 }}
-            <span class="text-[10px]! text-slate-400! font-medium!">m³</span>
+            <span class="text-[10px]! text-slate-400! font-medium!">mÂ³</span>
           </span>
         </template>
 
@@ -128,7 +128,7 @@
     </ContentCard>
 
     <div class="text-center py-8 text-[10px] text-slate-400 font-semibold tracking-[2px] uppercase">
-      PAMSIMAS · LAYANAN AIR BERSIH MASYARAKAT
+      PAMSIMAS Â· LAYANAN AIR BERSIH MASYARAKAT
     </div>
 
     <detaiDaftarTagihan
@@ -176,7 +176,6 @@ const fetchBills = async () => {
       bills.value = res.data.bills || []
     }
   } catch (err) {
-    console.error('Gagal memuat daftar tagihan:', err)
   } finally {
     isLoading.value = false
   }
@@ -234,7 +233,6 @@ const formatDueDate = (dateStr) => {
     ]
     return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`
   } catch (err) {
-    console.error('Error formatting date:', err)
     return dateStr
   }
 }
@@ -258,7 +256,6 @@ const getOverdueDays = (dateStr) => {
       return `Tersisa ${Math.abs(diffDays)} hari`
     }
   } catch (err) {
-    console.error('Error calculating overdue days:', err)
     return ''
   }
 }

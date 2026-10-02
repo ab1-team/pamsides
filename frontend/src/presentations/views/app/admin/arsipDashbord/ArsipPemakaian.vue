@@ -2,19 +2,22 @@
   <div class="h-full bg-white flex flex-col pt-2 pb-4">
     <DataTable
       v-model="searchQuery"
-      :data="filteredData"
+      :data="itemsList"
       :columns="columns"
       title="Detail Arsip Pemakaian"
       searchPlaceholder="Cari nama atau nomor pelanggan..."
       v-model:current-page="currentPage"
       v-model:per-page="perPage"
-      :total-entries="filteredData.length"
-      :show-entries="false"
+      :total-entries="serverTotal"
+      :total-pages="totalPages"
+      :show-entries="true"
       :no-card="true"
+      server-side
+      :loading="loading"
     >
       <template #column-tagihan="{ row }">
         <span class="font-semibold text-[12px] text-slate-700 font-mono whitespace-nowrap">
-          {{ row.tagihan != null ? formatRupiah(row.tagihan) : '-' }}
+          {{ row.total != null ? formatRupiah(row.total) : '-' }}
         </span>
       </template>
       <template #column-status="{ row }">
@@ -36,15 +39,16 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import DataTable from '@/presentations/components/ui/DataTable.vue'
-import billingService from '@/services/billing.service'
-import api from '@/utils/axios'
+import dashboardService from '@/services/dashboard.service'
 
 const searchQuery = ref('')
 const currentPage = ref(1)
-const perPage = ref(8)
+const perPage = ref(10)
 const loading = ref(false)
+const serverTotal = ref(0)
+const totalPages = ref(1)
 
 const formatRupiah = (value) => {
   const n = Number(value) || 0
@@ -55,62 +59,33 @@ const columns = [
   { key: 'nomorInduk', title: 'No. Pelanggan' },
   { key: 'customer', title: 'Nama' },
   { key: 'alamat', title: 'Alamat' },
-  { key: 'paket', title: 'Paket' },
-  { key: 'periode', title: 'Periode' },
-  { key: 'tagihan', title: 'Tagihan' },
+  { key: 'periodeLabel', title: 'Periode' },
+  { key: 'total', title: 'Tagihan' },
   { key: 'status', title: 'Status' },
-]
-
-const monthNames = [
-  '', 'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
-  'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember',
 ]
 
 const itemsList = ref([])
 
+// Pakai endpoint ringan DashboardController::popupData?type=pemakaian
+// (sebelumnya: 2 endpoint paralel + getAllBills loop semua halaman)
 const fetchUsageData = async () => {
   try {
     loading.value = true
     const now = new Date()
-    const year = now.getFullYear()
-    const month = now.getMonth() + 1
-
-    const [ticketsRes, billsRes] = await Promise.all([
-      api.get('/customers/search'),
-      billingService.getAllBills({ year, month }),
-    ])
-
-    const ticketsRaw = ticketsRes.data?.data
-    const tickets = Array.isArray(ticketsRaw)
-      ? ticketsRaw
-      : Array.isArray(ticketsRaw?.data) ? ticketsRaw.data : []
-    const bills = billsRes?.data?.bills || []
-
-    const billByCustomer = new Map()
-    for (const bill of bills) {
-      const cid = bill.customer_id || bill.customer?.id
-      if (cid) billByCustomer.set(cid, bill)
+    const response = await dashboardService.getPopupData('pemakaian', {
+      page: currentPage.value,
+      per_page: perPage.value,
+      search: searchQuery.value,
+      month: now.getMonth() + 1,
+      year: now.getFullYear(),
+    })
+    if (response?.success) {
+      itemsList.value = response.data || []
+      serverTotal.value = response.meta?.total ?? itemsList.value.length
+      totalPages.value = response.meta?.last_page ?? 1
     }
-
-    itemsList.value = tickets
-      .filter((t) => t.customer_code)
-      .map((t) => {
-        const bill = billByCustomer.get(t.customer_id) || null
-        const m = bill?.billing_period_month
-        const y = bill?.billing_period_year
-        return {
-          id: t.customer_id,
-          nomorInduk: t.customer_code || '-',
-          customer: t.name || '-',
-          alamat: t.address || '-',
-          paket: t.packageName || '-',
-          periode: m ? `${monthNames[m]} ${y}` : '-',
-          tagihan: bill?.total_amount ?? null,
-          status: bill ? bill.status : 'unrecorded',
-        }
-      })
   } catch (error) {
-    console.error('Failed to fetch usage data', error)
+    // silent
   } finally {
     loading.value = false
   }
@@ -120,13 +95,16 @@ onMounted(() => {
   fetchUsageData()
 })
 
-const filteredData = computed(() => {
-  const query = searchQuery.value.toLowerCase()
-  if (!query) return itemsList.value
-  return itemsList.value.filter(
-    (item) =>
-      item.customer.toLowerCase().includes(query) ||
-      item.nomorInduk.toLowerCase().includes(query),
-  )
+let searchTimer = null
+watch(searchQuery, () => {
+  clearTimeout(searchTimer)
+  searchTimer = setTimeout(() => {
+    currentPage.value = 1
+    fetchUsageData()
+  }, 300)
+})
+
+watch([currentPage, perPage], () => {
+  fetchUsageData()
 })
 </script>

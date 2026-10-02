@@ -10,7 +10,7 @@
 
       <div class="toolbar-right">
         <div class="zoom-controls no-print" v-if="pages.length > 0">
-          <button class="zoom-btn" @click="zoomOut" :disabled="zoomLevel <= minZoom" title="Zoom out">−</button>
+          <button class="zoom-btn" @click="zoomOut" :disabled="zoomLevel <= minZoom" title="Zoom out">âˆ’</button>
           <span class="zoom-percent active" @click="resetZoom" title="Reset zoom">{{ zoomPercent }}%</span>
           <button class="zoom-btn" @click="zoomIn" :disabled="zoomLevel >= maxZoom" title="Zoom in">+</button>
         </div>
@@ -199,7 +199,6 @@ onMounted(async () => {
       errorMsg.value = 'Tidak ada bukti transaksi untuk dicetak.'
     }
   } catch (err) {
-    console.error(err)
     errorMsg.value = err?.message || 'Gagal memuat data'
   } finally {
     isLoading.value = false

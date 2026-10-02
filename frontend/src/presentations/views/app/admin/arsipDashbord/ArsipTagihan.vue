@@ -3,15 +3,18 @@
     <DataTable
       v-model="searchQuery"
       v-model:selection="selectedRows"
-      :data="filteredData"
+      :data="itemsList"
       :columns="columns"
       title="Detail Arsip Tagihan"
       searchPlaceholder="Cari nama atau nomor pelanggan..."
       v-model:current-page="currentPage"
       v-model:per-page="perPage"
-      :total-entries="filteredData.length"
-      :show-entries="false"
+      :total-entries="serverTotal"
+      :total-pages="totalPages"
+      :show-entries="true"
       :no-card="true"
+      server-side
+      :loading="loading"
       selectable
     >
       <template #column-periode="{ row }">
@@ -51,25 +54,22 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, inject } from 'vue'
+import { ref, onMounted, watch, inject } from 'vue'
 import DataTable from '@/presentations/components/ui/DataTable.vue'
-import billingService from '@/services/billing.service'
+import dashboardService from '@/services/dashboard.service'
 
 const searchQuery = ref('')
 const currentPage = ref(1)
-const perPage = ref(8)
+const perPage = ref(10)
 const loading = ref(false)
+const serverTotal = ref(0)
+const totalPages = ref(1)
 const selectedRows = inject('tagihanSelection', ref([]))
 
 const formatRupiah = (value) => {
   const n = Number(value) || 0
   return `Rp ${n.toLocaleString('id-ID')}`
 }
-
-const monthNames = [
-  '', 'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
-  'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember',
-]
 
 const formatDate = (value) => {
   if (!value) return '-'
@@ -82,7 +82,7 @@ const columns = [
   { key: 'nomorInduk', title: 'No. Pelanggan' },
   { key: 'customer', title: 'Nama' },
   { key: 'alamat', title: 'Alamat' },
-  { key: 'periode', title: 'Periode' },
+  { key: 'periodeLabel', title: 'Periode' },
   { key: 'total', title: 'Total Tagihan' },
   { key: 'denda', title: 'Denda' },
   { key: 'jatuhTempo', title: 'Jatuh Tempo' },
@@ -91,32 +91,23 @@ const columns = [
 
 const itemsList = ref([])
 
+// Pakai endpoint ringan DashboardController::popupData?type=tagihan
+// (sebelumnya getAllBills() menarik SEMUA halaman tagihan unpaid)
 const fetchUnpaidBills = async () => {
   try {
     loading.value = true
-    const response = await billingService.getAllBills({ status: 'unpaid' })
-    if (response?.success && response?.data?.bills) {
-      itemsList.value = response.data.bills.map((bill) => {
-        const ticket = bill.customer?.ticket
-        return {
-          id: bill.id,
-          nomorInduk: bill.customer?.customer_code || '-',
-          customer: ticket?.applicant_name || bill.customer?.user?.name || '-',
-          alamat: ticket?.address || '-',
-          periode: bill.billing_period_month,
-          tahun: bill.billing_period_year,
-          periodeLabel: bill.billing_period_month
-            ? `${monthNames[bill.billing_period_month]} ${bill.billing_period_year}`
-            : '-',
-          total: bill.total_amount ?? 0,
-          denda: Number(bill.penalty_amount) || 0,
-          jatuhTempo: bill.due_date,
-          status: bill.status,
-        }
-      })
+    const response = await dashboardService.getPopupData('tagihan', {
+      page: currentPage.value,
+      per_page: perPage.value,
+      search: searchQuery.value,
+    })
+    if (response?.success) {
+      itemsList.value = response.data || []
+      serverTotal.value = response.meta?.total ?? itemsList.value.length
+      totalPages.value = response.meta?.last_page ?? 1
     }
   } catch (error) {
-    console.error('Failed to fetch unpaid bills', error)
+    // silent
   } finally {
     loading.value = false
   }
@@ -126,13 +117,16 @@ onMounted(() => {
   fetchUnpaidBills()
 })
 
-const filteredData = computed(() => {
-  const query = searchQuery.value.toLowerCase()
-  if (!query) return itemsList.value
-  return itemsList.value.filter(
-    (item) =>
-      item.customer.toLowerCase().includes(query) ||
-      item.nomorInduk.toLowerCase().includes(query),
-  )
+let searchTimer = null
+watch(searchQuery, () => {
+  clearTimeout(searchTimer)
+  searchTimer = setTimeout(() => {
+    currentPage.value = 1
+    fetchUnpaidBills()
+  }, 300)
+})
+
+watch([currentPage, perPage], () => {
+  fetchUnpaidBills()
 })
 </script>

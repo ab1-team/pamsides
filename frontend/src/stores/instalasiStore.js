@@ -127,7 +127,6 @@ export const useInstalasiStore = defineStore('instalasi', () => {
         fetchError.value = 'Format data tiket tidak dikenali.'
       }
     } catch (error) {
-      console.error('Failed to fetch installation statuses:', error)
       fetchError.value = error?.message || 'Gagal memuat data status instalasi.'
     } finally {
       isLoading.value = false

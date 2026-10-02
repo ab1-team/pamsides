@@ -3,15 +3,18 @@
   <div class="h-full bg-white flex flex-col pt-2 pb-4">
     <DataTable
       v-model="searchQuery"
-      :data="filteredData"
+      :data="itemsList"
       :columns="columns"
       title="Detail Arsip Instalasi"
       searchPlaceholder="Cari nama atau nomor induk..."
       v-model:current-page="currentPage"
       v-model:per-page="perPage"
-      :total-entries="filteredData.length"
-      :show-entries="false"
+      :total-entries="serverTotal"
+      :total-pages="totalPages"
+      :show-entries="true"
       :no-card="true"
+      server-side
+      :loading="loading"
     >
       <template #column-status="{ row }">
         <span
@@ -31,14 +34,16 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import DataTable from '@/presentations/components/ui/DataTable.vue'
-import ticketService from '@/services/ticket.service'
+import dashboardService from '@/services/dashboard.service'
 
 const searchQuery = ref('')
 const currentPage = ref(1)
-const perPage = ref(8)
+const perPage = ref(10)
 const loading = ref(false)
+const serverTotal = ref(0)
+const totalPages = ref(1)
 
 const STATUS_MAP = {
   draft: { label: 'Draft' },
@@ -53,11 +58,6 @@ const STATUS_MAP = {
   batal: { label: 'Batal' },
 }
 
-const allowedStatuses = ['draft', 'pasang', 'prosesing', 'unpaid']
-const allowedRawStatuses = Object.entries(STATUS_MAP)
-  .filter(([, v]) => allowedStatuses.includes(v.label.toLowerCase()))
-  .map(([k]) => k)
-
 const columns = [
   { key: 'nomorInduk', title: 'Nomor Induk' },
   { key: 'customer', title: 'Customer' },
@@ -68,27 +68,32 @@ const columns = [
 
 const itemsList = ref([])
 
+// Pakai endpoint ringan DashboardController::popupData?type=instalasi
+// (sebelumnya ticketService.getTickets({ per_page: 100 }) menarik SEMUA tiket
+//  dengan eager-load berat, lalu di-filter client-side)
 const fetchInstallations = async () => {
   try {
     loading.value = true
-    const response = await ticketService.getTickets({ per_page: 100 })
-    if (response?.success && response?.data?.data) {
-      itemsList.value = response.data.data
-        .filter((ticket) => allowedRawStatuses.includes(ticket.status))
-        .map((ticket) => ({
-          id: ticket.id,
-          nomorInduk: `INS-${ticket.id.toString().padStart(5, '0')}`,
-          customer: ticket.applicant_name || '-',
-          alamat: ticket.address || '-',
-          tanggalOrder: ticket.created_at
-            ? new Date(ticket.created_at).toISOString().split('T')[0]
-            : '-',
-          status: STATUS_MAP[ticket.status]?.label || '-',
-          rawStatus: ticket.status,
-        }))
+    const response = await dashboardService.getPopupData('instalasi', {
+      page: currentPage.value,
+      per_page: perPage.value,
+      search: searchQuery.value,
+    })
+    if (response?.success) {
+      itemsList.value = (response.data || []).map((t) => ({
+        id: t.id,
+        nomorInduk: t.nomorInduk,
+        customer: t.customer,
+        alamat: t.alamat,
+        tanggalOrder: t.tanggalOrder,
+        status: STATUS_MAP[t.status]?.label || t.status || '-',
+        rawStatus: t.status,
+      }))
+      serverTotal.value = response.meta?.total ?? itemsList.value.length
+      totalPages.value = response.meta?.last_page ?? 1
     }
   } catch (error) {
-    console.error('Failed to fetch installations', error)
+    // silent
   } finally {
     loading.value = false
   }
@@ -98,16 +103,16 @@ onMounted(() => {
   fetchInstallations()
 })
 
-const filteredData = computed(() => {
-  let rows = itemsList.value
-  const query = searchQuery.value.toLowerCase()
-  if (query) {
-    rows = rows.filter(
-      (item) =>
-        item.customer.toLowerCase().includes(query) ||
-        item.nomorInduk.toLowerCase().includes(query),
-    )
-  }
-  return rows
+let searchTimer = null
+watch(searchQuery, () => {
+  clearTimeout(searchTimer)
+  searchTimer = setTimeout(() => {
+    currentPage.value = 1
+    fetchInstallations()
+  }, 300)
+})
+
+watch([currentPage, perPage], () => {
+  fetchInstallations()
 })
 </script>

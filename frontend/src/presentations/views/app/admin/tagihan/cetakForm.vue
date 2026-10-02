@@ -17,7 +17,7 @@
 
         <div class="zoom-controls no-print" v-if="pages.length > 0">
           <button class="zoom-btn" @click="zoomOut" :disabled="zoomLevel <= minZoom" title="Zoom Out">
-            <span>−</span>
+            <span>âˆ’</span>
           </button>
           <span
             class="zoom-percent active"
@@ -229,7 +229,6 @@ onMounted(async () => {
       errorMsg.value = 'Tidak ada data form input untuk periode ini.'
     }
   } catch (err) {
-    console.error(err)
     errorMsg.value = err?.message || 'Gagal memuat data'
   } finally {
     isLoading.value = false

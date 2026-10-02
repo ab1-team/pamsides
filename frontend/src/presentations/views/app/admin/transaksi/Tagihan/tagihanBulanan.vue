@@ -357,6 +357,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useBillingStore } from '@/stores/billingStore.js'
+import { useSettingsStore } from '@/stores/settingsStore.js'
 import CustomSearch from '@/presentations/components/ui/CustomSearch.vue'
 import ContentCard from '@/presentations/components/ui/ContentCard.vue'
 import BillingForm from '@/presentations/components/billing/BillingForm.vue'
@@ -364,6 +365,7 @@ import DetailModal from './partials/BillingDetail.vue'
 import { MySwal } from '@/utils/swal.js'
 
 const billingStore = useBillingStore()
+const settingsStore = useSettingsStore()
 
 const showDetailModal = ref(false)
 
@@ -378,9 +380,15 @@ const selectCustomer = async (customer) => {
 const handleSavePayment = async (paymentData) => {
   const result = await billingStore.savePayment(paymentData)
   if (result.success) {
+    const methodLabel =
+      paymentData?.paymentMethod === 'transfer_bri'
+        ? 'Transfer Bank BRI'
+        : paymentData?.paymentMethod === 'cash'
+          ? 'Tunai'
+          : '—'
     MySwal.fire({
       title: 'Pembayaran Berhasil',
-      text: 'Tagihan bulan ini berhasil dikonfirmasi dan lunas.',
+      text: `Tagihan bulan ini berhasil dikonfirmasi dan lunas via ${methodLabel}.`,
       icon: 'success',
       confirmButtonText: 'Lihat Detail',
       confirmButtonColor: '#10B981',
@@ -419,6 +427,10 @@ const getInitialFormData = (period) => {
     denda: period.denda || 0,
     pembayaran: period.amount || 0,
     dueDate: period.dueDate || null,
+    billingPeriodMonth: period.billing_period_month ?? null,
+    billingPeriodYear: period.billing_period_year ?? null,
+    // Flag: ada tagihan lebih lama yang belum dibayar (= disable bayar dari tagihan ini)
+    hasOlderUnpaid: billingStore.hasOlderUnpaidPeriod(period),
   }
 }
 
@@ -432,6 +444,9 @@ const getCustomerInitials = () => {
 }
 
 onMounted(async () => {
+  // Load settings (toleransi_tunggakan) lebih awal — dipakai oleh BillingForm
+  // untuk deteksi ADVANCE payment. Aman dipanggil paralel dengan init store.
+  settingsStore.loadSettings()
   await billingStore.initializeStore()
 })
 </script>

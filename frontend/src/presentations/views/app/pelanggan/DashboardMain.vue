@@ -25,7 +25,7 @@
                 class="bg-gradient-to-r! from-indigo-600! to-blue-500! bg-clip-text! text-transparent!"
                 >{{ dashboardData.user.name }}</span
               >
-              👋
+              ðŸ‘‹
             </h1>
             <p class="text-slate-500! font-medium! text-sm! lg:text-lg! max-w-md! lg:mx-0!">
               Kode Pelanggan:
@@ -90,7 +90,7 @@
                 <div class="flex! justify-between! items-center!">
                   <span class="text-sm! font-bold! text-slate-500!">Pemakaian Air</span>
                   <span class="text-sm! font-black! text-slate-800!">
-                    {{ dashboardData.latest_bill?.usage_m3 || 0 }} m³
+                    {{ dashboardData.latest_bill?.usage_m3 || 0 }} mÂ³
                   </span>
                 </div>
                 <div class="w-full! h-px! bg-slate-200!"></div>
@@ -126,7 +126,7 @@
                   Distribusi Penggunaan
                 </h2>
                 <p class="text-slate-400! text-[10px]! lg:text-xs! font-medium! mt-1!">
-                  Pemakaian air 12 bulan terakhir •
+                  Pemakaian air 12 bulan terakhir â€¢
                   <span class="font-black! text-indigo-500!">{{ recordedCount }}/12</span>
                   bulan tercatat
                 </p>
@@ -154,7 +154,7 @@
                   Rata-rata
                 </div>
                 <div class="text-base! font-black! text-indigo-700! mt-1!">
-                  {{ formatDecimal(avgUsage) }} <span class="text-[10px]!">m³</span>
+                  {{ formatDecimal(avgUsage) }} <span class="text-[10px]!">mÂ³</span>
                 </div>
               </div>
               <div class="p-3! rounded-2xl! bg-emerald-50! border! border-emerald-100!">
@@ -162,7 +162,7 @@
                   Minimum
                 </div>
                 <div class="text-base! font-black! text-emerald-700! mt-1!">
-                  {{ formatDecimal(summary.min_m3) }} <span class="text-[10px]!">m³</span>
+                  {{ formatDecimal(summary.min_m3) }} <span class="text-[10px]!">mÂ³</span>
                 </div>
               </div>
               <div class="p-3! rounded-2xl! bg-rose-50! border! border-rose-100!">
@@ -170,7 +170,7 @@
                   Maksimum
                 </div>
                 <div class="text-base! font-black! text-rose-700! mt-1!">
-                  {{ formatDecimal(summary.max_m3) }} <span class="text-[10px]!">m³</span>
+                  {{ formatDecimal(summary.max_m3) }} <span class="text-[10px]!">mÂ³</span>
                 </div>
               </div>
               <div
@@ -226,7 +226,7 @@
                   </g>
                   <g v-if="avgLineY !== null">
                     <line x1="4" :y1="avgLineY" x2="96" :y2="avgLineY" stroke="#f59e0b" stroke-width="0.3" stroke-dasharray="1,1" opacity="0.7" />
-                    <text x="95" :y="avgLineY - 0.8" text-anchor="end" class="text-[2.2px]! font-black! fill-amber-600!">RATA²</text>
+                    <text x="95" :y="avgLineY - 0.8" text-anchor="end" class="text-[2.2px]! font-black! fill-amber-600!">RATAÂ²</text>
                   </g>
                   <g v-for="b in barChartData" :key="'bar-' + b.idx">
                     <rect :x="b.barX" :y="b.barY" :width="b.barWidth" :height="b.barHeight" :fill="b.isCurrent ? 'url(#barGradCurrent)' : 'url(#barGrad)'" :opacity="b.hasData ? 1 : 0.25" rx="0.6" />
@@ -276,7 +276,7 @@
                       :stroke="p.is_current ? '#4f46e5' : '#6366f1'"
                       stroke-width="0.3"
                     />
-                    <title>{{ p.label }}: {{ formatDecimal(p.usage_m3) }} m³</title>
+                    <title>{{ p.label }}: {{ formatDecimal(p.usage_m3) }} mÂ³</title>
                   </g>
                 </svg>
                 <div class="flex! justify-between! mt-3! px-1!">
@@ -301,7 +301,7 @@
                   3 Bulan Pemakaian Tertinggi
                 </h4>
                 <span class="text-[10px]! text-slate-400! font-medium!">
-                  Total {{ formatDecimal(totalUsage) }} m³ / {{ recordedCount }} bulan
+                  Total {{ formatDecimal(totalUsage) }} mÂ³ / {{ recordedCount }} bulan
                 </span>
               </div>
               <div class="grid! grid-cols-1! sm:grid-cols-3! gap-3!">
@@ -320,7 +320,7 @@
                       {{ top.label }}
                     </div>
                     <div class="text-sm! font-black! text-slate-800!">
-                      {{ formatDecimal(top.value) }} m³
+                      {{ formatDecimal(top.value) }} mÂ³
                     </div>
                   </div>
                   <span
@@ -336,7 +336,7 @@
                   <span
                     v-else
                     class="text-[9px]! font-black! text-slate-500! bg-white! px-2! py-1! rounded-full! border! border-slate-100!"
-                    >—</span
+                    >â€”</span
                   >
                 </div>
               </div>
@@ -575,7 +575,6 @@ const fetchDashboardData = async () => {
       }
     }
   } catch (error) {
-    console.error('Failed to fetch dashboard data:', error)
   }
 }
 

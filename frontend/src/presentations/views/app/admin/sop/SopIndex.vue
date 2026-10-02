@@ -84,6 +84,11 @@
                   v-model="sistemTagihanForm"
                   :on-save="saveSettings"
                 />
+                <CalkForm
+                  v-if="activeSection === 'calk'"
+                  v-model="calkForm"
+                  :on-save="saveSettings"
+                />
                 <LogoForm
                   v-if="activeSection === 'logo'"
                   v-model="logoForm"
@@ -93,6 +98,11 @@
                   v-if="activeSection === 'whatsapp'"
                   v-model="whatsappForm"
                   :on-save="saveSettings"
+                />
+                <!-- Tanda tangan: blok ini self-managed (punya tombol save sendiri),
+                 tidak bergantung pada :on-save dari SopIndex. -->
+                <SignatureForm
+                  v-if="activeSection === 'signature'"
                 />
               </div>
             </transition>
@@ -178,6 +188,11 @@
                 v-model="sistemTagihanForm"
                 :on-save="saveSettings"
               />
+              <CalkForm
+                v-if="activeSection === 'calk'"
+                v-model="calkForm"
+                :on-save="saveSettings"
+              />
               <LogoForm
                 v-if="activeSection === 'logo'"
                 v-model="logoForm"
@@ -187,6 +202,11 @@
                 v-if="activeSection === 'whatsapp'"
                 v-model="whatsappForm"
                 :on-save="saveSettings"
+              />
+              <!-- Tanda tangan: blok ini self-managed (punya tombol save sendiri),
+               tidak bergantung pada :on-save dari SopIndex. -->
+              <SignatureForm
+                v-if="activeSection === 'signature'"
               />
             </div>
           </transition>
@@ -204,8 +224,10 @@ import LembagaForm from './partials/LembagaSop.vue'
 import WellcomeForm from './partials/WelcomeSop.vue'
 import PasangBaruForm from './partials/pasangBaru.vue'
 import SistemTagihanForm from './partials/sistemTagihan.vue'
+import CalkForm from './partials/CalkSop.vue'
 import LogoForm from './partials/LogoSop.vue'
 import WhatsappForm from './partials/WhatsappSop.vue'
+import SignatureForm from './partials/SignatureSop.vue'
 
 const {
   activeSection,
@@ -218,5 +240,6 @@ const {
   wellcomeForm,
   pasangBaruForm,
   sistemTagihanForm,
+  calkForm,
 } = useSop()
 </script>

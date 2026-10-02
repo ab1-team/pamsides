@@ -22,6 +22,11 @@ import Toast from 'primevue/toast'
 import ToastService from 'primevue/toastservice'
 import ProgressBar from 'primevue/progressbar'
 import Chart from 'primevue/chart'
+import Editor from 'primevue/editor'
+
+// CSS untuk PrimeVue Editor (Quill)
+import 'primeicons/primeicons.css'
+import 'quill/dist/quill.snow.css'
 
 import { library } from '@fortawesome/fontawesome-svg-core'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
@@ -160,12 +165,35 @@ import {
   faFileLines,
   faList,
   faTrashAlt,
+  faTrashCan,
   faUsersSlash,
   faVenusMars,
   faVideo,
   faSync,
   faInbox,
   faMagic,
+  faBookOpen,
+  faPiggyBank,
+  faPeopleGroup,
+  faFileContract,
+  faStamp,
+  faMoneyBill,
+  faCube,
+  faLayerGroup,
+  faRetweet,
+  faCommentDots,
+  faPenToSquare,
+  faTriangleExclamation,
+  faArrowsRotate,
+  faXmark,
+  faUserPen,
+  faCalculator,
+  faPenFancy,
+  faSignature,
+  faPenNib,
+  faUpload,
+  faWandMagicSparkles,
+  faRefresh,
 } from '@fortawesome/free-solid-svg-icons'
 
 import { faWhatsapp } from '@fortawesome/free-brands-svg-icons'
@@ -313,6 +341,29 @@ library.add(
   faInbox,
   faMagic,
   faFileSignature,
+  faBookOpen,
+  faPiggyBank,
+  faPeopleGroup,
+  faFileContract,
+  faStamp,
+  faTrashCan,
+  faMoneyBill,
+  faCube,
+  faLayerGroup,
+  faRetweet,
+  faCommentDots,
+  faPenToSquare,
+  faTriangleExclamation,
+  faArrowsRotate,
+  faXmark,
+  faUserPen,
+  faCalculator,
+  faPenFancy,
+  faSignature,
+  faPenNib,
+  faUpload,
+  faWandMagicSparkles,
+  faRefresh,
 )
 
 export { MySwal } from './utils/swal'
@@ -322,7 +373,12 @@ const pinia = createPinia()
 
 app.use(pinia)
 app.use(router)
-app.use(VueSweetalert2)
+app.use(VueSweetalert2, {
+  // Pastikan SweetAlert konfirmasi selalu di depan modal package (z-[3000])
+  customClass: {
+    container: 'swal-container-front',
+  },
+})
 app.use(PrimeVue, {
   theme: {
     preset: Aura,
@@ -343,6 +399,7 @@ app.component('PrimeSelect', Select)
 app.component('PrimeToast', Toast)
 app.component('ProgressBar', ProgressBar)
 app.component('PrimeChart', Chart)
+app.component('PrimeEditor', Editor)
 app.component('font-awesome-icon', FontAwesomeIcon)
 
 app.mount('#app')
