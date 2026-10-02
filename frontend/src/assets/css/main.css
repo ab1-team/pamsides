@@ -6,6 +6,13 @@
 components,
 utilities;
 
+/* Paksa light color-scheme untuk seluruh aplikasi sehingga Quill editor
+   (yang tidak set background eksplisit) tidak menampilkan body yang hitam
+   ketika OS user dalam dark mode. */
+:root {
+  color-scheme: light;
+}
+
 @theme {
   --color-primary: #0ea5e9;
   --color-primary-dark: #0284c7;

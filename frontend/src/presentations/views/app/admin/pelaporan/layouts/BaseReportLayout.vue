@@ -44,17 +44,88 @@
 
     <main class="report-content">
       <slot></slot>
+
+      <!--
+        Blok tanda tangan otomatis.
+        signature.html berisi template + image yang sudah diinjeksi
+        oleh backend (lihat SignatureService::renderForReport).
+        Hanya dirender di halaman terakhir untuk laporan multi-page.
+      -->
+      <div
+        v-if="showSignature"
+        class="report-signature-block"
+        v-html="effectiveSignature.html"
+      ></div>
     </main>
   </div>
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, inject, useAttrs } from 'vue'
 
 const props = defineProps({
   lembaga: { type: Object, default: () => ({}) },
   config: { type: Object, default: () => ({ paper_size: 'A4', orientation: 'portrait' }) },
   noKop: { type: Boolean, default: false },
+  /**
+   * Full payload laporan. Hanya `pageInfo` yang dipakai di layout ini
+   * untuk menentukan apakah signature perlu di-render (halaman terakhir saja).
+   */
+  payload: { type: Object, default: () => ({}) },
+  /**
+   * Object signature dari backend:
+   *   { html, report_key, image_url, has_template }
+   * Bisa null/undefined untuk laporan yang tidak butuh tanda tangan.
+   * Jika tidak disediakan, coba ambil dari provide('reportSignature').
+   */
+  signature: { type: Object, default: null },
+})
+
+/**
+ * Fallback: kalau payload tidak diberikan lewat prop, coba ambil dari $attrs
+ * (misalnya kalau Report component meneruskannya sebagai extra attr).
+ * Atau dari inject('reportPayload') yang diset oleh PelaporanPreview.
+ */
+const attrs = useAttrs()
+const providedPayload = inject('reportPayload', null)
+const effectivePayload = computed(() => {
+  return (
+    props.payload ||
+    attrs.payload ||
+    providedPayload?.value ||
+    providedPayload ||
+    {}
+  )
+})
+
+/**
+ * Ambil signature dari props ATAU dari provide() (di-set oleh PelaporanPreview).
+ * Cara provide/inject dipakai supaya kita tidak perlu menambah prop ke 22+
+ * file ReportXxx.vue yang membungkus BaseReportLayout.
+ */
+const providedSignature = inject('reportSignature', null)
+const effectiveSignature = computed(() => props.signature || providedSignature?.value || providedSignature || null)
+
+/**
+ * Tentukan apakah signature block perlu dirender.
+ * - Harus ada html yang tidak kosong (template + image injected)
+ * - Hanya muncul di halaman terakhir (kalau pageInfo multi-page terdeteksi).
+ */
+const showSignature = computed(() => {
+  const sig = effectiveSignature.value
+  if (!sig || typeof sig.html !== 'string') return false
+  if (sig.html.trim() === '') return false
+
+  // Untuk laporan multi-page (CaLK, BukuBesar, dll) dengan pageInfo,
+  // hanya render di halaman terakhir.
+  const info = effectivePayload.value?.pageInfo
+  if (info && typeof info === 'object') {
+    if (typeof info.total === 'number' && info.total > 1) {
+      return info.current === info.total
+    }
+  }
+
+  return true
 })
 
 const configPaperSize = computed(() => {
@@ -279,6 +350,29 @@ const logoUrl = computed(() => {
       margin-top: 20px;
       display: flex;
       justify-content: flex-end;
+    }
+
+    /* Blok tanda tangan otomatis (di-inject dari backend via payload.signature). */
+    .report-signature-block {
+      width: 100%;
+      margin-top: 28px;
+      page-break-inside: avoid;
+      break-inside: avoid;
+      font-family: Arial, Helvetica, sans-serif;
+      color: #000000;
+    }
+    .report-signature-block :deep(table) {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    .report-signature-block :deep(p),
+    .report-signature-block :deep(div) {
+      margin: 0 0 4px 0;
+      line-height: 1.3;
+    }
+    .report-signature-block :deep(img) {
+      max-height: 60px;
+      object-fit: contain;
     }
     :deep(.footer-sign) {
       width: 35%;
