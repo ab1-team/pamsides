@@ -17,6 +17,7 @@ use App\Models\Transaction;
 use App\Models\User;
 use App\Services\InventoryService;
 use App\Services\PelaporanService;
+use App\Services\SignatureService;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -26,9 +27,42 @@ class PelaporanController extends Controller
 {
     protected $pelaporanService;
 
-    public function __construct(PelaporanService $pelaporanService)
-    {
+    protected $signatureService;
+
+    public function __construct(
+        PelaporanService $pelaporanService,
+        SignatureService $signatureService,
+    ) {
         $this->pelaporanService = $pelaporanService;
+        $this->signatureService = $signatureService;
+    }
+
+    /**
+     * Helper: bangun blok signature siap-inject untuk view_target tertentu.
+     * Disimpan sebagai `payload.signature` agar Vue bisa render otomatis.
+     */
+    private function buildSignaturePayload(?string $viewTarget, ?string $subLaporan = null): array
+    {
+        $reportKey = $this->signatureService->resolveReportKey($viewTarget, $subLaporan);
+        $html = $this->signatureService->renderForReport($reportKey);
+        $imageUrl = $this->signatureService->imageUrl($reportKey);
+
+        return [
+            'html'         => $html,
+            'report_key'   => $reportKey,
+            'image_url'    => $imageUrl,
+            'has_template' => $html !== '',
+        ];
+    }
+
+    /**
+     * Inject `signature` key ke array payload (in-place) untuk helper methods.
+     */
+    private function withSignature(array $payload, ?string $viewTarget, ?string $subLaporan = null): array
+    {
+        $payload['signature'] = $this->buildSignaturePayload($viewTarget, $subLaporan);
+
+        return $payload;
     }
 
     public function index()
@@ -271,7 +305,46 @@ class PelaporanController extends Controller
             $response->setData($body);
         }
 
+        // Pastikan payload CALK (calk_config + point_a) selalu ada,
+        // termasuk untuk handler yang tidak menambahkannya secara eksplisit.
+        if (! isset($body['payload']['calk_config']) || ! array_key_exists('point_a', $body['payload'])) {
+            $lembaga = Setting::first();
+            $body['payload']['calk_config'] = $this->buildCalkConfigForReport($lembaga);
+            $body['payload']['point_a'] = $lembaga?->calk_point_a ?? '';
+
+            $response->setData($body);
+        }
+
         return $response;
+    }
+
+    /**
+     * Susun konfigurasi CALK untuk laporan.
+     *
+     * Konsep diadaptasi dari sidbm: struktur JSON `settings.calk` dengan
+     * hierarki `D.1.d.1..3` (persentase bagian milik bersama) dan
+     * `D.2.a/b/c` (nominal laba ditahan).
+     *
+     * @param  \App\Models\Setting|null  $s
+     * @return array
+     */
+    private function buildCalkConfigForReport(?Setting $s): array
+    {
+        $calk = $s?->calk ?? [];
+
+        return [
+            'peraturan_desa' => $calk['peraturan_desa'] ?? ($s?->peraturan_desa ?? ''),
+            'persentase' => [
+                'bantuan_rumah_tangga'  => (float) ($calk['D']['1']['d']['1'] ?? 0),
+                'pengembangan_kapasitas' => (float) ($calk['D']['1']['d']['2'] ?? 0),
+                'pelatihan_masyarakat'   => (float) ($calk['D']['1']['d']['3'] ?? 0),
+            ],
+            'laba_ditahan' => [
+                'peningkatan_modal'      => (float) ($calk['D']['2']['a'] ?? 0),
+                'penambahan_investasi'   => (float) ($calk['D']['2']['b'] ?? 0),
+                'pendirian_unit_usaha'   => (float) ($calk['D']['2']['c'] ?? 0),
+            ],
+        ];
     }
 
     public function simpanSaldo(Request $request)
@@ -465,7 +538,7 @@ class PelaporanController extends Controller
             'view_target' => 'cover',
             'title' => 'Cover',
             'meta' => $data,
-            'payload' => [
+            'payload' => $this->withSignature([
                 'config' => $this->paperConfig('cover'),
                 'lembaga' => $lembaga ? [
                     'nama' => $lembaga->nama,
@@ -482,7 +555,7 @@ class PelaporanController extends Controller
                     'bulan_name' => $this->bulanName($data['bulan']),
                 ],
                 'judul' => 'LAPORAN KEUANGAN',
-            ],
+            ], 'cover'),
         ]);
     }
 
@@ -511,7 +584,7 @@ class PelaporanController extends Controller
             'view_target' => 'surat_pengantar',
             'title' => 'Surat Pengantar'.$periodeText,
             'meta' => $data,
-            'payload' => [
+            'payload' => $this->withSignature([
                 'config' => $this->paperConfig('surat_pengantar'),
                 'lembaga' => $lembaga ? [
                     'nama' => $lembaga->nama,
@@ -538,7 +611,7 @@ class PelaporanController extends Controller
                     'jabatan_id'   => $direktur->jabatan_id,
                     'nama_jabatan' => $direktur->jabatan?->nama_jabatan ?? 'Direktur',
                 ] : null,
-            ],
+            ], 'surat_pengantar'),
         ]);
     }
 
@@ -555,22 +628,26 @@ class PelaporanController extends Controller
         $periodeText = ' ('.$data['bulan_name'].' '.$tahun.')';
         $calkContent = $data['sub_laporan'] ?? Calk::where('tanggal', $data['tgl_kondisi'])->value('catatan') ?? '';
 
+        $lembaga = Setting::first();
+
         return response()->json([
             'success' => true,
             'view_target' => 'calkk',
             'title' => 'CALK'.$periodeText,
             'meta' => $data,
-            'payload' => [
+            'payload' => $this->withSignature([
                 'config' => $this->paperConfig('calkk'),
                 'periode' => [
                     'tahun' => $tahun,
                     'bulan' => $bulan,
                     'bulan_name' => strtoupper($data['bulan_name']),
                 ],
+                'calk_config' => $this->buildCalkConfigForReport($lembaga),
+                'point_a' => $lembaga?->calk_point_a ?? '',
                 'calk_content' => $calkContent,
                 'rows' => $rows,
                 'total_saldo' => $surplus,
-            ],
+            ], 'calkk'),
         ]);
     }
 
@@ -593,12 +670,12 @@ class PelaporanController extends Controller
             'success' => true,
             'view_target' => 'e_budgeting',
             'title' => 'E - Budgeting'.$periodeText,
-            'payload' => [
+            'payload' => $this->withSignature([
                 'config' => $this->paperConfig('e_budgeting'),
                 'items' => $items,
                 'bulan_tampil' => $list_bulan,
                 'thn' => $thn,
-            ],
+            ], 'e_budgeting'),
         ]);
     }
 
@@ -638,7 +715,7 @@ class PelaporanController extends Controller
             'view_target' => 'perubahan_modal',
             'title' => 'Laporan Perubahan Modal'.$periodeText,
             'meta' => $data,
-            'payload' => [
+            'payload' => $this->withSignature([
                 'config' => $this->paperConfig('LPM'),
                 'periode' => [
                     'tahun' => $tahun,
@@ -647,7 +724,7 @@ class PelaporanController extends Controller
                 ],
                 'items' => $items,
                 'total_saldo' => $total,
-            ],
+            ], 'perubahan_modal'),
         ]);
     }
 
@@ -713,10 +790,10 @@ class PelaporanController extends Controller
             'view_target' => 'daftar_pelanggan',
             'title' => 'Daftar Pelanggan',
             'meta' => $data,
-            'payload' => [
+            'payload' => $this->withSignature([
                 'config' => $this->paperConfig('daftar_pelanggan'),
                 'items' => $resultData,
-            ],
+            ], 'daftar_pelanggan'),
         ]);
     }
 
@@ -844,10 +921,10 @@ class PelaporanController extends Controller
             'view_target' => 'tagihan_pelanggan',
             'title' => 'Tagihan Pelanggan'.$periodeText,
             'meta' => $data,
-            'payload' => [
+            'payload' => $this->withSignature([
                 'config' => $this->paperConfig('tagihan_pelanggan'),
                 'items' => $resultData,
-            ],
+            ], 'tagihan_pelanggan'),
         ]);
     }
 
@@ -991,10 +1068,10 @@ class PelaporanController extends Controller
             'view_target' => 'piutang_pelanggan',
             'title' => 'Piutang Pelanggan'.$periodeText,
             'meta' => $data,
-            'payload' => [
+            'payload' => $this->withSignature([
                 'config' => $this->paperConfig('piutang_pelanggan'),
                 'items' => $resultData,
-            ],
+            ], 'piutang_pelanggan'),
         ]);
     }
 
@@ -1071,7 +1148,7 @@ class PelaporanController extends Controller
             'view_target' => 'jurnal_transaksi',
             'title' => 'Jurnal Transaksi'.$periodeText,
             'meta' => $data,
-            'payload' => $payload,
+            'payload' => $this->withSignature($payload, 'jurnal_transaksi'),
         ]);
     }
 
@@ -1104,7 +1181,7 @@ class PelaporanController extends Controller
             'view_target' => 'neraca_saldo',
             'title' => 'Neraca Saldo ('.$data['bulan_name'].' '.$tahun.')',
             'meta' => $data,
-            'payload' => [
+            'payload' => $this->withSignature([
                 'config' => $this->paperConfig('neraca_saldo'),
                 'periode' => [
                     'tahun' => $tahun, 'bulan' => $bulan,
@@ -1112,7 +1189,7 @@ class PelaporanController extends Controller
                 ],
                 'items' => $items,
                 'summary' => $summary,
-            ],
+            ], 'neraca_saldo'),
         ]);
     }
 
@@ -1166,7 +1243,7 @@ class PelaporanController extends Controller
             'view_target' => 'neraca',
             'title' => 'Neraca'.$periodeText,
             'meta' => $data,
-            'payload' => [
+            'payload' => $this->withSignature([
                 'config' => $this->paperConfig('neraca'),
                 'periode' => [
                     'tahun' => $tahun,
@@ -1176,7 +1253,7 @@ class PelaporanController extends Controller
                 'items' => $akun1,
                 'total_liabilitas_equitas' => $totalLiabilitasEkuitas,
                 'total_aset' => $totalAset,
-            ],
+            ], 'neraca'),
         ]);
     }
 
@@ -1194,7 +1271,7 @@ class PelaporanController extends Controller
             'view_target' => 'laba_rugi',
             'title' => 'Laba Rugi ('.strtoupper($data['bulan_name']).' '.$tahun.')',
             'meta' => $data,
-            'payload' => [
+            'payload' => $this->withSignature([
                 'config' => $this->paperConfig('laba_rugi'),
                 'periode' => [
                     'tahun' => $tahun,
@@ -1203,7 +1280,7 @@ class PelaporanController extends Controller
                 ],
                 'groups' => $report['groups'],
                 'laba_rugi' => $report['laba_rugi'],
-            ],
+            ], 'laba_rugi'),
         ]);
     }
 
@@ -1331,14 +1408,14 @@ class PelaporanController extends Controller
             'success' => true,
             'view_target' => 'arus_kas',
             'title' => 'Arus Kas'.$periodeText,
-            'payload' => [
+            'payload' => $this->withSignature([
                 'config' => $this->paperConfig('arus_kas'),
                 'periode' => [
                     'tahun' => $tahun,
                     'bulan_name' => strtoupper($data['bulan_name']),
                 ],
                 'items' => $items,
-            ],
+            ], 'arus_kas'),
         ]);
     }
 
@@ -1385,7 +1462,7 @@ class PelaporanController extends Controller
             'view_target' => 'atb', // Pastikan Vue menangkap ini
             'title' => 'Aset Tak Berwujud'.$periodeText,
             'meta' => $data,
-            'payload' => [
+            'payload' => $this->withSignature([
                 'config' => $this->paperConfig('atb'),
                 'periode' => [
                     'tahun' => $tahun,
@@ -1393,7 +1470,7 @@ class PelaporanController extends Controller
                     'bulan_name' => strtoupper($data['bulan_name']),
                 ],
                 'items' => $accounts, // Data sudah terisi
-            ],
+            ], 'atb'),
         ]);
     }
 
@@ -1441,7 +1518,7 @@ class PelaporanController extends Controller
             'view_target' => 'ati',
             'title' => 'Aset Tetap'.$periodeText,
             'meta' => $data,
-            'payload' => [
+            'payload' => $this->withSignature([
                 'config' => $this->paperConfig('ati'),
                 'periode' => [
                     'tahun' => $tahun,
@@ -1449,7 +1526,7 @@ class PelaporanController extends Controller
                     'bulan_name' => strtoupper($data['bulan_name']),
                 ],
                 'items' => $accounts,
-            ],
+            ], 'ati'),
         ]);
     }
 
@@ -1526,7 +1603,7 @@ class PelaporanController extends Controller
             'view_target' => 'piutang_komisi',
             'title' => 'Daftar Utang Komisi SPS'.$periodeText,
             'meta' => $data,
-            'payload' => [
+            'payload' => $this->withSignature([
                 'config' => $this->paperConfig('piutang_komisi'),
                 'periode' => [
                     'tahun' => $tahun,
@@ -1534,7 +1611,7 @@ class PelaporanController extends Controller
                     'bulan_name' => strtoupper($data['bulan_name']),
                 ],
                 'items' => $items,
-            ],
+            ], 'piutang_komisi'),
         ]);
     }
 
@@ -1552,7 +1629,7 @@ class PelaporanController extends Controller
                 'view_target' => 'buku_besar',
                 'title' => 'Buku Besar'.$periodeText,
                 'meta' => $data,
-                'payload' => [
+                'payload' => $this->withSignature([
                     'config' => $this->paperConfig('buku_besar'),
                     'periode' => [
                         'tahun' => $tahun,
@@ -1563,7 +1640,7 @@ class PelaporanController extends Controller
                     'nama_akun' => '',
                     'jenis_mutasi' => 'debit',
                     'transactions' => [],
-                ],
+                ], 'buku_besar'),
             ]);
         }
 
@@ -1645,7 +1722,7 @@ class PelaporanController extends Controller
             'view_target' => 'buku_besar',
             'title' => 'Buku Besar'.$periodeText,
             'meta' => $data,
-            'payload' => [
+            'payload' => $this->withSignature([
                 'config' => $this->paperConfig('buku_besar'),
                 'periode' => [
                     'tahun' => $tahun,
@@ -1662,6 +1739,7 @@ class PelaporanController extends Controller
                 'total_kredit_bulan_ini' => $totalKreditBulanIni,
                 'final_saldo' => $finalSaldo,
             ],
+            ], 'buku_besar'),
         ]);
     }
 
@@ -1681,13 +1759,13 @@ class PelaporanController extends Controller
         $fn = str_replace('-', '_', $viewTarget);
 
         if (! method_exists($this, $fn)) {
-            return response()->json([
+            return $this->injectLembaga(response()->json([
                 'success' => true,
                 'view_target' => $viewTarget,
                 'title' => 'Tutup Buku',
                 'meta' => $data,
                 'payload' => ['items' => []],
-            ]);
+            ]));
         }
 
         return $this->$fn($data);
@@ -1718,12 +1796,12 @@ class PelaporanController extends Controller
             'view_target' => 'tutup_buku_alokasi_laba',
             'title' => 'Alokasi Pembagian Laba ('.$tahun.')',
             'meta' => $data,
-            'payload' => [
+            'payload' => $this->withSignature([
                 'config' => $this->paperConfig('tutup_buku_alokasi_laba'),
                 'periode' => ['tahun' => $tahun, 'bulan' => '0', 'bulan_name' => 'AWAL TAHUN'],
                 'surplus' => $surplus,
                 'alokasi' => $alokasi,
-            ],
+            ], 'tutup_buku_alokasi_laba'),
         ]);
     }
 
@@ -1741,12 +1819,12 @@ class PelaporanController extends Controller
             'view_target' => 'tutup_buku_neraca',
             'title' => 'Neraca Awal Tahun ('.$tahun.')',
             'meta' => $data,
-            'payload' => [
+            'payload' => $this->withSignature([
                 'config' => $this->paperConfig('tutup_buku_neraca'),
                 'periode' => ['tahun' => $tahun, 'bulan' => '0', 'bulan_name' => 'AWAL TAHUN'],
                 'items' => $akun1,
                 'total_liabilitas_equitas' => (float) $akun1->whereIn('lev1', [2, 3])->sum('total_saldo_lev1'),
-            ],
+            ], 'tutup_buku_neraca'),
         ]);
     }
 
@@ -1834,12 +1912,12 @@ class PelaporanController extends Controller
             'view_target' => 'tutup_buku_laba_rugi',
             'title' => 'Laba Rugi Awal Tahun ('.$tahun.')',
             'meta' => $data,
-            'payload' => [
+            'payload' => $this->withSignature([
                 'config' => $this->paperConfig('tutup_buku_laba_rugi'),
                 'periode' => ['tahun' => $tahunLalu, 'bulan' => '12', 'bulan_name' => 'DESEMBER'],
                 'groups' => $groups,
                 'laba_rugi' => $labaRugi,
-            ],
+            ], 'tutup_buku_laba_rugi'),
         ]);
     }
 
@@ -1877,11 +1955,11 @@ class PelaporanController extends Controller
             'view_target' => 'tutup_buku_jurnal',
             'title' => 'Jurnal Tutup Buku '.$tahun,
             'meta' => $data,
-            'payload' => [
+            'payload' => $this->withSignature([
                 'config' => $this->paperConfig('tutup_buku_jurnal'),
                 'periode' => ['tahun' => $tahun, 'bulan' => '0', 'bulan_name' => 'AWAL TAHUN'],
                 'items' => $items,
-            ],
+            ], 'tutup_buku_jurnal'),
         ]);
     }
 
@@ -1929,18 +2007,22 @@ class PelaporanController extends Controller
 
         $rows = $this->susunFlatRowsTutupBuku($akun1, $surplus);
 
+        $lembaga = Setting::first();
+
         return response()->json([
             'success' => true,
             'view_target' => 'tutup_buku_calk',
             'title' => 'CALK Awal Tahun ('.$tahun.')',
             'meta' => $data,
-            'payload' => [
+            'payload' => $this->withSignature([
                 'config' => $this->paperConfig('tutup_buku_calk'),
                 'periode' => ['tahun' => $tahun, 'bulan' => '0', 'bulan_name' => 'AWAL TAHUN'],
+                'calk_config' => $this->buildCalkConfigForReport($lembaga),
+                'point_a' => $lembaga?->calk_point_a ?? '',
                 'calk_content' => $calkContent,
                 'rows' => $rows,
                 'total_saldo' => $surplus,
-            ],
+            ], 'tutup_buku_calk'),
         ]);
     }
 

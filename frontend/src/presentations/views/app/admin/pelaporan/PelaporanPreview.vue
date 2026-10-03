@@ -36,7 +36,8 @@
     <!-- OFF-SCREEN PROBE: untuk CaLK, kita mount sekali di sini dengan SEMUA rows
          + semua section (isFirst + isLast) supaya bisa diukur offsetTop tiap blok.
          Hasil pengukuran dipakai untuk generate pages sesuai tinggi A4 aktual.
-         Wrapper a4-fixed memaksa BaseReportLayout di dalamnya pakai height tetap. -->
+         Wrapper a4-fixed memaksa BaseReportLayout di dalamnya pakai height tetap.
+         Signature block di-inject otomatis via provide('reportSignature'). -->
     <div
       v-if="calkProbeData"
       class="a4-fixed"
@@ -121,7 +122,7 @@
 </template>
 
 <script setup>
-import { computed, nextTick, onMounted, onUnmounted, onBeforeUnmount, ref, shallowRef, watch } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, onBeforeUnmount, provide, ref, shallowRef, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import BaseButton from '@/presentations/components/ui/BaseButton.vue'
 import pelaporanService from '@/services/pelaporan.service.js'
@@ -297,6 +298,15 @@ const viewTarget = computed(() => response.value?.view_target || '')
 const resolvedView = computed(() => reportComponents[viewTarget.value] || CoverView)
 // config tetap
 const reportConfig = computed(() => response.value?.payload?.config || {})
+
+/**
+ * Object signature dari backend. Backend sudah menyisipkan blok tanda tangan
+ * siap-render ke `response.payload.signature` (lihat SignatureService).
+ * Kita provide ke BaseReportLayout supaya tidak perlu menambah prop
+ * ke 22+ file ReportXxx.vue yang membungkus layout tersebut.
+ */
+const reportSignature = computed(() => response.value?.payload?.signature || null)
+provide('reportSignature', reportSignature)
 
 // title tetap (tidak dihapus)
 const title = computed(() => {
@@ -489,7 +499,7 @@ const buildPages = (res) => {
       const total = pages.value.length
       pages.value = pages.value.map((p, i) => ({
         ...p,
-        payload: { ...p.payload, pageInfo: { ...(p.payload.pageInfo || {}), total }, isFirstPage: i === 0 }
+        payload: { ...p.payload, pageInfo: { ...p.payload.pageInfo, total }, isFirstPage: i === 0 }
       }))
     }
   }
@@ -1080,7 +1090,7 @@ const setupCalkProbe = async () => {
     ...p,
     payload: {
       ...p.payload,
-      pageInfo: { ...(p.payload.pageInfo || {}), total: totalPages, current: i + 1 },
+      pageInfo: { ...p.payload.pageInfo, total: totalPages, current: i + 1 },
     },
   }))
 

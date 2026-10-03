@@ -28,6 +28,7 @@
         @toggle-mobile-search="toggleMobileSearch"
         @close-mobile-search="closeMobileSearch"
         @search="handleSearch"
+        @select-result="handleSelectSearchResult"
         @logout="handleLogout"
       />
 
@@ -40,7 +41,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onBeforeUnmount } from 'vue'
+import { ref, onMounted, onBeforeUnmount, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { MySwal } from '@/utils/swal'
 import axios from '@/utils/axios.js'
@@ -48,8 +49,10 @@ import SidebarView from './SidebarView.vue'
 import TopNavigationView from './TopNavigationView.vue'
 import FooterView from './FooterView.vue'
 import { useUiStore } from '@/stores/uiStore'
+import { useInstalasiStore } from '@/stores/instalasiStore'
 
 const uiStore = useUiStore()
+const instalasiStore = useInstalasiStore()
 
 const router = useRouter()
 const route = useRoute()
@@ -57,7 +60,7 @@ const route = useRoute()
 const sidebarOpen = ref(true)
 const mobileSidebarOpen = ref(false)
 const mobileSearchOpen = ref(false)
-const searchQuery = ref('')
+const searchQuery = ref(instalasiStore.searchQuery || '')
 
 const toggleMobileSidebar = () => {
   mobileSidebarOpen.value = !mobileSidebarOpen.value
@@ -76,7 +79,28 @@ const closeMobileSearch = () => {
 }
 
 const handleSearch = (event) => {
-  searchQuery.value = event.target.value
+  const value = event?.target?.value ?? ''
+  searchQuery.value = value
+  // Sinkronkan ke store agar tabel di halaman Status Instalasi ikut terfilter
+  instalasiStore.searchQuery = value
+}
+
+const handleSelectSearchResult = ({ routeName, id, category }) => {
+  // Tutup mobile search popup jika terbuka
+  closeMobileSearch()
+  // Bersihkan query dari store & state lokal
+  searchQuery.value = ''
+  instalasiStore.searchQuery = ''
+  // Pastikan activeStatus di store sesuai dengan kategori hasil
+  if (category && instalasiStore.activeStatus !== category) {
+    instalasiStore.activeStatus = category
+  }
+  // Reset halaman
+  instalasiStore.currentPage = 1
+  // Navigasi ke halaman detail
+  router
+    .push({ name: routeName, params: { id: encodeURIComponent(id) } })
+    .catch(() => {})
 }
 
 const handleLogout = async () => {
@@ -109,7 +133,6 @@ const handleLogout = async () => {
         await axios.post('/logout')
       }
     } catch (error) {
-      console.error('Logout error:', error)
     } finally {
       const userData = JSON.parse(localStorage.getItem('user_data') || '{}')
       const userName = userData.name || ''
@@ -131,6 +154,14 @@ const handleKeyboardShortcuts = (e) => {
     document.querySelector('.topnav-search-modern input')?.focus()
   }
 }
+
+// Selalu sinkronkan searchQuery lokal dengan store (untuk kasus navigasi)
+watch(
+  () => instalasiStore.searchQuery,
+  (val) => {
+    if (searchQuery.value !== val) searchQuery.value = val
+  },
+)
 
 onMounted(() => {
   document.addEventListener('keydown', handleKeyboardShortcuts)

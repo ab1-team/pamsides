@@ -42,10 +42,10 @@
             class="flex! items-center! gap-3! text-base! font-semibold! text-gray-900!"
             v-if="bookStatus !== 'open' || isProcessing"
           >
-            <span class="text-lg!">📊</span>
+            <span class="text-lg!">ðŸ“Š</span>
             <div class="flex! flex-col! gap-1!">
               <span class="text-base! font-semibold! text-gray-900!"
-                >Daftar Akun — Tahun {{ selectedTahun }}</span
+                >Daftar Akun â€” Tahun {{ selectedTahun }}</span
               >
               <span
                 v-if="isProcessing || bookStatus === 'closed'"
@@ -62,7 +62,7 @@
                   v-if="isProcessing"
                   class="w-1.5! h-1.5! rounded-full! bg-amber-500! animate-ping!"
                 ></span>
-                <span v-else>✅</span>
+                <span v-else>âœ…</span>
                 {{
                   isProcessing
                     ? 'Sedang Memproses...'
@@ -75,13 +75,13 @@
                 v-if="bookStatus === 'closed' && tahunDepanInfo"
                 class="text-xs! text-blue-600! font-medium!"
               >
-                💡 Saldo bulan 00 untuk {{ tahunDepanInfo }} sudah ditambahkan
+                ðŸ’¡ Saldo bulan 00 untuk {{ tahunDepanInfo }} sudah ditambahkan
               </span>
             </div>
           </div>
         <div class="w-full! lg:w-auto!">
           <div class="relative!">
-            <span class="absolute! left-3! top-1/2! -translate-y-1/2! text-sm!">🔍</span>
+            <span class="absolute! left-3! top-1/2! -translate-y-1/2! text-sm!">ðŸ”</span>
             <input
               v-model="searchQuery"
               type="text"
@@ -203,7 +203,7 @@
       :loading="isSaving"
       v-if="bookStatus !== 'open' || isProcessing"
     >
-      <span class="mr-2!">💾</span>
+      <span class="mr-2!">ðŸ’¾</span>
       <span class="hidden! sm:inline!">Simpan Tutup Buku</span>
       <span class="sm:hidden!">Simpan</span>
     </BaseButton>
@@ -280,7 +280,6 @@ const loadAkunList = async (year) => {
       akunList.value = []
     }
   } catch (e) {
-    console.error('Gagal memuat daftar akun:', e)
     uiStore.error(e?.response?.data?.message || 'Gagal memuat daftar akun.')
     akunList.value = []
   } finally {
@@ -296,7 +295,6 @@ const checkBookStatus = async (year) => {
     }
     return false
   } catch (e) {
-    console.error('Gagal cek status buku:', e)
     return false
   }
 }
@@ -322,7 +320,6 @@ const simpanPerubahanSaldo = async () => {
       uiStore.error(res.message || 'Gagal menutup buku.')
     }
   } catch (e) {
-    console.error('Error simpan tutup buku:', e)
     uiStore.error(e?.response?.data?.message || 'Gagal menyimpan perubahan saldo.')
   } finally {
     isSaving.value = false
@@ -354,7 +351,6 @@ const handleTutupBuku = async () => {
     }
     await loadAkunList(yearToClose)
   } catch (e) {
-    console.error('Error handleTutupBuku:', e)
     uiStore.error('Terjadi kesalahan saat memproses tutup buku.')
   } finally {
     isProcessing.value = false

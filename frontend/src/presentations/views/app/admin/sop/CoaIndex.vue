@@ -167,7 +167,6 @@ const fetchAccounts = async () => {
       }
     })
   } catch (err) {
-    console.error('[COA] fetch error:', err)
     hasData.value = false
   } finally {
     isLoading.value = false

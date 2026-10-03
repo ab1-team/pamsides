@@ -1,5 +1,5 @@
 <template>
-  <BaseReportLayout :lembaga="payload?.lembaga" :config="payload?.config">    
+  <BaseReportLayout :lembaga="payload?.lembaga" :config="payload?.config" :payload="payload">    
     
     <table border="0" width="100%" class="surat-meta">
       <tr>

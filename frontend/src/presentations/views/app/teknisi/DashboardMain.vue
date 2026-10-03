@@ -281,7 +281,7 @@
                     <span class="text-rose-600!">
                       {{ cust.unpaid_count }} tagihan
                     </span>
-                    <span class="text-slate-300!">•</span>
+                    <span class="text-slate-300!">â€¢</span>
                     <span class="text-slate-700! font-mono!">
                       Rp.
                       {{
@@ -308,7 +308,7 @@
                   />
                   {{
                     restoringId === cust.id
-                      ? '…'
+                      ? 'â€¦'
                       : cust.unpaid_count > 0
                         ? 'Tunggu Admin'
                         : 'Aktifkan'
@@ -406,7 +406,6 @@ const fetchSuspended = async () => {
     const res = await billingService.getSuspendedCustomers()
     suspendedList.value = res?.data || []
   } catch (err) {
-    console.error('Gagal memuat pelanggan suspended:', err)
     suspendedList.value = []
   }
 }
@@ -480,7 +479,6 @@ const fetchDashboardData = async () => {
 
     await fetchSuspended()
   } catch (error) {
-    console.error('Error fetching dashboard data:', error)
   } finally {
     isLoading.value = false
   }

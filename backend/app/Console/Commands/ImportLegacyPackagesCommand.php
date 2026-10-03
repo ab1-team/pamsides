@@ -159,10 +159,6 @@ class ImportLegacyPackagesCommand extends Command
                     'kelas'     => $pkg->kelas ?? '-',
                     'error'     => $e->getMessage(),
                 ];
-                Log::error('Import package gagal', [
-                    'legacy_id' => $pkg->id,
-                    'error'     => $e->getMessage(),
-                ]);
                 $bar->advance();
             }
         }

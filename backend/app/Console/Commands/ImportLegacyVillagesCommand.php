@@ -94,10 +94,6 @@ class ImportLegacyVillagesCommand extends Command
                     'nama'      => $row->nama ?? '-',
                     'error'     => $e->getMessage(),
                 ];
-                Log::error('Import village gagal', [
-                    'legacy_id' => $row->id,
-                    'error'     => $e->getMessage(),
-                ]);
                 $bar->advance();
             }
         }

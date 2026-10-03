@@ -36,7 +36,6 @@ export const confirmDelete = async ({
     if (successMessage) showSuccessToast(successMessage)
     return true
   } catch (err) {
-    console.error('Gagal hapus:', err)
 
     const status = err.response?.status
     const data = err.response?.data

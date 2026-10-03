@@ -55,10 +55,10 @@ export function useRetribusiSampah() {
   const selectedRow = ref(null)
 
   // Fungsi-fungsi penanganan aksi
-  const handleApplyFilter = () => console.log('Apply filter Retribusi Sampah:', filter.value)
-  const handleCetakFormInput = () => console.log('Cetak Form Input Retribusi Sampah')
-  const handleHasilInput = () => console.log('Hasil Input Retribusi Sampah')
-  const handleInputPemakaian = () => console.log('Input Pemakaian Retribusi Sampah')
+  const handleApplyFilter = () => { /* debug log removed */ }
+  const handleCetakFormInput = () => { /* debug log removed */ }
+  const handleHasilInput = () => { /* debug log removed */ }
+  const handleInputPemakaian = () => { /* debug log removed */ }
 
   const handleEdit = (row) => {
     selectedRow.value = { ...row }

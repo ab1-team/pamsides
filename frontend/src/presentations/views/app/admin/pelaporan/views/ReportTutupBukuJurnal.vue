@@ -1,5 +1,5 @@
 <template>
-  <BaseReportLayout :lembaga="payload?.lembaga" :config="payload?.config">
+  <BaseReportLayout :lembaga="payload?.lembaga" :config="payload?.config" :payload="payload">
     <div class="header-section">
       <h2>JURNAL TUTUP BUKU</h2>
       <h3>TAHUN {{ payload?.periode?.tahun }}</h3>

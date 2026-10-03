@@ -1,5 +1,5 @@
 <template>
-    <BaseReportLayout :lembaga="payload?.lembaga" :config="payload?.config">
+    <BaseReportLayout :lembaga="payload?.lembaga" :config="payload?.config" :payload="payload">
         <div class="page-header">
             <h2>DAFTAR UTANG KOMISI SPS</h2>
             <h3 class="mt-1 mb-0 leading-tight uppercase">BULAN {{ payload?.periode?.bulan_name }}

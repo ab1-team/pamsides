@@ -52,7 +52,7 @@
         ref="daftarAkunRef"
         :tahun="filter.tahun"
         :bulan="filter.bulan"
-        :title="`Tentukan Rencana Anggaran — ${bulanName} ${filter.tahun}`"
+        :title="`Tentukan Rencana Anggaran â€” ${bulanName} ${filter.tahun}`"
       />
     </ContentCard>
 
@@ -65,7 +65,7 @@
       :loading="saving || checkingExisting"
       @click="simpanAnggaran"
     >
-      <span class="mr-2!">💾</span>
+      <span class="mr-2!">ðŸ’¾</span>
       <span class="hidden! sm:inline!">
         {{ checkingExisting ? 'Memeriksa...' : alreadySaved ? 'Sudah Disimpan' : 'Simpan Anggaran' }}
       </span>
@@ -120,7 +120,6 @@ const checkExisting = async () => {
       savedCount.value = response.data.count || 0
     }
   } catch (err) {
-    console.error('Gagal cek ebudgeting existing:', err)
     alreadySaved.value = false
     savedCount.value = 0
   } finally {
@@ -142,7 +141,6 @@ const tampilkanDaftarAkun = async () => {
     }
     showTable.value = true
   } catch (err) {
-    console.error(err)
   } finally {
     loading.value = false
   }
@@ -170,7 +168,6 @@ const simpanAnggaran = async () => {
     savedCount.value = items.length
     toastVisible.value = true
   } catch (err) {
-    console.error('Gagal menyimpan anggaran:', err)
   } finally {
     saving.value = false
   }

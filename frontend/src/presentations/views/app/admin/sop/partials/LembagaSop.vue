@@ -34,6 +34,18 @@
         :rows="3"
         class="md:col-span-2!"
       />
+      <BaseInput
+        v-model="form.peraturan_desa"
+        label="Peraturan Desa"
+        placeholder="Contoh: 01 TAHUN 2022"
+        prefix-icon="file-contract"
+      />
+      <BaseInput
+        v-model="form.sk_kemenkumham"
+        label="SK Kemenkumham"
+        placeholder="Nomor SK Badan Hukum"
+        prefix-icon="stamp"
+      />
     </div>
 
     <div class="flex justify-center md:justify-end! mt-8! md:mt-6!">
