@@ -1,6 +1,6 @@
 <template>
-    <BaseReportLayout :lembaga="payload?.lembaga" :config="payload?.config" :payload="payload">
-        <div class="header-section" style="text-align:center; margin-bottom:12px; font-family:sans-serif;">
+    <BaseReportLayout :lembaga="payload?.lembaga" :config="payload?.config" :no-meta-header="!isFirstPage">
+        <div v-if="isFirstPage" class="header-section" style="text-align:center; margin-bottom:12px; font-family:sans-serif;">
             <h2 style="margin:0; font-size:14pt; font-weight:bold; text-transform:uppercase; color:#000;">
                 LAPORAN LABA RUGI
             </h2>
@@ -82,7 +82,27 @@
 
     const periodeText = computed(() => {
         const p = props.payload?.periode || {}
-        return p.periode_text || `01 ${p.bulan_name?.toUpperCase() || ''} ${p.tahun || ''} S.D ${p.tahun || ''}`
+        if (p.periode_text) return p.periode_text
+        // Laba Rugi bulanan = kumulatif Januari s.d bulan yang dipilih
+        // Contoh buka bulan Agustus -> "PERIODE 01 JANUARI 2026 S.D 31 AGUSTUS 2026"
+        const bulan = p.bulan || p.bulan_index
+        const tahun = p.tahun
+        if (!bulan || !tahun) return ''
+        const bulanNames = [
+            '', 'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+            'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember',
+        ]
+        const bulanInt = parseInt(bulan, 10)
+        const bulanName = bulanNames[bulanInt] || p.bulan_name?.toUpperCase() || ''
+        const tahunInt = parseInt(tahun, 10)
+        const lastDay = new Date(tahunInt, bulanInt, 0).getDate()
+        return `01 Januari ${tahunInt} S.D ${lastDay} ${bulanName} ${tahunInt}`
+    })
+
+    const isFirstPage = computed(() => {
+        const info = props.payload?.pageInfo
+        if (info) return info.current === 1
+        return props.payload?.isFirstPage !== false
     })
 
     const format = (value) => {

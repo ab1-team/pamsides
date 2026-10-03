@@ -275,12 +275,17 @@ const handleInputPemakaian = () => {
 }
 
 const handleCetakFormInput = () => {
+  const teknisiId = filter.value.teknisi
+  const teknisiName =
+    teknisiOptions.value.find((t) => String(t.id) === String(teknisiId))?.name ||
+    selectedTeknisiName.value
   const url = router.resolve({
     name: 'Cetak Form',
     query: {
       tahun: filter.value.tahun,
       bulan: filter.value.bulan,
-      teknisi: filter.value.teknisi,
+      teknisi: teknisiId,
+      cater: teknisiName,
     },
   }).href
   window.open(url, '_blank')
