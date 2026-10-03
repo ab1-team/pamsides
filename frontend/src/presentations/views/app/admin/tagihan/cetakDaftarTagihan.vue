@@ -72,8 +72,8 @@
             class="report-page-wrap"
             :id="'report-page-' + i"
             :style="{
-              width: pageScaledWidth(PAGE_CONFIG) + 'px',
-              '--page-scale': pageScale(PAGE_CONFIG),
+              width: pageNaturalWidth(PAGE_CONFIG) + 'px',
+              zoom: pageScale(PAGE_CONFIG) !== 1 ? pageScale(PAGE_CONFIG) : undefined,
             }"
           >
             <component
@@ -96,7 +96,7 @@ import { useRoute } from 'vue-router'
 import ReportView from '@/presentations/views/app/admin/tagihan/partials/ReportCetakDaftarTagihan.vue'
 import { usePemakaianAir } from '@/composables/usePemakaianAir'
 import { usePdfPreview, THUMB_RENDER_BUFFER } from '@/composables/usePdfPreview'
-import { PER_PAGE_ROWS } from '@/utils/reportConfig'
+import { PER_PAGE_ROWS, FIRST_PAGE_ROWS } from '@/utils/reportConfig'
 
 const route = useRoute()
 const { tableData, filter, refreshData, groupedData, resolveCaterLabel } = usePemakaianAir()
@@ -163,18 +163,31 @@ const buildPages = () => {
     const totalPemakaian = members.reduce((sum, it) => sum + Number(it.pemakaian || 0), 0)
     const totalDibayar = members.reduce((sum, it) => sum + Number(it.paid_amount || 0), 0)
     const dusunChunks = []
-    for (let i = 0; i < members.length; i += PER_PAGE_ROWS) {
-      const endIndex = Math.min(i + PER_PAGE_ROWS, members.length)
+    let cursor = 0
+    const firstEnd = Math.min(FIRST_PAGE_ROWS, members.length)
+    dusunChunks.push({
+      dusun,
+      items: members.slice(0, firstEnd),
+      startIndex: 0,
+      isLast: firstEnd >= members.length,
+      totalTagihan,
+      totalPemakaian,
+      totalDibayar,
+    })
+    cursor = firstEnd
+    while (cursor < members.length) {
+      const endIndex = Math.min(cursor + PER_PAGE_ROWS, members.length)
       const isLast = endIndex >= members.length
       dusunChunks.push({
         dusun,
-        items: members.slice(i, endIndex),
-        startIndex: i,
+        items: members.slice(cursor, endIndex),
+        startIndex: cursor,
         isLast,
         totalTagihan,
         totalPemakaian,
         totalDibayar,
       })
+      cursor = endIndex
     }
     groupedChunks.push({ dusun, chunks: dusunChunks, total: members.length })
   })
@@ -618,8 +631,6 @@ onMounted(async () => {
 
 .report-page-wrap :deep(.report-page) {
   margin: 0 auto !important;
-  transform-origin: top center;
-  transform: scale(var(--page-scale, 1));
 }
 
 .report-page-wrap :deep(.report-page.surat-page.size-a4.portrait) {
@@ -656,8 +667,10 @@ onMounted(async () => {
     gap: 0 !important;
     padding: 0 !important;
   }
+  .report-page-wrap {
+    zoom: 1 !important;
+  }
   .report-page-wrap :deep(.report-page.surat-page.size-a4.portrait) {
-    transform: none !important;
     margin: 0 !important;
     width: 210mm !important;
     height: auto !important;

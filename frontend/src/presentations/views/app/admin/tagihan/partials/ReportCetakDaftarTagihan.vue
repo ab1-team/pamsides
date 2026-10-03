@@ -316,7 +316,7 @@ const tanggalAkhir = computed(() => {
 
 .total-row td {
   border: 1px solid #000;
-  font-size: 13px;
+  font-size: 11px;
   padding-top: 8px;
   padding-bottom: 8px;
   background: #f9fafb;

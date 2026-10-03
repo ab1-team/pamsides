@@ -1273,6 +1273,11 @@ class PelaporanController extends Controller
             'meta' => $data,
             'payload' => $this->withSignature([
                 'config' => $this->paperConfig('laba_rugi'),
+                'periode' => [
+                    'tahun' => $tahun,
+                    'bulan' => $bulan,
+                    'bulan_name' => strtoupper($data['bulan_name']),
+                ],
                 'groups' => $report['groups'],
                 'laba_rugi' => $report['laba_rugi'],
             ], 'laba_rugi'),
@@ -1691,6 +1696,27 @@ class PelaporanController extends Controller
                 ];
             })->values();
 
+        // Hitung total debit/kredit bulan ini & final saldo untuk footer
+        $totalDebitBulanIni = 0.0;
+        $totalKreditBulanIni = 0.0;
+        $isKredit = strtolower((string) $account->jenis_mutasi) === 'kredit';
+        foreach ($trx as $t) {
+            $isDebitSide = (string) $t['account_debet'] === (string) $kodeAkun;
+            $nominal = (float) ($t['saldo'] ?? 0);
+            $totalDebitBulanIni += $isDebitSide ? $nominal : 0;
+            $totalKreditBulanIni += $isDebitSide ? 0 : $nominal;
+        }
+        $running = ($isKredit ? ($saldoBulanLalu['kredit'] - $saldoBulanLalu['debit']) : ($saldoBulanLalu['debit'] - $saldoBulanLalu['kredit']));
+        foreach ($trx as $t) {
+            $isDebitSide = (string) $t['account_debet'] === (string) $kodeAkun;
+            $nominal = (float) ($t['saldo'] ?? 0);
+            $debit = $isDebitSide ? $nominal : 0;
+            $kredit = $isDebitSide ? 0 : $nominal;
+            $mutasi = $isKredit ? ($kredit - $debit) : ($debit - $kredit);
+            $running += $mutasi;
+        }
+        $finalSaldo = $running;
+
         return response()->json([
             'success' => true,
             'view_target' => 'buku_besar',
@@ -1709,6 +1735,9 @@ class PelaporanController extends Controller
                 'saldo_awal_tahun' => $saldoAwalTahun,
                 'saldo_bulan_lalu' => $saldoBulanLalu,
                 'transactions' => $trx,
+                'total_debit_bulan_ini' => $totalDebitBulanIni,
+                'total_kredit_bulan_ini' => $totalKreditBulanIni,
+                'final_saldo' => $finalSaldo,
             ], 'buku_besar'),
         ]);
     }

@@ -18,12 +18,17 @@
             <span class="meta-value">{{ filter.bulan || '-' }} {{ filter.tahun || '' }}</span>
           </div>
           <div class="meta-row">
-            <span class="meta-label">Cater</span>
+            <span class="meta-label">Tanggal Cetak</span>
             <span class="meta-sep">:</span>
-            <span class="meta-value">{{ filter.cater || 'Admin' }}</span>
+            <span class="meta-value">{{ tanggalCetak }}, Pukul {{ jamCetak }}</span>
           </div>
         </div>
         <div class="meta-col meta-col-right">
+          <div class="meta-row">
+            <span class="met-label">Cater</span>
+            <span class="meta-sep">:</span>
+            <span class="meta-value">{{ filter.cater || 'Admin' }}</span>
+          </div>
           <div class="meta-row">
             <span class="met-label">Dusun</span>
             <span class="meta-sep">:</span>
@@ -89,6 +94,23 @@ const filter = computed(() => props.payload?.filter || {})
 const lembaga = computed(() => props.payload?.lembaga || {})
 const startIndex = computed(() => Number(props.payload?.startIndex || 0))
 const showMeta = computed(() => props.payload?.showMeta !== false)
+
+const now = new Date()
+
+const tanggalCetak = computed(() =>
+  now.toLocaleDateString('id-ID', {
+    day: '2-digit',
+    month: 'long',
+    year: 'numeric',
+  })
+)
+
+const jamCetak = computed(() =>
+  now.toLocaleTimeString('id-ID', {
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+)
 </script>
 
 <style scoped>
@@ -133,7 +155,7 @@ const showMeta = computed(() => props.payload?.showMeta !== false)
   font-weight: 600;
 }
 
-/* Styling Tabel & Font Size 12px */
+/* Styling Tabel & Font Size 11px (samakan dengan cetak tagihan) */
 .data-table {
   width: 100%;
   border-collapse: collapse;
@@ -148,12 +170,26 @@ const showMeta = computed(() => props.payload?.showMeta !== false)
 .data-table-fixed td {
   box-sizing: border-box;
   padding: 2px 4px;
+  vertical-align: middle;
+}
+
+.data-table-fixed th {
+  white-space: nowrap;
+}
+
+.data-table-fixed td {
+  white-space: normal;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  font-size: 11px;
+  line-height: 1.2;
 }
 
 .data-table th,
 .data-table td {
   border: 1px solid #000;
-  font-size: 12px;
+  font-size: 11px;
+  line-height: 1.2;
 }
 
 .text-left {
@@ -180,7 +216,7 @@ const showMeta = computed(() => props.payload?.showMeta !== false)
 }
 
 .form-row {
-  height: 22px;
+  height: auto;
 }
 
 .form-row td {
@@ -192,15 +228,43 @@ const showMeta = computed(() => props.payload?.showMeta !== false)
   display: table-header-group;
 }
 
+.data-table tfoot {
+  display: table-footer-group;
+}
+
 /* Cegah satu baris form terpotong di antara halaman */
 .data-table tbody tr {
   page-break-inside: avoid;
   break-inside: avoid;
 }
+
+/* Page-break setelah .report-page */
+.report-page,
+.report-page.surat-page {
+  page-break-after: always;
+  break-after: page;
+}
+
+.report-page:last-child {
+  page-break-after: auto;
+  break-after: auto;
+}
 </style>
 
 <style>
 .report-page.surat-page {
-  padding: 60px 90px !important;
+  padding: 60px !important;
+}
+
+@media print {
+  .report-page.surat-page {
+    padding: 0 !important;
+  }
+  .report-page.surat-page.size-a4.portrait {
+    width: 210mm !important;
+    height: 297mm !important;
+    min-height: 297mm !important;
+    margin: 0 !important;
+  }
 }
 </style>

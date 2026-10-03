@@ -96,10 +96,28 @@ import { useRoute } from 'vue-router'
 import ReportView from '@/presentations/views/app/admin/tagihan/partials/ReportCetakForm.vue'
 import { usePemakaianAir } from '@/composables/usePemakaianAir'
 import { usePdfPreview, THUMB_RENDER_BUFFER } from '@/composables/usePdfPreview'
-import { PER_PAGE_ROWS } from '@/utils/reportConfig'
+import { PER_PAGE_ROWS, FIRST_PAGE_ROWS } from '@/utils/reportConfig'
+import { useUiStore } from '@/stores/uiStore'
 
 const route = useRoute()
-const { tableData, filter, refreshData, groupedData, resolveCaterLabel } = usePemakaianAir()
+const uiStore = useUiStore()
+const { tableData, filter, refreshData, groupedData, resolveCaterLabel, teknisiOptions, loadTeknisiOptions } = usePemakaianAir()
+
+const caterName = computed(() => {
+  const rawCater = route.query.cater
+  if (rawCater && String(uiStore.userData?.id) === String(rawCater)) {
+    return uiStore.userData?.nama || 'Admin'
+  }
+  if (rawCater) {
+    return resolveCaterLabel(rawCater) || 'Admin'
+  }
+  const teknisiId = route.query.teknisi
+  if (teknisiId) {
+    const match = teknisiOptions.value.find((t) => String(t.id) === String(teknisiId))
+    if (match) return match.name
+  }
+  return uiStore.userData?.nama || 'Admin'
+})
 
 const PAGE_CONFIG = { paper_size: 'A4', orientation: 'portrait' }
 
@@ -152,12 +170,21 @@ const buildPages = () => {
   const groupedChunks = []
   entries.forEach(([dusun, members]) => {
     const dusunChunks = []
-    for (let i = 0; i < members.length; i += PER_PAGE_ROWS) {
+    const firstEnd = Math.min(FIRST_PAGE_ROWS, members.length)
+    dusunChunks.push({
+      dusun,
+      items: members.slice(0, firstEnd),
+      startIndex: 0,
+    })
+    let cursor = firstEnd
+    while (cursor < members.length) {
+      const endIndex = Math.min(cursor + PER_PAGE_ROWS, members.length)
       dusunChunks.push({
         dusun,
-        items: members.slice(i, i + PER_PAGE_ROWS),
-        startIndex: i,
+        items: members.slice(cursor, endIndex),
+        startIndex: cursor,
       })
+      cursor = endIndex
     }
     groupedChunks.push({ dusun, chunks: dusunChunks })
   })
@@ -169,7 +196,7 @@ const buildPages = () => {
       config: PAGE_CONFIG,
       dusun: chunk.dusun,
       items: chunk.items,
-      filter: { ...filter.value },
+      filter: { ...filter.value, cater: caterName.value },
       lembaga: defaultLembaga(),
       startIndex: chunk.startIndex,
       showMeta: chunk.startIndex === 0,
@@ -222,7 +249,7 @@ onMounted(async () => {
 
     document.title = `Cetak Form Input`
 
-    await refreshData()
+    await Promise.all([refreshData(), loadTeknisiOptions()])
     buildPages()
 
     if (pages.value.length === 0) {
