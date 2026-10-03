@@ -23,6 +23,49 @@ class MonthlyBill extends Model
         'due_date'
     ];
 
+    /**
+     * Label periode tagihan dalam Bahasa Indonesia, mis. "Agustus 2026".
+     * Dipakai untuk menempelkan periode tagihan pada keterangan jurnal,
+     * karena tanggal transaksi = tanggal bayar, bukan bulan tagihan.
+     */
+    public function periodLabel(): string
+    {
+        $months = [
+            1 => 'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+            'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember',
+        ];
+
+        $month = $months[(int) $this->billing_period_month] ?? null;
+
+        return $month ? $month.' '.$this->billing_period_year : '';
+    }
+
+    /**
+     * Keterangan jurnal pembayaran tagihan, mis.
+     * "Tagihan Denda bulan Agustus 2026 an. Yuli Iswanto (1.04.0996)".
+     *
+     * Tanggal jurnal = tanggal bayar, jadi periode tagihan ditulis eksplisit
+     * di keterangan; nama + kode pelanggan supaya jurnal tetap terbaca.
+     * Kalau bulan tidak valid, kembalikan string kosong agar pemanggil
+     * bisa memutuskan fallback-nya.
+     */
+    public function paymentDescription(string $jenis, string $kode, string $nama = ''): string
+    {
+        $periode = $this->periodLabel();
+
+        if ($periode === '') {
+            return '';
+        }
+
+        $keterangan = trim('Tagihan '.$jenis.' bulan '.$periode);
+
+        if ($nama !== '') {
+            $keterangan .= ' an. '.$nama;
+        }
+
+        return $keterangan.' ('.$kode.')';
+    }
+
     public function customer()
     {
         return $this->belongsTo(Customer::class, 'customer_id');
