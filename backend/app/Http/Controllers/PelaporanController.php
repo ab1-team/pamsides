@@ -1738,7 +1738,6 @@ class PelaporanController extends Controller
                 'total_debit_bulan_ini' => $totalDebitBulanIni,
                 'total_kredit_bulan_ini' => $totalKreditBulanIni,
                 'final_saldo' => $finalSaldo,
-            ],
             ], 'buku_besar'),
         ]);
     }
