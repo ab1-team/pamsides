@@ -358,13 +358,15 @@ class MonthlyBillController extends Controller
             ], 400);
         }
 
-        $bill->load('customer');
+        $bill->load('customer.user', 'customer.ticket');
 
         $abodemen = (float) ($bill->abodemen ?? 0);
         $usageCharge = (float) ($bill->usage_charge ?? 0);
         $denda = (float) ($bill->penalty_amount ?? 0);
         $isTunggakan = $denda > 0;
         $relasi = $bill->customer?->customer_code ?? 'Bill #'.$bill->id;
+        $namaPelanggan = trim((string) ($bill->customer?->user?->name ?: $bill->customer?->ticket?->applicant_name));
+
         $userId = Auth::id();
 
         // Akun DEBET (kas masuk) mengikuti metode pembayaran:
@@ -409,9 +411,19 @@ class MonthlyBillController extends Controller
 
         $restoredTicket = false;
         $overdueDeletedCount = 0;
-        // Sufiks metode bayar di keterangan jurnal supaya saat cetak laporan
+        // Metode bayar ikut ditulis di keterangan jurnal supaya saat cetak laporan
         // kas / buku besar, sumber dana (Tunai vs Transfer BRI) jelas terlihat.
         $methodLabel = $paymentMethod === 'transfer' ? 'Transfer BRI' : 'Tunai';
+
+        // Keterangan memuat periode tagihan + nama + kode, lalu metode bayar:
+        //   "Tagihan Denda bulan Agustus 2026 an. Yuli Iswanto (1.04.0996) - Tunai"
+        $ket = fn (string $jenis) => $bill->paymentDescription($jenis, $relasi, $namaPelanggan)
+            ? $bill->paymentDescription($jenis, $relasi, $namaPelanggan).' - '.$methodLabel
+            : $jenis.' - '.$relasi.' ('.$methodLabel.')';
+
+        $ketAbodemen = $ket('Abodemen');
+        $ketPemakaian = $ket('Pemakaian');
+        $ketDenda = $ket('Denda');
 
         // Advance payment: hapus jurnal piutang overdue_bill yang sudah tercatat
         // untuk bill ini (reference ke bill.id).
@@ -421,7 +433,7 @@ class MonthlyBillController extends Controller
                 ->delete();
         }
 
-        DB::transaction(function () use ($bill, $request, $paidAtDate, $abodemen, $usageCharge, $denda, $isTunggakan, $isAdvancePayment, $revenueAbodemen, $revenuePemakaian, $relasi, $userId, $accountDebetKas, $methodLabel, &$restoredTicket) {
+        DB::transaction(function () use ($bill, $request, $paidAtDate, $abodemen, $usageCharge, $denda, $isTunggakan, $isAdvancePayment, $revenueAbodemen, $revenuePemakaian, $relasi, $userId, $accountDebetKas, $methodLabel, $ketAbodemen, $ketPemakaian, $ketDenda, &$restoredTicket) {
             $bill->update(['status' => 'paid']);
 
             $payment = BillPayment::create([
@@ -441,7 +453,7 @@ class MonthlyBillController extends Controller
                     'transaction_group' => null,
                     'reverence_type' => 'bill_payment',
                     'reverence_id' => $payment->id,
-                    'keterangan_transaksi' => 'Abodemen - '.$relasi.' ('.$methodLabel.')',
+                    'keterangan_transaksi' => $ketAbodemen,
                     'relasi' => $relasi,
                     'saldo' => $abodemen,
                     'id_user' => $userId,
@@ -458,7 +470,7 @@ class MonthlyBillController extends Controller
                     'transaction_group' => null,
                     'reverence_type' => 'bill_payment',
                     'reverence_id' => $payment->id,
-                    'keterangan_transaksi' => 'Tagihan Pemakaian - '.$relasi.' ('.$methodLabel.')',
+                    'keterangan_transaksi' => $ketPemakaian,
                     'relasi' => $relasi,
                     'saldo' => $usageCharge,
                     'id_user' => $userId,
@@ -475,7 +487,7 @@ class MonthlyBillController extends Controller
                     'transaction_group' => null,
                     'reverence_type' => 'bill_payment',
                     'reverence_id' => $payment->id,
-                    'keterangan_transaksi' => 'Denda - '.$relasi.' ('.$methodLabel.')',
+                    'keterangan_transaksi' => $ketDenda,
                     'relasi' => $relasi,
                     'saldo' => $denda,
                     'id_user' => $userId,
