@@ -1,12 +1,12 @@
 <template>
-  <BaseReportLayout :lembaga="payload?.lembaga" :config="payload?.config" :payload="payload">
-    <div class="page-header">
+  <BaseReportLayout :lembaga="payload?.lembaga" :config="payload?.config" :no-meta-header="!isFirstPage">
+    <div v-if="isFirstPage" class="page-header">
         <h2 class="uppercase">PIUTANG PELANGGAN</h2>
       <h2 class="mt-1 mb-0 leading-tight uppercase">BULAN {{ periodeText }}</h2>
     </div>
 
     <div v-if="caterVisible" class="cater-teknisi">
-      Cater : <b>{{ meta.nama_teknisi }}</b>
+      Cater : <b>{{ namaTeknisiFormatted }}</b>
     </div>
 
     <table class="data-table" :class="{ 'data-table-tight': caterVisible }">
@@ -110,6 +110,16 @@
 const isFirstPage = computed(() => props.payload?.isFirstPage !== false)
 const caterVisible = computed(() => Boolean(props.meta?.nama_teknisi) && isFirstPage.value)
 
+const namaTeknisiFormatted = computed(() => {
+  const raw = props.meta?.nama_teknisi
+  if (!raw) return ''
+  return String(raw)
+    .toLowerCase()
+    .split(/\s+/)
+    .map((w) => (w ? w[0].toUpperCase() + w.slice(1) : ''))
+    .join(' ')
+})
+
 const namaBulanIniLabel = computed(() => props.meta?.bulan_ini_label || 'Bulan Ini')
 const namaBulanLaluLabel = computed(() => props.meta?.bulan_lalu_label || 'Bulan Lalu')
 const namaSd3BulanLaluLabel = computed(() => props.meta?.sd_3_bulan_lalu_label || 's/d 3 Bulan Lalu')
@@ -136,7 +146,8 @@ const namaSd3BulanLaluLabel = computed(() => props.meta?.sd_3_bulan_lalu_label |
 <style scoped>
   .page-header {
     text-align: center;
-    margin-bottom: 15px;
+    margin-top: 0;
+    margin-bottom: 0;
   }
   .page-header h2 {
     font-size: 14pt;
@@ -149,7 +160,7 @@ const namaSd3BulanLaluLabel = computed(() => props.meta?.sd_3_bulan_lalu_label |
   .data-table {
     width: 100%;
     border-collapse: collapse;
-    margin-top: 15px;
+    margin-top: 4px;
     table-layout: fixed;
   }
 
@@ -205,7 +216,7 @@ const namaSd3BulanLaluLabel = computed(() => props.meta?.sd_3_bulan_lalu_label |
 
   .cater-teknisi {
     text-align: right;
-    font-size: 12px;
+    font-size: 13px;
     margin-top: -2px;
     margin-bottom: 0;
     padding: 0 4px;
