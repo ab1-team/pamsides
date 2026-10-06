@@ -149,7 +149,7 @@
                       </div>
                     </div>
                     <p class="text-[9px]! lg:text-[11px]! text-left! opacity-60! leading-relaxed!">
-                      #{{ customer.customer_code }} â€¢ {{ customer.address }}
+                      #{{ customer.customer_code }} • {{ customer.address }}
                     </p>
                   </div>
                 </div>
@@ -172,7 +172,7 @@
                     Total Pemakaian
                   </h4>
                   <div class="text-xl! lg:text-3xl! font-black! text-slate-800!">
-                    {{ bill.usage_m3 }} <span class="text-[10px]! lg:text-sm! opacity-30!">mÂ³</span>
+                    {{ bill.usage_m3 }} <span class="text-[10px]! lg:text-sm! opacity-30!">m³</span>
                   </div>
                 </div>
 
@@ -193,8 +193,8 @@
                       >
                     </div>
                     <span class="text-sm! lg:text-lg! font-black! text-slate-700!"
-                      >{{ bill.previous_meter_reading || 0 }}
-                      <span class="text-[9px]! opacity-30!">mÂ³</span></span
+                      >{{ bill.meter_reading_start ?? 0 }}
+                      <span class="text-[9px]! opacity-30!">m³</span></span
                     >
                   </div>
                   <div
@@ -211,8 +211,8 @@
                       >
                     </div>
                     <span class="text-sm! lg:text-lg! font-black! text-slate-900!"
-                      >{{ bill.current_meter_reading || 0 }}
-                      <span class="text-[9px]! opacity-30!">mÂ³</span></span
+                      >{{ bill.meter_reading_end ?? 0 }}
+                      <span class="text-[9px]! opacity-30!">m³</span></span
                     >
                   </div>
                 </div>
@@ -310,7 +310,18 @@
       </template>
 
       <div v-else class="flex! items-center! justify-center! min-h-[60vh]!">
-        <p class="text-slate-400! font-black!">Tagihan tidak ditemukan.</p>
+        <div class="text-center! px-6!">
+          <p class="text-slate-400! font-black!">
+            {{ errorMessage || 'Tagihan tidak ditemukan.' }}
+          </p>
+          <button
+            type="button"
+            class="mt-4! text-sm! font-bold! text-indigo-600! hover:underline!"
+            @click="fetchBillDetail"
+          >
+            Coba lagi
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -327,6 +338,7 @@ import Swal from 'sweetalert2'
 const route = useRoute()
 const isMobile = ref(false)
 const loading = ref(true)
+const errorMessage = ref('')
 const bill = ref(null)
 const customer = ref(null)
 
@@ -382,6 +394,20 @@ const shareInvoice = async () => {
       })
     }
   } catch (err) {
+    // Dua penyebab umum: pengguna membatalkan dialog share (AbortError —
+    // itu bukan kegagalan), atau clipboard ditolak browser.
+    if (err?.name === 'AbortError') return
+
+    Swal.fire({
+      title: 'Gagal Membagikan',
+      text: 'Tidak dapat menyalin detail tagihan. Salin manual dari layar ini.',
+      icon: 'warning',
+      timer: 3000,
+      showConfirmButton: false,
+      customClass: {
+        popup: 'rounded-[2rem]!',
+      },
+    })
   }
 }
 
@@ -416,7 +442,7 @@ const breakdownItems = computed(() => {
   return [
     {
       name: 'Biaya Air',
-      sub: `${bill.value.usage_m3} mÂ³ x Pemakaian`,
+      sub: `${bill.value.usage_m3} m³ x Pemakaian`,
       price: bill.value.usage_charge || 0,
       icon: 'tint',
     },
@@ -437,14 +463,25 @@ const breakdownItems = computed(() => {
 
 const fetchBillDetail = async () => {
   loading.value = true
+  errorMessage.value = ''
   try {
-    const id = route.query.id || ''
+    // Tanpa id, backend mengembalikan tagihan terbaru. Service sudah
+    // menangani pemanggilan tanpa segmen trailing.
+    const id = route.query.id || null
     const response = await pelangganService.getBillDetail(id)
+
     if (response.success) {
       bill.value = response.data.bill
       customer.value = response.data.customer
     }
   } catch (error) {
+    // Jangan biarkan `catch` kosong: sebelumnya semua kegagalan (404 tagihan
+    // tidak ada, 403, 500) tampil sebagai kartu kosong tanpa penjelasan.
+    errorMessage.value =
+      error.response?.data?.message ||
+      (error.response?.status === 404
+        ? 'Tagihan tidak ditemukan.'
+        : 'Gagal memuat detail tagihan. Silakan coba lagi.')
   } finally {
     loading.value = false
   }

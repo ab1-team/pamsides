@@ -42,10 +42,10 @@
             class="flex! items-center! gap-3! text-base! font-semibold! text-gray-900!"
             v-if="bookStatus !== 'open' || isProcessing"
           >
-            <span class="text-lg!">ðŸ“Š</span>
+            <span class="text-lg!">“Š</span>
             <div class="flex! flex-col! gap-1!">
               <span class="text-base! font-semibold! text-gray-900!"
-                >Daftar Akun â€” Tahun {{ selectedTahun }}</span
+                >Daftar Akun — Tahun {{ selectedTahun }}</span
               >
               <span
                 v-if="isProcessing || bookStatus === 'closed'"
@@ -75,13 +75,13 @@
                 v-if="bookStatus === 'closed' && tahunDepanInfo"
                 class="text-xs! text-blue-600! font-medium!"
               >
-                ðŸ’¡ Saldo bulan 00 untuk {{ tahunDepanInfo }} sudah ditambahkan
+                ’¡ Saldo bulan 00 untuk {{ tahunDepanInfo }} sudah ditambahkan
               </span>
             </div>
           </div>
         <div class="w-full! lg:w-auto!">
           <div class="relative!">
-            <span class="absolute! left-3! top-1/2! -translate-y-1/2! text-sm!">ðŸ”</span>
+            <span class="absolute! left-3! top-1/2! -translate-y-1/2! text-sm!">”</span>
             <input
               v-model="searchQuery"
               type="text"
@@ -203,7 +203,7 @@
       :loading="isSaving"
       v-if="bookStatus !== 'open' || isProcessing"
     >
-      <span class="mr-2!">ðŸ’¾</span>
+      <span class="mr-2!">’¾</span>
       <span class="hidden! sm:inline!">Simpan Tutup Buku</span>
       <span class="sm:hidden!">Simpan</span>
     </BaseButton>

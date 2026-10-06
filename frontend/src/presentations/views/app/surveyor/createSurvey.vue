@@ -6,7 +6,7 @@
       <div class="flex! items-center! gap-4!">
         <button
           v-if="route.query.id"
-          @click="router.push('/app')"
+          @click="router.push('/app/surveyor')"
           class="w-10! h-10! bg-white! border! border-slate-200! rounded-full! flex! items-center! justify-center! text-slate-500! hover:bg-slate-50! hover:text-orange-500! transition-all! shadow-sm!"
         >
           <font-awesome-icon icon="arrow-left" />
@@ -62,10 +62,22 @@
                 :options="ticketOptions"
                 placeholder="Cari NIK atau Nama Pemohon..."
                 :loading="loadingTickets"
-                :disabled="!!route.query.id"
+                :disabled="ticketSelectedFromUrl"
               />
               <p
-                v-if="ticketOptions.length === 0 && !loadingTickets"
+                v-if="invalidTicketId"
+                class="mt-2! text-xs! text-red-500! font-bold!"
+              >
+                * Tiket dari tautan tidak valid. Silakan pilih tiket lain di bawah.
+              </p>
+              <p
+                v-else-if="ticketLoadFailed"
+                class="mt-2! text-xs! text-red-500! font-bold!"
+              >
+                * Gagal memuat daftar permohonan. Periksa koneksi lalu muat ulang.
+              </p>
+              <p
+                v-else-if="ticketOptions.length === 0 && !loadingTickets"
                 class="mt-2! text-xs! text-orange-500! font-bold!"
               >
                 * Tidak ada permohonan yang menunggu survey.
@@ -220,7 +232,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, computed } from 'vue'
+import { ref, reactive, onMounted, onBeforeUnmount, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useUiStore } from '@/stores/uiStore'
 import ContentCard from '@/presentations/components/ui/ContentCard.vue'
@@ -243,6 +255,15 @@ const photoPreview = ref(null)
 const showCameraModal = ref(false)
 const galleryInput = ref(null)
 const ticketOptions = ref([])
+// Dibedakan dari "daftar kosong": true berarti request-nya gagal, bukan
+// tidak ada antrian.
+const ticketLoadFailed = ref(false)
+// id di URL tidak valid / tidak lagi pending.
+const invalidTicketId = ref(false)
+// Select dikunci HANYA kalau tiket dari URL benar-benar valid. Sebelumnya
+// memakai `!!route.query.id`, jadi URL rusak (?id=abc) mengunci dropdown
+// selamanya tanpa bisa memilih tiket yang benar.
+const ticketSelectedFromUrl = computed(() => Boolean(formData.ticket_id) && !invalidTicketId.value)
 
 const formData = reactive({
   ticket_id: '',
@@ -252,31 +273,57 @@ const formData = reactive({
 })
 
 const isFormValid = computed(() => {
-  return (
-    formData.ticket_id && formData.distance_to_pipe_m && formData.photo && formData.material_notes
+  // PENTING: jangan pakai truthiness (`formData.distance_to_pipe_m &&`).
+  // Jarak 0 meter itu hasil survey yang SAH, tapi `0 && ...` bernilai falsy
+  // sehingga form tidak pernah bisa dikirim untuk hasil 0. Backend memang
+  // mewajibkan `integer|min:0`, jadi 0 harus diterima.
+  const jarakValid =
+    formData.distance_to_pipe_m !== null &&
+    formData.distance_to_pipe_m !== '' &&
+    formData.distance_to_pipe_m !== undefined &&
+    !Number.isNaN(Number(formData.distance_to_pipe_m)) &&
+    Number(formData.distance_to_pipe_m) >= 0
+
+  return Boolean(
+    formData.ticket_id && jarakValid && formData.photo && String(formData.material_notes).trim(),
   )
 })
 
 onMounted(async () => {
   await fetchPendingTickets()
 
+  // id dari URL harus berupa angka valid DAN ada di daftar pending.
+  // Sebelumnya `Number('abc')` menghasilkan NaN yang membuat form terkunci
+  // permanen tanpa pesan apa pun.
   if (route.query.id) {
-    formData.ticket_id = Number(route.query.id)
+    const parsed = Number(route.query.id)
+    if (Number.isInteger(parsed) && ticketOptions.value.some((t) => t.value === parsed)) {
+      formData.ticket_id = parsed
+    } else {
+      invalidTicketId.value = true
+      uiStore.error('Tiket yang dituju tidak valid atau sudah tidak menunggu survey.')
+    }
   }
 })
 
 const fetchPendingTickets = async () => {
   try {
     loadingTickets.value = true
+    ticketLoadFailed.value = false
     const response = await ticketService.getTickets({ status: 'pending' })
-    const tickets = response.data.data || []
+    const tickets = response?.data?.data || []
     ticketOptions.value = tickets.map((t) => ({
       value: t.id,
       label: `${t.applicant_name} (${t.nik}) - ${t.address}`,
     }))
   } catch (err) {
-    console.Consoleerror(err)
-    uiStore.error('Gagal mengambil daftar permohonan.')
+    // Catat kegagalan secara terpisah. Tanpa ini, daftar kosong akibat error
+    // tampil identik dengan "tidak ada antrian" — surveyor mengira tidak
+    // ada pekerjaan padahal request-nya gagal.
+    ticketLoadFailed.value = true
+    uiStore.error(
+      err.response?.data?.message || 'Gagal mengambil daftar permohonan. Coba muat ulang halaman.',
+    )
   } finally {
     loadingTickets.value = false
   }
@@ -291,8 +338,17 @@ const handleCameraCapture = async (file) => {
     uiStore.setLoading(true)
     const compressed = await cameraUtils.compressImage(file)
     formData.photo = compressed
+
+    // Lepaskan URL lama sebelum menggantinya, supaya setiap pengambilan
+    // foto tidak meninggalkan blob yang tertahan di memory.
+    if (photoPreview.value?.startsWith('blob:')) {
+      URL.revokeObjectURL(photoPreview.value)
+    }
     photoPreview.value = URL.createObjectURL(compressed)
   } catch (err) {
+    // Catat penyebab sebenarnya: "Gagal memproses foto" saja tidak
+    // membedakan file bukan gambar, memory habis, atau kamera gagal.
+    console.error('[Survey] gagal memproses foto:', err)
     uiStore.error('Gagal memproses foto.')
   } finally {
     uiStore.setLoading(false)
@@ -303,16 +359,30 @@ const triggerGallery = () => {
   galleryInput.value.click()
 }
 
+// Bebaskan object URL saat komponen dilepas, supaya blob foto tidak
+// tertahan di memory selama pengguna menjelajah halaman lain.
+onBeforeUnmount(() => {
+  if (photoPreview.value?.startsWith('blob:')) {
+    URL.revokeObjectURL(photoPreview.value)
+  }
+})
+
 const handlePhotoUpload = async (e) => {
   const file = e.target.files[0]
   if (!file) return
 
   try {
     uiStore.setLoading(true)
-    photoPreview.value = URL.createObjectURL(file)
 
     const compressedBlob = await cameraUtils.compressImage(file)
     formData.photo = compressedBlob
+
+    // Buat object URL dari hasil kompresi (bukan file asli) supaya preview
+    // sesuai dengan yang akan dikirim, dan lepaskan URL sebelumnya.
+    if (photoPreview.value?.startsWith('blob:')) {
+      URL.revokeObjectURL(photoPreview.value)
+    }
+    photoPreview.value = URL.createObjectURL(compressedBlob)
 
     uiStore.success('Foto berhasil diproses.')
   } catch {
@@ -339,8 +409,14 @@ const submitSurvey = async () => {
     uiStore.success('Hasil survey berhasil dikirim.')
 
     if (route.query.id) {
-      router.push('/app')
+      router.push('/app/surveyor')
     } else {
+      // Lepaskan object URL lama sebelum menggantinya, kalau tidak setiap
+      // survey yang dikirim menambah blob yang tidak pernah dibebaskan.
+      if (photoPreview.value?.startsWith('blob:')) {
+        URL.revokeObjectURL(photoPreview.value)
+      }
+
       Object.assign(formData, {
         ticket_id: '',
         distance_to_pipe_m: '',
@@ -351,7 +427,15 @@ const submitSurvey = async () => {
       await fetchPendingTickets()
     }
   } catch (err) {
-    uiStore.error('Gagal mengirim data survey. Coba lagi.')
+    // Tampilkan pesan yang sebenarnya dari server. Sebelumnya semua kegagalan
+    // (validasi per-field, 403, status tiket, foto >2MB)-collapsed menjadi
+    // satu kalimat generik sehingga surveyor tidak pernah tahu apa yang salah.
+    const validationMessage = Object.values(err.response?.data?.errors || {})[0]?.[0]
+    uiStore.error(
+      validationMessage ||
+        err.response?.data?.message ||
+        'Gagal mengirim data survey. Coba lagi.',
+    )
   } finally {
     isSubmitting.value = false
     uiStore.setLoading(false)

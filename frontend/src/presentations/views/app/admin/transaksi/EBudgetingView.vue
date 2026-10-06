@@ -52,7 +52,7 @@
         ref="daftarAkunRef"
         :tahun="filter.tahun"
         :bulan="filter.bulan"
-        :title="`Tentukan Rencana Anggaran â€” ${bulanName} ${filter.tahun}`"
+        :title="`Tentukan Rencana Anggaran — ${bulanName} ${filter.tahun}`"
       />
     </ContentCard>
 
@@ -65,7 +65,7 @@
       :loading="saving || checkingExisting"
       @click="simpanAnggaran"
     >
-      <span class="mr-2!">ðŸ’¾</span>
+      <span class="mr-2!">’¾</span>
       <span class="hidden! sm:inline!">
         {{ checkingExisting ? 'Memeriksa...' : alreadySaved ? 'Sudah Disimpan' : 'Simpan Anggaran' }}
       </span>

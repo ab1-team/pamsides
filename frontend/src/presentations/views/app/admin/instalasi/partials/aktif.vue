@@ -95,7 +95,7 @@
                   <span class="text-[11px]! font-bold! text-slate-700!">
                     {{ s.distance_to_pipe_m || 0 }} m
                   </span>
-                  <span class="text-[10px]! text-slate-400!">â€¢</span>
+                  <span class="text-[10px]! text-slate-400!">•</span>
                   <span class="text-[10px]! text-slate-500!">{{ formatDate(s.surveyed_at) }}</span>
                 </div>
                 <p class="text-[10px]! text-slate-500! truncate! mt-0.5!">
@@ -142,13 +142,13 @@
               </div>
               <div>
                 <div class="text-[11px]! font-bold! text-slate-700!">
-                  {{ formatMeter(r.meter_value) }} mÂ³
+                  {{ formatMeter(r.meter_value) }} m³
                 </div>
                 <div class="text-[10px]! text-slate-400!">{{ r.date }}</div>
               </div>
             </div>
             <span class="text-[10px]! font-bold! text-slate-500!">
-              {{ r.usage > 0 ? `+${formatMeter(r.usage)} mÂ³` : 'â€”' }}
+              {{ r.usage > 0 ? `+${formatMeter(r.usage)} m³` : '—' }}
             </span>
           </div>
         </div>
@@ -189,7 +189,7 @@
               <div class="text-center!">
                 <p class="text-[8px]! font-bold! text-slate-400! uppercase!">Pakai</p>
                 <p class="text-[11px]! font-bold! text-slate-700!">
-                  {{ formatMeter(customer.latestBill.usage_m3) }} mÂ³
+                  {{ formatMeter(customer.latestBill.usage_m3) }} m³
                 </p>
               </div>
               <div class="text-center!">
@@ -253,7 +253,7 @@
               </div>
             </div>
             <span class="text-[11px]! font-bold! text-violet-600!">
-              Rp {{ formatRibuan(block.price_per_m3) }}/mÂ³
+              Rp {{ formatRibuan(block.price_per_m3) }}/m³
             </span>
           </div>
         </div>
@@ -521,10 +521,10 @@ const customer = computed(() => {
     .map((b) => {
       const min = Number(b.usage_min_m3)
       const max = b.usage_max_m3 !== null && b.usage_max_m3 !== undefined ? Number(b.usage_max_m3) : null
-      const range = max === null ? `${min}+ mÂ³` : max - min >= 1 ? `${min}â€“${max} mÂ³` : `${min} mÂ³`
+      const range = max === null ? `${min}+ m³` : max - min >= 1 ? `${min}–${max} m³` : `${min} m³`
       return {
         range,
-        label: max === null ? `Pemakaian > ${min} mÂ³` : `Pemakaian ${min}â€“${max} mÂ³`,
+        label: max === null ? `Pemakaian > ${min} m³` : `Pemakaian ${min}–${max} m³`,
         price_per_m3: Number(b.price_per_m3 || 0),
       }
     })
