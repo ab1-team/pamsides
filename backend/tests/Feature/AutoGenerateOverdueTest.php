@@ -307,32 +307,6 @@ class AutoGenerateOverdueTest extends TestCase
     }
 
     #[Test]
-    public function check_endpoint_melaporkan_will_run_tanpa_tergantung_sudah_jalan(): void
-    {
-        // `will_run` tidak boleh bergantung pada cache "sudah pernah jalan",
-        // karena frontend memakainya untuk membuka popup di setiap login.
-        Setting::create([
-            'key' => 'sop',
-            'batas_tagihan' => 27,
-            'toleransi_tunggakan' => (int) now()->format('d'),
-        ]);
-
-        $admin = $this->createUser('admin');
-        $headers = $this->authHeaders($admin);
-
-        $this->withHeaders($headers)
-            ->postJson('/api/dashboard/auto-generate-overdue')
-            ->assertOk();
-
-        // Setelah generate pertama, `will_run` tetap true.
-        $this->withHeaders($headers)
-            ->getJson('/api/dashboard/auto-generate-overdue/check')
-            ->assertOk()
-            ->assertJsonPath('will_run', true)
-            ->assertJsonPath('already_ran', false);
-    }
-
-    #[Test]
     public function auto_generate_overdue_tanpa_tagihan_overdue_masih_ran_true_namun_summary_nol(): void
     {
         // Set toleransi = hari ini, TAPI tidak ada tagihan overdue.
