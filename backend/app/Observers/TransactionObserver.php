@@ -3,10 +3,9 @@
 namespace App\Observers;
 
 use App\Models\Transaction;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
-use Carbon\Carbon;
 
 class TransactionObserver
 {
@@ -17,6 +16,22 @@ class TransactionObserver
 
     public function updated(Transaction $transaction)
     {
+        // Lewati sinkronisasi `amount` kalau update TIDAK menyentuh kolom yang
+        // menentukan saldo (tgl_transaksi / account_debet / account_kredit).
+        //
+        // Contoh nyata: pola `Transaction::create([...]); $trx->update(['urutan' => $trx->id]);`
+        // di MonthlyBillController::pay. Update `urutan` tidak mengubah saldo,
+        // tapi tetap memicu agregasi SUM() penuh (1+ detik per call) — dan
+        // trigger `update_amount_debit` MySQL juga jalan lagi.
+        //
+        // Dengan skip ini, observer tidak lagi agregasi penuh untuk update yang
+        // tidak relevan (mis. hanya mengisi kolom `urutan`).
+        $watches = ['tgl_transaksi', 'account_debet', 'account_kredit'];
+
+        if (! $this->wasChangedAmong($transaction, $watches)) {
+            return;
+        }
+
         $oldDate = $transaction->getOriginal('tgl_transaksi');
         $newDate = $transaction->tgl_transaksi;
 
@@ -24,6 +39,52 @@ class TransactionObserver
             $this->syncAmountForPeriod($transaction, $oldDate);
         }
         $this->syncAmount($transaction);
+    }
+
+    /**
+     * True kalau update ini mengubah salah satu kolom yang dipantau.
+     *
+     * Pakai perbandingan nilai LAMA vs BARU (bukan `wasChanged`) supaya aman
+     * dipanggil baik setelah `save()` maupun setelah refresh attribute.
+     */
+    protected function wasChangedAmong(Transaction $transaction, array $keys): bool
+    {
+        foreach ($keys as $key) {
+            $before = $transaction->getOriginal($key);
+            $after = $transaction->getAttribute($key);
+
+            // Bandingkan sebagai tanggal agar '2026-10-06' vs Carbon(2026-10-06)
+            // dianggap sama (tgl_transaksi di-cast jadi date).
+            if ($key === 'tgl_transaksi') {
+                if (! $this->sameDate($before, $after)) {
+                    return true;
+                }
+
+                continue;
+            }
+
+            if ((string) $before !== (string) $after) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    protected function sameDate($before, $after): bool
+    {
+        if ($before === null && $after === null) {
+            return true;
+        }
+        if ($before === null || $after === null) {
+            return false;
+        }
+
+        try {
+            return Carbon::parse($before)->toDateString() === Carbon::parse($after)->toDateString();
+        } catch (\Throwable $e) {
+            return (string) $before === (string) $after;
+        }
     }
 
     public function deleted(Transaction $transaction)
@@ -70,7 +131,9 @@ class TransactionObserver
     protected function updateAmountForAccount($kodeAkun, $tahun, $bulan)
     {
         $account = DB::table('accounts')->where('kode_akun', $kodeAkun)->first();
-        if (!$account) return;
+        if (! $account) {
+            return;
+        }
 
         $startOfYear = "{$tahun}-01-01";
         $endOfMonth = Carbon::create($tahun, (int) $bulan, 1)->endOfMonth()->toDateString();
@@ -86,7 +149,7 @@ class TransactionObserver
             })
             ->first();
 
-        $id = (string) $account->id . $tahun . $bulan;
+        $id = (string) $account->id.$tahun.$bulan;
 
         DB::table('amount')->updateOrInsert(
             ['id' => $id],

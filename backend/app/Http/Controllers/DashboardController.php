@@ -428,54 +428,80 @@ class DashboardController extends Controller
         ]);
     }
 
-    public function getNotification()
-    {
-        $userId = auth()->id();
-        $dismissed = Cache::get('overdue_gen_dismissed_' . $userId, false);
-
-        if ($dismissed) {
-            return response()->json([
-                'success' => true,
-                'data'    => null,
-            ]);
-        }
-
-        $notification = Cache::get('overdue_gen_notification');
-
-        return response()->json([
-            'success' => true,
-            'data'    => $notification,
-        ]);
-    }
-
-    public function dismissNotification()
-    {
-        $userId = auth()->id();
-        Cache::put('overdue_gen_dismissed_' . $userId, true, now()->addDays(7));
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Notifikasi ditutup',
-        ]);
-    }
-
     /**
      * Auto-generate piutang/abodemen/denda untuk tagihan menunggak.
      *
-     * Dipanggil dari frontend setiap kali halaman dashboard di-mount.
-     * - Hanya jalan bila hari ini == `toleransi_tunggakan` (tanggal di
-     *   kolom SOP, range 1-28) DAN proses untuk bulan ini belum pernah
-     *   dijalankan (cache `auto_gen_overdue_{YYYY-MM}_{userId}`).
-     * - Menjalankan command `billing:generate-overdue-transactions`
-     *   dengan `--tanggal=today` dan `--force=false`.
-     * - Hasil dikembalikan ke frontend untuk ditampilkan di pop up.
+     * Dipanggil dari frontend SETELAH login berhasil, lalu hasilnya
+     * ditampilkan lewat popup loading → popup hasil di
+     * `useOverdueGenNotification.js`.
      *
-     * Catatan: bila dijalankan berulang pada hari yang sama untuk user
-     * berbeda, command akan skip tagihan yang sudah punya jurnal
-     * overdue_bill (lihat flag `--force=false`). Aman.
+     * - Hanya jalan bila hari ini == `toleransi_tunggakan` (TANGGAL di
+     *   kolom SOP, range 1-28).
+     * - SELALU menjalankan ulang command pada tanggal tersebut — tidak ada
+     *   lagi gate "sudah pernah jalan hari ini". Command-nya sendiri yang
+     *   menentukan mana yang perlu dikerjakan: setiap tagihan yang sudah
+     *   punya jurnal `overdue_bill` dilewati (`skipped`), sisanya dibuat.
+     *   Jadi menjalankan berkali-kali dalam sehari aman dan tidak
+     *   menghasilkan data ganda.
+     * - `--force` TIDAK dipakai: memaksa akan menghapus jurnal lama lalu
+     *   membuat ulang, itu justru sumber data ganda kalau proses gagal di
+     *   tengah jalan.
+     * - Concurrency dijaga `Cache::lock`, bukan cache "sudah jalan": dua
+     *   admin yang login bersamaan tidak boleh menjalankan command
+     *   bersamaan, karena keduanya akan melihat tagihan yang sama belum
+     *   punya jurnal lalu sama-sama membuat.
+     *
+     * Catatan: notifikasi banner lama (`overdue_gen_notification` +
+     * endpoint `dashboard/notification`) sudah DIHAPUS. Deliverinya kini
+     * murni lewat popup: user melihat proses generate, lalu hasilnya.
      */
+    public function checkAutoGenerateOverdue(Request $request)
+    {
+        $today      = now();
+        $todayYmd   = $today->toDateString();
+        $todayDay   = (int) $today->format('d');
+        $scheduledDay = (int) (Setting::first()?->toleransi_tunggakan ?? 0);
+
+        $configured = $scheduledDay >= 1 && $scheduledDay <= 28;
+        $isScheduledDay = $todayDay === $scheduledDay;
+
+        // `will_run` = hari ini adalah tanggal generate. Sengaja TIDAK
+        // bergantung pada "sudah pernah jalan" — frontend memakai field ini
+        // hanya untuk memutuskan apakah membuka popup loading, dan itu harus
+        // tetap true di setiap login pada tanggal tersebut supaya proses
+        // dijalankan ulang (dedup ada di level command, bukan di sini).
+        return response()->json([
+            'success'        => true,
+            'configured'     => $configured,
+            'is_scheduled'   => $isScheduledDay,
+            // Dipertahankan di response supaya frontend lama yang masih
+            // membaca field ini tidak ikut rusak, tapi nilainya sudah tidak
+            // lagi dipakai sebagai penentu.
+            'already_ran'    => false,
+            'will_run'       => $configured && $isScheduledDay,
+            'scheduled_day'  => $scheduledDay,
+            'today_day'      => $todayDay,
+            'date'           => $todayYmd,
+        ]);
+    }
+
     public function autoGenerateOverdue(Request $request)
     {
+        // Generate piutang menulis jurnal keuangan untuk SELURUH tagihan
+        // menunggak, jadi ini operasi yang mutlak milik admin. Endpoint-nya
+        // boleh dipanggil teknisi (route-nya `role:admin,teknisi`) karena
+        // teknisi memakai statistik yang sama, tapi eksekusinya tidak.
+        // Tanpa guard ini teknisi bisa menjalankannya, dan karena cache-nya
+        // global per tanggal, teknisi yang login pertama kali pada hari itu
+        // akan "memiliki" eksekusi tersebut.
+        if ($request->user()?->role !== 'admin') {
+            return response()->json([
+                'success' => true,
+                'ran'     => false,
+                'reason'  => 'Generate piutang otomatis hanya dapat dijalankan oleh admin.',
+            ], 403);
+        }
+
         $userId  = auth()->id();
         $today   = now();
         $todayYmd = $today->toDateString();
@@ -509,22 +535,40 @@ class DashboardController extends Controller
             ]);
         }
 
-        // 3) Idempotent per (bulan, user). Pertama kali buka dashboard
-        //    pada bulan ini & user ini → execute. Berikutnya → skip.
-        $runCacheKey = 'auto_gen_overdue_' . $todayYm . '_' . $userId;
-        $alreadyRan = Cache::get($runCacheKey, false);
+        // 3) Idempotent GLOBAL per tanggal, bukan per user.
+        //
+        // 3) Lock eksklusif per tanggal.
+        //
+        //    Dulu ada cache "sudah pernah jalan hari ini" yang membuat
+        //    endpoint hanya bisa jalan SEKALI per tanggal. Permintaan baru:
+        //    setiap login di tanggal generate harus menghitung ulang, karena
+        //    tagihan baru bisa saja masuk setelah login pertama.
+        //
+        //    Yang diganti adalah PENGAKAL, bukan idempotensi. Command-nya
+        //    sendiri yang melakukan dedup: tagihan yang sudah punya jurnal dilewati
+        //    (`skipped`), jadi dijalankan berapa kali pun tidak menghasilkan
+        //    jurnal ganda.
+        //
+        //    Yang tetap dijaga adalah LOCK. Tanpa lock, dua admin yang login
+        //    pada detik yang sama bisa sama-sama melihat tagihan yang belum
+        //    punya jurnal lalu sama-sama membuat — itu baru benar-benar
+        //    menghasilkan data ganda. `Cache::lock` bersifat atomik, jadi
+        //    hanya satu yang menang dan yang lain membaca ringkasan hasil.
+        $lock = Cache::lock('auto_gen_overdue_lock_' . $todayYmd, 300);
 
-        if ($alreadyRan) {
-            // Ambil hasil terakhir dari cache notifikasi (kalau ada).
-            $lastNotif = Cache::get('overdue_gen_notification');
+        if (! $lock->get()) {
+            // Proses sedang berjalan di request lain (double-click, atau dua
+            // tab terbuka bersamaan). Balas ringkasan terakhir yang tersedia
+            // supaya popup admin kedua tetap informatif, bukan error kosong.
             return response()->json([
-                'success'        => true,
-                'ran'           => false,
-                'reason'        => 'Generate sudah pernah dijalankan bulan ini untuk akun Anda.',
+                'success'     => true,
+                'ran'         => false,
+                'busy'        => true,
+                'reason'      => 'Generate piutang sedang berjalan di tab lain. Mohon tunggu sebentar.',
                 'scheduled_day' => $scheduledDay,
-                'today_day'     => $todayDay,
-                'date'          => $todayYmd,
-                'previous'      => $lastNotif,
+                'today_day'  => $todayDay,
+                'date'       => $todayYmd,
+                'summary'    => $this->buildSummaryFromRun(Cache::get('overdue_gen_run_summary')),
             ]);
         }
 
@@ -537,6 +581,7 @@ class DashboardController extends Controller
             $output = Artisan::output();
         } catch (\Throwable $e) {
             Log::error('autoGenerateOverdue gagal: ' . $e->getMessage());
+            $lock->release();
             return response()->json([
                 'success' => false,
                 'ran'     => false,
@@ -549,50 +594,80 @@ class DashboardController extends Controller
 
         $duration = (int) ((microtime(true) - $start) * 1000);
 
-        // Tandai sudah pernah dijalankan untuk (bulan, user) selama 35 hari.
-        Cache::put($runCacheKey, true, now()->addDays(35));
+        // Ambil ringkasan yang ditulis command (angka akurat dari loop
+        // yang benar-benar dijalankan). Fallback ke hitung ulang dari DB
+        // bila command tidak sempat menulis (mis. gagal sebelum summary).
+        $runSummary = Cache::get('overdue_gen_run_summary');
 
-        // Reset flag dismiss notifikasi supaya pop up baru bisa muncul.
-        Cache::forget('overdue_gen_dismissed_' . $userId);
+        $lock->release();
 
-        // Susun payload untuk pop up frontend. Hitung ringkasan dari DB
-        // agar frontend tidak perlu parsing output Artisan.
+        $payload = [
+            'success'       => true,
+            'ran'           => true,
+            'date'          => $todayYmd,
+            'scheduled_day' => $scheduledDay,
+            'today_day'     => $todayDay,
+            'duration_ms'   => $duration,
+            'exit_code'     => $exit,
+            'output'        => trim($output),
+            'summary'       => $this->buildSummaryFromRun($runSummary),
+        ];
+
+        return response()->json($payload);
+    }
+
+    /**
+     * Bentuk payload `summary` untuk pop up frontend.
+     *
+     * Sumber angka: cache `overdue_gen_run_summary` yang ditulis command
+     * `billing:generate-overdue-transactions` (lihat method
+     * `storeRunSummary`). Angka di sana berasal langsung dari loop
+     * pemrosesan, jadi tidak bisa nol palsu.
+     *
+     * Fallback dipakai hanya bila cache hilang (mis. cache store dimatikan).
+     */
+    private function buildSummaryFromRun(?array $run): array
+    {
+        // Abaikan ringkasan dari hari lain — kalau tanggalnya beda, angka
+        // `processed`/`skipped` tidak lagi menggambarkan proses hari ini.
+        if ($run && ($run['date'] ?? null) !== now()->toDateString()) {
+            $run = null;
+        }
+
+        if ($run) {
+            return [
+                'tagihan_dengan_abodemen_tungakan'  => (int) ($run['jurnal_abodemen'] ?? 0),
+                'tagihan_dengan_pemakaian_tungakan' => (int) ($run['jurnal_pemakaian'] ?? 0),
+                'tagihan_diproses'                   => (int) ($run['processed'] ?? 0),
+                'tagihan_dilewati'                   => (int) ($run['skipped'] ?? 0),
+                'total_unpaid'                       => (int) ($run['total_unpaid'] ?? 0),
+                'total_overdue'                      => (int) ($run['total_overdue'] ?? 0),
+            ];
+        }
+
+        // Fallback: hitung dari DB tanpa filter tanggal, karena jurnal
+        // tunggakan bisa dibuat di tanggal run sebelumnya.
         $processed = (int) Transaction::where('reverence_type', 'overdue_bill')
-            ->whereDate('tgl_transaksi', $todayYmd)
             ->where('account_debet', '1.1.03.01')
-            ->where('account_kredit', '4.1.01.02') // Tunggakan Abodemen
+            ->where('account_kredit', '4.1.01.02')
             ->distinct()
             ->count('reverence_id');
 
         $processedUsage = (int) Transaction::where('reverence_type', 'overdue_bill')
-            ->whereDate('tgl_transaksi', $todayYmd)
             ->where('account_debet', '1.1.03.01')
-            ->where('account_kredit', '4.1.01.03') // Tunggakan Pemakaian / denda
+            ->where('account_kredit', '4.1.01.03')
             ->distinct()
             ->count('reverence_id');
 
-        $totalUnpaid = (int) MonthlyBill::where('status', 'unpaid')->count();
-        $totalOverdue = (int) MonthlyBill::where('status', 'unpaid')
-            ->where('due_date', '<', $todayYmd)
-            ->count();
-
-        $payload = [
-            'success'        => true,
-            'ran'            => true,
-            'date'           => $todayYmd,
-            'scheduled_day'  => $scheduledDay,
-            'today_day'      => $todayDay,
-            'duration_ms'    => $duration,
-            'exit_code'      => $exit,
-            'output'         => trim($output),
-            'summary'        => [
-                'tagihan_dengan_abodemen_tungakan' => $processed,
-                'tagihan_dengan_pemakaian_tungakan' => $processedUsage,
-                'total_unpaid'        => $totalUnpaid,
-                'total_overdue'       => $totalOverdue,
-            ],
+        return [
+            'tagihan_dengan_abodemen_tungakan'  => $processed,
+            'tagihan_dengan_pemakaian_tungakan' => $processedUsage,
+            'tagihan_diproses'                   => $processed + $processedUsage,
+            'tagihan_dilewati'                   => 0,
+            'total_unpaid'                       => (int) MonthlyBill::where('status', 'unpaid')->count(),
+            'total_overdue'                      => (int) MonthlyBill::where('status', 'unpaid')
+                ->where('due_date', '<', now()->toDateString())
+                ->count(),
         ];
-
-        return response()->json($payload);
     }
 }
