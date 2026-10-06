@@ -5,9 +5,8 @@
 </template>
 
 <script setup>
-import { computed, onMounted } from 'vue'
+import { computed } from 'vue'
 import { useUiStore } from '@/stores/uiStore'
-import { useOverdueGenNotification } from '@/composables/useOverdueGenNotification'
 
 import AdminDashboard from './admin/DashboardMain.vue'
 import SurveyorDashboard from './surveyor/DashboardMain.vue'
@@ -26,17 +25,16 @@ const activeDashboard = computed(() => {
   return AdminDashboard
 })
 
-// Hanya role yang punya akses ke dashboard/auto-generate-overdue
-// (admin & teknisi) yang boleh memicu generate otomatis.
-const { checkOverdueGenOnMount } = useOverdueGenNotification()
-
-onMounted(() => {
-  const role = uiStore.userRole
-  if (role === 'admin' || role === 'teknisi') {
-    // Jalankan tanpa await: pop up akan muncul sendiri saat hasil siap.
-    checkOverdueGenOnMount()
-  }
-})
+// Generate piutang SENGAJA TIDAK dipicu dari komponen ini.
+//
+// Dulu `checkOverdueGenOnMount()` dipanggil di `onMounted` di sini. Karena
+// `onMounted` berjalan setiap kali komponen di-mount, memetik menu
+// Dashboard — atau kembali ke dashboard dari halaman lain — akan menjalankan
+// generate piutang LAGI. Itu bukan yang diminta: generate harus berjalan
+// setiap kali login BERHASIL, bukan setiap kali dashboard dibuka.
+//
+// Pemicunya sekarang hanya `LoginView.vue`, tepat setelah login sukses.
+// Membuka dashboard sebanyak apa pun tidak menambah satu perhitungan pun.
 </script>
 
 <style scoped>

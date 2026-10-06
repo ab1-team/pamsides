@@ -31,24 +31,27 @@ export const dashboardService = {
     return response.data
   },
 
-  async getNotification() {
-    const response = await api.get('/dashboard/notification')
-    return response.data
-  },
-
-  async dismissNotification() {
-    const response = await api.post('/dashboard/notification/dismiss')
+  /**
+   * Auto-generate piutang/abodemen/denda untuk tagihan menunggak
+   * ketika hari ini == toleransiTunggakan (dari SOP).
+   * Idempotent per TANGGAL (satu hari = satu proses). Admin berikutnya
+   * menerima `already_ran: true` beserta ringkasan hasil yang sama.
+   */
+  async autoGenerateOverdue() {
+    const response = await api.post('/dashboard/auto-generate-overdue')
     return response.data
   },
 
   /**
-   * Auto-generate piutang/abodemen/denda untuk tagihan menunggak
-   * ketika hari ini == toleransiTunggakan (dari SOP).
-   * Idempotent per (bulan, user). Backend skip kalau sudah pernah
-   * dijalankan di bulan ini untuk user ini.
+   * Pra-cek ringan: apakah hari ini memang ada generate piutang?
+   *
+   * Dipanggil setelah login tapi SEBELUM popup loading dibuka. Tujuannya
+   * supaya modal tidak pernah berkedip di hari biasa — di luar tanggal
+   * generate, endpoint `autoGenerateOverdue()` membalas instan `ran=false`
+   * sehingga popup loading akan muncul-hilang dalam ~100ms.
    */
-  async autoGenerateOverdue() {
-    const response = await api.post('/dashboard/auto-generate-overdue')
+  async checkAutoGenerateOverdue() {
+    const response = await api.get('/dashboard/auto-generate-overdue/check')
     return response.data
   },
 }

@@ -10,6 +10,29 @@
     </div>
 
     <div v-else>
+      <!-- Banner kegagalan memuat: tanpa ini, seluruh kartu statistik
+           menampilkan angka 0 dan teknisi bisa salah menyimpulkan
+           tidak ada pekerjaan yang menunggu. -->
+      <div
+        v-if="dashboardLoadFailed"
+        class="mb-6! flex! items-center! gap-3! p-4! bg-red-50! border! border-red-200! rounded-2xl!"
+      >
+        <font-awesome-icon icon="triangle-exclamation" class="text-red-500! text-lg!" />
+        <div class="flex-1!">
+          <p class="text-xs! font-black! text-red-700!">
+            Gagal memuat data dashboard. Angka di bawah ini mungkin tidak akurat.
+          </p>
+          <p class="text-[10px]! text-red-500!">Periksa koneksi lalu muat ulang halaman.</p>
+        </div>
+        <button
+          type="button"
+          @click="fetchDashboardData"
+          class="px-3! py-1.5! text-[10px]! font-black! uppercase! bg-red-500! text-white! rounded-xl! hover:bg-red-600!"
+        >
+          Coba Lagi
+        </button>
+      </div>
+
       <!-- Header Section -->
       <div class="flex! flex-col! lg:flex-row! lg:items-center! justify-between! mb-8! gap-6!">
         <div>
@@ -247,13 +270,28 @@
 
             <div
               v-if="suspendedList.length === 0"
-              class="p-6! text-center! bg-emerald-50/50! border! border-dashed! border-emerald-200! rounded-2xl!"
+              class="p-6! text-center! rounded-2xl!"
+              :class="
+                suspendedLoadFailed
+                  ? 'bg-red-50/50! border! border-dashed! border-red-200!'
+                  : 'bg-emerald-50/50! border! border-dashed! border-emerald-200!'
+              "
             >
               <font-awesome-icon
-                icon="check-circle"
-                class="text-emerald-500! text-xl! mb-1!"
+                :icon="suspendedLoadFailed ? 'triangle-exclamation' : 'check-circle'"
+                class="text-xl! mb-1!"
+                :class="suspendedLoadFailed ? 'text-red-500!' : 'text-emerald-500!'"
               />
-              <p class="text-xs! font-black! text-slate-600!">Tidak ada pelanggan suspended</p>
+              <p class="text-xs! font-black! text-slate-600!">
+                {{
+                  suspendedLoadFailed
+                    ? 'Gagal memuat daftar pelanggan suspended'
+                    : 'Tidak ada pelanggan suspended'
+                }}
+              </p>
+              <p v-if="suspendedLoadFailed" class="mt-1! text-[10px]! text-slate-400!">
+                Periksa koneksi lalu muat ulang halaman.
+              </p>
             </div>
 
             <div v-else class="space-y-2.5!">
@@ -281,7 +319,7 @@
                     <span class="text-rose-600!">
                       {{ cust.unpaid_count }} tagihan
                     </span>
-                    <span class="text-slate-300!">â€¢</span>
+                    <span class="text-slate-300!">•</span>
                     <span class="text-slate-700! font-mono!">
                       Rp.
                       {{
@@ -292,27 +330,30 @@
                     </span>
                   </div>
                 </div>
+                <!--
+                  Aktivasi pelanggan adalah operasi admin (backend menolak 403
+                  untuk non-admin). Untuk teknisi tombol ini jadi label
+                  informasi saja, supaya tidak menampilkan aksi yang pasti gagal.
+                -->
+                <span
+                  v-if="cust.unpaid_count > 0 || !canRestoreCustomers"
+                  class="px-3! py-2! rounded-xl! text-[10px]! font-black! uppercase! tracking-wider! bg-slate-100! text-slate-400! flex! items-center! gap-1.5! shrink-0!"
+                >
+                  <font-awesome-icon icon="lock" />
+                  {{ cust.unpaid_count > 0 ? 'Tunggu Admin' : 'Admin' }}
+                </span>
+
                 <button
+                  v-else
                   @click="handleRestore(cust)"
-                  :disabled="restoringId === cust.id || cust.unpaid_count > 0"
-                  class="px-3! py-2! rounded-xl! text-[10px]! font-black! uppercase! tracking-wider! transition-all! active:scale-95! flex! items-center! gap-1.5! shadow-sm! shrink-0!"
-                  :class="
-                    cust.unpaid_count > 0
-                      ? 'bg-slate-100! text-slate-400! cursor-not-allowed!'
-                      : 'bg-emerald-500! hover:bg-emerald-600! text-white! shadow-emerald-200!'
-                  "
+                  :disabled="restoringId === cust.id"
+                  class="px-3! py-2! rounded-xl! text-[10px]! font-black! uppercase! tracking-wider! transition-all! active:scale-95! flex! items-center! gap-1.5! shadow-sm! shrink-0! bg-emerald-500! hover:bg-emerald-600! text-white! shadow-emerald-200!"
                 >
                   <font-awesome-icon
                     :icon="restoringId === cust.id ? 'spinner' : 'undo'"
                     :spin="restoringId === cust.id"
                   />
-                  {{
-                    restoringId === cust.id
-                      ? 'â€¦'
-                      : cust.unpaid_count > 0
-                        ? 'Tunggu Admin'
-                        : 'Aktifkan'
-                  }}
+                  {{ restoringId === cust.id ? '…' : 'Aktifkan' }}
                 </button>
               </div>
             </div>
@@ -370,6 +411,9 @@ import { billingService } from '@/services/billing.service'
 import ContentCard from '@/presentations/components/ui/ContentCard.vue'
 import BaseButton from '@/presentations/components/ui/BaseButton.vue'
 import { MySwal } from '@/utils/swal'
+import { useUiStore } from '@/stores/uiStore'
+
+const uiStore = useUiStore()
 
 const isLoading = ref(true)
 const dashboardData = ref(null)
@@ -377,6 +421,13 @@ const pendingReadingsCount = ref(0)
 const unpaidBillsCount = ref(0)
 const suspendedList = ref([])
 const restoringId = ref(null)
+// true = request pelanggan suspended gagal, false = memang tidak ada.
+const suspendedLoadFailed = ref(false)
+// true = statistik dashboard gagal dimuat.
+const dashboardLoadFailed = ref(false)
+// Backend menolak POST /customers/{id}/restore untuk non-admin (403),
+// jadi frontend jangan menampilkan tombol yang pasti gagal.
+const canRestoreCustomers = computed(() => uiStore.userRole === 'admin')
 const isExpanded = ref(false)
 
 const userData = JSON.parse(localStorage.getItem('user_data') || '{}')
@@ -405,13 +456,20 @@ const fetchSuspended = async () => {
   try {
     const res = await billingService.getSuspendedCustomers()
     suspendedList.value = res?.data || []
+    suspendedLoadFailed.value = false
   } catch (err) {
+    // Kosongkan daftar DAN tandai gagalnya. Kalau hanya dikosongkan,
+    // teknisi melihat "tidak ada pelanggan suspended" padahal
+    // request-nya yang gagal — keputusan untuk memberi amplitur air
+    // akan diambil dari data yang tidak pernah sampai.
     suspendedList.value = []
+    suspendedLoadFailed.value = true
+    console.error('[Dashboard teknisi] gagal memuat pelanggan suspended:', err)
   }
 }
 
 const handleRestore = async (cust) => {
-  if (cust.unpaid_count > 0 || restoringId.value) return
+  if (cust.unpaid_count > 0 || restoringId.value || !canRestoreCustomers.value) return
 
   const ok = await MySwal.fire({
     icon: 'question',
@@ -455,6 +513,7 @@ const handleRestore = async (cust) => {
 const fetchDashboardData = async () => {
   try {
     isLoading.value = true
+    dashboardLoadFailed.value = false
 
     const now = new Date()
     const currentMonthNum = now.getMonth() + 1
@@ -479,6 +538,10 @@ const fetchDashboardData = async () => {
 
     await fetchSuspended()
   } catch (error) {
+    // Dashboard kosong tanpa penjelasan sama dengan "tidak ada pekerjaan".
+    // Bedakan keduanya supaya teknisi tahu perlu memuat ulang.
+    dashboardLoadFailed.value = true
+    console.error('[Dashboard teknisi] gagal memuat data:', error)
   } finally {
     isLoading.value = false
   }
