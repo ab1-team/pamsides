@@ -45,63 +45,13 @@
         search-placeholder="Cari nama pelanggan, kode, atau no. invoice..."
         empty-title="Tagihan Tidak Ditemukan"
         empty-message="Belum ada tagihan sesuai pencarian. Coba kata kunci lain atau muat ulang."
-        :show-toolbar="false"
+        empty-icon="file-invoice-dollar"
         no-card
         row-clickable
         :loading="isLoading"
         server-side
         @row-click="handleOpenDetail"
       >
-        <template #toolbar>
-          <div
-            class="flex! flex-col! sm:flex-row! sm:items-center! justify-between! p-3! border-b! border-slate-100! gap-3!"
-          >
-            <div class="flex! items-center! gap-3! text-xs! text-slate-500!">
-              <span class="whitespace-nowrap!">Tampilkan</span>
-              <select
-                :value="perPage"
-                @change="onPerPageChange(parseInt($event.target.value))"
-                class="bg-white! border! border-slate-200! rounded-md! px-2! py-1! outline-none! focus:border-cyan-600! transition-all! cursor-pointer! text-slate-700!"
-              >
-                <option :value="10">10</option>
-                <option :value="25">25</option>
-                <option :value="50">50</option>
-                <option :value="100">100</option>
-              </select>
-              <span class="whitespace-nowrap!">data per halaman</span>
-              <span class="hidden! sm:inline!">Â·</span>
-              <span class="hidden! sm:inline!">
-                Total:
-                <strong class="font-bold! text-slate-800!">{{
-                  totalEntries.toLocaleString('id-ID')
-                }}</strong>
-                tagihan
-              </span>
-            </div>
-
-            <div class="relative! flex-1! sm:w-72!">
-              <span class="absolute! left-3.5! top-1/2! -translate-y-1/2! text-sm! text-slate-400!">
-                ðŸ”
-              </span>
-              <input
-                :value="searchQuery"
-                @input="onSearchInput($event.target.value)"
-                type="text"
-                placeholder="Cari nama, kode, atau no. invoice..."
-                class="pl-9! pr-4! py-2! bg-slate-50! border! border-slate-200! rounded-lg! text-sm! text-slate-900! w-full! hover:bg-white! hover:border-slate-300! focus:border-cyan-600! focus:bg-white! focus:outline-none! transition-all!"
-              />
-              <button
-                v-if="searchQuery"
-                @click="clearSearch"
-                class="absolute! right-2! top-1/2! -translate-y-1/2! w-6! h-6! rounded-full! hover:bg-slate-200! text-slate-400! hover:text-slate-600! transition-colors! flex! items-center! justify-center!"
-                type="button"
-              >
-                <font-awesome-icon icon="times" class="text-[10px]!" />
-              </button>
-            </div>
-          </div>
-        </template>
-
         <template #column-customer="{ row }">
           <div class="flex items-center gap-3!">
             <div
@@ -134,7 +84,7 @@
             <span class="text-slate-400! font-normal!">
               {{ formatNumber(row.meter_reading_start) }}
             </span>
-            <span class="text-slate-300!">â†’</span>
+            <span class="text-slate-300!">→</span>
             <span class="text-cyan-600! font-bold!">
               {{ formatNumber(row.meter_reading_end) }}
             </span>
@@ -144,7 +94,7 @@
         <template #column-usage="{ row }">
           <span class="text-sm! font-bold! text-slate-800!">
             {{ row.usage_m3 || 0 }}
-            <span class="text-[10px]! text-slate-400! font-medium!">mÂ³</span>
+            <span class="text-[10px]! text-slate-400! font-medium!">m³</span>
           </span>
         </template>
 
@@ -188,7 +138,7 @@
     </ContentCard>
 
     <div class="text-center py-8 text-[10px] text-slate-400 font-semibold tracking-[2px] uppercase">
-      PAMSIMAS Â· LAYANAN AIR BERSIH MASYARAKAT
+      PAMSIMAS · LAYANAN AIR BERSIH MASYARAKAT
     </div>
 
     <detaiDaftarTagihan
@@ -322,30 +272,42 @@ const visiblePages = computed(() => {
   return pages
 })
 
-const onSearchInput = (value) => {
-  searchQuery.value = value
-  if (searchDebounce) clearTimeout(searchDebounce)
-  searchDebounce = setTimeout(() => {
-    currentPage.value = 1
+// Kembali ke halaman 1 lalu muat ulang.
+//
+// `watch(currentPage)` di bawah yang mem-fetch saat nomor halaman berubah.
+// Kalau halaman sudah 1, setter tidak menghasilkan perubahan, jadi watcher
+// tidak berjalan — maka `fetchBills()` dipanggil langsung di sini.
+// Kalau halaman berubah, cukup andalkan watcher-nya supaya tidak ada dua
+// request untuk aksi yang sama.
+const backToFirstPage = () => {
+  if (currentPage.value === 1) {
     fetchBills()
-  }, 350)
+  } else {
+    currentPage.value = 1
+  }
 }
 
-const clearSearch = () => {
-  searchQuery.value = ''
+// Pencarian memakai input bawaan `DataTable` (slot `toolbar`), jadi
+// perubahan keyword datang lewat `v-model="searchQuery"`, bukan lewat event
+// `@input` milik halaman ini.
+//
+// Debounce tetap dijaga di sini: tanpa itu, tiap ketikan huruf langsung
+// menembak request ke server dan tabel berkedip karena `loading` aktif
+// pada tiap ketikan.
+watch(searchQuery, () => {
   if (searchDebounce) clearTimeout(searchDebounce)
-  currentPage.value = 1
-  fetchBills()
-}
-
-const onPerPageChange = (value) => {
-  perPage.value = value
-  currentPage.value = 1
-  fetchBills()
-}
+  searchDebounce = setTimeout(backToFirstPage, 350)
+})
 
 watch(currentPage, () => {
   fetchBills()
+})
+
+// `perPage` ditangani oleh `v-model:per-page` milik `DataTable`. Nomor
+// halaman dikembalikan ke 1 karena mengganti ukuran halaman membuat posisi
+// halaman lama bisa menunjuk ke luar jangkauan.
+watch(perPage, () => {
+  backToFirstPage()
 })
 
 const getInitials = (row) => {

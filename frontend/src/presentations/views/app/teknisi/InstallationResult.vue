@@ -29,7 +29,7 @@
           <div>
             <h4 class="text-lg! font-bold! text-slate-800!">{{ ticketData.applicant_name }}</h4>
             <p class="text-xs! text-slate-500! font-bold!">
-              Tiket #{{ ticketData.id }} â€¢ {{ ticketData.address }}
+              Tiket #{{ ticketData.id }} • {{ ticketData.address }}
             </p>
           </div>
           <div class="ml-auto! text-right!">
@@ -67,14 +67,16 @@
               >
               <div class="relative!">
                 <input
-                  v-model="formData.initial_meter_value"
+                  v-model="formData.initial_meter_reading"
                   type="number"
+                  min="0"
+                  step="1"
                   class="w-full! text-2xl! bg-slate-50! border-2! border-slate-100! rounded-2xl! px-5! py-4! focus:border-cyan-500! focus:outline-none! font-black! text-cyan-600!"
                   placeholder="0"
                 />
                 <span
                   class="absolute! right-5! top-1/2! -translate-y-1/2! text-slate-400! font-black!"
-                  >mÂ³</span
+                  >m³</span
                 >
               </div>
             </div>
@@ -151,9 +153,9 @@
               <div>
                 <h5 class="text-xs! font-black! text-amber-800! uppercase! mb-1!">Panduan Foto</h5>
                 <ul class="text-xs! text-amber-700! space-y-1! font-medium!">
-                  <li>â€¢ Nomor meteran terlihat jelas</li>
-                  <li>â€¢ Sambungan pipa tampak utuh</li>
-                  <li>â€¢ Pencahayaan cukup terang</li>
+                  <li>• Nomor meteran terlihat jelas</li>
+                  <li>• Sambungan pipa tampak utuh</li>
+                  <li>• Pencahayaan cukup terang</li>
                 </ul>
               </div>
             </div>
@@ -216,13 +218,16 @@ const ticketData = ref({
 
 const formData = reactive({
   meter_number: '',
-  initial_meter_value: 0,
+  // Nama field WAJIB sama dengan yang InstallationResultController validasi
+  // ('initial_meter_reading'). Sebelumnya terkirim 'initial_meter_value',
+  // jadi setiap submit selalu berakhir 422.
+  initial_meter_reading: 0,
   notes: '',
   photo: null,
 })
 
 const isFormValid = computed(() => {
-  return formData.meter_number && formData.initial_meter_value >= 0 && formData.photo
+  return formData.meter_number && formData.initial_meter_reading >= 0 && formData.photo
 })
 
 onMounted(async () => {
@@ -242,7 +247,19 @@ const fetchTicketData = async () => {
       }
     }
   } catch (error) {
-    Toast.fire({ icon: 'error', title: 'Gagal memuat data tiket' })
+    // Jangan biarkan header menggantung di "Loading...". Tandai gagal agar
+    // pemanggil tahu halaman ini tidak bisa dipakai.
+    ticketData.value = {
+      ...ticketData.value,
+      applicant_name: 'Gagal memuat',
+    }
+    Toast.fire({
+      icon: 'error',
+      title: 'Gagal memuat data tiket',
+      text:
+        error.response?.data?.message ||
+        'Tiket tidak ditemukan atau Anda tidak punya akses ke tiket ini.',
+    })
   }
 }
 
@@ -282,7 +299,7 @@ const submitInstallation = async () => {
 
     const submitData = new FormData()
     submitData.append('meter_number', formData.meter_number)
-    submitData.append('initial_meter_value', formData.initial_meter_value)
+    submitData.append('initial_meter_reading', formData.initial_meter_reading)
     submitData.append('notes', formData.notes || '')
     submitData.append('photo', formData.photo)
 
@@ -295,9 +312,19 @@ const submitInstallation = async () => {
       confirmButtonColor: '#06b6d4',
     })
 
-    router.push('/app')
+    // Kembali ke dashboard TEKNISI. Sebelumnya '/app' yang membuat teknisi
+    // mendarat di route dashboard lain dengan efek samping berbeda.
+    router.push('/app/teknisi')
   } catch (error) {
-    Toast.fire({ icon: 'error', title: 'Gagal menyimpan data instalasi' })
+    // Tampilkan pesan dari server (mis. validasi per-field atau status tiket).
+    // Tanpa ini semua kegagalan 422/403/500 tampak sama saja dan teknisi
+    // tidak tahu harus memperbaiki apa.
+    const message =
+      error.response?.data?.message ||
+      Object.values(error.response?.data?.errors || {})[0]?.[0] ||
+      'Gagal menyimpan data instalasi'
+
+    Toast.fire({ icon: 'error', title: message })
   } finally {
     isSubmitting.value = false
     uiStore.setLoading(false)
