@@ -223,9 +223,15 @@ const router = createRouter({
           component: () => import('@/presentations/views/app/surveyor/createSurvey.vue'),
         },
         {
+          // Halaman lama `teknisi/MeterReading.vue` sudah dihapus karena
+          // isinya mock (nama & angka meter di-hardcode) dan memanggil
+          // endpoint yang selalu 404. Alur meter yang sebenarnya ada di
+          // `teknisi/PemakaianAir.vue` -> `admin/tagihan/partials/
+          // detailPemakaianAir.vue`. Route ini dipertahankan hanya
+          // sebagai pengalih supaya tautan/riwayat lama tidak error 404.
           path: 'teknisi/pencatatan-meter',
           name: 'Catat Meter',
-          component: () => import('@/presentations/views/app/teknisi/MeterReading.vue'),
+          redirect: '/app/instalasi/teknisiPemakaianAir',
         },
         {
           path: 'teknisi/hasil-instalasi/:id',
