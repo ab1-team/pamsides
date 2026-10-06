@@ -34,7 +34,7 @@ class DashboardController extends Controller
         $month = (int) $request->query('month', $now->month);
         $todayYmd = $now->toDateString();
 
-        // ─── CACHE 1: stat-global (independent of year/month) ───
+        // â”€â”€â”€ CACHE 1: stat-global (independent of year/month) â”€â”€â”€
         $statsGlobal = Cache::remember(
             'dashboard:stats:global:'.$todayYmd,
             self::STATS_CACHE_TTL,
@@ -70,7 +70,7 @@ class DashboardController extends Controller
             }
         );
 
-        // ─── CACHE 2: finance data (per year+month) ───
+        // â”€â”€â”€ CACHE 2: finance data (per year+month) â”€â”€â”€
         $financeData = Cache::remember(
             "dashboard:finance:{$year}:{$month}",
             self::FINANCE_CACHE_TTL,
@@ -138,7 +138,7 @@ class DashboardController extends Controller
             }
         );
 
-        // ─── CACHE 3: available_years (jarang berubah) ───
+        // â”€â”€â”€ CACHE 3: available_years (jarang berubah) â”€â”€â”€
         $availableYears = Cache::remember(
             'dashboard:available_years',
             self::YEARS_CACHE_TTL,
@@ -470,31 +470,29 @@ class DashboardController extends Controller
      * supaya modal tidak berkedip di hari biasa. Sengaja TIDAK bergantung
      * pada cache "sudah pernah jalan": frontend memakai `will_run` hanya
      * untuk memutuskan membuka popup, dan itu harus tetap true di setiap
-     * login pada tanggal tersebut. Deduplikasi ada di level command, bukan
-     * di sini.
+     * login pada tanggal tersebut. Deduplikasi ada di level command.
      */
     public function checkAutoGenerateOverdue(Request $request)
     {
-        $today = now();
-        $todayYmd = $today->toDateString();
-        $todayDay = (int) $today->format('d');
+        $today        = now();
+        $todayYmd     = $today->toDateString();
+        $todayDay     = (int) $today->format('d');
         $scheduledDay = (int) (Setting::first()?->toleransi_tunggakan ?? 0);
 
-        $configured = $scheduledDay >= 1 && $scheduledDay <= 28;
+        $configured     = $scheduledDay >= 1 && $scheduledDay <= 28;
         $isScheduledDay = $todayDay === $scheduledDay;
 
         return response()->json([
-            'success' => true,
-            'configured' => $configured,
-            'is_scheduled' => $isScheduledDay,
-            // Dipertahankan di response supaya frontend lama yang masih
-            // membaca field ini tidak ikut rusak, tapi nilainya sudah tidak
-            // lagi dipakai sebagai penentu.
-            'already_ran' => false,
-            'will_run' => $configured && $isScheduledDay,
+            'success'       => true,
+            'configured'    => $configured,
+            'is_scheduled'  => $isScheduledDay,
+            // Dipertahankan supaya frontend lama yang membaca field ini
+            // tidak rusak, tapi nilainya sudah tidak dipakai sebagai penentu.
+            'already_ran'   => false,
+            'will_run'      => $configured && $isScheduledDay,
             'scheduled_day' => $scheduledDay,
-            'today_day' => $todayDay,
-            'date' => $todayYmd,
+            'today_day'     => $todayDay,
+            'date'          => $todayYmd,
         ]);
     }
 
@@ -523,7 +521,7 @@ class DashboardController extends Controller
         $setting = Setting::first();
         $scheduledDay = (int) ($setting?->toleransi_tunggakan ?? 0);
 
-        // 1) Kalau SOP belum di-set / 0 → tidak ada generate otomatis.
+        // 1) Kalau SOP belum di-set / 0 â†’ tidak ada generate otomatis.
         if ($scheduledDay < 1 || $scheduledDay > 28) {
             return response()->json([
                 'success' => true,
@@ -549,7 +547,7 @@ class DashboardController extends Controller
         }
 
         // 3) Idempotent per (bulan, user). Pertama kali buka dashboard
-        //    pada bulan ini & user ini → execute. Berikutnya → skip.
+        //    pada bulan ini & user ini â†’ execute. Berikutnya â†’ skip.
         $runCacheKey = 'auto_gen_overdue_'.$todayYm.'_'.$userId;
         $alreadyRan = Cache::get($runCacheKey, false);
 
