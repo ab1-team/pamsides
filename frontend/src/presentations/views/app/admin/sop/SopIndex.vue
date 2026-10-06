@@ -5,47 +5,44 @@
       padding="none"
       class="relative! lg:shadow-lg! lg:variant-default! lg:hoverable!"
     >
-      <div class="hidden lg:flex! h-full min-h-[400px]!">
+      <div class="hidden lg:flex! items-stretch! min-h-[400px]!">
         <ContentCard
           variant="minimal"
           padding="none"
-          class="w-54! xl:w-62! flex-shrink-0! bg-slate-900! border-r! border-slate-800! rounded-tr-none! rounded-br-none! overflow-visible! relative! z-20!"
+          class="w-60! xl:w-64! flex-shrink-0! self-stretch! bg-slate-900! border-r! border-slate-800! rounded-tr-none! rounded-br-none! overflow-hidden! relative! z-20!"
         >
-          <div class="flex flex-col gap-1! py-6!">
+          <div class="flex flex-col gap-1! py-5! px-3!">
             <p
-              class="text-[10px]! font-bold! text-slate-500! uppercase! tracking-widest! mb-3! pl-5! pr-4!"
+              class="text-[10px]! font-bold! text-slate-500! uppercase! tracking-widest! mb-2! pl-3! pr-2!"
             >
               Menu Pengaturan
             </p>
 
-            <div class="flex flex-col gap-1! pl-2! overflow-visible!">
-              <div
-                v-for="menu in menuList"
-                :key="menu.key"
-                class="relative! w-full!"
-                :class="{ 'active-tab-curve!': activeSection === menu.key }"
-              >
+            <div class="flex flex-col gap-0.5!">
+              <div v-for="menu in menuList" :key="menu.key" class="relative!">
                 <BaseButton
                   @click="activeSection = menu.key"
                   variant="ghost"
-                  class="w-full! justify-start! pl-3! pr-4! py-3.5! rounded-l-full! rounded-r-none! transition-all! duration-300! relative!"
+                  class="w-full! justify-start! pl-3! pr-3! py-2.5! rounded-xl! transition-all! duration-200! relative!"
                   :class="[
                     activeSection === menu.key
-                      ? 'bg-[#f8fafc]! text-slate-900! font-bold! z-10! translate-x-[1px]! ring-0! ring-offset-0! focus:ring-0! focus:ring-offset-0! outline-none! border-r-0! shadow-none!'
+                      ? 'bg-[#f8fafc]! text-slate-900! font-bold! shadow-sm! ring-0! focus:ring-0! outline-none!'
                       : 'text-slate-400! hover:text-white! hover:bg-white/10!',
                   ]"
                 >
-                  <span class="w-full! flex! items-center! justify-between! gap-3!">
-                    <span class="flex items-center gap-3!">
-                      <span class="text-lg! leading-none! shrink-0! w-6! flex! justify-start!">
+                  <span class="w-full! flex! items-center! justify-between! gap-2!">
+                    <span class="flex items-center gap-2.5! min-w-0!">
+                      <span class="text-sm! leading-none! shrink-0! w-4! flex! justify-center!">
                         <font-awesome-icon :icon="menu.icon" />
                       </span>
-                      <span class="text-sm! font-bold! text-left! truncate!">{{ menu.label }}</span>
+                      <span class="text-[13px]! font-bold! text-left! truncate!">{{
+                        menu.label
+                      }}</span>
                     </span>
                     <font-awesome-icon
                       v-if="activeSection === menu.key"
                       icon="chevron-right"
-                      class="text-[10px]! text-blue-100! opacity-50!"
+                      class="text-[10px]! text-slate-400! shrink-0!"
                     />
                   </span>
                 </BaseButton>
@@ -139,7 +136,7 @@
                   />
                   <span
                     v-if="activeSection === menu.key"
-                    class="text-[10px]! font-black! uppercase! tracking-tight! whitespace-nowrap! animate-item-reveal!"
+                    class="text-[10px]! font-black! uppercase! tracking-tight! whitespace-nowrap! animate-item-reveal"
                   >
                     {{ menu.label }}
                   </span>

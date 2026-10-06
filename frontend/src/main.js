@@ -194,6 +194,17 @@ import {
   faUpload,
   faWandMagicSparkles,
   faRefresh,
+  faBold,
+  faItalic,
+  faUnderline,
+  faAlignLeft,
+  faAlignCenter,
+  faAlignRight,
+  faListUl,
+  faListOl,
+  faTable,
+  faRotateLeft,
+  faRotateRight,
 } from '@fortawesome/free-solid-svg-icons'
 
 import { faWhatsapp } from '@fortawesome/free-brands-svg-icons'
@@ -364,6 +375,17 @@ library.add(
   faUpload,
   faWandMagicSparkles,
   faRefresh,
+  faBold,
+  faItalic,
+  faUnderline,
+  faAlignLeft,
+  faAlignCenter,
+  faAlignRight,
+  faListUl,
+  faListOl,
+  faTable,
+  faRotateLeft,
+  faRotateRight,
 )
 
 export { MySwal } from './utils/swal'
