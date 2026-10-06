@@ -44,18 +44,11 @@ import ArsipPemakaian from '@/presentations/views/app/admin/arsipDashbord/ArsipP
 import ArsipInstalasi from '@/presentations/views/app/admin/arsipDashbord/ArsipInstalasi.vue'
 import NotFoundView from '@/presentations/views/app/NotFoundView.vue'
 
-const getDashboardRoute = (role) => {
-  const routes = {
-    surveyor: '/app',
-    teknisi: '/app/teknisi',
-    pelanggan: '/app',
-    admin: '/app',
-  }
-  return routes[role] || '/app'
-}
+import { getDashboardRoute } from './dashboardRoutes'
 
-// NOTE: DashboardHome renders role-specific dashboard via dynamic component,
-// jadi surveyor/pelanggan/admin bisa share path /app. Teknisi pakai route khusus.
+// NOTE: DashboardHome merender dashboard per-role lewat dynamic component,
+// jadi admin/surveyor/pelanggan berbagi path /app. Teknisi punya route khusus
+// (/app/teknisi) yang me-render komponen yang sama.
 
 
 const router = createRouter({
@@ -223,9 +216,19 @@ const router = createRouter({
           component: () => import('@/presentations/views/app/surveyor/createSurvey.vue'),
         },
         {
+          // Rute lama menunjuk MeterReading.vue, yaitu halaman MOCK:
+          // nama pelanggan, nomor ID, dan angka meter di-hardcode
+          // ("Budi Darmawan", 1240 m³) dan submit-nya memanggil
+          // POST /installation-tickets/METER-MOCK/installation-result
+          // yang selalu 404 karena route-model binding.
+          //
+          // Alur pencatatan meter yang benar sudah ada di PemakaianAir.vue
+          // → detailPemakaianAir.vue dan memakai meterService. Route ini
+          // sekarang mengarah ke sana supaya tidak ada tautan/yangl/error
+          // menuju halaman yang tidak bisa dipakai.
           path: 'teknisi/pencatatan-meter',
           name: 'Catat Meter',
-          component: () => import('@/presentations/views/app/teknisi/MeterReading.vue'),
+          redirect: '/app/instalasi/teknisiPemakaianAir',
         },
         {
           path: 'teknisi/hasil-instalasi/:id',
@@ -372,10 +375,78 @@ const router = createRouter({
   ],
 })
 
+/**
+ * Peta role → path yang boleh dibuka, dan siapa saja yang boleh.
+ *
+ * Format: `prefixes` untuk route bertipe prefix (agar guard tetap benar
+ * meski penulisan trailed slash berbeda), `roles` untuk role yang diizinkan.
+ *
+ * PENTING: admin sengaja TIDAK diberi akses ke prefix role lain. Sebelumnya
+ * admin exempted dari semua cek (`!['pelanggan','admin'].includes(userRole)`),
+ * sehingga admin bisa membuka /app/pelanggan/* lalu mendapat 403 dari backend
+ * karena route-nya `role:pelanggan`. Admin yang salah klik tidak seharusnya
+ * melihat halaman kosong.
+ */
+const ROLE_GUARDS = [
+  {
+    key: 'surveyor',
+    prefixes: ['/app/survey/create', '/app/surveyor'],
+    roles: ['surveyor', 'admin'],
+  },
+  {
+    key: 'teknisi',
+    // Perhatikan: prefix TIDAK memakai trailing slash supaya `/app/teknisi`
+    // (tanpa garis miring akhir) ikut tertangkap. Sebelumnya daftar memakai
+    // '/app/teknisi/' sehingga path persis '/app/teknisi' lolos tanpa cek.
+    prefixes: ['/app/teknisi', '/app/instalasi/teknisiPemakaianAir'],
+    roles: ['teknisi', 'admin'],
+  },
+  {
+    key: 'pelanggan',
+    prefixes: ['/app/pelanggan'],
+    roles: ['pelanggan'],
+  },
+  {
+    key: 'admin',
+    prefixes: [
+      '/app/data-pelanggan',
+      '/app/data-desa',
+      // PENTING: '/app/dataInstalasi' memakai huruf I besar, sedangkan
+      // '/app/data-pelanggan' memakai tanda hubung. Sebelumnya hanya yang
+      // terdaftar sehingga /app/dataInstalasi tidak pernah terproteksi.
+      '/app/dataInstalasi',
+      '/app/arsip',
+      '/app/settings',
+      '/app/kelas-biaya',
+      '/app/transaksi',
+      '/app/pelaporan',
+    ],
+    roles: ['admin'],
+  },
+]
+
+/**
+ * Cocokkan path dengan daftar prefix, aman terhadap perbedaan trailing slash.
+ * '/app/teknisi' cocok dengan '/app/teknisi', '/app/teknisi/',
+ * dan '/app/teknisi/pencatatan-meter'.
+ */
+const matchesPrefix = (path, prefix) => {
+  if (path === prefix) return true
+  return path.startsWith(prefix + '/')
+}
+
+/**
+ * Semua prefix yang PUNYA batasan role selain "hanya butuh login".
+ * Rute seperti /app/profil dan /usages/cetak_* sengaja tidak ada di sini.
+ */
+const GUARDED_PREFIXES = ROLE_GUARDS.flatMap((guard) =>
+  guard.prefixes.map((prefix) => ({ prefix, roles: guard.roles })),
+)
+
 router.beforeEach((to) => {
   const token = localStorage.getItem('auth_token')
   const expiresAt = localStorage.getItem('auth_expires_at')
-  const userRole = localStorage.getItem('user_role') || 'admin'
+  const storedRole = localStorage.getItem('user_role')
   const isAuthPage = to.name === 'login'
   const now = Date.now()
 
@@ -390,60 +461,54 @@ router.beforeEach((to) => {
     }
   }
 
-  const roleSpecificRoutes = {
-    surveyor: ['/app/survey/create', '/app/surveyor'],
-    teknisi: [
-      '/app/teknisi/',
-      '/app/instalasi/teknisiPemakaianAir',
-      '/app/instalasi/pemakaian-air',
-    ],
-    admin: [
-      '/app/data-pelanggan',
-      '/app/data-desa',
-      '/app/settings/',
-      '/app/coa',
-      '/app/kelas-biaya',
-      '/app/instalasi/',
-      '/app/transaksi/',
-      '/app/pelaporan',
-    ],
-    pelanggan: ['/app/pelanggan/'],
-  }
-
-  const isTeknisiPath =
-    to.path.startsWith('/app/teknisi/') ||
-    to.path === '/app/instalasi/teknisiPemakaianAir' ||
-    to.path.startsWith('/app/instalasi/pemakaian-air')
-
-  const matchesRole = (role) => {
-    if (role === 'admin' && isTeknisiPath && userRole === 'teknisi') return false
-    return roleSpecificRoutes[role].some((r) => to.path.startsWith(r))
-  }
-
-  const isTeknisiAllowedPath = isTeknisiPath && userRole === 'teknisi'
-
-  const isSurveyorOnly = matchesRole('surveyor') && !['surveyor', 'admin'].includes(userRole)
-  const isTeknisiOnly = isTeknisiPath && !['teknisi', 'admin'].includes(userRole)
-  const isAdminOnly = matchesRole('admin') && !['admin'].includes(userRole) && !
-    isTeknisiAllowedPath
-  const isPelangganOnly = matchesRole('pelanggan') && !['pelanggan', 'admin'].includes(userRole)
-
-  if (isSurveyorOnly || isTeknisiOnly || isAdminOnly || isPelangganOnly) {
+  // Cek autentikasi DULUAN, sebelum bicara soal role.
+  //
+  // Urutan ini penting: `userRole` lama diberi fallback ke 'admin' ketika
+  // localStorage kosong, sehingga setiap keputusan role untuk tamu selalu
+  // berakhir "diizinkan" dan satu-satunya penjaga adalah `if (!token)`.
+  // Menolak tamu lebih dulu membuat keputusan role hanya berlaku untuk user
+  // yang benar-benar punya sesi.
+  if (!token) {
+    if (isAuthPage) return true
     return {
       name: 'login'
     }
   }
 
-  if (to.path.startsWith('/app') || to.path === '/') {
-    if (!token) {
-      return {
-        name: 'login'
-      }
+  // Sudah login: jangan tampilkan halaman login lagi.
+  if (isAuthPage) {
+    return {
+      path: getDashboardRoute(storedRole || 'admin')
     }
-    return true
   }
 
-  if (isAuthPage && token) {
+  // Role yang tidak dikenal (mis. enum DB ditambah nanti) tidak boleh
+  // mendapat akses apa pun yang dibatasi — fail closed.
+  const userRole = ROLE_GUARDS.some((g) => g.roles.includes(storedRole))
+    ? storedRole
+    : 'unknown'
+
+  if (userRole === 'unknown') {
+    // Paksa logout supaya user bisa login ulang dan mendapat role yang valid.
+    localStorage.removeItem('auth_token')
+    localStorage.removeItem('user_data')
+    localStorage.removeItem('user_role')
+    localStorage.removeItem('auth_expires_at')
+
+    return {
+      name: 'login'
+    }
+  }
+
+  // Temukan prefix yang cocok. Prefix terpanjang didahulukan supaya
+  // '/app/instalasi/teknisiPemakaianAir' menang atas '/app/instalasi'.
+  const matched = GUARDED_PREFIXES
+    .filter(({ prefix }) => matchesPrefix(to.path, prefix))
+    .sort((a, b) => b.prefix.length - a.prefix.length)[0]
+
+  if (matched && !matched.roles.includes(userRole)) {
+    // Jangan lempar ke halaman login (user sudah login dan itu membingungkan,
+    // serta memicu redirect bolak-balik). Kembalikan ke dashboard role-nya.
     return {
       path: getDashboardRoute(userRole)
     }
