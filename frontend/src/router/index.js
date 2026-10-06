@@ -420,8 +420,24 @@ const ROLE_GUARDS = [
       '/app/kelas-biaya',
       '/app/transaksi',
       '/app/pelaporan',
+      // Halaman instalasi yang di sidebar eksklusif admin. Tanpa prefix
+      // di sini, teknisi/pelanggan yang mengetik URL secara manual akan
+      // lolos ke halaman lalu baru kena 403 dari backend — UX buruk yang
+      // persis seperti yang terjadi di /app/pelanggan dulu.
+      '/app/instalasi/register',
+      '/app/instalasi/status',
+      '/app/instalasi/daftar-tagihan',
     ],
     roles: ['admin'],
+  },
+  {
+    key: 'admin-teknisi',
+    // Route backend `meter-readings/*` dan `monthly-bills/*` dibuka untuk
+    // admin DAN teknisi, jadi halaman pemakaiknya tidak boleh dikunci
+    // admin-only. Yang dilindungi di sini hanya akses role lain
+    // (pelanggan/surveyor) yang memang tidak punya endpoint-nya.
+    prefixes: ['/app/instalasi/pemakaian-air'],
+    roles: ['admin', 'teknisi'],
   },
 ]
 
