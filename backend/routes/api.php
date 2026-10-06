@@ -42,7 +42,11 @@ use Illuminate\Support\Facades\Route;
 | Public Routes
 |--------------------------------------------------------------------------
 */
-Route::post('/login', [AuthController::class, 'login']);
+// Dua limiter berlapis: per email+IP (5x/menit) dan per IP (20x/menit).
+// Kombinasi email+IP dipilih supaya penyerang tidak bisa mengunci akun
+// orang lain hanya dengan mengspam email-nya.
+Route::post('/login', [AuthController::class, 'login'])
+    ->middleware(['throttle:login', 'throttle:login-ip']);
 Route::get('/health', function () {
     return response()->json(['status' => 'OK']);
 });
@@ -60,15 +64,37 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('settings/kecamatan', [SettingController::class, 'getKecamatan']);
     Route::get('settings/desa', [SettingController::class, 'getDesa']);
     Route::get('settings/payment-mode', [SettingController::class, 'getPaymentMode']);
+
+    // Identitas lembaga untuk chrome bersama (judul sidebar, kop cetak).
+    // Endpoint ini sengaja mengembalikan HANYA field yang layak dilihat
+    // semua role. SidebarView memanggilnya di setiap mount; sebelumnya
+    // memakai GET /settings/sop yang `role:admin` sehingga teknisi,
+    // surveyor, dan pelanggan selalu 403 dan judulnya diam-diam jatuh ke
+    // teks hardcoded.
+    Route::get('settings/lembaga-identity', [SopController::class, 'publicIdentity']);
 });
 
 
-//Shared Routes (Bisa diakses Admin & Surveyor)
-
-Route::middleware(['auth:sanctum', 'role:admin,surveyor'])->group(function () {
+// Shared Routes (Bisa diakses Admin, Surveyor & Teknisi)
+//
+// PENTIKAN URUTAN: `register-dropdown` harus didaftarkan SEBELUM wildcard
+// `{installationTicket}`. Laravel mencocokkan route sesuai urutan
+// pendaftaran, bukan menbakarnya per pola. Kalau wildcard terdaftar lebih
+// dulu, path "register-dropdown" diperlakukan sebagai nilai id dan request
+// berakhir 404 — bukan 403 — sehingga endpointnya tidak pernah bisa dipanggil
+// meski route-nya sendiri sudah terdaftar dengan benar.
+Route::middleware(['auth:sanctum', 'role:admin,surveyor,teknisi'])->group(function () {
     // Dipindahkan ke sini agar admin bisa membaca draft & surveyor bisa membaca pending
     Route::get('installation-tickets', [InstallationTicketController::class, 'index']);
-    Route::get('installation-tickets/register-dropdown', [InstallationTicketController::class, 'registerDropdown']);
+
+    // Hanya relevan untuk admin yang mengisi formulir registrasi.
+    Route::middleware('role:admin')->group(function () {
+        Route::get('installation-tickets/register-dropdown', [InstallationTicketController::class, 'registerDropdown']);
+    });
+
+    // Teknisi butuh detail tiket untuk mengisi Hasil Instalasi. Sebelumnya
+    // endpoint ini tertutup untuk teknisi sehingga halaman tersebut 403
+    // dan header-nya menggantung di "Loading...".
     Route::get('installation-tickets/{installationTicket}', [InstallationTicketController::class, 'show']);
 });
 
@@ -92,9 +118,12 @@ Route::middleware(['auth:sanctum', 'role:admin,teknisi'])->group(function () {
     // Endpoint ringan khusus popup 4 kotak di dashboard admin.
     // Filter & paginasi di SERVER → frontend tidak perlu loop halaman.
     Route::get('dashboard/popup-data', [DashboardController::class, 'popupData']);
-    Route::get('dashboard/notification', [DashboardController::class, 'getNotification']);
-    Route::post('dashboard/notification/dismiss', [DashboardController::class, 'dismissNotification']);
     Route::post('dashboard/auto-generate-overdue', [DashboardController::class, 'autoGenerateOverdue']);
+    // Pra-cek ringan: apakah hari ini memang ada generate piutang?
+    // Dipanggil frontend SETELAH login tapi SEBELUM popup loading dibuka,
+    // supaya modal tidak berkedip di hari biasa (backend balas instan
+    // `ran=false` bila bukan tanggal generate).
+    Route::get('dashboard/auto-generate-overdue/check', [DashboardController::class, 'checkAutoGenerateOverdue']);
 
     Route::get('meter-readings/pending', [MeterReadingController::class, 'index']);
     Route::post('meter-readings', [MeterReadingController::class, 'store']);

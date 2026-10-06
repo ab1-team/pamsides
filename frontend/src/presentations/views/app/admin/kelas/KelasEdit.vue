@@ -105,7 +105,7 @@
             >
               <span
                 class="sm:hidden! text-[10px]! font-bold! text-slate-400! uppercase! tracking-wider!"
-                >Rentang Volume (mÂ³)</span
+                >Rentang Volume (m³)</span
               >
               <div class="flex items-center gap-3! w-full sm:w-auto!">
                 <div class="relative! w-full sm:w-24!">
@@ -149,7 +149,7 @@
             <div class="sm:px-2! w-full!">
               <span
                 class="sm:hidden! block! mb-1.5! text-[10px]! font-bold! text-slate-400! uppercase! tracking-wider!"
-                >Harga per mÂ³</span
+                >Harga per m³</span
               >
               <MaksMoneyInput v-model="block.price" placeholder="0" no-margin />
             </div>

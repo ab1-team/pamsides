@@ -31,6 +31,18 @@ export default defineConfig([
     },
   },
 
+  // File build/config berjalan di Node, bukan browser. Tanpa ini `process` di
+  // `vite.config.js` dianggap undefined dan kena `no-undef`.
+  {
+    name: 'node-files',
+    files: ['vite.config.js', 'vite.config.mjs', 'eslint.config.js', 'tailwind.config.js'],
+    languageOptions: {
+      globals: {
+        ...globals.node,
+      },
+    },
+  },
+
   ...pluginOxlint.buildFromOxlintConfigFile('.oxlintrc.json'),
 
   skipFormatting,

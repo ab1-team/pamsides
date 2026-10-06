@@ -227,12 +227,75 @@ export const useBillingStore = defineStore('billing', () => {
         }
       }
 
+      // Tanggal pembayaran dari date picker. Backend membaca field `paid_at_date`
+      // (MonthlyBillController::pay). Sebelumnya field ini TIDAK pernah dikirim,
+      // sehingga backend selalu jatuh ke `now()` — tanggal yang dipilih user
+      // diabaikan begitu saja, padahal logika ADVANCE di UI memakainya.
+      const paidAtDate = paymentData?.tanggal ? String(paymentData.tanggal).slice(0, 10) : null
+
       const payload = {
         payment_method: backendMethod,
         amount_paid: Number(paymentData.pembayaran || paymentData.amount || 0),
+        ...(paidAtDate ? { paid_at_date: paidAtDate } : {}),
       }
 
-      const res = await billingService.confirmPayment(periodId, payload)
+      // ── Retry otomatis ──
+      // User sering tidak sengaja menekan tombol berulang, atau internet
+      // putus sesaat. Karena backend sudah idempoten (status tagihan dicek
+      // ulang di dalam transaksi + lockForUpdate), mengirim ulang request
+      // yang sama aman: kalau pembayaran pertama sudah sempat berhasil,
+      // request kedua dibalas 400 "Tagihan sudah dibayar" yang kita Perlakukan
+      // sebagai SUKSES (idempotent), bukan error.
+      //
+      // Retry hanya untuk error jaringan / server sibuk — bukan untuk 4xx lain.
+      const MAX_RETRY = 2
+      const RETRY_DELAY_MS = 1200
+
+      const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
+
+      const isRetryable = (err) => {
+        const status = err?.response?.status
+
+        // Tidak ada respons = timeout / internet putus / DNS gagal.
+        if (!err?.response) return true
+        // 503 (server sibuk) & 502/504 (gateway) = layak dicoba lagi.
+        return [502, 503, 504].includes(status)
+      }
+
+      let res = null
+      let lastError = null
+
+      for (let attempt = 0; attempt <= MAX_RETRY; attempt++) {
+        try {
+          res = await billingService.confirmPayment(periodId, payload)
+          lastError = null
+          break
+        } catch (err) {
+          lastError = err
+
+          // "Tagihan sudah dibayar" = pembayaran kita sebenarnya sudah
+          // sempat berhasil tapi responsnya hilang. Perlakukan sebagai sukses.
+          if (
+            err?.response?.status === 400 &&
+            /sudah dibayar/i.test(err.response?.data?.message || '')
+          ) {
+            res = { success: true, message: 'Pembayaran berhasil dikonfirmasi', already_paid: true }
+            lastError = null
+            break
+          }
+
+          if (attempt < MAX_RETRY && isRetryable(err)) {
+            await sleep(RETRY_DELAY_MS * (attempt + 1))
+            continue
+          }
+
+          throw err
+        }
+      }
+
+      if (lastError) {
+        throw lastError
+      }
 
       if (!res?.success) {
         return {
@@ -280,7 +343,11 @@ export const useBillingStore = defineStore('billing', () => {
       error.value = 'Gagal menyimpan pembayaran'
       return {
         success: false,
-        message: err.response?.data?.message || 'Gagal menyimpan pembayaran',
+        message:
+          err?.response?.data?.message ||
+          (err?.response
+            ? `Gagal menyimpan pembayaran (HTTP ${err.response.status}). Silakan coba lagi.`
+            : 'Tidak dapat terhubung ke server. Periksa koneksi internet, lalu coba lagi.'),
         error: err,
       }
     } finally {

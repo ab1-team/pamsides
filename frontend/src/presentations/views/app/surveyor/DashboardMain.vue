@@ -151,11 +151,20 @@
           <div class="p-4! space-y-4! max-h-[380px]! overflow-y-auto! custom-scrollbar!">
             <div v-if="tasks.length === 0" class="py-20! text-center!">
               <div
-                class="w-16! h-16! bg-slate-50! rounded-full! flex! items-center! justify-center! mx-auto! mb-4! text-slate-300!"
+                class="w-16! h-16! rounded-full! flex! items-center! justify-center! mx-auto! mb-4!"
+                :class="loadError ? 'bg-red-50! text-red-300!' : 'bg-slate-50! text-slate-300!'"
               >
-                <font-awesome-icon icon="clipboard-check" size="2x" />
+                <font-awesome-icon :icon="loadError ? 'triangle-exclamation' : 'clipboard-check'" size="2x" />
               </div>
-              <p class="text-xs! font-bold! text-slate-400!">Semua survey telah selesai!</p>
+              <p
+                class="text-xs! font-bold!"
+                :class="loadError ? 'text-red-500!' : 'text-slate-400!'"
+              >
+                {{ loadError ? 'Gagal memuat antrian survey.' : 'Semua survey telah selesai!' }}
+              </p>
+              <p v-if="loadError" class="mt-1! text-[11px]! text-slate-400!">
+                Periksa koneksi lalu muat ulang halaman.
+              </p>
             </div>
 
             <div
@@ -231,6 +240,8 @@ import ticketService from '@/services/ticket.service'
 
 const tasks = ref([])
 const loading = ref(false)
+// true = request gagal, false = memang tidak ada antrian.
+const loadError = ref(false)
 const userData = JSON.parse(localStorage.getItem('user_data') || '{}')
 const surveyorName = ref(userData.name || 'Surveyor')
 const completionRate = ref(0)
@@ -270,12 +281,18 @@ onMounted(async () => {
 const fetchDashboardData = async () => {
   try {
     loading.value = true
+    loadError.value = false
 
     const pendingRes = await ticketService.getTickets({ status: 'pending' })
-    const pendingTickets = pendingRes.data.data || []
+    const pendingTickets = pendingRes?.data?.data || []
 
-    const surveyedRes = await ticketService.getTickets({ status: 'surveyed' })
-    const surveyedTickets = surveyedRes.data.data || []
+    // PENTING: minta per_page besar untuk status `surveyed`. Tanpa ini
+    // default backend = 10 baris, sehingga grafik "Distribusi Jarak Pipa"
+    // hanya menghitung 10 tiket terakhir sementara angka "Survey Selesai"
+    // memakai total keseluruhan — dua visualisasi jadi saling bertentangan
+    // setiap kali data melewati 10 baris.
+    const surveyedRes = await ticketService.getTickets({ status: 'surveyed', per_page: 500 })
+    const surveyedTickets = surveyedRes?.data?.data || []
 
     tasks.value = pendingTickets.slice(0, 15).map((t) => ({
       id: t.id,
@@ -284,8 +301,8 @@ const fetchDashboardData = async () => {
       status: 'Pending',
     }))
 
-    const totalPending = pendingRes.data.total || pendingTickets.length
-    const totalSurveyed = surveyedRes.data.total || surveyedTickets.length
+    const totalPending = pendingRes?.data?.total ?? pendingTickets.length
+    const totalSurveyed = surveyedRes?.data?.total ?? surveyedTickets.length
     const grandTotal = totalPending + totalSurveyed
 
     stats.value[0].value = grandTotal.toString()
@@ -343,6 +360,12 @@ const fetchDashboardData = async () => {
       ],
     }
   } catch (err) {
+    // Jangan biarkan `catch` kosong. Sebelumnya kegagalan request membuat
+    // dashboard menampilkan state "semua survey selesai" dan 0% — identik
+    // dengan kondisi antrian memang kosong, sehingga surveyor salah paham
+    // bahwa pekerjaannya sudah beres.
+    loadError.value = true
+    console.error('[SurveyorDashboard] gagal memuat data:', err)
   } finally {
     loading.value = false
   }

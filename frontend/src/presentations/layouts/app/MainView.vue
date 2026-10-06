@@ -133,15 +133,36 @@ const handleLogout = async () => {
         await axios.post('/logout')
       }
     } catch (error) {
+      // Sengaja ditelan: logout harus tetap membersihkan sesi lokal meski
+      // POST /logout gagal (koneksi putus, token sudah kedaluwarsa).
+      // Menahan pengguna di aplikasi karena request server gagal justru
+      // membiarkan sesi half-login. Token server akan ditolak sendiri
+      // setelah kedaluwarsa.
+      console.warn('[Logout] gagal membatalkan token di server:', error?.message)
     } finally {
       const userData = JSON.parse(localStorage.getItem('user_data') || '{}')
       const userName = userData.name || ''
 
+      // Bersihkan SEMUA key sesi. `auth_expires_at` wajib ikut dihapus:
+      // sebelumnya tidak, sehingga di browser bersama timestamp milik user
+      // lama bisa membuat user berikutnya ikut ter-logout paksa saat guard
+      // menemukan now > expiresAt.
       localStorage.removeItem('auth_token')
       localStorage.removeItem('user_role')
       localStorage.removeItem('user_data')
+      localStorage.removeItem('auth_expires_at')
 
-      uiStore.setUserRole('admin')
+      // Catatan: penanda popup generate piutang yang pernah ada di
+      // `sessionStorage` sudah DIHAPUS, jadi logout tidak perlu membersihkan
+      // apa pun di sana lagi. Generate kini berjalan ulang di setiap login
+      // pada tanggal toleransi, dengan dedup di level command backend.
+
+      // Reset state store ke kondisi "belum login". Nilai lama 'admin'
+      // membuat sidebar menampilkan menu admin dan roleTitle "Portal Admin"
+      // di halaman login.
+      uiStore.setUserRole('')
+      uiStore.setUserData(null)
+      uiStore.setLembagaName('')
 
       router.push(`/login?logout=true&name=${encodeURIComponent(userName)}`)
     }

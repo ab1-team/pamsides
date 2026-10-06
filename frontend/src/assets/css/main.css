@@ -1874,6 +1874,26 @@ utilities;
     border-radius: var(--border-radius-lg) !important;
   }
 
+  /* Grid ringkasan pada popup "Generate Piutang Tunggakan". HTML-nya
+     dikirim lewat opsi `html:` di dalam file JS, jadi kelas ini ditulis di
+     CSS (bukan utilities Tailwind) supaya pasti ikut ter-generate.
+     Dulu `grid grid-cols-2!` — utility itu bisa hilang kalau pemindaian
+     Tailwind tidak menemukan file sumbernya. */
+  .swal2-popup .overdue-stat-grid {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 0.625rem !important;
+    margin-bottom: 0.75rem !important;
+  }
+
+  /* Baris legenda "kode akun -> kode akun" + jumlahnya. */
+  .swal2-popup .overdue-legend-row {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 0.75rem !important;
+  }
+
   .swal2-container.swal2-top-end {
     top: 12rem !important;
     right: 1rem !important;
@@ -1891,6 +1911,30 @@ utilities;
     margin-bottom: 20px !important;
     align-items: center !important;
   }
+
+  /* Toast memakai `width: 360px` dari SweetAlert2 plus `min-width: 280px`
+     milik `.swal-toast-custom`. Di layar 320px, lebar tetap 360px itu ditambah padding container
+     akan meluber, jadi lebarkan ulang mengikuti lebar layar yang tersedia.
+     `swal-container-front` ikut dicakup karena itu class container yang
+     dipasang `app.use(VueSweetalert2)` di main.js. */
+  @media (max-width: 480px) {
+    body.swal2-toast-shown .swal2-container,
+    .swal2-container.swal-container-front {
+      width: auto !important;
+      max-width: 100% !important;
+    }
+
+    .swal-toast-custom {
+      min-width: 0 !important;
+      width: 100% !important;
+    }
+
+    .swal2-toast-container {
+      margin: 0.5rem !important;
+      left: 0.5rem !important;
+      right: 0.5rem !important;
+    }
+  }
   
   .swal2-toast .swal2-popup {
     padding: 1rem 1.25rem !important;
@@ -1906,6 +1950,11 @@ utilities;
     gap: 0.75rem !important;
   }
 
+  /* Catatan `display`: SweetAlert2 menyembunyikan tombol lewat inline
+     style `display: none` (lihat `toggle()` di sweetalert2). Kalau di sini
+     ada `display: inline-flex !important`, aturan itu MENANG dan membuat
+     tombol tetap terlihat walau `showConfirmButton: false`. Karena itu
+     `display` TIDAK ikut dipaksa — styling tetap sama saat tombol aktif. */
   .swal2-confirm {
     background-color: #ef4444 !important;
     color: white !important;
@@ -1917,7 +1966,6 @@ utilities;
     transition: all 0.2s ease !important;
     min-width: 120px !important;
     height: auto !important;
-    display: inline-flex !important;
     align-items: center !important;
     justify-content: center !important;
   }
@@ -1928,6 +1976,8 @@ utilities;
     box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3) !important;
   }
 
+  /* Sama seperti `.swal2-confirm` di atas: `display` tidak dipaksa agar
+     `display: none` inline dari SweetAlert2 tetap berlaku. */
   .swal2-cancel {
     background-color: #6b7280 !important;
     color: white !important;
@@ -1939,7 +1989,6 @@ utilities;
     transition: all 0.2s ease !important;
     min-width: 120px !important;
     height: auto !important;
-    display: inline-flex !important;
     align-items: center !important;
     justify-content: center !important;
   }
@@ -1950,19 +1999,103 @@ utilities;
     box-shadow: 0 4px 12px rgba(107, 114, 128, 0.3) !important;
   }
 
+  /* Style tombol sudah diletakkan pada masing-masing tombol di atas
+     (`.swal2-confirm`, `.swal2-cancel`) — bukan pada wrapper-nya.
+     `display` sengaja TIDAK dipaksa di sini: SweetAlert2 menyembunyikan
+     wrapper lewat inline style `display: none` saat semua tombol
+     dimatikan, dan aturan `display: ... !important` pada selector yang
+     sama akanMENANG lalu membatalkannya, sehingga popup tanpa tombol
+     tetap memunculkan baris Actions kosong. */
   .swal2-actions {
     gap: 0.75rem !important;
     margin-top: 1rem !important;
-    display: flex !important;
     flex-wrap: wrap !important;
     justify-content: center !important;
   }
 
-  .swal2-actions button {
-    visibility: visible !important;
-    opacity: 1 !important;
-    position: relative !important;
-    z-index: 1000 !important;
+  /* ============================================================
+     SWEETALERT2 - RESPONSIF
+
+     SweetAlert2 menulis `width` dari opsi `width:` sebagai nilai PAJANG
+     (mis. `width: 560` menjadi `width: 560px`) lewat `applyNumericalStyle`,
+     dan hanya sets `max-width: 100%` bawaannya. Di layar sempit popup tetap
+     memakai lebar 560px lalu dipotong oleh `overflow` container.
+
+     Yang dikontrol di sini:
+       - lebar popup dibatasi viewport dengan margin yang nyaman,
+       - isi popup boleh di-scroll saat lebih tinggi dari layar
+         (SweetAlert2 hanya memberi `overflow: auto` pada
+         `.swal2-html-container`, bukan pada `.swal2-popup`; dengan isi
+         panjang seperti popup "Generate Piutang Tunggakan" yang muncul
+         tepat setelah login admin, popup bisa melebihi tinggi layar),
+       - tombol tetap punya tinggi sentuh yang layak di layar kecil.
+
+     `dvh` dipakai supaya tinggi mengikuti area yang benar-benar terlihat di
+     browser mobile; dengan `vh` saja, address bar ikut terhitung sehingga
+     `max-height` jadi terlalu kecil.
+     ============================================================ */
+
+  /* Semua aturan di bawah hanya berlaku di layar kecil. Di layar lebar
+     popup dibiarkan seperti aslinya agar tampilan desktop tidak berubah. */
+  @media (max-width: 480px) {
+    .swal2-container {
+      /* Padding container bawaan 0.625em membuat popup terlalu dekat tepi
+         layar; naikkan sedikit supaya ada ruang bernapas di HP. */
+      padding: 0.75rem !important;
+    }
+
+    .swal2-popup {
+      /* Menimpa lebar numeric dari opsi `width:`. Aturan bawaan hanya
+         memberi `max-width: 100%`, sementara `width` tetap menang, jadi
+         batas viewport harus ditulis eksplisit di sini. */
+      max-width: calc(100vw - 1.5rem) !important;
+      /* Isi boleh di-scroll, bukan popup-nya dipotong. */
+      max-height: calc(100dvh - 1.5rem) !important;
+      overflow-y: auto !important;
+      overscroll-behavior: contain;
+    }
+
+    .swal2-title {
+      font-size: var(--text-lg) !important;
+    }
+
+    .swal2-html-container {
+      padding: 0.75rem 0.25rem 0 !important;
+      font-size: var(--text-sm) !important;
+    }
+
+    /* Tombol ditumpuk supaya tidak terpotong. `column-reverse` menempatkan
+       tombol utama paling bawah, mengikuti urutan yang lazim pada dialog
+       mobile. */
+    .swal2-actions {
+      flex-direction: column-reverse !important;
+      align-items: stretch !important;
+      gap: 0.5rem !important;
+    }
+
+    .swal2-actions .swal2-styled {
+      /* `min-width: 120px` bawaan tidak masalah di kolom penuh, tapi
+         `width: 100%` diperlukan agar container tidak menyisakan ruang. */
+      margin: 0 !important;
+      width: 100% !important;
+      min-height: 44px !important;
+    }
+
+    /* Grid ringkasan pada popup "Generate Piutang Tunggakan". Dua kolom
+       masih muat di layar sempit, tapi angka `text-xl` + label `uppercase`
+       membuat isinya rapat sekali; turun ke satu kolom lebih terbaca.
+       Selector-nya memakai `.swal2-popup` sebagai ancestor karena HTML-nya
+       dikirim lewat `html:` di dalam file JS. */
+    .swal2-popup .overdue-stat-grid {
+      grid-template-columns: 1fr !important;
+    }
+
+    /* Baris "kode akun → kode akun" punya label panjang; izinkan wrap
+       supaya tidak keluar dari popup. */
+    .swal2-popup .overdue-legend-row {
+      flex-wrap: wrap !important;
+      gap: 0.25rem 0.75rem !important;
+    }
   }
 
   @keyframes fadeIn {

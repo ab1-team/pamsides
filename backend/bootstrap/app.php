@@ -16,6 +16,10 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->append(HandleCors::class);
 
+        // Aktifkan throttle bawaan untuk seluruh grup `api`. Tanpa ini
+        // tidak ada limiter yang berlaku pada route di routes/api.php.
+        $middleware->throttleApi();
+
         $middleware->alias([
             'role' => CheckRole::class,
         ]);

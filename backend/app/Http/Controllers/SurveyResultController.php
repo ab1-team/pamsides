@@ -2,14 +2,18 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\GeneratesSafeUploadNames;
 use App\Models\InstallationTicket;
 use App\Models\SurveyResult;
+use App\StateMachines\TicketStateMachine;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
 class SurveyResultController extends Controller
 {
+    use GeneratesSafeUploadNames;
+
     public function index(Request $request)
     {
         $query = SurveyResult::with(['surveyor', 'ticket.package', 'ticket.village', 'ticket.user']);
@@ -66,16 +70,34 @@ class SurveyResultController extends Controller
             'photo.max' => 'Ukuran foto maksimal 2MB.',
         ]);
 
-        if (! in_array($installationTicket->status, ['pending', 'draft'], true)) {
+        // Hanya tiket `pending` boleh disurvey. Sebelumnya `draft` ikut
+        // diterima, sehingga admin yang masih mengisi draft bisa
+        // di-dorong ke `surveyed` dan seluruh langkah registrasi
+        // terlewati — transisi itu memang dilarang di TicketStateMachine.
+        if ($installationTicket->status !== 'pending') {
             return response()->json([
                 'success' => false,
                 'message' => 'Tiket dengan status '.$installationTicket->status.' tidak dapat di-survey.',
             ], 422);
         }
 
-        $file = $request->file('photo');
-        $fileName = time().'_'.$file->getClientOriginalName();
-        $file->storeAs('survey-photos', $fileName, 'public');
+        // Lewati helper state machine supaya aturan transisi tetap satu
+        // sumber kebenaran (rulenya mengizinkan pending -> surveyed).
+        TicketStateMachine::validate($installationTicket->status, 'surveyed');
+
+        // Penjaga terakhir terhadap survey ganda. Cek status di atas biasanya
+        // sudah cukup (store() selalu mengubah status ke `surveyed`), tapi
+        // dua request bersamaan bisa sama-sama lolos sebelum salah satunya
+        // commit. survey_results.ticket_id sengaja tidak diberi unique
+        // constraint, jadi pengecekan eksplisit ini diperlukan.
+        if ($installationTicket->survey()->exists()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Tiket ini sudah memiliki hasil survey.',
+            ], 409);
+        }
+
+        $fileName = $this->storeUploadedImage($request->file('photo'), 'survey-photos');
 
         DB::beginTransaction();
         try {
@@ -99,11 +121,16 @@ class SurveyResultController extends Controller
             ], 201);
         } catch (\Exception $e) {
             DB::rollBack();
+            // Bersihkan file yang barusan ditulis supaya tidak ada file
+            // yatim di disk kalau insert-nya gagal.
             Storage::disk('public')->delete('survey-photos/'.$fileName);
+
+            // Jangan bocorkan pesan exception internal ke klien.
+            report($e);
 
             return response()->json([
                 'success' => false,
-                'message' => 'Gagal menyimpan survey: '.$e->getMessage(),
+                'message' => 'Gagal menyimpan survey. Silakan coba lagi.',
             ], 500);
         }
     }
@@ -131,10 +158,7 @@ class SurveyResultController extends Controller
                 if ($survey->photo_url) {
                     Storage::disk('public')->delete('survey-photos/'.$survey->photo_url);
                 }
-                $file = $request->file('photo');
-                $fileName = time().'_'.$file->getClientOriginalName();
-                $file->storeAs('survey-photos', $fileName, 'public');
-                $survey->photo_url = $fileName;
+                $survey->photo_url = $this->storeUploadedImage($request->file('photo'), 'survey-photos');
             }
 
             if ($request->filled('distance_to_pipe_m')) {

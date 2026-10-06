@@ -32,8 +32,21 @@
 
 .login-container {
   min-height: 100vh;
+  /* `100vh` di browser mobile menghitung address bar sebagai bagian dari
+     viewport, jadi hasilnya selalu lebih tinggi dari layar yang benar-benar
+     terlihat. `dvh` mengikuti tinggi viewport yang aktual. Ditulis setelah
+     `100vh` supaya browser lama tetap memakai nilai yang valid. */
+  min-height: 100dvh;
   display: flex;
-  align-items: center;
+  /* Sengaja `flex-start`, bukan `center`. Dengan `center`, ketika konten
+     lebih tinggi dari layar (mis. landscape HP, atau jendela laptop pendek)
+     overflow terjadi di ATAS dan bawah. Browser hanya bisa scroll ke bawah,
+     jadi badge + headline jadi tidak terjangkau — user tidak pernah bisa
+     melihat bagian atas form.
+     Centering yang aman dilakukan lewat `margin: auto 0` pada `.wrapper`:
+     kalau ruang cukup dia tetap di tengah, kalau tidak dia turun ke atas dan
+     sisanya bisa di-scroll. */
+  align-items: flex-start;
   justify-content: center;
   padding: 2rem;
   font-family: 'Plus Jakarta Sans', 'Inter', sans-serif;
@@ -65,6 +78,12 @@
   justify-content: space-between;
   gap: 4rem;
   max-width: 1100px;
+  width: 100%;
+  /* Pusatkan vertikal tanpa memotong bagian atas saat konten melebihi
+     tinggi layar (lihat catatan `align-items` di `.login-container`).
+     `width: 100%` sengaja ditulis ulang: tanpa itu, `margin: auto` membuat
+     elemen turun ke lebar intrinsic dan kolom kanan ikut menyusut. */
+  margin: auto 0;
   width: 100%;
 }
 
@@ -301,7 +320,10 @@ label {
   background: #ffffff;
   border: 1.5px solid #e2e8f0;
   border-radius: 1rem;
-  font-size: 0.95rem;
+  /* 16px, bukan 0.95rem: iOS Safari auto-membesarkan tampilan halaman saat
+     field difokuskan kalau font-size-nya di bawah 16px. Efeknya user
+     ter-zoom dan tidak otomatis kembali saat pindah ke field berikutnya. */
+  font-size: 16px;
   font-family: inherit;
   color: #1e293b;
 
@@ -452,22 +474,33 @@ label {
 
 @media (max-width: 850px) {
   .login-container {
-    padding: 3rem 1.5rem;
-    align-items: flex-start;
+    padding: 2rem 1.5rem;
   }
   .wrapper {
     flex-direction: column;
     text-align: center;
     max-width: 550px;
     gap: 2.5rem;
+    /* Tulis ulang `margin: auto 0` dari aturan dasar. Pada sumbu kolom,
+       `auto` memusatkan horizontal; sumbu baris dibiarkan 0 supaya konten
+       mulai dari atas dan sisa tinggi layar bisa di-scroll (sama seperti
+       `.login-container`, jangan pakai `align-items: center` di sini). */
     margin: 0 auto;
+  }
+  .left,
+  .right {
+    /* Animasi masuk dari kiri/kanan terasa meleset saat layout sudah
+       menumpuk di tengah. `slideInUp` jauh lebih wajar secara visual. */
+    animation-name: slideInUp;
   }
   .left {
     align-items: center;
     max-width: 100%;
   }
   .headline h1 {
-    font-size: 3.5rem;
+    /* `clamp` menggantikan nilai tetap: mengikuti lebar layar tanpa pernah
+       meluber, jadi tidak perlu breakpoint tambahan hanya untuk judul. */
+    font-size: clamp(2.5rem, 8vw, 3.5rem);
   }
   .desc-group {
     display: block;
@@ -480,11 +513,14 @@ label {
     line-height: 1.8;
   }
   .chips {
-    display: inline-flex;
-    vertical-align: middle;
-    gap: 0.6rem;
-    margin-left: 0.5rem;
+    /* Dulu `inline-flex` + `vertical-align: middle` supaya chip menempel di
+       akhir paragraf. Itu rapuh: begitu teks wraps, chip meloncat ke baris
+       sendiri dan jarak antar chip jadi tidak konsisten. Block terpisah
+       dengan jarak sendiri jauh lebih stabil. */
+    display: flex;
     justify-content: center;
+    gap: 0.6rem;
+    margin: 0.9rem 0 0;
     flex-wrap: wrap;
   }
   .chip {
@@ -498,6 +534,17 @@ label {
   }
 }
 
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 @media (max-width: 480px) {
   .login-container {
     padding: 1rem 0.6rem;
@@ -508,7 +555,7 @@ label {
     padding: 0;
   }
   .headline h1 {
-    font-size: 2.8rem;
+    font-size: clamp(2.1rem, 9vw, 2.8rem);
   }
   .desc {
     display: inline;
@@ -525,16 +572,18 @@ label {
   }
   .card-sub {
     font-size: 0.85rem;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    /* Dulu dipaksa satu baris + ellipsis supaya tidak membungkus, tapi
+       itu membuat teks benar-benar terpotong di HP sempit ("Login untuk
+       akses dash..."). Membungkus jauh lebih terbaca. */
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
   }
   .chips {
-    display: inline-flex;
+    display: flex;
     gap: 0.4rem;
-    margin: 0.5rem 0 0 0.4rem;
-    width: auto;
-    max-width: 100%;
+    margin: 0.75rem 0 0;
+    width: 100%;
     flex-wrap: wrap;
     justify-content: center;
   }
@@ -546,6 +595,15 @@ label {
     gap: 0.3rem;
   }
   .card-title {
+    font-size: 1.5rem;
+    /* Jarak ke emoji ikut dikecilkan agar baris judul tetap muat
+       di layar sempit. */
+    gap: 0.5rem;
+  }
+  .card-title::before {
+    /* Emoji `::before` punya `font-size` sendiri di aturan dasar; kalau
+       tidak ikut dikecilkan, ukurannya tetap 2rem dan proporsinya
+       terlihat jauh lebih besar daripada judulnya. */
     font-size: 1.5rem;
   }
   .quick-btns {

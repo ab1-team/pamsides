@@ -36,7 +36,9 @@
           <input
             ref="searchInputRef"
             type="text"
-            placeholder="Cari nama pelanggan..."
+            :placeholder="canSearchCustomers ? 'Cari nama pelanggan...' : 'Pencarian tidak tersedia'"
+            :disabled="!canSearchCustomers"
+            :title="canSearchCustomers ? '' : 'Pencarian pelanggan hanya tersedia untuk admin dan surveyor'"
             :value="searchQuery"
             @input="onSearchInput"
             @focus="searchDropdownOpen = true"
@@ -44,7 +46,7 @@
             autocomplete="off"
           />
           <button
-            v-if="searchQuery"
+            v-if="searchQuery && canSearchCustomers"
             class="topnav-search-clear"
             @click="clearSearch"
             aria-label="Bersihkan pencarian"
@@ -229,6 +231,11 @@ const emit = defineEmits([
 ])
 
 const uiStore = useUiStore()
+
+// Pencarian pelanggan bersumber dari data /installation-tickets yang hanya
+// boleh diakses admin & surveyor. Untuk role lain kotak ini diberi disabled,
+// bukan dibiarkan "tidak ada hasil" yang menyesatkan.
+const canSearchCustomers = computed(() => ['admin', 'surveyor'].includes(uiStore.userRole))
 const instalasiStore = useInstalasiStore()
 
 const userData = computed(() => {
@@ -309,7 +316,7 @@ const DEBOUNCE_MS = 200
 
 const performSearch = (query) => {
   const q = (query || '').trim().toLowerCase()
-  if (!q) {
+  if (!q || !canSearchCustomers.value) {
     searchResults.value = []
     searchLoading.value = false
     return
@@ -413,8 +420,12 @@ watch(
 
 onMounted(() => {
   document.addEventListener('click', handleClickOutside)
-  // Pastikan data instalasi sudah di-load agar pencarian langsung tersedia
-  if (instalasiStore && typeof instalasiStore.fetchData === 'function') {
+  // Pastikan data instalasi sudah di-load agar pencarian langsung tersedia.
+  // Hanya untuk role yang punya akses ke /installation-tickets
+  // (admin & surveyor). Untuk pelanggan & teknisi endpoint itu 403, sehingga
+  // pemanggilan di sini menghasilkan error yang ditelan tanpa pesan — gejalanya
+  // kotak pencarian selalu "tidak ada hasil" tanpa penjelasan.
+  if (canSearchCustomers.value && instalasiStore && typeof instalasiStore.fetchData === 'function') {
     const dataMap = instalasiStore.dataMap || {}
     const total =
       (dataMap.permohonan?.length || 0) +

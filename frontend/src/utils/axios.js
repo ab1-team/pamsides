@@ -3,7 +3,8 @@ import { useUiStore } from '@/stores/uiStore'
 
 const baseURL = (() => {
   if (import.meta.env.VITE_API_BASE_URL) return import.meta.env.VITE_API_BASE_URL
-  if (import.meta.env.VITE_BACKEND_URL) return `${import.meta.env.VITE_BACKEND_URL.replace(/\/$/, '')}/api`
+  if (import.meta.env.VITE_BACKEND_URL)
+    return `${import.meta.env.VITE_BACKEND_URL.replace(/\/$/, '')}/api`
   if (typeof window !== 'undefined') {
     const { protocol, hostname } = window.location
     return `${protocol}//${hostname}/api`
@@ -18,6 +19,12 @@ const axiosInstance = axios.create({
     Accept: 'application/json',
   },
   withCredentials: false,
+  // Timeout generously: proses simpan tagihan involves insert jurnal + trigger
+  // `amount`, which historically took 3-8 detik. Default axios (0 = no timeout)
+  // meant a hung request left the UI spinning forever with no feedback; 60s is
+  // far above normal latency but still bounded so the user eventually gets a
+  // retryable error instead of an infinite spinner.
+  timeout: 60000,
 })
 
 axiosInstance.interceptors.request.use(

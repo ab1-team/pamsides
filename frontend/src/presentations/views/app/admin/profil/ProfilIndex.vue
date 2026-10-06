@@ -59,7 +59,7 @@
               <font-awesome-icon icon="file-image" class="text-[10px]! shrink-0!" />
               <span class="truncate!">{{ avatarFile?.name || avatarFileName || 'Foto tersimpan' }}</span>
               <span v-if="avatarFile" class="text-slate-400! shrink-0!">
-                â€¢ {{ (avatarFile.size / 1024).toFixed(1) }} KB
+                • {{ (avatarFile.size / 1024).toFixed(1) }} KB
               </span>
             </span>
           </div>

@@ -8,7 +8,11 @@ export const useUiStore = defineStore('ui', () => {
   // State
   const loading = ref(false)
   const activeRequests = ref(0)
-  const userRole = ref(localStorage.getItem('user_role') || 'admin')
+  // Default TIDAK boleh 'admin'. Nilai kosong lebih aman: role yang belum
+// dikenal akan ditolak router guard (fail closed). Dengan default 'admin',
+// storage yang kosong atau terhapus sempat menampilkan menu & dashboard
+// admin sebelum guard yang menyusun ulang redirect.
+const userRole = ref(localStorage.getItem('user_role') || '')
   const userData = ref(JSON.parse(localStorage.getItem('user_data')) || null)
   const lembagaName = ref('')
   const settingsVersion = ref(0)

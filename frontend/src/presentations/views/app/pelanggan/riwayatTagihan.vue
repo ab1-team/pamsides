@@ -102,7 +102,7 @@
 
           <template #column-usage="{ row }">
             <div class="font-bold! text-slate-600!">
-              {{ row.usage }} <span class="text-[10px]! opacity-50!">mÂ³</span>
+              {{ row.usage }} <span class="text-[10px]! opacity-50!">m³</span>
             </div>
           </template>
 
@@ -161,7 +161,7 @@
               >
                 <div class="flex! justify-between! items-center!">
                   <span class="text-xs! font-bold! text-slate-500!">Pemakaian Air</span>
-                  <span class="text-xs! font-black! text-slate-800!"> {{ bill.usage }} mÂ³ </span>
+                  <span class="text-xs! font-black! text-slate-800!"> {{ bill.usage }} m³ </span>
                 </div>
                 <div class="w-full! h-px! bg-slate-100!"></div>
                 <div class="flex! justify-between! items-center!">
@@ -276,7 +276,7 @@ const tableColumns = [
 const stats = computed(() => [
   {
     label: 'Total Pemakaian (3 Bln)',
-    value: `${historyStats.value.total_usage_3_months || 0} mÂ³`,
+    value: `${historyStats.value.total_usage_3_months || 0} m³`,
     icon: 'droplet',
     bg: 'bg-blue-50',
     color: 'text-blue-600',
