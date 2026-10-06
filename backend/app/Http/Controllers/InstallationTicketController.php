@@ -45,6 +45,25 @@ class InstallationTicketController extends Controller
 
             $query = InstallationTicket::with($relations)->orderBy('created_at', 'desc');
 
+            // Least-privilege untuk non-admin. Admin tetap melihat semuanya
+            // (kebutuhan operasional), sedangkan role lain dibatasi:
+            //  - pelanggan: hanya tiket miliknya sendiri
+            //  - teknisi : hanya tiket berstatus instalasi (surveyed ke atas)
+            //  - surveyor: hanya tiket pending, dan TIDAK draft (draft = pekerjaan
+            //    awal admin yang belum selesai; sebelumnya ikut terbaca dan
+            //    bahkan bisa di-survey)
+            if (! $request->user()?->canSeeAllTickets()) {
+                $role = $request->user()?->role;
+
+                if ($role === 'pelanggan') {
+                    $query->where('user_id', $request->user()->id);
+                } elseif ($role === 'surveyor') {
+                    $query->where('status', 'pending');
+                } elseif ($role === 'teknisi') {
+                    $query->whereIn('status', User::TICKET_STATUSES_FOR_TEKNISI);
+                }
+            }
+
             if ($request->has('search') && ! empty($request->search)) {
                 $q = $request->search;
                 $query->where(function ($sub) use ($q) {
@@ -216,8 +235,27 @@ class InstallationTicketController extends Controller
         ]);
     }
 
-    public function show(InstallationTicket $installationTicket)
+    public function show(Request $request, InstallationTicket $installationTicket)
     {
+        // Endpoint ini mengembalikan data tagihan & pemakaian milik pelanggan
+        // tersebut, jadi harus ikut dibatasi. Tanpa guard di sini, scoping
+        // pada index() bisa dilewati dengan memanggil URL detail langsung.
+        if (! $request->user()?->canSeeAllTickets()) {
+            $role = $request->user()?->role;
+
+            if ($role === 'pelanggan' && (int) $installationTicket->user_id !== (int) $request->user()->id) {
+                abort(403, 'Akses ditolak. Tiket ini bukan milik Anda.');
+            }
+
+            if ($role === 'surveyor' && $installationTicket->status !== 'pending') {
+                abort(403, 'Akses ditolak. Surveyor hanya dapat membuka tiket yang menunggu survey.');
+            }
+
+            if ($role === 'teknisi' && ! in_array($installationTicket->status, User::TICKET_STATUSES_FOR_TEKNISI, true)) {
+                abort(403, 'Akses ditolak. Tiket ini belum masuk tahap instalasi.');
+            }
+        }
+
         $ticket = $installationTicket->load([
             'package.tariffBlocks',
             'package',

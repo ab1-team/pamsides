@@ -165,9 +165,43 @@ class PelangganPortalController extends Controller
             ->where('user_id', $user->id)
             ->first();
 
+        // Jangan pernah kembalikan null dengan 200:billDetail() dan
+        // billHistory() menolak dengan 403, jadi bentuk kegagalan untuk
+        // "pelanggan tanpa record Customer" harus konsisten di semua endpoint.
+        if (! $customer) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Data pelanggan tidak ditemukan.',
+            ], 404);
+        }
+
+        // Pilih field secara eksplisit. `$customer` dengan relasi `user`
+        // ikut memuat model User utuh; endpoint ini satu-satunya yang
+        // mengembalikan model mentah seperti itu, jadi jangan
+        // bergantung pada atribut #[Hidden] pada model.
         return response()->json([
             'success' => true,
-            'data' => $customer
+            'data' => [
+                'id' => $customer->id,
+                'customer_code' => $customer->customer_code,
+                'initial_meter_reading' => $customer->initial_meter_reading,
+                'meter_photo_url' => $customer->meter_photo_url,
+                'activated_at' => $customer->activated_at,
+                'created_at' => $customer->created_at,
+                'ticket' => $customer->ticket ? [
+                    'id' => $customer->ticket->id,
+                    'applicant_name' => $customer->ticket->applicant_name,
+                    'address' => $customer->ticket->address,
+                    'phone' => $customer->ticket->phone,
+                    'status' => $customer->ticket->status,
+                    'village_id' => $customer->ticket->village_id,
+                ] : null,
+                'user' => $customer->user ? [
+                    'id' => $customer->user->id,
+                    'name' => $customer->user->name,
+                    'email' => $customer->user->email,
+                ] : null,
+            ],
         ]);
     }
 

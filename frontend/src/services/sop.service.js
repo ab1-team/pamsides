@@ -11,9 +11,25 @@ import api from '@/utils/axios'
 export const sopService = {
   /**
    * Ambil seluruh pengaturan SOP (untuk inisialisasi form)
+   *
+   * KHUSUS ADMIN — endpoint ini `role:admin`. Jangan panggil dari komponen
+   * yang dirender untuk semua role, karena hasilnya 403 dan error-nya
+   * ditelan `catch` sehingga gejalanya tidak terlihat. Gunakan
+   * `getPublicIdentity()` untuk chrome bersama.
    */
   async getAll() {
     const response = await api.get('/settings/sop')
+    return response.data
+  },
+
+  /**
+   * Nama & logo lembaga — boleh dipanggil role apa pun yang sudah login.
+   *
+   * Dipakai SidebarView untuk judul, yang juga dirender oleh teknisi,
+   * surveyor, dan pelanggan.
+   */
+  async getPublicIdentity() {
+    const response = await api.get('/settings/lembaga-identity')
     return response.data
   },
 

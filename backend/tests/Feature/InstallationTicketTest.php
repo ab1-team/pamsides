@@ -127,12 +127,64 @@ class InstallationTicketTest extends TestCase
     }
 
     #[Test]
-    public function non_admin_tidak_bisa_akses_tiket(): void
+    public function pelanggan_tidak_bisa_akses_tiket(): void
     {
-        Sanctum::actingAs($this->createUser('teknisi'), ['*']);
+        Sanctum::actingAs($this->createUser('pelanggan'), ['*']);
 
         $response = $this->getJson('/api/installation-tickets');
 
         $response->assertStatus(403);
+    }
+
+    /**
+     * Teknisi BOLEH membuka daftar/detail tiket, tapi hanya tiket berstatus
+     * instalasi. Endpoint-nya dibuka ke `role:admin,surveyor,teknisi`
+     * (sebelumnya teknisi kena 403 sehingga halaman Hasil Instalasi tidak
+     * bisa dipakai sama sekali), dan barisnya tetap di-scope lewat
+     * User::TICKET_STATUSES_FOR_TEKNISI.
+     */
+    #[Test]
+    public function teknisi_hanya_melihat_tiket_tahap_instalasi(): void
+    {
+        $package = $this->createPackage();
+
+        // Tiket harus dibuat sebagai ADMIN: store() hanya boleh admin, jadi
+        // kalau sesi masih teknisi, POST-nya 403 dan $draft bernilai null.
+        Sanctum::actingAs($this->createUser('admin'), ['*']);
+
+        // Tiket baru dibuat berstatus `draft` (lihat store()), yaitu masih
+        // pekerjaan awal admin dan di luar kewenangan teknisi.
+        $draft = $this->postJson('/api/installation-tickets', [
+            'package_id'     => $package->id,
+            'applicant_name' => 'Tiwik Teknisi',
+            'nik'            => '3300000000000099',
+            'address'        => 'Jl. Uji Coba No. 9',
+            'lat'            => -7.797068,
+            'lng'            => 110.370529,
+        ])->json('data.id');
+
+        $this->assertNotNull($draft, 'Tiket admin gagal dibuat.');
+
+        Sanctum::actingAs($this->createUser('teknisi'), ['*']);
+
+        $index = $this->getJson('/api/installation-tickets');
+        $index->assertStatus(200);
+        $index->assertJsonPath('data.total', 0);
+
+        // Membuka detail tiket draft secara langsung juga harus ditolak.
+        $this->getJson("/api/installation-tickets/{$draft}")->assertStatus(403);
+    }
+
+    /**
+     * Guard: `isPrivileged()` hanya boleh true untuk admin. Kalau role lain
+     * ikut lolos, semua scoping kepemilikan data jadi tidak berarti.
+     */
+    #[Test]
+    public function dropdown_registrasi_tetap_admin_saja(): void
+    {
+        Sanctum::actingAs($this->createUser('surveyor'), ['*']);
+
+        $this->getJson('/api/installation-tickets/register-dropdown')
+            ->assertStatus(403);
     }
 }

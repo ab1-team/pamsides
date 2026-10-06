@@ -47,7 +47,16 @@ return [
     |
     */
 
-    'expiration' => null,
+    // Token API kedaluwarsa setelah 8 jam (480 menit).
+    //
+    // Sebelumnya `null` = token tidak pernah kedaluwarsa di sisi server.
+    // Frontend sudah memasang timer 8 jam (LoginView.vue), tapi timer itu
+    // murni di browser: hanya dicek saat navigasi, dan hanya menghapus
+    // token dari localStorage — barisnya tetap sah di database. Token yang
+    // "kedaluwarsa" itu masih bisa dipakai bila sempat bocor.
+    //
+    // Disamakan ke 8 jam supaya batas sesi ditegakkan di server juga.
+    'expiration' => 480,
 
     /*
     |--------------------------------------------------------------------------

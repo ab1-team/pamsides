@@ -347,6 +347,9 @@ class MonthlyBillController extends Controller
         $request->validate([
             'payment_method' => 'nullable|string|in:cash,transfer',
             'amount_paid' => 'nullable|numeric|min:0',
+            // Tanggal pembayaran dari date picker FE. Divalidasi sebagai date
+            // supaya string rusak ditolak 422 (bukan 500 dari Carbon::parse).
+            'paid_at_date' => 'nullable|date',
         ]);
 
         $bill = MonthlyBill::findOrFail($id);
@@ -377,9 +380,18 @@ class MonthlyBillController extends Controller
         $accountDebetKas = $paymentMethod === 'transfer' ? '1.1.01.03' : '1.1.01.01';
 
         // Tanggal pembayaran: pakai dari FE kalau ada & valid, fallback ke now().
-        $paidAtDate = $request->filled('paid_at_date')
-            ? \Carbon\Carbon::parse($request->paid_at_date)->startOfDay()
-            : \Carbon\Carbon::now();
+        // Sudah divalidasi rule `date` di atas, jadi parse di sini aman;
+        // try-catch tetap disimpan sebagai jaring pengaman.
+        try {
+            $paidAtDate = $request->filled('paid_at_date')
+                ? \Carbon\Carbon::parse($request->paid_at_date)->startOfDay()
+                : \Carbon\Carbon::now();
+        } catch (\Throwable $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Tanggal pembayaran tidak valid.',
+            ], 422);
+        }
 
         // Deteksi ADVANCE PAYMENT: bayar SEBELUM hari toleransi_tunggakan di
         // BULAN PEMAKAIAN tagihan (billing_period_month/year).
@@ -425,15 +437,34 @@ class MonthlyBillController extends Controller
         $ketPemakaian = $ket('Pemakaian');
         $ketDenda = $ket('Denda');
 
-        // Advance payment: hapus jurnal piutang overdue_bill yang sudah tercatat
-        // untuk bill ini (reference ke bill.id).
-        if ($isAdvancePayment) {
-            $overdueDeletedCount = \App\Models\Transaction::where('reverence_type', 'overdue_bill')
-                ->where('reverence_id', $bill->id)
-                ->delete();
-        }
+        // NOTE: penghapusan jurnal piutang `overdue_bill` (kasus advance payment)
+        // dipindah KE DALAM DB::transaction di bawah. Sebelumnya ada di luar,
+        // sehingga kalau closure berikutnya gagal, jurnal piutang sudah hilang
+        // tanpa rollback -> data piutang vs jurnal tidak sinkron.
+        //
+        // DB::transaction(function () use (...) {
+        try {
+            DB::transaction(function () use ($bill, $request, $paidAtDate, $abodemen, $usageCharge, $denda, $isTunggakan, $isAdvancePayment, $revenueAbodemen, $revenuePemakaian, $relasi, $userId, $accountDebetKas, $methodLabel, $ketAbodemen, $ketPemakaian, $ketDenda, &$restoredTicket, &$overdueDeletedCount, &$payment) {
+            // Kunci baris tagihan (SELECT ... FOR UPDATE) supaya 2 request bersamaan
+            // tidak bisa sama-sama membaca status 'unpaid' lalu membayarkan dua
+            // kali. Cek status diulang di sini dengan baris terkunci — sebelumnya
+            // pengecekan terjadi DI LUAS transaksi sehingga race condition.
+            $bill = MonthlyBill::lockForUpdate()->findOrFail($bill->id);
 
-        DB::transaction(function () use ($bill, $request, $paidAtDate, $abodemen, $usageCharge, $denda, $isTunggakan, $isAdvancePayment, $revenueAbodemen, $revenuePemakaian, $relasi, $userId, $accountDebetKas, $methodLabel, $ketAbodemen, $ketPemakaian, $ketDenda, &$restoredTicket) {
+            if ($bill->status === 'paid') {
+                throw new \RuntimeException('TAGIHAN_SUDAH_DIBAYAR');
+            }
+
+            if ($isAdvancePayment) {
+                // Tanpa `lockForUpdate()` di sini: baris tagihan sudah terkunci
+                // oleh `MonthlyBill::lockForUpdate()` di atas, jadi tidak ada
+                // transaksi lain yang bisa menyentuh tagihan ini bersamaan.
+                // Memasang lock kedua hanya menambah durasi lock tanpa Benefit.
+                $overdueDeletedCount = \App\Models\Transaction::where('reverence_type', 'overdue_bill')
+                    ->where('reverence_id', $bill->id)
+                    ->delete();
+            }
+
             $bill->update(['status' => 'paid']);
 
             $payment = BillPayment::create([
@@ -444,6 +475,16 @@ class MonthlyBillController extends Controller
             ]);
 
             // ── Jurnal Pembayaran ──
+            // Kumpulkan id jurnal dulu, lalu isi kolom `urutan` dengan SATU
+            // bulk update di akhir.
+            //
+            // Sebelumnya tiap baris melakukan `->update(['urutan' => $trx->id])`
+            // sendiri. Update itu memicu observer `syncAmount` (agregasi SUM()
+            // penuh ~1 detik) + trigger `update_amount_debit` MySQL, padahal
+            // `urutan` tidak memengaruhi saldo sama sekali. Itu menambah ~5 detik
+            // per pembayaran dan ikut memicu "Lock wait timeout".
+            $trxIds = [];
+
             // Abodemen
             if ($abodemen > 0) {
                 $trx = Transaction::create([
@@ -458,7 +499,7 @@ class MonthlyBillController extends Controller
                     'saldo' => $abodemen,
                     'id_user' => $userId,
                 ]);
-                $trx->update(['urutan' => $trx->id]);
+                $trxIds[] = $trx->id;
             }
 
             // Tagihan Pemakaian
@@ -475,7 +516,7 @@ class MonthlyBillController extends Controller
                     'saldo' => $usageCharge,
                     'id_user' => $userId,
                 ]);
-                $trx->update(['urutan' => $trx->id]);
+                $trxIds[] = $trx->id;
             }
 
             // Denda (hanya tunggakan)
@@ -492,7 +533,15 @@ class MonthlyBillController extends Controller
                     'saldo' => $denda,
                     'id_user' => $userId,
                 ]);
-                $trx->update(['urutan' => $trx->id]);
+                $trxIds[] = $trx->id;
+            }
+
+            // Satu statement untuk semua baris (tidak lewat observer Eloquent,
+            // sehingga tidak memicu agregasi `amount` per baris).
+            if ($trxIds !== []) {
+                foreach ($trxIds as $tid) {
+                    DB::table('transactions')->where('id', $tid)->update(['urutan' => $tid]);
+                }
             }
 
             // ── Auto-restore: jika tiket suspended & semua bill paid → kembalikan ke completed ──
@@ -507,7 +556,33 @@ class MonthlyBillController extends Controller
                     $restoredTicket = true;
                 }
             }
-        });
+            });
+        } catch (\RuntimeException $e) {
+            // Double-pay: request lain baru saja membayar tagihan yang sama.
+            if ($e->getMessage() === 'TAGIHAN_SUDAH_DIBAYAR') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Tagihan sudah dibayar',
+                ], 400);
+            }
+
+            throw $e;
+        } catch (\Illuminate\Database\QueryException $e) {
+            // Deadlock / lock wait timeout / koneksi putus di tengah jalan.
+            // Balas 503 (retryable) dengan pesan yang bisa dibaca FE, jangan 500
+            // kosong supaya user bisa menekan ulang dengan aman (transaksi sudah
+            // di-rollback oleh DB::transaction, jadi tidak ada data setengah jadi).
+            $sqlState = $e->getCode();
+
+            if (in_array($sqlState, ['40001', '40P01', 'HY000'], true)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Server sedang sibuk, pembayaran gagal diproses. Silakan coba lagi.',
+                ], 503);
+            }
+
+            throw $e;
+        }
 
         $bill->load('customer.user', 'customer.ticket.package');
 
@@ -518,6 +593,7 @@ class MonthlyBillController extends Controller
                 : 'Pembayaran berhasil dikonfirmasi',
             'data' => [
                 'bill' => $bill,
+                'payment' => $payment,
                 'ticket_restored' => $restoredTicket,
             ],
         ]);
@@ -567,6 +643,18 @@ class MonthlyBillController extends Controller
     // Backend cek: jika semua bill paid → ubah ticket status suspended → completed.
     public function restoreCustomer(Request $request, $customerId)
     {
+        // Mengaktifkan kembali pelanggan = transisi status layanan +
+        // revenue state, sama seperti proses pembayaran. Route-nya pernah
+        // dibuka untuk teknisi (group admin+teknisi) sehingga teknisi bisa
+        // mengubah status tiket pelanggan mana saja tanpa jejak audit.
+        // Now teknisi hanya melihat daftarnya; aksi aktivasinya milik admin.
+        if ($request->user()?->role !== 'admin') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Aktivasi pelanggan hanya dapat dilakukan oleh admin.',
+            ], 403);
+        }
+
         $customer = Customer::with('ticket')->findOrFail($customerId);
 
         if (! $customer->ticket) {

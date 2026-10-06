@@ -24,3 +24,11 @@ backend/docker/mysql/
 # Backups and nested repos
 .git_backup/
 frontend/pamsides/
+
+# Log output build (vite/npm) - jangan pernah ikut commit
+build_output.txt
+build_error*.txt
+serve_test*.log
+
+# Codemod sekali pakai
+frontend/clean_views.cjs
