@@ -23,7 +23,7 @@
         <ContentCard variant="default" padding="normal" hoverable>
           <div class="flex items-center gap-2.5 mb-5! pb-4 border-b border-gray-100">
             <div class="w-8 h-8 rounded-lg flex items-center justify-center text-sm bg-cyan-100">
-              ðŸ’¸
+              ’¸
             </div>
             <div class="flex flex-col">
               <span class="text-base font-bold text-gray-800">Laba Dibagihkan</span>
@@ -56,7 +56,7 @@
         <ContentCard variant="default" padding="normal" hoverable>
           <div class="flex items-center gap-2.5 mb-5! pb-4 border-b border-gray-100">
             <div class="w-8 h-8 rounded-lg flex items-center justify-center text-sm bg-teal-50">
-              ðŸ¦
+              ¦
             </div>
             <div class="flex flex-col">
               <span class="text-base font-bold text-gray-800">Laba Ditahan</span>

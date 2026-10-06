@@ -46,7 +46,7 @@
               :readonly="true"
             />
             <span v-if="unpaidInfo" class="text-[11px]! text-slate-500! mt-1!">
-              {{ unpaidInfo.bill_count }} tagihan unpaid â€¢ Pelanggan
+              {{ unpaidInfo.bill_count }} tagihan unpaid • Pelanggan
               {{ unpaidInfo.customer?.customer_code || '-' }}
             </span>
           </div>
@@ -139,7 +139,7 @@
                   {{ row.customer?.customer_code || row.id }}
                 </span>
                 <span class="text-slate-500!">
-                  {{ row.customer?.nama || '-' }} â€¢ {{ row.bill_count }} Tagihan
+                  {{ row.customer?.nama || '-' }} • {{ row.bill_count }} Tagihan
                 </span>
               </div>
               <span class="font-mono! font-semibold! text-slate-800!">

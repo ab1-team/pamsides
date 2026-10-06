@@ -130,7 +130,7 @@
               <div class="flex-1! min-w-0!">
                 <p class="text-sm! font-bold! text-slate-800! truncate!">{{ t.applicant_name }}</p>
                 <p class="text-[11px]! text-slate-500! font-mono! mt-0.5!">
-                  NIK {{ t.nik }} Â· #INS-{{ String(t.id).padStart(4, '0') }}
+                  NIK {{ t.nik }} · #INS-{{ String(t.id).padStart(4, '0') }}
                 </p>
               </div>
               <span
@@ -235,11 +235,11 @@
                     class="flex! flex-wrap! items-center! gap-x-3! gap-y-1! mt-1! text-[11px]! text-white/70!"
                   >
                     <span>NIK: {{ selectedTicket.nik }}</span>
-                    <span class="text-white/30!">â€¢</span>
+                    <span class="text-white/30!">•</span>
                     <span class="font-mono!"
                       >#INS-{{ String(selectedTicket.id).padStart(4, '0') }}</span
                     >
-                    <span class="text-white/30!">â€¢</span>
+                    <span class="text-white/30!">•</span>
                     <span>{{ selectedTicket.package }}</span>
                   </div>
                 </div>
@@ -676,7 +676,7 @@ const handleSubmit = async () => {
         ${
           !isLunas
             ? `<div style="background:#fef3c7; padding:8px 10px; border-radius:6px; font-size:11px; color:#92400e; margin-top:6px;">
-                Sisa setelah bayar: <strong>Rp ${formatRibuan(selectedTicket.value.remaining - form.amount)}</strong> â€” status tiket tetap <strong>Belum Bayar</strong>
+                Sisa setelah bayar: <strong>Rp ${formatRibuan(selectedTicket.value.remaining - form.amount)}</strong> — status tiket tetap <strong>Belum Bayar</strong>
               </div>`
             : `<div style="background:#d1fae5; padding:8px 10px; border-radius:6px; font-size:11px; color:#065f46; margin-top:6px;">
                 Status tiket akan otomatis lanjut ke <strong>Diproses</strong>

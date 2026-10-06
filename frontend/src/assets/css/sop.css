@@ -1,27 +1,3 @@
-.active-tab-curve::before,
-.active-tab-curve::after {
-  content: '';
-  position: absolute;
-  right: 0;
-  width: 25px;
-  height: 25px;
-  background: transparent;
-  pointer-events: none;
-  z-index: 50 !important;
-}
-
-.active-tab-curve::before {
-  top: -25px;
-  border-bottom-right-radius: 25px;
-  box-shadow: 15px 15px 0 15px #f8fafc !important;
-}
-
-.active-tab-curve::after {
-  bottom: -25px;
-  border-top-right-radius: 25px;
-  box-shadow: 15px -15px 0 15px #f8fafc !important;
-}
-
 .fade-enter-active,
 .fade-leave-active {
   transition:

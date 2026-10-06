@@ -177,7 +177,7 @@
               class="flex! flex-wrap! items-center! gap-x-2! gap-y-0.5! text-blue-50! text-[10px]! sm:text-xs! mt-0.5! opacity-90!"
             >
               <span class="font-mono! font-bold!">NIK: {{ selectedCustomer.nik || '-' }}</span>
-              <span class="hidden! sm:inline!">Â·</span>
+              <span class="hidden! sm:inline!">·</span>
               <span class="truncate!">
                 Status:
                 <span class="font-bold! text-white!">{{
@@ -250,8 +250,8 @@
         >
           {{
             selectedCustomer.status === 'Suspended'
-              ? 'Pendaftaran Ditolak â€” Pelanggan Dalam Status Blokir'
-              : 'Pendaftaran Ditolak â€” Pelanggan Sudah Dicabut'
+              ? 'Pendaftaran Ditolak — Pelanggan Dalam Status Blokir'
+              : 'Pendaftaran Ditolak — Pelanggan Sudah Dicabut'
           }}
         </h3>
         <p
@@ -356,7 +356,7 @@
                   >
                     <div>Blok</div>
                     <div class="text-center!">Volume</div>
-                    <div class="text-right!">Harga / mÂ³</div>
+                    <div class="text-right!">Harga / m³</div>
                   </div>
 
                   <div
@@ -381,7 +381,7 @@
                     <div class="text-center! text-xs! font-bold! text-slate-600!">
                       {{ parseFloat(block.usage_min_m3).toFixed(0) }} -
                       {{ block.usage_max_m3 ? parseFloat(block.usage_max_m3).toFixed(0) : 'âˆž' }}
-                      <span class="text-[10px]! text-slate-400! font-normal!">mÂ³</span>
+                      <span class="text-[10px]! text-slate-400! font-normal!">m³</span>
                     </div>
 
                     <div class="text-right! text-xs! font-extrabold! text-blue-600!">

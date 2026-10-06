@@ -109,7 +109,6 @@
       :show="!!detailData || isDetailLoading"
       :loading="isDetailLoading"
       :data="detailData"
-      :change-type-colors="CHANGE_TYPE_COLORS"
       :format-rupiah="formatRupiah"
       :format-date-time="formatDateTime"
       @close="closeDetail"
@@ -152,7 +151,6 @@ const {
   packages,
   isDetailLoading,
   isUpdateSubmitting,
-  CHANGE_TYPE_COLORS,
   handleShowDetail,
   closeDetail,
   openUpdatePackage,

@@ -2,7 +2,7 @@
   <div class="space-y-6!">
     <div class="flex! flex-col! lg:flex-row! lg:items-center! lg:justify-between! gap-4!">
       <div class="flex! items-center! gap-3!">
-        <span class="text-lg!">ðŸ“Š</span>
+        <span class="text-lg!">“Š</span>
         <div class="flex! flex-col! gap-1!">
           <span class="text-base! font-semibold! text-gray-900!">
             {{ title || `Tentukan Rencana Anggaran Tahun ${tahun}` }}
@@ -13,7 +13,7 @@
         <input
           v-model="searchQuery"
           type="text"
-          placeholder="ðŸ” Cari kode atau nama akun..."
+          placeholder="” Cari kode atau nama akun..."
           class="w-full! h-10! pl-3! pr-3! bg-white! border! border-slate-200! rounded-lg! text-sm! text-slate-700! transition-all! focus:outline-none! focus:border-blue-500! focus:ring-2! focus:ring-blue-500/10!"
         />
       </div>

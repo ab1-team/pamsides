@@ -126,7 +126,7 @@
 
           <!-- ============ BODY ============ -->
           <div class="package-modal__body">
-            <div class="package-modal__body-inner pdm-stack">
+            <div class="package-modal__body-inner pdm-stack pdm-stack--detail">
 
               <!-- ============================================ -->
               <!-- SECTION 1: STATUS TAGIHAN (adaptif) -->
@@ -240,8 +240,8 @@
                       Aktif
                     </span>
                   </div>
-                  <div class="package-panel__body space-y-3">
-                    <div v-if="data.current_package" class="space-y-3">
+                  <div class="package-panel__body">
+                    <div v-if="data.current_package" class="pdm-panel-flow">
                       <!-- Paket name prominent -->
                       <div class="package-name-card package-name-card--indigo">
                         <div
@@ -277,9 +277,12 @@
                       </div>
 
                       <!-- Tarif blok -->
-                      <div v-if="data.current_package.tariff_blocks?.length">
+                      <div
+                        v-if="data.current_package.tariff_blocks?.length"
+                        class="pdm-panel-section"
+                      >
                         <div
-                          class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5 flex items-center gap-1.5"
+                          class="text-[10px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5"
                         >
                           <font-awesome-icon icon="bars" class="text-slate-400" />
                           Blok Tarif
@@ -542,7 +545,7 @@
                   <!-- Timeline -->
                   <div v-else class="timeline">
                     <div class="timeline__line"></div>
-                    <div class="space-y-2.5">
+                    <div class="pdm-timeline-list">
                       <div
                         v-for="(h, idx) in data.history"
                         :key="h.id"
@@ -563,11 +566,10 @@
                             class="flex items-center justify-between gap-2 mb-2 flex-wrap"
                           >
                             <span
-                              class="chip"
-                              :class="props.changeTypeColors[h.change_type] ||
-                                'chip--info'"
+                              class="text-[13px] font-extrabold text-slate-900 truncate"
+                              :title="h.new_package?.name"
                             >
-                              {{ h.change_type_label }}
+                              {{ h.new_package?.name || '-' }}
                             </span>
                             <span class="text-[10px] text-slate-400 font-medium">
                               {{ formatDateTime(h.created_at) }}
@@ -679,7 +681,6 @@ const props = defineProps({
   show: { type: Boolean, default: false },
   loading: { type: Boolean, default: false },
   data: { type: Object, default: null },
-  changeTypeColors: { type: Object, default: () => ({}) },
   formatRupiah: { type: Function, required: true },
   formatDateTime: { type: Function, required: true },
 })
