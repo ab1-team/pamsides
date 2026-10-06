@@ -513,6 +513,16 @@ class DashboardController extends Controller
      */
     public function autoGenerateOverdue(Request $request)
     {
+        // Route-nya memang dibuka untuk admin & teknisi (teknisi butuh
+        // endpoint ini untuk popup yang sama), TAPI aksi-nya khusus admin.
+        // Generate piutang menulis ke tabel `transactions` secara global
+        // dan ringkasannya disimpan di cache ber-key tanggal — bukan per
+        // user. Kalau teknisi boleh menjalankannya, teknisi pertama yang
+        // login pada tanggal tersebut akan "memiliki" eksekusi hari itu.
+        if (auth()->user()?->role !== 'admin') {
+            abort(403, 'Hanya admin yang dapat menjalankan generate piutang.');
+        }
+
         $userId = auth()->id();
         $today = now();
         $todayYmd = $today->toDateString();

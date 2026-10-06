@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\AuthorizesMeterReadings;
+use App\Http\Controllers\Concerns\GeneratesSafeUploadNames;
 use App\Models\Customer;
 use App\Models\InstallationTicket;
 use App\Models\MeterReading;
@@ -16,6 +18,9 @@ use Illuminate\Support\Facades\Storage;
 
 class MeterReadingController extends Controller
 {
+    use AuthorizesMeterReadings;
+    use GeneratesSafeUploadNames;
+
     /**
      * Ambil data meteran yang SUDAH di-input berdasarkan filter Bulan dan Tahun
      */
@@ -38,11 +43,7 @@ class MeterReadingController extends Controller
             ->where('reading_year', $request->year);
 
         // Least-privilege: teknisi hanya melihat catatannya sendiri
-        if (Auth::check() && Auth::user()->role === 'teknisi') {
-            $query->where('recorded_by', Auth::id());
-        }
-
-        $readings = $query->latest()->get();
+        $readings = $this->scopeMeterReadingsToOwner($query, $request)->latest()->get();
 
         return response()->json([
             'success' => true,
@@ -76,11 +77,29 @@ class MeterReadingController extends Controller
                     ->where('billing_period_year', $prevYear);
             },
         ])
+            // Hanya pelanggan dengan tiket aktif yang bisa ditagih. Tanpa
+            // filter ini pelanggan terminated/blokir ikut muncul di daftar
+            // pencatatan meter. (MonthlyBillController::usage() sudah pakai
+            // daftar status yang sama ΓÇö disamakan di sini.)
+            ->whereHas('ticket', function ($query) {
+                $query->whereIn('status', ['surveyed', 'unpaid', 'processing', 'completed', 'suspended']);
+            })
             ->whereDoesntHave('meterReadings', function ($query) use ($bulan, $tahun) {
                 $query->where('reading_month', $bulan)
                     ->where('reading_year', $tahun);
-            })
-            ->get();
+            });
+
+        // Least-privilege: teknisi hanya ditagih pelanggan yang sudah pernah
+        // ia tangani. Tanpa ini teknisi bisa mencatat meter untuk pelanggan
+        // teknisi lain, lalu store() ikut menagih dan menyuspend tiketnya.
+        if (! $this->isPrivileged($request)) {
+            $userId = $request->user()?->id;
+            $customers->whereHas('meterReadings', function ($query) use ($userId) {
+                $query->where('recorded_by', $userId);
+            });
+        }
+
+        $customers = $customers->get();
 
         return response()->json([
             'success' => true,
@@ -106,6 +125,32 @@ class MeterReadingController extends Controller
         $bulan = (int) $request->reading_month;
         $tahun = (int) $request->reading_year;
 
+        // Pastikan pelanggan benar-benar punya tiket & paket. BillingService
+        // memakai $customer->ticket->package tanpa cek null; tanpa guard di
+        // sini permintaan untuk pelanggan tanpa tiket berakhir 500.
+        $customer = Customer::with(['ticket.package.waterTariffBlocks'])->findOrFail($request->customer_id);
+
+        if (! $customer->ticket || ! $customer->ticket->package) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Pelanggan ini belum memiliki paket aktif sehingga tidak bisa ditagih.',
+            ], 422);
+        }
+
+        // Least-privilege: teknisi hanya boleh mencatat untuk pelanggan yang
+        // sudah pernah ia tangani.store() ikut membuat MonthlyBill dan bisa
+        // menyuspend tiket, jadi tanpa cek ini teknisi bisa menagih & mengubah
+        // status pelanggan milik teknisi lain.
+        if (! $this->isPrivileged($request)) {
+            $isOwnCustomer = MeterReading::where('customer_id', $customer->id)
+                ->where('recorded_by', $request->user()?->id)
+                ->exists();
+
+            if (! $isOwnCustomer) {
+                abort(403, 'Akses ditolak. Pelanggan ini bukan dalam wilayah pencatatan Anda.');
+            }
+        }
+
         $exists = MeterReading::where('customer_id', $request->customer_id)
             ->where('reading_month', $bulan)
             ->where('reading_year', $tahun)
@@ -126,13 +171,11 @@ class MeterReadingController extends Controller
         if ($last && $request->meter_value < $last->meter_value) {
             return response()->json([
                 'success' => false,
-                'message' => 'Angka meter tidak boleh lebih kecil dari bulan sebelumnya (Catatan terakhir: '.$last->meter_value.' m³)',
+                'message' => 'Angka meter tidak boleh lebih kecil dari bulan sebelumnya (Catatan terakhir: '.$last->meter_value.' m┬│)',
             ], 400);
         }
 
-        $file = $request->file('photo');
-        $fileName = time().'_'.$file->getClientOriginalName();
-        $file->storeAs('meter-readings', $fileName, 'public');
+        $fileName = $this->storeUploadedImage($request->file('photo'), 'meter-readings');
 
         $settings = Setting::first();
         $batasTagihan = (int) ($settings?->batas_tagihan ?? 27);
@@ -142,9 +185,9 @@ class MeterReadingController extends Controller
             ->setDay(min($batasTagihan, Carbon::create($tahun, $bulan, 1)->daysInMonth))
             ->setTimeFrom(now());
 
-        $result = DB::transaction(function () use ($request, $bulan, $tahun, $fileName, $recordedAt, $batasTagihan) {
+        $result = DB::transaction(function () use ($request, $customer, $bulan, $tahun, $fileName, $recordedAt, $batasTagihan) {
             $reading = MeterReading::create([
-                'customer_id' => $request->customer_id,
+                'customer_id' => $customer->id,
                 'recorded_by' => Auth::id(),
                 'reading_month' => $bulan,
                 'reading_year' => $tahun,
@@ -152,9 +195,6 @@ class MeterReadingController extends Controller
                 'photo_url' => $fileName,
                 'recorded_at' => $recordedAt,
             ]);
-
-            $customer = Customer::with(['ticket.package.waterTariffBlocks'])
-                ->findOrFail($request->customer_id);
 
             $bill = app(BillingService::class)
                 ->generateForCustomer($customer, $tahun, $bulan, $batasTagihan);
@@ -189,7 +229,7 @@ class MeterReadingController extends Controller
         ]);
     }
 
-    public function show(string $id)
+    public function show(Request $request, string $id)
     {
         $reading = MeterReading::with(['customer.user', 'customer.ticket'])->find($id);
 
@@ -199,6 +239,8 @@ class MeterReadingController extends Controller
                 'message' => 'Pencatatan meter tidak ditemukan',
             ], 404);
         }
+
+        $this->ensureMeterReadingOwner($request, $reading);
 
         return response()->json([
             'success' => true,
@@ -217,6 +259,8 @@ class MeterReadingController extends Controller
                 'message' => 'Pencatatan meter tidak ditemukan',
             ], 404);
         }
+
+        $this->ensureMeterReadingOwner($request, $reading);
 
         $request->validate([
             'meter_value' => 'required|integer|min:0|max:99999999',
@@ -238,8 +282,23 @@ class MeterReadingController extends Controller
         if ($previous && $request->meter_value < $previous->meter_value) {
             return response()->json([
                 'success' => false,
-                'message' => 'Meter tidak boleh lebih kecil dari bulan sebelumnya ('.$previous->meter_value.' m³)',
+                'message' => 'Meter tidak boleh lebih kecil dari bulan sebelumnya ('.$previous->meter_value.' m┬│)',
             ], 400);
+        }
+
+        // Rekam tagihan yang sudah dibayar tidak boleh diubah nilainya:
+        // bukti fisiknya sudah jadi bagian audit.
+        $paidBill = MonthlyBill::where('customer_id', $reading->customer_id)
+            ->where('billing_period_month', $reading->reading_month)
+            ->where('billing_period_year', $reading->reading_year)
+            ->whereIn('status', ['paid', 'processing'])
+            ->exists();
+
+        if ($paidBill && (int) $request->meter_value !== (int) $reading->meter_value) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Meter periode ini sudah ditagih dan dibayar sehingga tidak bisa diubah.',
+            ], 409);
         }
 
         $reading->meter_value = $request->meter_value;
@@ -248,10 +307,7 @@ class MeterReadingController extends Controller
             if ($reading->photo_url) {
                 Storage::disk('public')->delete('meter-readings/'.$reading->photo_url);
             }
-            $file = $request->file('photo');
-            $fileName = time().'_'.$file->getClientOriginalName();
-            $file->storeAs('meter-readings', $fileName, 'public');
-            $reading->photo_url = $fileName;
+            $reading->photo_url = $this->storeUploadedImage($request->file('photo'), 'meter-readings');
         }
 
         $reading->save();
@@ -263,7 +319,7 @@ class MeterReadingController extends Controller
         ]);
     }
 
-    public function destroy(string $id)
+    public function destroy(Request $request, string $id)
     {
         $reading = MeterReading::find($id);
 
@@ -272,6 +328,24 @@ class MeterReadingController extends Controller
                 'success' => false,
                 'message' => 'Pencatatan meter tidak ditemukan',
             ], 404);
+        }
+
+        $this->ensureMeterReadingOwner($request, $reading);
+
+        // monthly_bills tidak punya FK ke meter_readings, jadi hapus catatan
+        // tetap berhasil walau periodenya sudah dibayar. Itu menghilangkan
+        // bukti audit ΓÇö tolak di sini.
+        $hasSettledBill = MonthlyBill::where('customer_id', $reading->customer_id)
+            ->where('billing_period_month', $reading->reading_month)
+            ->where('billing_period_year', $reading->reading_year)
+            ->whereIn('status', ['paid', 'processing'])
+            ->exists();
+
+        if ($hasSettledBill) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Catatan meter ini sudah ditagih dan dibayar sehingga tidak bisa dihapus.',
+            ], 409);
         }
 
         return $this->safeDelete(
