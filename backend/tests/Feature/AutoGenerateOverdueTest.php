@@ -20,18 +20,20 @@ class AutoGenerateOverdueTest extends TestCase
         // Pakai suffix random kecil supaya email selalu unik walau
         // dipanggil beberapa kali dalam satu test class.
         $uniq = uniqid('', true);
+
         return User::create([
-            'name'     => 'Test User',
-            'email'    => 'test-' . $role . '-' . substr($uniq, -6) . '@pdam.test',
+            'name' => 'Test User',
+            'email' => 'test-'.$role.'-'.substr($uniq, -6).'@pdam.test',
             'password' => Hash::make('password'),
-            'role'     => $role,
+            'role' => $role,
         ]);
     }
 
     private function authHeaders(User $user): array
     {
         $token = $user->createToken('auth_token')->plainTextToken;
-        return ['Authorization' => 'Bearer ' . $token];
+
+        return ['Authorization' => 'Bearer '.$token];
     }
 
     #[Test]
@@ -69,7 +71,7 @@ class AutoGenerateOverdueTest extends TestCase
         $response->assertOk()
             ->assertJson([
                 'success' => true,
-                'ran'     => false,
+                'ran' => false,
             ]);
     }
 
@@ -91,7 +93,7 @@ class AutoGenerateOverdueTest extends TestCase
         $response->assertOk()
             ->assertJson([
                 'success' => true,
-                'ran'     => false,
+                'ran' => false,
             ])
             ->assertJsonStructure(['reason']);
     }
@@ -119,9 +121,35 @@ class AutoGenerateOverdueTest extends TestCase
         $second->assertOk()
             ->assertJson([
                 'success' => true,
-                'ran'     => false,
+                'ran' => false,
             ])
             ->assertJsonStructure(['reason']);
+    }
+
+    #[Test]
+    public function check_endpoint_melaporkan_will_run_tanpa_tergantung_sudah_jalan(): void
+    {
+        // `will_run` tidak boleh bergantung pada cache "sudah pernah jalan",
+        // karena frontend memakainya untuk membuka popup di setiap login.
+        Setting::create([
+            'key' => 'sop',
+            'batas_tagihan' => 27,
+            'toleransi_tunggakan' => (int) now()->format('d'),
+        ]);
+
+        $admin = $this->createUser('admin');
+        $headers = $this->authHeaders($admin);
+
+        $this->withHeaders($headers)
+            ->postJson('/api/dashboard/auto-generate-overdue')
+            ->assertOk();
+
+        // Setelah generate pertama, `will_run` tetap true.
+        $this->withHeaders($headers)
+            ->getJson('/api/dashboard/auto-generate-overdue/check')
+            ->assertOk()
+            ->assertJsonPath('will_run', true)
+            ->assertJsonPath('already_ran', false);
     }
 
     #[Test]
@@ -143,7 +171,7 @@ class AutoGenerateOverdueTest extends TestCase
         $response->assertOk()
             ->assertJson([
                 'success' => true,
-                'ran'     => true,
+                'ran' => true,
             ])
             ->assertJsonStructure([
                 'summary' => [
@@ -204,59 +232,68 @@ class AutoGenerateOverdueTest extends TestCase
 
         // Setup chain: package → ticket → customer → monthly bill overdue
         $packageId = \DB::table('installation_packages')->insertGetId([
-            'name'             => 'Paket Test',
+            'name' => 'Paket Test',
             'installation_fee' => 0,
             'monthly_abodemen' => 10000,
-            'late_penalty'     => 0,
-            'created_at'       => now(),
-            'updated_at'       => now(),
+            'late_penalty' => 0,
+            'created_at' => now(),
+            'updated_at' => now(),
         ]);
 
         $ticketId = \DB::table('installation_tickets')->insertGetId([
-            'package_id'      => $packageId,
-            'applicant_name'  => 'Fuji Riyanta',
-            'nik'             => '3321010101900001',
-            'order_date'      => now()->toDateString(),
-            'address'         => 'Alamat Test',
-            'lat'             => -7.1234567,
-            'lng'             => 110.1234567,
-            'status'          => 'completed',
-            'created_by'      => $adminUser->id,
-            'created_at'      => now(),
-            'updated_at'      => now(),
+            'package_id' => $packageId,
+            'applicant_name' => 'Fuji Riyanta',
+            'nik' => '3321010101900001',
+            'order_date' => now()->toDateString(),
+            'address' => 'Alamat Test',
+            'lat' => -7.1234567,
+            'lng' => 110.1234567,
+            'status' => 'completed',
+            'created_by' => $adminUser->id,
+            'created_at' => now(),
+            'updated_at' => now(),
         ]);
 
         // User dengan nama "Fuji Riyanta" (simulasi akun pelanggan).
         $customerUser = User::create([
-            'name'     => 'Fuji Riyanta',
-            'email'    => 'fuji.riyanta-' . uniqid() . '@pdam.test',
+            'name' => 'Fuji Riyanta',
+            'email' => 'fuji.riyanta-'.uniqid().'@pdam.test',
             'password' => Hash::make('password'),
-            'role'     => 'pelanggan',
+            'role' => 'pelanggan',
         ]);
 
         $customerId = \DB::table('customers')->insertGetId([
-            'ticket_id'              => $ticketId,
-            'user_id'                => $customerUser->id,
-            'customer_code'          => '7349',
-            'initial_meter_reading'  => 0,
-            'created_at'             => now(),
-            'updated_at'             => now(),
+            'ticket_id' => $ticketId,
+            'user_id' => $customerUser->id,
+            'customer_code' => '7349',
+            'initial_meter_reading' => 0,
+            'created_at' => now(),
+            'updated_at' => now(),
         ]);
 
         $periodMonth = max(1, (int) now()->format('m') - 1);
         MonthlyBill::create([
-            'customer_id'          => $customerId,
-            'billing_period_year'  => now()->year,
+            'customer_id' => $customerId,
+            'billing_period_year' => now()->year,
             'billing_period_month' => $periodMonth,
-            'meter_reading_start'  => 0,
-            'meter_reading_end'    => 10,
-            'usage_m3'             => 10,
-            'usage_charge'         => 50000,
-            'abodemen'             => 10000,
-            'penalty_amount'       => 0,
-            'total_amount'         => 60000,
-            'status'               => 'unpaid',
-            'due_date'             => now()->subDays(5)->toDateString(),
+            'meter_reading_start' => 0,
+            'meter_reading_end' => 10,
+            'usage_m3' => 10,
+            'usage_charge' => 50000,
+            'abodemen' => 10000,
+            'penalty_amount' => 0,
+            'total_amount' => 60000,
+            'status' => 'unpaid',
+            // `due_date` harus PAST melewati ambang `today - toleransi_tunggakan`.
+            // Test ini menyetel toleransi = tanggal hari ini, jadi ambangnya
+            // bergeser mengikuti tanggal eksekusi. `subDays(5)` dulu dipakai
+            // sebagai tebakan tetap dan langsung gagal pada tanggal 1-4:
+            // ambang jatuh di bulan sebelumnya sehingga `subDays(5)` justru
+            // LEBIH baru dari ambang, sehingga tagihan tidak terdeteksi
+            // menunggak dan jurnal tidak pernah terbentuk.
+            // `subMonths(1)->day(1)` menaruh due_date di awal bulan lalu,
+            // yang pasti lebih kecil dari ambang berapa pun tanggal test jalan.
+            'due_date' => now()->subMonths(1)->day(1)->toDateString(),
         ]);
 
         $response = $this->withHeaders($this->authHeaders($adminUser))
@@ -265,7 +302,7 @@ class AutoGenerateOverdueTest extends TestCase
         $response->assertOk()
             ->assertJson([
                 'success' => true,
-                'ran'     => true,
+                'ran' => true,
             ]);
 
         // Keterangan harus mengandung "Piutang Abodemen bulan <long month> <year>
@@ -275,15 +312,15 @@ class AutoGenerateOverdueTest extends TestCase
             5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus',
             9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember',
         ];
-        $expectedPeriod = $monthsLong[$periodMonth] . ' ' . now()->year;
-        $expectedSuffix = 'bulan ' . $expectedPeriod . ' an. Fuji Riyanta (7349)';
+        $expectedPeriod = $monthsLong[$periodMonth].' '.now()->year;
+        $expectedSuffix = 'bulan '.$expectedPeriod.' an. Fuji Riyanta (7349)';
 
         $abodemenJurnal = Transaction::where('reverence_type', 'overdue_bill')
             ->where('account_kredit', '4.1.01.02')
             ->first();
         $this->assertNotNull($abodemenJurnal, 'Harus ada jurnal piutang Abodemen.');
         $this->assertSame(
-            'Piutang Abodemen ' . $expectedSuffix,
+            'Piutang Abodemen '.$expectedSuffix,
             $abodemenJurnal->keterangan_transaksi,
             'Format keterangan Abodemen harus "Piutang Abodemen <suffix>".'
         );
@@ -295,7 +332,7 @@ class AutoGenerateOverdueTest extends TestCase
             ->first();
         $this->assertNotNull($dendaJurnal, 'Harus ada jurnal piutang Denda.');
         $this->assertSame(
-            'Piutang Denda ' . $expectedSuffix,
+            'Piutang Denda '.$expectedSuffix,
             $dendaJurnal->keterangan_transaksi,
             'Format keterangan Denda harus "Piutang Denda <suffix>".'
         );
@@ -319,57 +356,66 @@ class AutoGenerateOverdueTest extends TestCase
         $adminUser = $this->createUser('admin');
 
         $packageId = \DB::table('installation_packages')->insertGetId([
-            'name'             => 'Paket Test',
+            'name' => 'Paket Test',
             'installation_fee' => 0,
             'monthly_abodemen' => 10000,
-            'late_penalty'     => 0,
-            'created_at'       => now(),
-            'updated_at'       => now(),
+            'late_penalty' => 0,
+            'created_at' => now(),
+            'updated_at' => now(),
         ]);
 
         $ticketId = \DB::table('installation_tickets')->insertGetId([
-            'package_id'      => $packageId,
-            'applicant_name'  => 'Nama di Tiket', // berbeda
-            'nik'             => '3321010101900002',
-            'order_date'      => now()->toDateString(),
-            'address'         => 'Alamat Test',
-            'lat'             => -7.1234567,
-            'lng'             => 110.1234567,
-            'status'          => 'completed',
-            'created_by'      => $adminUser->id,
-            'created_at'      => now(),
-            'updated_at'      => now(),
+            'package_id' => $packageId,
+            'applicant_name' => 'Nama di Tiket', // berbeda
+            'nik' => '3321010101900002',
+            'order_date' => now()->toDateString(),
+            'address' => 'Alamat Test',
+            'lat' => -7.1234567,
+            'lng' => 110.1234567,
+            'status' => 'completed',
+            'created_by' => $adminUser->id,
+            'created_at' => now(),
+            'updated_at' => now(),
         ]);
 
         $customerUser = User::create([
-            'name'     => 'Nama di User', // sumber utama
-            'email'    => 'nama.user-' . uniqid() . '@pdam.test',
+            'name' => 'Nama di User', // sumber utama
+            'email' => 'nama.user-'.uniqid().'@pdam.test',
             'password' => Hash::make('password'),
-            'role'     => 'pelanggan',
+            'role' => 'pelanggan',
         ]);
 
         $customerId = \DB::table('customers')->insertGetId([
-            'ticket_id'              => $ticketId,
-            'user_id'                => $customerUser->id,
-            'customer_code'          => 'CUST-X',
-            'initial_meter_reading'  => 0,
-            'created_at'             => now(),
-            'updated_at'             => now(),
+            'ticket_id' => $ticketId,
+            'user_id' => $customerUser->id,
+            'customer_code' => 'CUST-X',
+            'initial_meter_reading' => 0,
+            'created_at' => now(),
+            'updated_at' => now(),
         ]);
 
         MonthlyBill::create([
-            'customer_id'          => $customerId,
-            'billing_period_year'  => now()->year,
+            'customer_id' => $customerId,
+            'billing_period_year' => now()->year,
             'billing_period_month' => max(1, (int) now()->format('m') - 1),
-            'meter_reading_start'  => 0,
-            'meter_reading_end'    => 10,
-            'usage_m3'             => 10,
-            'usage_charge'         => 50000,
-            'abodemen'             => 10000,
-            'penalty_amount'       => 0,
-            'total_amount'         => 60000,
-            'status'               => 'unpaid',
-            'due_date'             => now()->subDays(5)->toDateString(),
+            'meter_reading_start' => 0,
+            'meter_reading_end' => 10,
+            'usage_m3' => 10,
+            'usage_charge' => 50000,
+            'abodemen' => 10000,
+            'penalty_amount' => 0,
+            'total_amount' => 60000,
+            'status' => 'unpaid',
+            // `due_date` harus PAST melewati ambang `today - toleransi_tunggakan`.
+            // Test ini menyetel toleransi = tanggal hari ini, jadi ambangnya
+            // bergeser mengikuti tanggal eksekusi. `subDays(5)` dulu dipakai
+            // sebagai tebakan tetap dan langsung gagal pada tanggal 1-4:
+            // ambang jatuh di bulan sebelumnya sehingga `subDays(5)` justru
+            // LEBIH baru dari ambang, sehingga tagihan tidak terdeteksi
+            // menunggak dan jurnal tidak pernah terbentuk.
+            // `subMonths(1)->day(1)` menaruh due_date di awal bulan lalu,
+            // yang pasti lebih kecil dari ambang berapa pun tanggal test jalan.
+            'due_date' => now()->subMonths(1)->day(1)->toDateString(),
         ]);
 
         $this->withHeaders($this->authHeaders($adminUser))
