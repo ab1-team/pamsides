@@ -45,9 +45,9 @@
               <font-awesome-icon icon="id-card" />
             </div>
             <span class="text-xs! font-bold! text-slate-600! font-mono!">{{ customer.noInduk }}</span>
-            <span class="text-slate-300!">â€¢</span>
+            <span class="text-slate-300!">•</span>
             <span class="text-xs! font-black! text-slate-900! truncate! flex-1!">{{ customer.nama }}</span>
-            <span class="hidden! sm:inline! text-slate-300!">â€¢</span>
+            <span class="hidden! sm:inline! text-slate-300!">•</span>
             <span class="hidden! sm:inline! text-xs! font-bold! text-slate-500!">{{ customer.dusun }}</span>
           </div>
 
@@ -65,7 +65,7 @@
                   class="flex! items-center! bg-slate-100/60! border-2! border-transparent! rounded-xl! px-4! py-2.5! opacity-70!"
                 >
                   <span class="flex-1! text-sm! font-bold! text-slate-500! font-mono!">{{ customer.meterAwal }}</span>
-                  <span class="text-[9px]! font-black! text-slate-400! bg-slate-200/60! px-1.5! py-0.5! rounded!">MÂ³</span>
+                  <span class="text-[9px]! font-black! text-slate-400! bg-slate-200/60! px-1.5! py-0.5! rounded!">M³</span>
                 </div>
               </div>
 
@@ -86,13 +86,13 @@
                     onkeypress="return /[0-9]/.test(event.key)"
                     class="flex-1! bg-transparent! border-none! outline-none! text-base! font-black! text-slate-800! placeholder-slate-200! focus:text-cyan-600! font-mono!"
                   />
-                  <span class="text-[9px]! font-black! text-cyan-600! bg-cyan-50! px-1.5! py-0.5! rounded!">MÂ³</span>
+                  <span class="text-[9px]! font-black! text-cyan-600! bg-cyan-50! px-1.5! py-0.5! rounded!">M³</span>
                 </div>
                 <p class="text-[10px] text-slate-400 italic mt-1.5! flex items-center gap-1.5!">
                   <font-awesome-icon v-if="isScanning" icon="spinner" spin class="text-indigo-500" />
                   <font-awesome-icon v-else-if="ocrStatus === 'ok'" icon="check-circle" class="text-emerald-500" />
                   <font-awesome-icon v-else-if="ocrStatus === 'fail'" icon="exclamation-circle" class="text-amber-500" />
-                  <span v-if="isScanning">Membaca angkaâ€¦</span>
+                  <span v-if="isScanning">Membaca angka…</span>
                   <span v-else-if="ocrStatus === 'ok'">Terdeteksi otomatis. Periksa sebelum simpan.</span>
                   <span v-else-if="ocrStatus === 'fail'">Gagal membaca, ketik manual.</span>
                   <span v-else>* Masukkan angka meteran</span>
@@ -134,7 +134,7 @@
                       class="px-2! py-0.5! rounded-full! bg-black/60! text-emerald-300! text-[8px]! font-black! uppercase! tracking-widest! flex! items-center! gap-1!"
                     >
                       <font-awesome-icon :icon="isScanning ? 'spinner' : 'magic'" :spin="isScanning" class="text-[8px]!" />
-                      {{ isScanning ? 'Membacaâ€¦' : (autoScanAttempts > 0 ? 'Coba ulangâ€¦' : 'Arahkan angka ke kotak') }}
+                      {{ isScanning ? 'Membaca…' : (autoScanAttempts > 0 ? 'Coba ulang…' : 'Arahkan angka ke kotak') }}
                     </span>
                   </div>
                 </div>

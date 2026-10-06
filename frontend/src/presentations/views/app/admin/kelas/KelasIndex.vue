@@ -115,7 +115,7 @@
                     </div>
                     <div class="text-sm! font-black! text-slate-800! whitespace-nowrap!">
                       {{ block.usage_min_m3 }} - {{ block.usage_max_m3 || 'âˆž' }}
-                      <span class="text-[10px]! text-slate-400! font-bold! ml-0.5!">mÂ³</span>
+                      <span class="text-[10px]! text-slate-400! font-bold! ml-0.5!">m³</span>
                     </div>
                   </div>
                   <div class="space-y-0.5!">

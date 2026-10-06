@@ -766,6 +766,51 @@ input[type='text'] {
   margin-top: 0.625rem; /* 10px — sangat rapat untuk preview */
 }
 
+/* ---- Detail popup: jarak antar section seragam (24px) ----
+   Base rule memberi 20px untuk elemen generic, sedangkan
+   `.package-panel` dapat 24px. Akibatnya section berbentuk
+   `<section class="grid">` (Paket Aktif + Ringkasan Tagihan)
+   ikut 20px sementara section lain 24px — ritme vertikal
+   tidak konsisten. Variant ini memaksa SEMUA section sama. */
+.pdm-stack--detail > * + * {
+  margin-top: 1.5rem; /* 24px */
+}
+
+.pdm-stack--detail > * + .package-panel {
+  margin-top: 1.5rem; /* 24px — samakan dengan section di atasnya */
+}
+
+/* ---- Ritme vertikal di dalam panel (Paket Aktif) ----
+   `space-y-3` pernah dipakai dua kali bertumpuk (panel__body +
+   wrapper di dalamnya) sehingga semua jarak—whether antar kartu,
+   ke 3 stat tile, atau ke label "Blok Tarif"—menjadi 12px. Akibatnya
+   blok tarif "nempel" ke stat tile dan tidak terbaca sebagai grup
+   tersendiri. Kelas ini memberi jarak bertingkat: longgar antar
+   blok konten, rapat di dalam satu blok. */
+.pdm-panel-flow > * + * {
+  margin-top: 1rem; /* 16px antar blok utama */
+}
+
+/* Label pembatas ("Blok Tarif") butuh ruang lebih agar terpisah
+   jelas dari stat tile di atasnya. */
+.pdm-panel-flow > * + .pdm-panel-section {
+  margin-top: 1.25rem; /* 20px */
+}
+
+.pdm-panel-section > * + * {
+  margin-top: 0.5rem; /* 8px label -> baris pertama */
+}
+
+/* ---- Jarak antar entri timeline ----
+   `space-y-2.5` (10px) terlalu rapat untuk panel detail yang lebar:
+   kartu riwayat berdempet dan tiap entri tidak terbatas jelas.
+   Node timeline (lingkaran bernomor) ikut terpisah, jadi jarak antar
+   kartu harus cukup agar garis vertikal & nomornya terbaca sebagai
+   satu rangkaian, bukan blok tempfile. */
+.pdm-timeline-list > * + * {
+  margin-top: 1rem; /* 16px antar entri riwayat */
+}
+
 /* ---- Update modal: 2-column layout (kiri paket, kanan preview) ---- */
 .pdm-update-grid {
   display: grid;

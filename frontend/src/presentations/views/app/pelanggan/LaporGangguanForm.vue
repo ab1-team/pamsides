@@ -125,9 +125,9 @@
             <div>
               <h5 class="text-sm! font-black! text-amber-800! mb-2!">Catatan Penting</h5>
               <ul class="text-xs! text-amber-700! space-y-1! font-medium!">
-                <li>â€¢ Laporan akan ditindaklanjuti maksimal 1x24 jam</li>
-                <li>â€¢ Untuk gangguan darurat, hubungi hotline: (0274) 889-123</li>
-                <li>â€¢ Pastikan nomor telepon yang Anda berikan aktif</li>
+                <li>• Laporan akan ditindaklanjuti maksimal 1x24 jam</li>
+                <li>• Untuk gangguan darurat, hubungi hotline: (0274) 889-123</li>
+                <li>• Pastikan nomor telepon yang Anda berikan aktif</li>
               </ul>
             </div>
           </div>

@@ -196,12 +196,17 @@ const roleSubtitle = computed(() => {
 
 const loadLembagaName = async () => {
   try {
-    const res = await sopService.getAll()
+    // PENTING: pakai endpoint identitas publik, bukan getAll().
+    // getAll() (= GET /settings/sop) hanya untuk admin, sedangkan
+    // SidebarView ini dirender untuk semua role — memakai getAll() membuat
+    // teknisi/surveyor/pelanggan kena 403 di setiap halaman, dan karena
+    // error-nya ditelan `catch`, judulnya diam-diam jatuh ke teks hardcoded.
+    const res = await sopService.getPublicIdentity()
     const data = res?.data ?? res
-    const name = data?.lembaga?.nama?.trim()
+    const name = data?.nama?.trim()
     uiStore.setLembagaName(name || '')
   } catch {
-    // silent: fallback to default role title
+    // silent: fallback ke judul role
   }
 }
 

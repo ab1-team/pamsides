@@ -17,6 +17,15 @@ class User extends Authenticatable
 {
     use HasFactory, Notifiable, HasApiTokens;
 
+    /** Status tiket instalasi yang boleh dilihat oleh teknisi. */
+    public const TICKET_STATUSES_FOR_TEKNISI = ['surveyed', 'unpaid', 'processing', 'completed'];
+
+    /** Hanya admin yang boleh melihat seluruh data tiket Cross-Customer. */
+    public function canSeeAllTickets(): bool
+    {
+        return $this->role === 'admin';
+    }
+
     public function tickets()
     {
         return $this->hasMany(InstallationTicket::class, 'created_by');

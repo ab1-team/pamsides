@@ -117,10 +117,13 @@ import { useRouter } from 'vue-router'
 import axios from '@/utils/axios.js'
 import { MySwal } from '@/utils/swal'
 import { useUiStore } from '@/stores/uiStore'
+import { useOverdueGenNotification } from '@/composables/useOverdueGenNotification'
+import { getDashboardRoute } from '@/router/dashboardRoutes'
 import '@/assets/css/login.css'
 
 const router = useRouter()
 const uiStore = useUiStore()
+const { checkOverdueGenOnMount } = useOverdueGenNotification()
 
 const form = ref({
   email: '',
@@ -134,15 +137,8 @@ const togglePassword = () => {
   showPassword.value = !showPassword.value
 }
 
-const getDashboardRoute = (role) => {
-  const routes = {
-    surveyor: '/app/surveyor',
-    teknisi: '/app/teknisi',
-    pelanggan: '/app',
-    admin: '/app',
-  }
-  return routes[role] || '/app'
-}
+// Sumber tunggal yang sama dengan router (lihat router/dashboardRoutes.js).
+// Jangan diduplikasi di sini — itulah penyebab surveyor punya 2 URL berbeda.
 
 onMounted(() => {
   const urlParams = new URLSearchParams(window.location.search)
@@ -210,8 +206,26 @@ const handleLogin = async () => {
         },
       })
 
+      // Pindah ke dashboard dulu supaya user langsung melihat hasil login.
       const redirectRoute = getDashboardRoute(res.data.user.role)
       router.push(redirectRoute)
+
+      // Generate piutang TIDAK di-await di sini: user tidak boleh merasa
+      // loginnya macet. Prosesnya berjalan di background dan popup
+      // loading muncul sendiri setelah user sampai di dashboard — jadi
+      // yang tampil adalah progres nyata, bukan spinner kosong.
+      //
+      // Ini SATU-SATUNYA pemicu generate di seluruh aplikasi. Jangan
+      // ditambah pemicu di halaman lain: kalau generate juga berjalan
+      // saat dashboard dibuka, setiap klik menu Dashboard akan
+      // menghitung ulang.
+      //
+      // Pengecekan role TIDAK dilakukan di sini. `checkOverdueGenOnMount`
+      // sudah berhenti sendiri untuk non-admin SEBELUM mengirim request
+      // apa pun, jadi teknisi tidak melihat popup dan tidak membuang
+      // satu request sia-sia.
+      await new Promise((resolve) => requestAnimationFrame(resolve))
+      checkOverdueGenOnMount()
     } else {
       throw new Error(res.message || 'Login Gagal')
     }

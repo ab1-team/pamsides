@@ -21,20 +21,22 @@ class DashboardController extends Controller
      * - Stat umum: 60 detik (data berubah saat bayar / tiket baru)
      * - Finance chart & available_years: 5 menit (lebih stabil)
      */
-    private const STATS_CACHE_TTL  = 60;   // detik
+    private const STATS_CACHE_TTL = 60;   // detik
+
     private const FINANCE_CACHE_TTL = 300;  // detik (5 menit)
-    private const YEARS_CACHE_TTL   = 3600; // 1 jam
+
+    private const YEARS_CACHE_TTL = 3600; // 1 jam
 
     public function statistics(Request $request)
     {
-        $now   = now();
-        $year  = (int) $request->query('year', $now->year);
+        $now = now();
+        $year = (int) $request->query('year', $now->year);
         $month = (int) $request->query('month', $now->month);
         $todayYmd = $now->toDateString();
 
-        // ─── CACHE 1: stat-global (independent of year/month) ───
+        // â”€â”€â”€ CACHE 1: stat-global (independent of year/month) â”€â”€â”€
         $statsGlobal = Cache::remember(
-            'dashboard:stats:global:' . $todayYmd,
+            'dashboard:stats:global:'.$todayYmd,
             self::STATS_CACHE_TTL,
             function () {
                 return [
@@ -68,33 +70,33 @@ class DashboardController extends Controller
             }
         );
 
-        // ─── CACHE 2: finance data (per year+month) ───
+        // â”€â”€â”€ CACHE 2: finance data (per year+month) â”€â”€â”€
         $financeData = Cache::remember(
             "dashboard:finance:{$year}:{$month}",
             self::FINANCE_CACHE_TTL,
             function () use ($year, $month) {
                 // Pakai range tanggal supaya index tgl_transaksi optimal
                 $start = Carbon::create($year, $month, 1)->startOfMonth()->toDateString();
-                $end   = Carbon::create($year, $month, 1)->endOfMonth()->toDateString();
+                $end = Carbon::create($year, $month, 1)->endOfMonth()->toDateString();
 
                 // Aggregate pendapatan + beban dalam 1 query (bukan 2)
                 $monthAgg = Transaction::selectRaw(
                     "COALESCE(SUM(CASE WHEN account_kredit LIKE '4.%' THEN saldo ELSE 0 END), 0) AS pendapatan,"
-                    . " COALESCE(SUM(CASE WHEN account_debet  LIKE '5.%' THEN saldo ELSE 0 END), 0) AS beban"
+                    ." COALESCE(SUM(CASE WHEN account_debet  LIKE '5.%' THEN saldo ELSE 0 END), 0) AS beban"
                 )
                     ->whereBetween('tgl_transaksi', [$start, $end])
                     ->first();
 
                 $pendapatan = (float) ($monthAgg->pendapatan ?? 0);
-                $beban      = (float) ($monthAgg->beban ?? 0);
+                $beban = (float) ($monthAgg->beban ?? 0);
 
                 // Chart per bulan dalam 1 tahun
                 $yearStart = Carbon::create($year, 1, 1)->startOfYear()->toDateString();
-                $yearEnd   = Carbon::create($year, 12, 31)->endOfYear()->toDateString();
+                $yearEnd = Carbon::create($year, 12, 31)->endOfYear()->toDateString();
 
                 $rowsPendapatan = Transaction::selectRaw(
-                    "MONTH(tgl_transaksi) AS m,"
-                    . " COALESCE(SUM(saldo), 0) AS total"
+                    'MONTH(tgl_transaksi) AS m,'
+                    .' COALESCE(SUM(saldo), 0) AS total'
                 )
                     ->whereBetween('tgl_transaksi', [$yearStart, $yearEnd])
                     ->where('account_kredit', 'like', '4.%')
@@ -102,8 +104,8 @@ class DashboardController extends Controller
                     ->pluck('total', 'm');
 
                 $rowsBeban = Transaction::selectRaw(
-                    "MONTH(tgl_transaksi) AS m,"
-                    . " COALESCE(SUM(saldo), 0) AS total"
+                    'MONTH(tgl_transaksi) AS m,'
+                    .' COALESCE(SUM(saldo), 0) AS total'
                 )
                     ->whereBetween('tgl_transaksi', [$yearStart, $yearEnd])
                     ->where('account_debet', 'like', '5.%')
@@ -115,28 +117,28 @@ class DashboardController extends Controller
                     $p = (float) ($rowsPendapatan[$m] ?? 0);
                     $b = (float) ($rowsBeban[$m] ?? 0);
                     $chart[] = [
-                        'year'       => $year,
-                        'month'      => $m,
+                        'year' => $year,
+                        'month' => $m,
                         'pendapatan' => $p,
-                        'beban'      => $b,
-                        'surplus'    => $p - $b,
+                        'beban' => $b,
+                        'surplus' => $p - $b,
                     ];
                 }
 
                 return [
                     'finance' => [
                         'pendapatan' => $pendapatan,
-                        'beban'      => $beban,
-                        'surplus'    => $pendapatan - $beban,
-                        'year'       => $year,
-                        'month'      => $month,
+                        'beban' => $beban,
+                        'surplus' => $pendapatan - $beban,
+                        'year' => $year,
+                        'month' => $month,
                     ],
                     'finance_chart' => $chart,
                 ];
             }
         );
 
-        // ─── CACHE 3: available_years (jarang berubah) ───
+        // â”€â”€â”€ CACHE 3: available_years (jarang berubah) â”€â”€â”€
         $availableYears = Cache::remember(
             'dashboard:available_years',
             self::YEARS_CACHE_TTL,
@@ -162,12 +164,12 @@ class DashboardController extends Controller
 
         return response()->json([
             'success' => true,
-            'data'    => array_merge($statsGlobal, [
+            'data' => array_merge($statsGlobal, [
                 'revenue_this_month' => $revenueThisMonth,
-                'bills_this_month'   => $billsThisMonth,
-                'finance'            => $financeData['finance'],
-                'finance_chart'      => $financeData['finance_chart'],
-                'available_years'    => $availableYears,
+                'bills_this_month' => $billsThisMonth,
+                'finance' => $financeData['finance'],
+                'finance_chart' => $financeData['finance_chart'],
+                'available_years' => $availableYears,
             ]),
         ]);
     }
@@ -188,10 +190,10 @@ class DashboardController extends Controller
      */
     public function popupData(Request $request)
     {
-        $type    = (string) $request->query('type', '');
+        $type = (string) $request->query('type', '');
         $perPage = max(1, min((int) $request->query('per_page', 10), 50));
-        $page    = max(1, (int) $request->query('page', 1));
-        $search  = trim((string) $request->query('search', ''));
+        $page = max(1, (int) $request->query('page', 1));
+        $search = trim((string) $request->query('search', ''));
 
         switch ($type) {
             case 'instalasi':
@@ -222,8 +224,8 @@ class DashboardController extends Controller
 
         if ($search !== '') {
             $query->where(function ($w) use ($search) {
-                $w->where('applicant_name', 'like', $search . '%')
-                    ->orWhere('nik', 'like', $search . '%');
+                $w->where('applicant_name', 'like', $search.'%')
+                    ->orWhere('nik', 'like', $search.'%');
             });
         }
 
@@ -232,22 +234,22 @@ class DashboardController extends Controller
             ->get(['id', 'applicant_name', 'address', 'status', 'created_at']);
 
         $items = $rows->map(fn ($t) => [
-            'id'           => $t->id,
-            'nomorInduk'   => 'INS-' . str_pad((string) $t->id, 5, '0', STR_PAD_LEFT),
-            'customer'     => $t->applicant_name ?: '-',
-            'alamat'       => $t->address ?: '-',
+            'id' => $t->id,
+            'nomorInduk' => 'INS-'.str_pad((string) $t->id, 5, '0', STR_PAD_LEFT),
+            'customer' => $t->applicant_name ?: '-',
+            'alamat' => $t->address ?: '-',
             'tanggalOrder' => $t->created_at ? $t->created_at->toDateString() : '-',
-            'status'       => $t->status,
+            'status' => $t->status,
         ])->values();
 
         return response()->json([
             'success' => true,
-            'data'    => $items,
-            'meta'    => [
+            'data' => $items,
+            'meta' => [
                 'current_page' => $page,
-                'last_page'    => (int) max(1, ceil($total / $perPage)),
-                'per_page'     => $perPage,
-                'total'        => $total,
+                'last_page' => (int) max(1, ceil($total / $perPage)),
+                'per_page' => $perPage,
+                'total' => $total,
             ],
         ]);
     }
@@ -270,9 +272,9 @@ class DashboardController extends Controller
 
         if ($search !== '') {
             $query->where(function ($w) use ($search) {
-                $w->whereHas('customer.user', fn ($u) => $u->where('name', 'like', $search . '%'))
-                    ->orWhereHas('customer', fn ($c) => $c->where('customer_code', 'like', $search . '%'))
-                    ->orWhereHas('customer.ticket', fn ($t) => $t->where('applicant_name', 'like', $search . '%'));
+                $w->whereHas('customer.user', fn ($u) => $u->where('name', 'like', $search.'%'))
+                    ->orWhereHas('customer', fn ($c) => $c->where('customer_code', 'like', $search.'%'))
+                    ->orWhereHas('customer.ticket', fn ($t) => $t->where('applicant_name', 'like', $search.'%'));
             });
         }
 
@@ -282,30 +284,31 @@ class DashboardController extends Controller
         $items = $rows->map(function ($b) {
             $totalAmt = (float) $b->total_amount;
             $denda = (float) $b->penalty_amount;
+
             return [
-                'id'           => $b->id,
-                'nomorInduk'   => $b->customer?->customer_code ?: '-',
-                'customer'     => $b->customer?->ticket?->applicant_name
+                'id' => $b->id,
+                'nomorInduk' => $b->customer?->customer_code ?: '-',
+                'customer' => $b->customer?->ticket?->applicant_name
                     ?? $b->customer?->user?->name ?? '-',
-                'alamat'       => $b->customer?->ticket?->address ?: '-',
+                'alamat' => $b->customer?->ticket?->address ?: '-',
                 'periodeLabel' => $b->billing_period_month
                     ? sprintf('%02d/%d', $b->billing_period_month, $b->billing_period_year)
                     : '-',
-                'tagihan'      => max(0, $totalAmt - $denda),
-                'denda'        => $denda,
-                'total'        => $totalAmt,
-                'status'       => 'Belum Lunas',
+                'tagihan' => max(0, $totalAmt - $denda),
+                'denda' => $denda,
+                'total' => $totalAmt,
+                'status' => 'Belum Lunas',
             ];
         })->values();
 
         return response()->json([
             'success' => true,
-            'data'    => $items,
-            'meta'    => [
+            'data' => $items,
+            'meta' => [
                 'current_page' => $page,
-                'last_page'    => (int) max(1, ceil($total / $perPage)),
-                'per_page'     => $perPage,
-                'total'        => $total,
+                'last_page' => (int) max(1, ceil($total / $perPage)),
+                'per_page' => $perPage,
+                'total' => $total,
             ],
         ]);
     }
@@ -326,9 +329,9 @@ class DashboardController extends Controller
 
         if ($search !== '') {
             $query->where(function ($w) use ($search) {
-                $w->whereHas('customer.user', fn ($u) => $u->where('name', 'like', $search . '%'))
-                    ->orWhereHas('customer', fn ($c) => $c->where('customer_code', 'like', $search . '%'))
-                    ->orWhereHas('customer.ticket', fn ($t) => $t->where('applicant_name', 'like', $search . '%'));
+                $w->whereHas('customer.user', fn ($u) => $u->where('name', 'like', $search.'%'))
+                    ->orWhereHas('customer', fn ($c) => $c->where('customer_code', 'like', $search.'%'))
+                    ->orWhereHas('customer.ticket', fn ($t) => $t->where('applicant_name', 'like', $search.'%'));
             });
         }
 
@@ -336,30 +339,30 @@ class DashboardController extends Controller
         $rows = $query->forPage($page, $perPage)->get();
 
         $items = $rows->map(fn ($b) => [
-            'id'           => $b->id,
-            'nomorInduk'   => $b->customer?->customer_code ?: '-',
-            'customer'     => $b->customer?->ticket?->applicant_name
+            'id' => $b->id,
+            'nomorInduk' => $b->customer?->customer_code ?: '-',
+            'customer' => $b->customer?->ticket?->applicant_name
                 ?? $b->customer?->user?->name ?? '-',
-            'alamat'       => $b->customer?->ticket?->address ?: '-',
-            'periode'      => $b->billing_period_month,
-            'tahun'        => $b->billing_period_year,
+            'alamat' => $b->customer?->ticket?->address ?: '-',
+            'periode' => $b->billing_period_month,
+            'tahun' => $b->billing_period_year,
             'periodeLabel' => $b->billing_period_month
                 ? sprintf('%02d/%d', $b->billing_period_month, $b->billing_period_year)
                 : '-',
-            'total'        => (float) $b->total_amount,
-            'denda'        => (float) $b->penalty_amount,
-            'jatuhTempo'   => $b->due_date?->toDateString(),
-            'status'       => $b->status,
+            'total' => (float) $b->total_amount,
+            'denda' => (float) $b->penalty_amount,
+            'jatuhTempo' => $b->due_date?->toDateString(),
+            'status' => $b->status,
         ])->values();
 
         return response()->json([
             'success' => true,
-            'data'    => $items,
-            'meta'    => [
+            'data' => $items,
+            'meta' => [
                 'current_page' => $page,
-                'last_page'    => (int) max(1, ceil($total / $perPage)),
-                'per_page'     => $perPage,
-                'total'        => $total,
+                'last_page' => (int) max(1, ceil($total / $perPage)),
+                'per_page' => $perPage,
+                'total' => $total,
             ],
         ]);
     }
@@ -370,9 +373,9 @@ class DashboardController extends Controller
      */
     private function popupPemakaian(Request $request, int $perPage, int $page, string $search)
     {
-        $now   = now();
+        $now = now();
         $month = (int) $request->query('month', $now->month);
-        $year  = (int) $request->query('year',  $now->year);
+        $year = (int) $request->query('year', $now->year);
 
         $customers = Customer::with(['user:id,name', 'ticket:id,applicant_name,address'])
             ->whereHas('ticket', fn ($q) => $q->whereIn('status', [
@@ -388,22 +391,23 @@ class DashboardController extends Controller
 
         $items = $customers->map(function ($c) use ($bills, $month, $year) {
             $bill = $bills->get($c->id);
+
             return [
-                'id'               => $c->id,
-                'nomorInduk'       => $c->customer_code ?: '-',
-                'customer'         => $c->user?->name ?? $c->ticket?->applicant_name ?? '-',
-                'alamat'           => $c->ticket?->address ?: '-',
-                'periodeLabel'     => $bill
+                'id' => $c->id,
+                'nomorInduk' => $c->customer_code ?: '-',
+                'customer' => $c->user?->name ?? $c->ticket?->applicant_name ?? '-',
+                'alamat' => $c->ticket?->address ?: '-',
+                'periodeLabel' => $bill
                     ? sprintf('%02d/%d', $bill->billing_period_month, $bill->billing_period_year)
                     : sprintf('%02d/%d', $month, $year),
-                'meter_awal'       => $bill?->meter_reading_start,
-                'meter_akhir'      => $bill?->meter_reading_end,
-                'pemakaian'        => $bill?->usage_m3,
+                'meter_awal' => $bill?->meter_reading_start,
+                'meter_akhir' => $bill?->meter_reading_end,
+                'pemakaian' => $bill?->usage_m3,
                 'pemakaian_charge' => $bill?->usage_charge,
-                'abodemen'         => $bill?->abodemen,
-                'denda'            => $bill?->penalty_amount ?? 0,
-                'total'            => $bill?->total_amount ?? 0,
-                'status'           => $bill?->status ?? 'pending',
+                'abodemen' => $bill?->abodemen,
+                'denda' => $bill?->penalty_amount ?? 0,
+                'total' => $bill?->total_amount ?? 0,
+                'status' => $bill?->status ?? 'pending',
             ];
         })->values();
 
@@ -418,12 +422,12 @@ class DashboardController extends Controller
 
         return response()->json([
             'success' => true,
-            'data'    => $rows,
-            'meta'    => [
+            'data' => $rows,
+            'meta' => [
                 'current_page' => $page,
-                'last_page'    => (int) max(1, ceil($total / $perPage)),
-                'per_page'     => $perPage,
-                'total'        => $total,
+                'last_page' => (int) max(1, ceil($total / $perPage)),
+                'per_page' => $perPage,
+                'total' => $total,
             ],
         ]);
     }
@@ -431,12 +435,12 @@ class DashboardController extends Controller
     public function getNotification()
     {
         $userId = auth()->id();
-        $dismissed = Cache::get('overdue_gen_dismissed_' . $userId, false);
+        $dismissed = Cache::get('overdue_gen_dismissed_'.$userId, false);
 
         if ($dismissed) {
             return response()->json([
                 'success' => true,
-                'data'    => null,
+                'data' => null,
             ]);
         }
 
@@ -444,18 +448,51 @@ class DashboardController extends Controller
 
         return response()->json([
             'success' => true,
-            'data'    => $notification,
+            'data' => $notification,
         ]);
     }
 
     public function dismissNotification()
     {
         $userId = auth()->id();
-        Cache::put('overdue_gen_dismissed_' . $userId, true, now()->addDays(7));
+        Cache::put('overdue_gen_dismissed_'.$userId, true, now()->addDays(7));
 
         return response()->json([
             'success' => true,
             'message' => 'Notifikasi ditutup',
+        ]);
+    }
+
+    /**
+     * Pra-cek apakah hari ini adalah tanggal generate piutang.
+     *
+     * Endpoint ringan yang dipanggil frontend SEBELUM popup loading dibuka,
+     * supaya modal tidak berkedip di hari biasa. Sengaja TIDAK bergantung
+     * pada cache "sudah pernah jalan": frontend memakai `will_run` hanya
+     * untuk memutuskan membuka popup, dan itu harus tetap true di setiap
+     * login pada tanggal tersebut. Deduplikasi ada di level command.
+     */
+    public function checkAutoGenerateOverdue(Request $request)
+    {
+        $today        = now();
+        $todayYmd     = $today->toDateString();
+        $todayDay     = (int) $today->format('d');
+        $scheduledDay = (int) (Setting::first()?->toleransi_tunggakan ?? 0);
+
+        $configured     = $scheduledDay >= 1 && $scheduledDay <= 28;
+        $isScheduledDay = $todayDay === $scheduledDay;
+
+        return response()->json([
+            'success'       => true,
+            'configured'    => $configured,
+            'is_scheduled'  => $isScheduledDay,
+            // Dipertahankan supaya frontend lama yang membaca field ini
+            // tidak rusak, tapi nilainya sudah tidak dipakai sebagai penentu.
+            'already_ran'   => false,
+            'will_run'      => $configured && $isScheduledDay,
+            'scheduled_day' => $scheduledDay,
+            'today_day'     => $todayDay,
+            'date'          => $todayYmd,
         ]);
     }
 
@@ -476,23 +513,33 @@ class DashboardController extends Controller
      */
     public function autoGenerateOverdue(Request $request)
     {
-        $userId  = auth()->id();
-        $today   = now();
+        // Route-nya memang dibuka untuk admin & teknisi (teknisi butuh
+        // endpoint ini untuk popup yang sama), TAPI aksi-nya khusus admin.
+        // Generate piutang menulis ke tabel `transactions` secara global
+        // dan ringkasannya disimpan di cache ber-key tanggal — bukan per
+        // user. Kalau teknisi boleh menjalankannya, teknisi pertama yang
+        // login pada tanggal tersebut akan "memiliki" eksekusi hari itu.
+        if (auth()->user()?->role !== 'admin') {
+            abort(403, 'Hanya admin yang dapat menjalankan generate piutang.');
+        }
+
+        $userId = auth()->id();
+        $today = now();
         $todayYmd = $today->toDateString();
         $todayYm = $today->format('Y-m');
 
-        $setting  = Setting::first();
+        $setting = Setting::first();
         $scheduledDay = (int) ($setting?->toleransi_tunggakan ?? 0);
 
-        // 1) Kalau SOP belum di-set / 0 → tidak ada generate otomatis.
+        // 1) Kalau SOP belum di-set / 0 â†’ tidak ada generate otomatis.
         if ($scheduledDay < 1 || $scheduledDay > 28) {
             return response()->json([
                 'success' => true,
-                'ran'     => false,
-                'reason'  => 'Toleransi menunggak belum dikonfigurasi.',
+                'ran' => false,
+                'reason' => 'Toleransi menunggak belum dikonfigurasi.',
                 'scheduled_day' => $scheduledDay,
-                'today_day'     => (int) $today->format('d'),
-                'date'          => $todayYmd,
+                'today_day' => (int) $today->format('d'),
+                'date' => $todayYmd,
             ]);
         }
 
@@ -501,49 +548,51 @@ class DashboardController extends Controller
         if ($todayDay !== $scheduledDay) {
             return response()->json([
                 'success' => true,
-                'ran'     => false,
-                'reason'  => 'Hari ini bukan tanggal generate yang dijadwalkan.',
+                'ran' => false,
+                'reason' => 'Hari ini bukan tanggal generate yang dijadwalkan.',
                 'scheduled_day' => $scheduledDay,
-                'today_day'     => $todayDay,
-                'date'          => $todayYmd,
+                'today_day' => $todayDay,
+                'date' => $todayYmd,
             ]);
         }
 
         // 3) Idempotent per (bulan, user). Pertama kali buka dashboard
-        //    pada bulan ini & user ini → execute. Berikutnya → skip.
-        $runCacheKey = 'auto_gen_overdue_' . $todayYm . '_' . $userId;
+        //    pada bulan ini & user ini â†’ execute. Berikutnya â†’ skip.
+        $runCacheKey = 'auto_gen_overdue_'.$todayYm.'_'.$userId;
         $alreadyRan = Cache::get($runCacheKey, false);
 
         if ($alreadyRan) {
             // Ambil hasil terakhir dari cache notifikasi (kalau ada).
             $lastNotif = Cache::get('overdue_gen_notification');
+
             return response()->json([
-                'success'        => true,
-                'ran'           => false,
-                'reason'        => 'Generate sudah pernah dijalankan bulan ini untuk akun Anda.',
+                'success' => true,
+                'ran' => false,
+                'reason' => 'Generate sudah pernah dijalankan bulan ini untuk akun Anda.',
                 'scheduled_day' => $scheduledDay,
-                'today_day'     => $todayDay,
-                'date'          => $todayYmd,
-                'previous'      => $lastNotif,
+                'today_day' => $todayDay,
+                'date' => $todayYmd,
+                'previous' => $lastNotif,
             ]);
         }
 
         // 4) Eksekusi command (sama seperti endpoint /tunggakan/generate).
-        $start   = microtime(true);
-        $opts    = ['--tanggal' => $todayYmd];
+        $start = microtime(true);
+        $opts = ['--tanggal' => $todayYmd];
 
         try {
-            $exit   = Artisan::call('billing:generate-overdue-transactions', $opts);
+            $exit = Artisan::call('billing:generate-overdue-transactions', $opts);
             $output = Artisan::output();
         } catch (\Throwable $e) {
-            Log::error('autoGenerateOverdue gagal: ' . $e->getMessage());
+            Log::error('autoGenerateOverdue gagal: '.$e->getMessage());
+
             return response()->json([
                 'success' => false,
-                'ran'     => false,
-                'message' => 'Gagal menjalankan generate: ' . $e->getMessage(),
+                'ran' => false,
+                'message' => 'Gagal menjalankan generate: '.$e->getMessage(),
                 'scheduled_day' => $scheduledDay,
-                'today_day'     => $todayDay,
-                'date'          => $todayYmd,
+                'today_day' => $todayDay,
+                'date' => $todayYmd,
             ], 500);
         }
 
@@ -553,7 +602,7 @@ class DashboardController extends Controller
         Cache::put($runCacheKey, true, now()->addDays(35));
 
         // Reset flag dismiss notifikasi supaya pop up baru bisa muncul.
-        Cache::forget('overdue_gen_dismissed_' . $userId);
+        Cache::forget('overdue_gen_dismissed_'.$userId);
 
         // Susun payload untuk pop up frontend. Hitung ringkasan dari DB
         // agar frontend tidak perlu parsing output Artisan.
@@ -577,19 +626,19 @@ class DashboardController extends Controller
             ->count();
 
         $payload = [
-            'success'        => true,
-            'ran'            => true,
-            'date'           => $todayYmd,
-            'scheduled_day'  => $scheduledDay,
-            'today_day'      => $todayDay,
-            'duration_ms'    => $duration,
-            'exit_code'      => $exit,
-            'output'         => trim($output),
-            'summary'        => [
+            'success' => true,
+            'ran' => true,
+            'date' => $todayYmd,
+            'scheduled_day' => $scheduledDay,
+            'today_day' => $todayDay,
+            'duration_ms' => $duration,
+            'exit_code' => $exit,
+            'output' => trim($output),
+            'summary' => [
                 'tagihan_dengan_abodemen_tungakan' => $processed,
                 'tagihan_dengan_pemakaian_tungakan' => $processedUsage,
-                'total_unpaid'        => $totalUnpaid,
-                'total_overdue'       => $totalOverdue,
+                'total_unpaid' => $totalUnpaid,
+                'total_overdue' => $totalOverdue,
             ],
         ];
 

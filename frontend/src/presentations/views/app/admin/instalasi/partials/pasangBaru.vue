@@ -223,7 +223,7 @@
               <div class="flex-1! min-w-0!">
                 <p class="text-sm! font-bold! text-slate-800!">Hasil Survey Tersedia</p>
                 <p class="text-[11px]! text-slate-500!">
-                  {{ customer.surveyInfo.distance_to_pipe_m }}m dari pipa utama Â·
+                  {{ customer.surveyInfo.distance_to_pipe_m }}m dari pipa utama ·
                   {{ customer.surveyInfo.surveyor_name || '-' }}
                 </p>
               </div>
@@ -357,7 +357,7 @@
                 />
                 <span
                   class="absolute! right-3! top-1/2! -translate-y-1/2! text-[10px]! text-slate-400!"
-                  >MÂ³</span
+                  >M³</span
                 >
               </div>
             </div>

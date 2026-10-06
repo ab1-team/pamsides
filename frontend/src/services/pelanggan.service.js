@@ -13,10 +13,17 @@ export const pelangganService = {
   },
 
   /**
-   * Ambil detail tagihan (opsional by ID)
+   * Ambil detail tagihan (opsional by ID).
+   *
+   * PENTING: saat `id` kosong, jangan membangun URL `/pelanggan/bill-detail/`
+   * (garis miring menggantung + segmen kosong). Route Laravel punya `{id?}`
+   * opsional, dan path seperti itu tidak cocok — hasilnya 404 sehingga
+   * cabang "tagihan terbaru" di backend tidak pernah terpakai.
+   * Solusinya: panggil endpoint tanpa segmen trailing.
    */
-  async getBillDetail(id = '') {
-    const response = await api.get(`/pelanggan/bill-detail/${id}`)
+  async getBillDetail(id = null) {
+    const path = id ? `/pelanggan/bill-detail/${id}` : '/pelanggan/bill-detail'
+    const response = await api.get(path)
     return response.data
   },
 

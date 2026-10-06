@@ -47,6 +47,27 @@ class SopController extends Controller
         ]);
     }
 
+    /**
+     * Identitas lembaga yang boleh dilihat semua role login.
+     *
+     * Dipakai oleh chrome bersama (judul sidebar, kop surat/cetak) yang
+     * dirender untuk admin, teknisi, surveyor, dan pelanggan. Sengaja hanya
+     * mengembalikan nama & logo: data kontak lengkap (email, telepon,
+     * alamat, SK) tetap khusus admin lewat `index()` di atas.
+     */
+    public function publicIdentity()
+    {
+        $s = Setting::first();
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'nama' => $s?->nama ?? '',
+                'logo' => $s?->logo ?? null,
+            ],
+        ]);
+    }
+
     public function updateLembaga(Request $request)
     {
         try {

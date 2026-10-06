@@ -83,7 +83,7 @@
         <template #column-usage="{ row }">
           <span class="text-sm! font-bold! text-slate-800!">
             {{ row.usage_m3 || 0 }}
-            <span class="text-[10px]! text-slate-400! font-medium!">mÂ³</span>
+            <span class="text-[10px]! text-slate-400! font-medium!">m³</span>
           </span>
         </template>
 
@@ -128,7 +128,7 @@
     </ContentCard>
 
     <div class="text-center py-8 text-[10px] text-slate-400 font-semibold tracking-[2px] uppercase">
-      PAMSIMAS Â· LAYANAN AIR BERSIH MASYARAKAT
+      PAMSIMAS · LAYANAN AIR BERSIH MASYARAKAT
     </div>
 
     <detaiDaftarTagihan

@@ -18,7 +18,7 @@ export function useSop() {
     { key: 'calk', label: 'Pengaturan CALK', icon: 'book-open' },
     { key: 'logo', label: 'Logo & Branding', icon: 'image' },
     { key: 'whatsapp', label: 'Whatsapp API', icon: ['fab', 'whatsapp'] },
-    { key: 'signature', label: 'Tanda Tangan Laporan', icon: 'signature' },
+    { key: 'signature', label: 'Tanda Tangan', icon: 'signature' },
   ]
 
   const activeLabel = computed(() => {
