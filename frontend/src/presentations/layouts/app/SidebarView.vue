@@ -133,18 +133,28 @@
         class="new-entry-btn"
         :class="{ 'icon-only': !sidebarOpen }"
         size="md"
+        :title="!sidebarOpen ? 'Tentang Asta Brata Teknologi' : ''"
+        :aria-label="!sidebarOpen ? 'Tentang Asta Brata Teknologi' : undefined"
+        @click="showAbtModal = true"
       >
-        <span v-if="sidebarOpen">AstaBrata Teknologi</span>
+        <span v-if="sidebarOpen" class="new-entry-btn__label">
+          <span class="new-entry-btn__brand">Asta Brata</span>
+          <span class="new-entry-btn__sub">Teknologi</span>
+        </span>
+        <font-awesome-icon v-else icon="gem" class="new-entry-btn__collapsed-icon" />
       </BaseButton>
     </div>
+
+    <AbtAstaBrataModal :show="showAbtModal" @close="showAbtModal = false" />
   </div>
 </template>
 
 <script setup>
-import { onMounted, watch, computed, reactive } from 'vue'
+import { onMounted, watch, computed, reactive, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { useUiStore } from '@/stores/uiStore'
 import BaseButton from '@/presentations/components/ui/BaseButton.vue'
+import AbtAstaBrataModal from '@/presentations/components/ui/AbtAstaBrataModal.vue'
 import sopService from '@/services/sop.service'
 
 const props = defineProps({
@@ -161,6 +171,9 @@ const props = defineProps({
 const emit = defineEmits(['toggle-sidebar', 'close-mobile-sidebar'])
 const uiStore = useUiStore()
 const route = useRoute()
+
+// Popup "Tentang Aplikasi Ini" — kredit untuk Asta Brata Teknologi.
+const showAbtModal = ref(false)
 
 const roleTitle = computed(() => {
   if (uiStore.lembagaName) {
