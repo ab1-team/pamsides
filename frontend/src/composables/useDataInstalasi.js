@@ -17,6 +17,16 @@ const STATUS_LABELS = {
   terminated: 'Cabut',
 }
 
+/**
+ * Hanya 3 status instalasi yang berstatus "aktif" (sudah selesai dipasang).
+ * - completed  → Aktif
+ * - suspended  → Blokir
+ * - terminated → Cabut
+ * Ticket yang masih pending (draft, pending, surveyed, unpaid, processing)
+ * tidak ditampilkan di halaman ini karena belum jadi pelanggan aktif.
+ */
+const ACTIVE_CONNECTION_STATUSES = ['completed', 'suspended', 'terminated']
+
 const STATUS_COLORS = {
   draft: 'bg-slate-100 text-slate-700',
   pending: 'bg-blue-100 text-blue-700',
@@ -70,18 +80,25 @@ export function useDataInstalasi() {
   const fetchData = async () => {
     try {
       isLoading.value = true
-      const res = await ticketService.getTickets({ per_page: 200 })
+      const res = await ticketService.getTickets({
+        per_page: 200,
+        // Filter di server (backend mendukung daftar status dipisah koma)
+        status: ACTIVE_CONNECTION_STATUSES.join(','),
+      })
       if (res?.success && Array.isArray(res?.data?.data)) {
-        tableData.value = res.data.data.map((t) => ({
-          ticketId: t.id,
-          kodeInstalasi: t.customer?.[0]?.customer_code || `#INS-${String(t.id).padStart(4, '0')}`,
-          nama: t.applicant_name || '-',
-          alamat: t.address || '-',
-          paket: t.package?.name || t.package_name || '-',
-          currentPackageId: t.package_id ?? null,
-          rawStatus: t.status,
-          status: STATUS_LABELS[t.status] || t.status || '-',
-        }))
+        // Pengaman tambahan di sisi client: pastikan hanya 3 status aktif.
+        tableData.value = res.data.data
+          .filter((t) => ACTIVE_CONNECTION_STATUSES.includes(t.status))
+          .map((t) => ({
+            ticketId: t.id,
+            kodeInstalasi: t.customer?.[0]?.customer_code || `#INS-${String(t.id).padStart(4, '0')}`,
+            nama: t.applicant_name || '-',
+            alamat: t.address || '-',
+            paket: t.package?.name || t.package_name || '-',
+            currentPackageId: t.package_id ?? null,
+            rawStatus: t.status,
+            status: STATUS_LABELS[t.status] || t.status || '-',
+          }))
       } else {
         tableData.value = []
       }
