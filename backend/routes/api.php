@@ -72,8 +72,20 @@ Route::middleware('auth:sanctum')->group(function () {
     // surveyor, dan pelanggan selalu 403 dan judulnya diam-diam jatuh ke
     // teks hardcoded.
     Route::get('settings/lembaga-identity', [SopController::class, 'publicIdentity']);
-});
 
+    /*
+     * Ringkasan tagihan belum bayar untuk badge icon lonceng di navbar.
+     *
+     * Sengaja TIDAK memakai `role:` di sini. Endpoint ini dipakai bersama
+     * oleh semua role, dan cakupannya ditentukan di dalam controller
+     * (MonthlyBillController::unpaidSummary):
+     *   - admin/teknisi → seluruh pelanggan yang menunggak
+     *   - pelanggan     → hanya tagihannya sendiri
+     * Controller menolak role lain dengan 403, jadi membership role di route
+     * hanya akan menduplikasi logika yang sudah hidup di satu tempat.
+     */
+    Route::get('monthly-bills/unpaid-summary', [MonthlyBillController::class, 'unpaidSummary']);
+});
 
 // Shared Routes (Bisa diakses Admin, Surveyor & Teknisi)
 //

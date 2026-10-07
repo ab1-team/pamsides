@@ -3,6 +3,7 @@ import './assets/css/datepicker.css'
 import './assets/css/stat-card.css'
 import './assets/css/ui-base.css'
 import './assets/css/ui-modals.css'
+import './assets/css/topnav-notifications.css'
 
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
@@ -205,6 +206,10 @@ import {
   faTable,
   faRotateLeft,
   faRotateRight,
+  faGem,
+  faCode,
+  faRocket,
+  faQuoteLeft,
 } from '@fortawesome/free-solid-svg-icons'
 
 import { faWhatsapp } from '@fortawesome/free-brands-svg-icons'
@@ -386,6 +391,10 @@ library.add(
   faTable,
   faRotateLeft,
   faRotateRight,
+  faGem,
+  faCode,
+  faRocket,
+  faQuoteLeft,
 )
 
 export { MySwal } from './utils/swal'
