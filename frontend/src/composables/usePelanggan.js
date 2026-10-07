@@ -1,4 +1,4 @@
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { STATUS_TYPES, STATUS_COLORS } from '@/types/pelanggan'
 import customerService from '@/services/customer.service'
 import { confirmDelete } from '@/utils/deleteHandler'
@@ -9,16 +9,33 @@ export function usePelanggan(router = null) {
   const searchQuery = ref('')
   const currentPage = ref(1)
   const perPage = ref(10)
-  let fetchId = 0
 
   // State untuk data pelanggan
   const tableData = ref([])
   const isLoading = ref(false)
 
+  // Metadata paginasi dari server. Sengaja TIDAK memakai nilai bawaan dari
+  // backend: `serverTotal` yang di-nol-kan membuat DataTable sempat menggambar
+  // "Showing 1 to 0 of 0" di layar pertama sebelum balasan tiba.
+  const serverTotal = ref(0)
+  const serverLastPage = ref(1)
+
+  let fetchId = 0
+  let searchTimer = null
+
   const mapRow = (c) => ({
-    id: c.customer_code || c.id,
+    // `id` dipakai handleEdit untuk membuka /customers/{id}, jadi harus
+    // customer_code bila ada — itulah yang ditampilkan di kolom ID dan yang
+    // dibaca show()/update()/destroy() lewat findTicketByIdentifier().
+    //
+    // Kalau customer_code belum ada (pelanggan hasil form Tambah, yang belum
+    // diaktivasi), `id` berupa ANGKA. Karena itu nilainya dipaksa jadi string:
+    // `row.id.toLowerCase()` dulu melempar TypeError tepat ketika user
+    // mengetik di kotak search, dan tabel ikut kosong walau data hasil simpan
+    // memang ada.
+    id: c.customer_code || String(c.id),
     realId: c.id,
-    nama: c.name,
+    nama: c.name || '-',
     initials: c.name
       ? c.name
           .split(' ')
@@ -35,35 +52,51 @@ export function usePelanggan(router = null) {
     status: c.status || 'draft',
   })
 
-  // Fungsi untuk mengambil data dari API (semua halaman)
-  const fetchCustomers = async (search = '') => {
+  /**
+   * Ambil satu halaman dari server.
+   *
+   * Tidak ada argumen — kata kunci & nomor halaman dibaca dari state, bukan
+   * dari parameter. `@click="fetchCustomers"` di toolbar DataTable mengirim
+   * PointerEvent sebagai argumen pertama. Artefak itu pernah ikut terkirim
+   * sebagai `?search=[object PointerEvent]` dan me-reset hasil pencarian
+   * setiap kali tombol Muat Ulang ditekan.
+   */
+  const fetchCustomers = async () => {
     const myId = ++fetchId
     try {
       isLoading.value = true
-      const pageSize = 100
-      let page = 1
-      let lastPage = 1
-      let aggregated = []
 
-      do {
-        const response = await customerService.getCustomers({
-          search,
-          page,
-          per_page: pageSize,
-        })
-        if (myId !== fetchId) return
+      const params = {
+        page: currentPage.value,
+        per_page: perPage.value,
+      }
+      const keyword = searchQuery.value.trim()
+      if (keyword !== '') {
+        params.search = keyword
+      }
 
-        const payload = response?.data || {}
-        const items = payload.data || []
-        aggregated = aggregated.concat(items)
-
-        lastPage = payload.last_page || 1
-        page += 1
-      } while (page <= lastPage)
+      const response = await customerService.getCustomers(params)
+      // Balasan request lama sudah tidak relevan (user sudah mengetik lagi).
       if (myId !== fetchId) return
 
-      tableData.value = aggregated.map(mapRow)
+      const payload = response?.data || {}
+      const items = Array.isArray(payload.data) ? payload.data : []
+
+      tableData.value = items.map(mapRow)
+      serverTotal.value = Number(payload.total) || 0
+      serverLastPage.value = Math.max(1, Number(payload.last_page) || 1)
+
+      // Hasil pencarian bisa jadi lebih sedikit halaman (mis. sedang cari di
+      // halaman 5 lalu tersisa 1 halaman). Kembalikan ke halaman terakhir yang
+      // valid, jangan biarkan tabel kosong.
+      if (currentPage.value > serverLastPage.value) {
+        currentPage.value = serverLastPage.value
+      }
     } catch (error) {
+      if (myId !== fetchId) return
+      tableData.value = []
+      serverTotal.value = 0
+      serverLastPage.value = 1
       MySwal.fire({
         title: 'Gagal!',
         text: 'Tidak dapat mengambil data pelanggan.',
@@ -74,32 +107,48 @@ export function usePelanggan(router = null) {
     }
   }
 
-  // Watcher untuk pencarian (satu-satunya trigger fetch)
-  watch(
-    searchQuery,
-    (val) => {
+  /**
+   * Kembali ke halaman 1 lalu muat ulang.
+   *
+   * Kalau halaman sudah 1, setter tidak menghasilkan perubahan sehingga
+   * watcher di bawah tidak berjalan — maka fetchCustomers() dipanggil langsung.
+   */
+  const backToFirstPage = () => {
+    if (currentPage.value === 1) {
+      fetchCustomers()
+    } else {
       currentPage.value = 1
-      fetchCustomers(val)
-    },
-    { immediate: true },
-  )
+    }
+  }
 
-  // Properti komputasi
-  const filteredData = computed(() => {
-    if (!searchQuery.value) return tableData.value
-    const q = searchQuery.value.toLowerCase()
-    return tableData.value.filter(
-      (r) =>
-        r.nama.toLowerCase().includes(q) ||
-        r.id.toLowerCase().includes(q) ||
-        r.nik.includes(q) ||
-        r.alamat.toLowerCase().includes(q),
-    )
+  // Debounce 350ms: tanpa itu tiap ketikan huruf menembak request ke server
+  // dan tabel berkedip karena `loading` aktif tiap ketikan.
+  watch(searchQuery, () => {
+    if (searchTimer) clearTimeout(searchTimer)
+    searchTimer = setTimeout(backToFirstPage, 350)
   })
 
-  const totalPages = computed(() =>
-    Math.max(1, Math.ceil(filteredData.value.length / perPage.value)),
-  )
+  // Nomor halaman berubah = perlu ambil isi halaman itu.
+  watch(currentPage, () => {
+    fetchCustomers()
+  })
+
+  // `perPage` ditangani v-model:per-page milik DataTable. Nomor halaman
+  // dikembalikan ke 1 karena mengganti ukuran halaman membuat posisi halaman
+  // lama bisa menunjuk ke luar jangkauan.
+  watch(perPage, () => {
+    backToFirstPage()
+  })
+
+  // Muat halaman pertama saat composable dibuat (pengganti `immediate: true`).
+  fetchCustomers()
+
+  // Filter & paginasi sudah diurus server, jadi `tableData` apa adanya adalah
+  // isi halaman yang sedang ditampilkan. filteredData sengaja dipertahankan
+  // sebagai nama yang dipakai PelangganIndex.vue supaya template tidak berubah.
+  const filteredData = computed(() => tableData.value)
+
+  const totalPages = computed(() => serverLastPage.value)
 
   // Fungsi-fungsi penanganan aksi
   const handleEdit = (row) => {
@@ -115,7 +164,12 @@ export function usePelanggan(router = null) {
       successMessage: 'Data pelanggan berhasil dihapus',
       entity: 'pelanggan',
       onConfirm: async () => {
-        await customerService.deleteCustomer(row.realId || row.id)
+        // Pakai id yang sama dengan handleEdit (customer_code || id) supaya
+        // backend menerima identifier yang konsisten. Keduanya sudah didukung
+        // findTicketByIdentifier(), jadi ini aman untuk kolom ID manapun.
+        await customerService.deleteCustomer(row.id)
+        // fetchCustomers() membaca keyword & nomor halaman dari state, jadi
+        // hasil pencarian yang sedang aktif tetap terjaga.
         await fetchCustomers()
       },
     })
@@ -137,6 +191,7 @@ export function usePelanggan(router = null) {
 
     // Komputasi
     totalPages,
+    serverTotal,
 
     // Konstanta
     STATUS_TYPES,

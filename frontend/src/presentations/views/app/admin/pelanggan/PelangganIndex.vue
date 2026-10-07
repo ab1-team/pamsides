@@ -14,13 +14,16 @@
       title=""
       v-model:current-page="currentPage"
       v-model:per-page="perPage"
-      :total-entries="filteredData.length"
+      :total-entries="serverTotal"
+      :total-pages="totalPages"
       v-model="searchQuery"
       class="mt-6!"
-      search-placeholder="Cari pelanggan..."
+      search-placeholder="Cari nama, NIK, alamat, atau kode..."
       empty-title="Pelanggan Tidak Ditemukan"
       empty-message="Mohon cek kembali kata kunci pencarian Anda atau tambahkan pelanggan baru."
       empty-icon="users-slash"
+      :loading="isLoading"
+      server-side
     >
       <template #search-actions>
         <BaseButton
@@ -94,9 +97,10 @@ const {
   searchQuery,
   currentPage,
   perPage,
-  tableData,
   filteredData,
   isLoading,
+  serverTotal,
+  totalPages,
   handleEdit,
   handleDelete,
   fetchCustomers,
