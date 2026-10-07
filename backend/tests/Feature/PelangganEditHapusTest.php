@@ -151,7 +151,7 @@ class PelangganEditHapusTest extends TestCase
         $original = Hash::make('rahasia123');
         $ticket->user->update(['password' => $original]);
 
-        //Nilainya datang dari PelangganEdit.vue yang mengosongkan password.
+        // Nilainya datang dari PelangganEdit.vue yang mengosongkan password.
         $this->putJson('/api/customers/'.$ticket->id, [
             'nik' => '3273010101010001',
             'nama_lengkap' => 'Warga Aktif Diperbarui',

@@ -6,6 +6,7 @@ use App\Models\Customer;
 use App\Models\InstallationTicket;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
@@ -99,7 +100,7 @@ class CustomerController extends Controller
             $search = mb_substr($search, 0, 100);
             $like = "%{$search}%";
 
-            $query->where(function ($sub) use ($like, $search) {
+            $query->where(function ($sub) use ($like) {
                 $sub->where('applicant_name', 'like', $like)
                     ->orWhere('nik', 'like', $like)
                     ->orWhere('phone', 'like', $like)
@@ -262,7 +263,7 @@ class CustomerController extends Controller
         }
 
         try {
-            $date = \Illuminate\Support\Carbon::parse($raw);
+            $date = Carbon::parse($raw);
         } catch (\Exception $e) {
             return null;
         }
