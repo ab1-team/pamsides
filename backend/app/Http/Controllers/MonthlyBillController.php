@@ -599,6 +599,160 @@ class MonthlyBillController extends Controller
         ]);
     }
 
+    /**
+     * Ringkasan tagihan yang belum dibayar untuk badge icon lonceng di navbar.
+     *
+     * Cakupannya mengikuti role pemanggil:
+     *   - admin/teknisi → seluruh pelanggan yang menunggak, dikelompokkan per
+     *     pelanggan (siapa saja yang punya tagihan belum bayar)
+     *   - pelanggan     → hanya tagihannya sendiri
+     *
+     * Agregasi dilakukan di SQL, bukan di PHP. Tabel monthly_bills pada
+     * instalasi nyata bisa mencapai puluhan ribu baris `unpaid`, jadi
+     * `->get()` lalu dijumlahkan di memory akan menahan seluruh tabel di
+     * RAM setiap kali navbar dimuat. Query di bawah mengembalikan satu baris
+     * per pelanggan beserta totalnya.
+     *
+     * Daftar yang dikirim dibatasi 15 baris: panel lonceng adalah daftar
+     * sekilas, bukan pengganti halaman Daftar Tagihan yang sudah punya filter
+     * & pagination. Angka di `summary` tetap dihitung dari seluruh data.
+     */
+    public function unpaidSummary(Request $request)
+    {
+        $user = Auth::user();
+
+        // Route sengaja tidak dibatasi `role:` (lihat routes/api.php) supaya
+        // admin, teknisi, dan pelanggan bisa memakai endpoint yang sama.
+        // Role lain harus ditolak di sini.
+        if (! in_array($user->role, ['admin', 'teknisi', 'pelanggan'], true)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Role tidak memiliki akses ke ringkasan tagihan.',
+            ], 403);
+        }
+
+        $isStaff = in_array($user->role, ['admin', 'teknisi'], true);
+        $limit = 15;
+        $today = now()->toDateString();
+
+        $emptySummary = [
+            'unpaid_count' => 0,
+            'unpaid_total' => 0.0,
+            'overdue_count' => 0,
+            'customer_count' => 0,
+        ];
+
+        // Pelanggan: hanya tagihan miliknya sendiri.
+        if (! $isStaff) {
+            $customerId = Customer::where('user_id', $user->id)->value('id');
+
+            // Pelanggan tanpa record Customer tidak punya tagihan sama sekali
+            // (tagihan menempel ke customers). Kembalikan kosong dengan 200
+            // supaya badge tidak error, bukan 403 yang membuat navbar gagal.
+            if (! $customerId) {
+                return response()->json([
+                    'success' => true,
+                    'data' => [],
+                    'summary' => $emptySummary,
+                ]);
+            }
+
+            $agg = MonthlyBill::where('customer_id', $customerId)
+                ->where('status', 'unpaid')
+                ->selectRaw(
+                    'COUNT(*) AS unpaid_count,'
+                    .' COALESCE(SUM(total_amount), 0) AS unpaid_total,'
+                    .' SUM(CASE WHEN due_date < ? THEN 1 ELSE 0 END) AS overdue_count',
+                    [$today]
+                )
+                ->first();
+
+            $summary = [
+                'unpaid_count' => (int) ($agg->unpaid_count ?? 0),
+                'unpaid_total' => (float) ($agg->unpaid_total ?? 0),
+                'overdue_count' => (int) ($agg->overdue_count ?? 0),
+                'customer_count' => 1,
+            ];
+
+            // Periode terbaru dulu — yang paling mendesak untuk dilihat.
+            $bills = MonthlyBill::where('customer_id', $customerId)
+                ->where('status', 'unpaid')
+                ->orderByDesc('billing_period_year')
+                ->orderByDesc('billing_period_month')
+                ->limit($limit)
+                ->get();
+
+            $data = $bills->map(fn ($b) => [
+                'bill_id' => $b->id,
+                'period_label' => $b->periodLabel()
+                    ?: sprintf('%02d/%d', $b->billing_period_month, $b->billing_period_year),
+                'total_amount' => (float) $b->total_amount,
+                'due_date' => $b->due_date?->toDateString(),
+                'is_overdue' => (string) $b->due_date < $today,
+            ])->values()->all();
+
+            return response()->json([
+                'success' => true,
+                'data' => $data,
+                'summary' => $summary,
+            ]);
+        }
+
+        // Admin & teknisi: pelanggan mana saja yang menunggak. Satu query
+        // agregat per pelanggan; total di `summary` diambil dari hasil
+        // query yang sama, jadi tidak butuh COUNT kedua.
+        $rows = MonthlyBill::where('status', 'unpaid')
+            ->whereNotNull('customer_id')
+            ->groupBy('customer_id')
+            ->selectRaw(
+                'customer_id,'
+                .' COUNT(*) AS unpaid_count,'
+                .' COALESCE(SUM(total_amount), 0) AS total_unpaid,'
+                .' SUM(CASE WHEN due_date < ? THEN 1 ELSE 0 END) AS overdue_count,'
+                .' MIN(due_date) AS oldest_due_date',
+                [$today]
+            )
+            ->orderByDesc('total_unpaid')
+            ->get();
+
+        $summary = [
+            'unpaid_count' => (int) $rows->sum('unpaid_count'),
+            'unpaid_total' => (float) $rows->sum('total_unpaid'),
+            'overdue_count' => (int) $rows->sum('overdue_count'),
+            'customer_count' => $rows->count(),
+        ];
+
+        // Nama & kode pelanggan diambil terpisah hanya untuk baris yang
+        // benar-benar dikirim (maks 15), bukan untuk semua pelanggan.
+        $customers = Customer::with([
+            'user:id,name',
+            'ticket:id,applicant_name',
+        ])
+            ->whereIn('id', $rows->take($limit)->pluck('customer_id'))
+            ->get(['id', 'user_id', 'ticket_id', 'customer_code'])
+            ->keyBy('id');
+
+        $data = $rows->take($limit)->map(function ($r) use ($customers) {
+            $c = $customers->get($r->customer_id);
+
+            return [
+                'customer_id' => (int) $r->customer_id,
+                'name' => $c?->ticket?->applicant_name ?? $c?->user?->name ?? '-',
+                'code' => $c?->customer_code ?? '-',
+                'unpaid_count' => (int) $r->unpaid_count,
+                'total_unpaid' => (float) $r->total_unpaid,
+                'overdue_count' => (int) $r->overdue_count,
+                'oldest_due_date' => (string) $r->oldest_due_date,
+            ];
+        })->values()->all();
+
+        return response()->json([
+            'success' => true,
+            'data' => $data,
+            'summary' => $summary,
+        ]);
+    }
+
     // Daftar pelanggan suspended + tagihan unpaid-nya (untuk teknisi)
     public function suspended(Request $request)
     {

@@ -3,6 +3,7 @@ import './assets/css/datepicker.css'
 import './assets/css/stat-card.css'
 import './assets/css/ui-base.css'
 import './assets/css/ui-modals.css'
+import './assets/css/topnav-notifications.css'
 
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'

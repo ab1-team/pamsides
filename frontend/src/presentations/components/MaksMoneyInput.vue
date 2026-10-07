@@ -1,5 +1,8 @@
 <template>
-  <div class="currency-input" :class="{ 'mb-2': !noMargin }">
+  <div
+    class="currency-input"
+    :class="{ 'mb-2': !noMargin, 'currency-input--sm': size === 'sm' }"
+  >
     <label v-if="label" class="currency-label">{{ label }}</label>
     <div class="currency-input-wrapper">
       <span v-if="!hidePrefix" class="currency-prefix">Rp.</span>
@@ -114,7 +117,20 @@ function handleFocus() {}
   color: #334155 !important;
   transition: all 0.3s !important;
   outline: none !important;
-  height: v-bind('size === "sm" ? "2.25rem" : "2.75rem"');
+  /* Tinggi input WAJIB ditulis eksplisit, jangan lewat CSS v-bind().
+     v-bind() di dalam <style scoped> menghasilkan nama variabel ber-hash
+     yang dihitung terpisah oleh kompilator CSS dan kompilator script. Di
+     build production kedua hash itu bisa berbeda, sehingga
+     `height: var(--<hash>)` tidak pernah berisi nilai apa pun dan aturan
+     height sama sekali tidak berlaku. Akibatnya hanya sisa padding + border
+     yang menentukan tinggi (~19px), dan input terlihat gepeng/kecil.
+     Class `.currency-input--sm` di bawah dipakai sebagai gantinya. */
+  height: 2.75rem !important;
+}
+
+/* Varian kecil untuk `size="sm"` (2.25rem), lihat catatan di atas. */
+.currency-input--sm :deep(.p-inputnumber-input) {
+  height: 2.25rem !important;
 }
 :deep(.p-inputnumber-input::placeholder) {
   color: #94a3b8 !important;

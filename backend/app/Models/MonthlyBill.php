@@ -8,6 +8,20 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class MonthlyBill extends Model
 {
     use SoftDeletes;
+
+    /**
+     * Kolom tanggal di model ini perlu di-cast eksplisit.
+     *
+     * Tanpa cast, `due_date` dikembalikan sebagai string polos
+     * (`"2024-11-27"`), bukan objek Carbon. Kode yang memformatnya
+     * sebagai tanggal — `DashboardController::popupTagihan()` sudah
+     * memakai `$b->due_date?->toDateString()` — lalu menjalankan method
+     * pada string dan melempar Error 500.
+     */
+    protected $casts = [
+        'due_date' => 'date',
+    ];
+
     protected $fillable = [
         'customer_id',
         'billing_period_year',
@@ -20,7 +34,7 @@ class MonthlyBill extends Model
         'penalty_amount',
         'total_amount',
         'status',
-        'due_date'
+        'due_date',
     ];
 
     /**

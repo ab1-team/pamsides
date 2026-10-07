@@ -36,9 +36,15 @@
           <input
             ref="searchInputRef"
             type="text"
-            :placeholder="canSearchCustomers ? 'Cari nama pelanggan...' : 'Pencarian tidak tersedia'"
+            :placeholder="
+              canSearchCustomers ? 'Cari nama pelanggan...' : 'Pencarian tidak tersedia'
+            "
             :disabled="!canSearchCustomers"
-            :title="canSearchCustomers ? '' : 'Pencarian pelanggan hanya tersedia untuk admin dan surveyor'"
+            :title="
+              canSearchCustomers
+                ? ''
+                : 'Pencarian pelanggan hanya tersedia untuk admin dan surveyor'
+            "
             :value="searchQuery"
             @input="onSearchInput"
             @focus="searchDropdownOpen = true"
@@ -60,10 +66,7 @@
               <font-awesome-icon icon="spinner" spin class="mr-2" />
               <span>Mencari data...</span>
             </div>
-            <div
-              v-else-if="searchResults.length === 0"
-              class="topnav-search-empty"
-            >
+            <div v-else-if="searchResults.length === 0" class="topnav-search-empty">
               <font-awesome-icon icon="search" class="mr-2 text-slate-400" />
               <span>Pelanggan tidak ditemukan</span>
             </div>
@@ -74,10 +77,7 @@
                 class="topnav-search-item"
                 @mousedown.prevent="selectResult(item)"
               >
-                <div
-                  class="topnav-search-avatar"
-                  :style="{ backgroundColor: item.color }"
-                >
+                <div class="topnav-search-avatar" :style="{ backgroundColor: item.color }">
                   {{ item.initials }}
                 </div>
                 <div class="topnav-search-info">
@@ -88,10 +88,7 @@
                     <span class="topnav-search-addr">{{ item.address }}</span>
                   </p>
                 </div>
-                <span
-                  class="topnav-search-status"
-                  :class="categoryBadgeClass(item.category)"
-                >
+                <span class="topnav-search-status" :class="categoryBadgeClass(item.category)">
                   {{ categoryLabel(item.category) }}
                 </span>
               </li>
@@ -99,12 +96,40 @@
           </div>
         </div>
 
-        <div class="topnav-icon-btn">
-          <font-awesome-icon icon="bell" width="15" height="15" />
+        <div class="topnav-icon-wrapper" ref="bellRef">
+          <button
+            type="button"
+            class="topnav-icon-btn"
+            :class="{
+              'is-active': bellPanelOpen,
+              'has-urgent': notificationStore.billsSummary.overdue_count > 0,
+            }"
+            :title="bellTitle"
+            aria-label="Tagihan yang harus dibayar"
+            @click="toggleBellPanel"
+          >
+            <font-awesome-icon icon="bell" width="15" height="15" />
+            <span v-if="notificationStore.bellCount > 0" class="topnav-icon-badge">
+              {{ notificationStore.bellCount > 99 ? '99+' : notificationStore.bellCount }}
+            </span>
+          </button>
+
+          <BillNotificationPanel v-if="bellPanelOpen" @close="closePanelAndNavigate" />
         </div>
 
-        <div class="topnav-icon-btn">
-          <font-awesome-icon icon="question-circle" width="15" height="15" />
+        <div class="topnav-icon-wrapper" ref="helpRef">
+          <button
+            type="button"
+            class="topnav-icon-btn"
+            :class="{ 'is-active': helpPanelOpen }"
+            title="Kendala? Hubungi teknikal support"
+            aria-label="Bantuan teknikal support"
+            @click="toggleHelpPanel"
+          >
+            <font-awesome-icon icon="question-circle" width="15" height="15" />
+          </button>
+
+          <SupportContactPanel v-if="helpPanelOpen" @close="closeHelpPanel" />
         </div>
 
         <div class="topnav-avatar-wrapper" ref="avatarRef">
@@ -175,10 +200,7 @@
             class="topnav-search-item"
             @mousedown.prevent="selectResult(item)"
           >
-            <div
-              class="topnav-search-avatar"
-              :style="{ backgroundColor: item.color }"
-            >
+            <div class="topnav-search-avatar" :style="{ backgroundColor: item.color }">
               {{ item.initials }}
             </div>
             <div class="topnav-search-info">
@@ -187,10 +209,7 @@
                 <span class="topnav-search-id">ID: {{ item.id }}</span>
               </p>
             </div>
-            <span
-              class="topnav-search-status"
-              :class="categoryBadgeClass(item.category)"
-            >
+            <span class="topnav-search-status" :class="categoryBadgeClass(item.category)">
               {{ categoryLabel(item.category) }}
             </span>
           </li>
@@ -202,9 +221,13 @@
 
 <script setup>
 import { ref, onMounted, onBeforeUnmount, computed, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import BaseButton from '@/presentations/components/ui/BaseButton.vue'
+import BillNotificationPanel from '@/presentations/components/topnav/BillNotificationPanel.vue'
+import SupportContactPanel from '@/presentations/components/topnav/SupportContactPanel.vue'
 import { useUiStore } from '@/stores/uiStore'
 import { useInstalasiStore } from '@/stores/instalasiStore'
+import { useNotificationStore } from '@/stores/notificationStore'
 
 const props = defineProps({
   sidebarOpen: {
@@ -231,6 +254,8 @@ const emit = defineEmits([
 ])
 
 const uiStore = useUiStore()
+const notificationStore = useNotificationStore()
+const router = useRouter()
 
 // Pencarian pelanggan bersumber dari data /installation-tickets yang hanya
 // boleh diakses admin & surveyor. Untuk role lain kotak ini diberi disabled,
@@ -277,6 +302,60 @@ const userRoleLabel = computed(() => {
 
 const avatarDropdownOpen = ref(false)
 const avatarRef = ref(null)
+
+// ── Panel notifikasi navbar ──────────────────────────────────────────
+// Dua panel saling menutup: membuka lonceng menutup panel support, dan
+// sebaliknya. Keduanya dilewati oleh handleClickOutside lewat ref masing-masing.
+const bellPanelOpen = ref(false)
+const helpPanelOpen = ref(false)
+const bellRef = ref(null)
+const helpRef = ref(null)
+
+const bellTitle = computed(() => {
+  if (notificationStore.billsLoading && notificationStore.bellCount === 0)
+    return 'Memuat tagihan...'
+  if (notificationStore.bellCount === 0) return 'Tidak ada tagihan yang perlu dibayar'
+  return notificationStore.isStaffRole
+    ? `${notificationStore.bellCount} pelanggan punya tagihan belum dibayar`
+    : `Anda punya ${notificationStore.bellCount} tagihan belum dibayar`
+})
+
+const toggleBellPanel = () => {
+  const next = !bellPanelOpen.value
+  bellPanelOpen.value = next
+  helpPanelOpen.value = false
+
+  // Data baru ditarik saat panel dibuka, bukan saat mount: navbar muncul di
+  // semua halaman, jadi fetch saat mount akan berjalan di background pada
+  // setiap navigasi tanpa perlu.
+  if (next) notificationStore.fetchBills()
+}
+
+// Panel tanda tanya hanya kontak statis — tidak ada request, jadi tidak
+// ada lagi yang perlu pemicu saat dibuka.
+const toggleHelpPanel = () => {
+  helpPanelOpen.value = !helpPanelOpen.value
+  bellPanelOpen.value = false
+}
+
+/**
+ * `@close` panel menerima payload opsional. Tanpa payload panel hanya
+ * ditutup; dengan `{ routeName }` panel ditutup lalu pindah halaman
+ * (dipakai saat pengguna mengklik tagihan di dalam panel lonceng).
+ */
+const closePanelAndNavigate = (payload) => {
+  bellPanelOpen.value = false
+  helpPanelOpen.value = false
+
+  if (payload?.routeName) {
+    router.push({ name: payload.routeName, params: payload.params ?? {} }).catch(() => {})
+  }
+}
+
+const closeHelpPanel = () => {
+  helpPanelOpen.value = false
+}
+
 const searchWrapperRef = ref(null)
 const searchInputRef = ref(null)
 const mobileSearchInput = ref(null)
@@ -309,7 +388,8 @@ const CATEGORY_ROUTES = {
 }
 
 const categoryLabel = (key) => CATEGORY_LABELS[key] || key
-const categoryBadgeClass = (key) => CATEGORY_BADGES[key] || 'bg-slate-50 text-slate-600 border-slate-200'
+const categoryBadgeClass = (key) =>
+  CATEGORY_BADGES[key] || 'bg-slate-50 text-slate-600 border-slate-200'
 
 let debounceTimer = null
 const DEBOUNCE_MS = 200
@@ -387,6 +467,12 @@ const handleClickOutside = (e) => {
   if (avatarRef.value && !avatarRef.value.contains(e.target)) {
     avatarDropdownOpen.value = false
   }
+  if (bellRef.value && !bellRef.value.contains(e.target)) {
+    bellPanelOpen.value = false
+  }
+  if (helpRef.value && !helpRef.value.contains(e.target)) {
+    helpPanelOpen.value = false
+  }
   if (
     searchWrapperRef.value &&
     !searchWrapperRef.value.contains(e.target) &&
@@ -394,6 +480,15 @@ const handleClickOutside = (e) => {
   ) {
     searchDropdownOpen.value = false
   }
+}
+
+// Escape menutup panel yang sedang terbuka, didahulukan sebelum dropdown avatar
+// supaya konsisten dengan perilaku dropdown search.
+const handleEscape = (e) => {
+  if (e.key !== 'Escape') return
+  bellPanelOpen.value = false
+  helpPanelOpen.value = false
+  avatarDropdownOpen.value = false
 }
 
 // Tutup dropdown saat route berganti / dataMap berubah
@@ -420,12 +515,21 @@ watch(
 
 onMounted(() => {
   document.addEventListener('click', handleClickOutside)
+  document.addEventListener('keydown', handleEscape)
+
+  // Badge counter diambil sekali saat navbar muncul. Isi lengkap daftar
+  // tagihan baru diambil saat panelnya dibuka (lihat toggleBellPanel).
+  notificationStore.fetchBills()
   // Pastikan data instalasi sudah di-load agar pencarian langsung tersedia.
   // Hanya untuk role yang punya akses ke /installation-tickets
   // (admin & surveyor). Untuk pelanggan & teknisi endpoint itu 403, sehingga
   // pemanggilan di sini menghasilkan error yang ditelan tanpa pesan — gejalanya
   // kotak pencarian selalu "tidak ada hasil" tanpa penjelasan.
-  if (canSearchCustomers.value && instalasiStore && typeof instalasiStore.fetchData === 'function') {
+  if (
+    canSearchCustomers.value &&
+    instalasiStore &&
+    typeof instalasiStore.fetchData === 'function'
+  ) {
     const dataMap = instalasiStore.dataMap || {}
     const total =
       (dataMap.permohonan?.length || 0) +
@@ -441,6 +545,7 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   document.removeEventListener('click', handleClickOutside)
+  document.removeEventListener('keydown', handleEscape)
   if (debounceTimer) clearTimeout(debounceTimer)
 })
 </script>
