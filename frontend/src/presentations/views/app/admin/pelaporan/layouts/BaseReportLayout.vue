@@ -111,20 +111,34 @@ const effectiveSignature = computed(() => props.signature || providedSignature?.
 /**
  * Tentukan apakah signature block perlu dirender.
  * - Harus ada html yang tidak kosong (template + image injected)
- * - Hanya muncul di halaman terakhir (kalau pageInfo multi-page terdeteksi).
+ *
+ * Aturan: blok TTD hanya boleh muncul SATU KALI per file laporan, yaitu di
+ * halaman terakhir. `pageInfo` sudah dinormalisasi untuk semua view di
+ * PelaporanPreview, jadi di sini cukup membaca current/total.
+ * Fallback berjenjang bila pageInfo tidak tersedia: pakai flag isLastPage.
  */
 const showSignature = computed(() => {
   const sig = effectiveSignature.value
   if (!sig || typeof sig.html !== 'string') return false
   if (sig.html.trim() === '') return false
 
-  // Untuk laporan multi-page (CaLK, BukuBesar, dll) dengan pageInfo,
-  // hanya render di halaman terakhir.
-  const info = effectivePayload.value?.pageInfo
+  // Dibaca dari payload halaman ini; pageInfo sudah dinormalisasi di atas.
+  const payload = effectivePayload.value
+  const info = payload?.pageInfo
+
+  // Halaman terakhir = current === total. Dengan normalisasi pageInfo di
+  // PelaporanPreview, aturan ini berlaku untuk SEMUA jenis laporan.
   if (info && typeof info === 'object') {
-    if (typeof info.total === 'number' && info.total > 1) {
-      return info.current === info.total
+    const current = Number(info.current)
+    const total = Number(info.total)
+    if (Number.isFinite(total) && total > 0 && Number.isFinite(current)) {
+      return current === total
     }
+  }
+
+  // Fallback: pakai flag isLastPage bila pageInfo tidak tersedia.
+  if (typeof payload?.isLastPage === 'boolean') {
+    return payload.isLastPage
   }
 
   return true

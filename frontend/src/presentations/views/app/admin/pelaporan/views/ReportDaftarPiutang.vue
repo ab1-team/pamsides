@@ -1,5 +1,5 @@
 <template>
-  <BaseReportLayout :lembaga="payload?.lembaga" :config="payload?.config" :no-meta-header="!isFirstPage">
+  <BaseReportLayout :lembaga="payload?.lembaga" :config="payload?.config" :payload="payload" :no-meta-header="!isFirstPage">
     <div v-if="isFirstPage" class="page-header">
         <h2 class="uppercase">PIUTANG PELANGGAN</h2>
       <h2 class="mt-1 mb-0 leading-tight uppercase">BULAN {{ periodeText }}</h2>
