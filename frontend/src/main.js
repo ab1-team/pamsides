@@ -205,6 +205,10 @@ import {
   faTable,
   faRotateLeft,
   faRotateRight,
+  faGem,
+  faCode,
+  faRocket,
+  faQuoteLeft,
 } from '@fortawesome/free-solid-svg-icons'
 
 import { faWhatsapp } from '@fortawesome/free-brands-svg-icons'
@@ -386,6 +390,10 @@ library.add(
   faTable,
   faRotateLeft,
   faRotateRight,
+  faGem,
+  faCode,
+  faRocket,
+  faQuoteLeft,
 )
 
 export { MySwal } from './utils/swal'
