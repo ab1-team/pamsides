@@ -127,6 +127,16 @@ export const billingService = {
     const response = await api.post(`/customers/${customerId}/restore`)
     return response.data
   },
+
+  /**
+   * Ringkasan tagihan yang belum dibayar untuk badge icon lonceng.
+   * Backend yang menyesuaikan daftar berdasarkan role pemanggil
+   * (admin/teknisi → semua pelanggan menunggak, pelanggan → miliknya).
+   */
+  async getUnpaidSummary() {
+    const response = await api.get('/monthly-bills/unpaid-summary')
+    return response.data
+  },
 }
 
 export default billingService
