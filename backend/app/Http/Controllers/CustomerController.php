@@ -2,44 +2,137 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Customer;
 use App\Models\InstallationTicket;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rule;
 
 class CustomerController extends Controller
 {
+    /**
+     * Resolve {id} dari form Ubah/Hapus.
+     *
+     * ID yang dikirim frontend bisa berupa dua bentuk:
+     *   - angka (installation_tickets.id) — untuk pelanggan yang belum punya
+     *     record `customers` (mis. baru disimpan lewat form Tambah), dan
+     *   - customer_code (mis. "005.0001.100.1") — untuk pelanggan aktif, sebab
+     *     mapRow() di usePelanggan.js memakai `customer_code || id`.
+     *
+     * Dulu show() hanya findOrFail() tiket berdasarkan angka, sehingga tombol
+     * Ubah untuk SETIAP pelanggan aktif melompat ke 404: kolom ID di UI
+     * menampilkan kode pelanggan, tapi route menerimanya sebagai id tiket.
+     */
+    private function findTicketByIdentifier($id): ?InstallationTicket
+    {
+        $ticket = InstallationTicket::with(['user', 'customer'])
+            ->find($id);
+
+        if ($ticket) {
+            return $ticket;
+        }
+
+        // Bukan id tiket: bisa jadi customer_code.
+        return InstallationTicket::with(['user', 'customer'])
+            ->whereHas('customer', fn ($q) => $q->where('customer_code', (string) $id))
+            ->first();
+    }
+
+    /**
+     * Daftar pelanggan untuk halaman /app/data-pelanggan.
+     *
+     * Paginasi dilakukan di SERVER (satu halaman per request). usePelanggan.js
+     * dulunya menarik seluruh halaman lalu memfilter di browser; sekarang ia
+     * hanya meminta halaman yang sedang ditampilkan.
+     *
+     * Catatan performa — `installation_tickets` punya kolom `address` TEXT,
+     * `birth_place`, lat/lng, dan lain-lain yang tidak pernah dirender tabel,
+     * jadi kolom select dibatasi. `user` juga tidak di-eager-load karena
+     * mapper di bawah membaca nama dari `applicant_name`, bukan dari users —
+     * tanpa pembatasan itu tiap halaman menambah satu query sia-sia.
+     *
+     * store() membuat tiket berstatus `draft`, dan tombol "Tidak, Cek Data" di
+     * form Tambah langsung mengarahkan user ke halaman ini. Karena itu draft
+     * tidak disaring: draft = pelanggan yang baru didaftarkan lewat halaman
+     * ini, jadi memang harus ikut tampil.
+     */
     public function index(Request $request)
     {
-        $query = InstallationTicket::with(['user', 'customer'])
-            ->where('status', '!=', 'draft');
+        // Batasi ukuran halaman supaya satu request tidak bisa menarik seluruh
+        // tabel. Frontend|max 100 lewat dropdown "Tampilkan ... data".
+        $perPage = max(1, min((int) $request->get('per_page', 10), 100));
 
-        if ($request->search) {
-            $q = $request->search;
-            $query->where(function ($sub) use ($q) {
-                $sub->where('applicant_name', 'like', "%{$q}%")
-                    ->orWhere('nik', 'like', "%{$q}%");
+        $query = InstallationTicket::query()
+            ->select([
+                'id',
+                'applicant_name',
+                'nik',
+                'phone',
+                'address',
+                'status',
+                'created_at',
+            ])
+            // customer_code hanya ada di tabel `customers` (dibuat saat
+            // aktivasi, belum ada untuk pelanggan draft). Eager load
+            // `customer` = satu query hasMany tambahan per halaman untuk satu
+            // kolom; subquery skalar di sini digabung ke query utama.
+            ->addSelect([
+                'customer_code' => Customer::query()
+                    ->select('customer_code')
+                    ->whereColumn('customers.ticket_id', 'installation_tickets.id')
+                    ->orderBy('customers.id')
+                    ->limit(1),
+            ]);
+
+        $search = trim((string) $request->get('search', ''));
+        $status = trim((string) $request->get('status', ''));
+
+        if ($status !== '') {
+            $query->where('status', $status);
+        }
+
+        if ($search !== '') {
+            // Panjang dibatasi supaya satu request tidak bisa memaksa MySQL
+            // membandingkan seluruh kolom teks dengan pola yang sangat panjang.
+            $search = mb_substr($search, 0, 100);
+            $like = "%{$search}%";
+
+            $query->where(function ($sub) use ($like) {
+                $sub->where('applicant_name', 'like', $like)
+                    ->orWhere('nik', 'like', $like)
+                    ->orWhere('phone', 'like', $like)
+                    ->orWhere('address', 'like', $like)
+                    // Kolom "ID" di UI menampilkan customer_code, jadi kode
+                    // pelanggan ikut bisa dicari — sebelumnya tidak, sehingga
+                    // mengetik kode selalu mengembalikan "Pelanggan Tidak
+                    // Ditemukan" walau datanya ada.
+                    ->orWhereIn(
+                        'id',
+                        Customer::query()->select('ticket_id')->where('customer_code', 'like', $like)
+                    );
             });
         }
 
-        if ($request->status) {
-            $query->where('status', $request->status);
-        }
+        // `id` jadi tie-breaker: created_at berpresisi detik, jadi dua baris
+        // yang dibuat pada detik sama bisa berganti urutan antar-request dan
+        // menyebabkan baris yang sama muncul di dua halaman.
+        $tickets = $query
+            ->orderByDesc('created_at')
+            ->orderByDesc('id')
+            ->paginate($perPage);
 
-        $tickets = $query->latest()->paginate($request->get('per_page', 10));
-
-        $items = $tickets->getCollection()->map(function ($t) {
-            return [
-                'id' => $t->id,
-                'name' => $t->applicant_name,
-                'nik' => $t->nik,
-                'no_telp' => $t->phone ?? '-',
-                'address' => $t->address ?? '-',
-                'status' => $t->status,
-                'customer_code' => optional($t->customer->first())->customer_code,
-            ];
-        });
+        $items = $tickets->getCollection()->map(fn ($t) => [
+            'id' => $t->id,
+            'name' => $t->applicant_name,
+            'nik' => $t->nik,
+            'no_telp' => $t->phone ?? '-',
+            'address' => $t->address ?? '-',
+            'status' => $t->status,
+            'customer_code' => $t->customer_code,
+        ]);
 
         return response()->json([
             'success' => true,
@@ -125,16 +218,74 @@ class CustomerController extends Controller
         ]);
     }
 
+    /**
+     * Normalisasi nilai "kosong" dari form.
+     *
+     * Kedua form (PelangganCreate.vue & PelangganEdit.vue) mengganti kolom kosong
+     * dengan '0' atau '-' sebelum mengirim, sesuai catatan di bawah form. Nilai
+     * placeholder itu TIDAK boleh dianggap data asli: kolom tanggal harus jadi
+     * NULL (bukan 1970-01-01 hasil strtotime('-')), dan gender kosong tidak boleh
+     * diam-diam dianggap laki-laki.
+     */
+    private function blankToNull($value): ?string
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        $value = trim((string) $value);
+
+        return ($value === '' || $value === '-' || $value === '0') ? null : $value;
+    }
+
+    /**
+     * Terjemahkan label Bahasa Indonesia dari form ke enum DB (male/female).
+     * Nilai tidak dikenal (termasuk placeholder '-') menghasilkan null.
+     */
+    private function normalizeGender($value): ?string
+    {
+        return match ($this->blankToNull($value)) {
+            'Perempuan' => 'female',
+            'Laki-laki' => 'male',
+            default => null,
+        };
+    }
+
+    /**
+     * Tanggal lahir dari date-picker. Nilai placeholder / tidak valid -> null.
+     */
+    private function normalizeBirthDate($value): ?string
+    {
+        $raw = $this->blankToNull($value);
+
+        if ($raw === null) {
+            return null;
+        }
+
+        try {
+            $date = Carbon::parse($raw);
+        } catch (\Exception $e) {
+            return null;
+        }
+
+        // Hanya terima tahun yang masuk akal (>= 1900). Tanpa ini, nilai
+        // placeholder '-' dari date-picker akan tersimpan sebagai 1970-01-01.
+        return ($date->year >= 1900 && $date->year <= (int) date('Y')) ? $date->format('Y-m-d') : null;
+    }
+
     public function store(Request $request)
     {
         $request->validate([
-            'nik' => 'required',
+            'nik' => ['required', 'string', 'max:20', Rule::unique('installation_tickets', 'nik')],
             'nama_lengkap' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
             'password' => 'required|min:6',
             'alamat_lengkap' => 'required',
+            'package_id' => 'nullable|exists:installation_packages,id',
+            'jenis_kelamin' => 'nullable|in:Laki-laki,Perempuan',
         ], [
             'nik.required' => 'NIK wajib diisi',
+            'nik.unique' => 'NIK sudah digunakan oleh pelanggan lain',
             'nama_lengkap.required' => 'Nama lengkap wajib diisi',
             'email.required' => 'Email wajib diisi',
             'email.email' => 'Format email tidak valid',
@@ -142,6 +293,7 @@ class CustomerController extends Controller
             'password.required' => 'Password wajib diisi',
             'password.min' => 'Password minimal 6 karakter',
             'alamat_lengkap.required' => 'Alamat lengkap wajib diisi',
+            'jenis_kelamin.in' => 'Jenis kelamin tidak valid',
         ]);
 
         try {
@@ -159,10 +311,10 @@ class CustomerController extends Controller
                     'applicant_name' => $request->nama_lengkap,
                     'nik' => $request->nik,
                     'address' => $request->alamat_lengkap,
-                    'phone' => $request->no_telp ?? '-',
-                    'gender' => $request->jenis_kelamin == 'Perempuan' ? 'female' : 'male',
-                    'birth_place' => $request->tempat_lahir ?? '-',
-                    'birth_date' => $request->tgl_lahir ? date('Y-m-d', strtotime($request->tgl_lahir)) : now(),
+                    'phone' => $this->blankToNull($request->no_telp) ?? '0',
+                    'gender' => $this->normalizeGender($request->jenis_kelamin),
+                    'birth_place' => $this->blankToNull($request->tempat_lahir) ?? '-',
+                    'birth_date' => $this->normalizeBirthDate($request->tgl_lahir),
                     'lat' => 0,
                     'lng' => 0,
                     'status' => 'draft',
@@ -185,12 +337,24 @@ class CustomerController extends Controller
 
     public function update(Request $request, $id)
     {
-        $ticket = InstallationTicket::with('user')->findOrFail($id);
+        // {id} bisa customer_code (lihat findTicketByIdentifier).
+        $ticket = $this->findTicketByIdentifier($id);
+
+        if (! $ticket) {
+            abort(404, 'Data pelanggan tidak ditemukan');
+        }
 
         $request->validate([
-            'nik' => 'required',
-            'nama_lengkap' => 'required',
+            'nik' => [
+                'required', 'string', 'max:20',
+                Rule::unique('installation_tickets', 'nik')->ignore($ticket->id),
+            ],
+            'nama_lengkap' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email,'.$ticket->user_id,
+            'jenis_kelamin' => 'nullable|in:Laki-laki,Perempuan',
+        ], [
+            'nik.unique' => 'NIK sudah digunakan oleh pelanggan lain',
+            'jenis_kelamin.in' => 'Jenis kelamin tidak valid',
         ]);
 
         DB::transaction(function () use ($request, $ticket) {
@@ -204,10 +368,10 @@ class CustomerController extends Controller
                 'applicant_name' => $request->nama_lengkap,
                 'nik' => $request->nik,
                 'address' => $request->alamat_lengkap,
-                'phone' => $request->no_telp,
-                'gender' => $request->jenis_kelamin == 'Perempuan' ? 'female' : 'male',
-                'birth_place' => $request->tempat_lahir,
-                'birth_date' => $request->tgl_lahir ? date('Y-m-d', strtotime($request->tgl_lahir)) : null,
+                'phone' => $this->blankToNull($request->no_telp) ?? '0',
+                'gender' => $this->normalizeGender($request->jenis_kelamin),
+                'birth_place' => $this->blankToNull($request->tempat_lahir) ?? '-',
+                'birth_date' => $this->normalizeBirthDate($request->tgl_lahir),
             ]);
         });
 
@@ -219,7 +383,11 @@ class CustomerController extends Controller
 
     public function destroy($id)
     {
-        $ticket = InstallationTicket::with('user')->findOrFail($id);
+        $ticket = $this->findTicketByIdentifier($id);
+
+        if (! $ticket) {
+            abort(404, 'Data pelanggan tidak ditemukan');
+        }
 
         return $this->safeDelete(
             fn () => DB::transaction(function () use ($ticket) {
@@ -237,7 +405,11 @@ class CustomerController extends Controller
 
     public function show($id)
     {
-        $ticket = InstallationTicket::with(['user', 'customer'])->findOrFail($id);
+        $ticket = $this->findTicketByIdentifier($id);
+
+        if (! $ticket) {
+            abort(404, 'Data pelanggan tidak ditemukan');
+        }
 
         return response()->json([
             'success' => true,
