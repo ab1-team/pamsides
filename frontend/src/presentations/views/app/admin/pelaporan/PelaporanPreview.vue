@@ -799,11 +799,28 @@ const buildPages = (res) => {
     pages.value = [{ payload: data, meta: baseMeta }]
   }
 
-  pages.value = pages.value.map((p) => ({
+  // Normalisasi akhir: pastikan SETIAP halaman punya pageInfo { current, total }
+  // yang akurat, apa pun view_target-nya.
+  //
+  // Sebagian laporan hanya mengisi `isFirstPage`/`isLastPage` tanpa `pageInfo`,
+  // dan sebagian lagi tidak mengisi apa pun. Akibatnya BaseReportLayout tidak
+  // bisa tahu halaman mana yang terakhir, sehingga blok tanda tangan ikut
+  // ter-render di SEMUA halaman. Menormalkan di sini membuat aturan
+  // "1 blok TTD di halaman terakhir" berlaku seragam untuk semua laporan.
+  //
+  // `total` selalu memakai panjang `pages` karena itu sudah merupakan
+  // jumlah halaman aktual (CaLK juga sudah menormalkan sendiri di probe).
+  const totalPages = pages.value.length
+  pages.value = pages.value.map((p, i) => ({
     ...p,
     payload: {
       ...p.payload,
       lembaga: p.payload?.lembaga || baseLembaga,
+      pageInfo: {
+        ...(p.payload?.pageInfo || {}),
+        current: i + 1,
+        total: totalPages,
+      },
     },
   }))
 }

@@ -1,5 +1,5 @@
 <template>
-    <BaseReportLayout :lembaga="payload?.lembaga" :config="payload?.config" :no-meta-header="!isFirstPage">
+    <BaseReportLayout :lembaga="payload?.lembaga" :config="payload?.config" :payload="payload" :no-meta-header="!isFirstPage">
         <div ref="rootEl" class="calk-root">
             <div v-if="isFirstPage" class="header-section" data-block="header" style="text-align:center;margin-bottom:15px;font-family:sans-serif;">
                 <h2 style="margin:0;font-size:14pt;font-weight:bold;text-transform:uppercase;color:#000;">
@@ -37,27 +37,14 @@
                 <ol v-if="isFirstPage" style="list-style: upper-alpha; font-size: 12px;">
                     <li data-block="sec-gambaran">
                         <div style="text-transform: uppercase;">Gambaran Umum</div>
-                        <div style="text-align: justify">
-                    {{ lembagaNama }} adalah Badan Usaha yang didirikan dari transformasi UPK PNPM-MPd dengan kegiatan
-                    usaha Dana Bergulir Masyarakat (DBM) melalui produk usahanya SPP dan UEP. Dalam
-                    perkembangannya sebagian dari laba DBM UPK PNPM-MPd kemudian sebelum ditetapkannya PP 11
-                    tahun 2021 telah digunakan untuk membentuk unit usaha Perdagangan dan Produksi*. Bumdesma Lkd setelah didirikan sesuai ketentuan PP 11 tahun 2021 dilaksanakan transformasi
-                    sesuai Permendesa PDTT Nomor 15 tahun 2021 yang meliputi pengalihan aset, pengalihan
-                    kelembagaan, pengalihan personil, dan pengalihan kegiatan usaha. Modal awal Pendirian
-                    Bumdesma Lkd sesuai dengan ketentuan tersebut adalah berasal dari keseluruhan pengalihan
-                    keseluruhan aset DBM Eks PNPM MPd (Permendesa PDTT 15 tahun 2021 Pasal 5) yang dicatat
-                    sebagai Ekuitas Bumdesma Lkd ditambah dengan Penyertaan Modal Desa. Yang kemudian didalam
-                    laporan posisi keuangan ekuitas yang berasal dari Aset DBM Eks PNPM Mpd disebut Modal
-                    Masyarakat Desa (Permendesa PDTT 15 tahun 2021 Pasal 6). Sesuai dengan ketentuan UU Cipta Kerja No 11 Tahun 2020 bahwa Menetapkan status Badan hukum
-                    BUM Desa pada ketentuan Pasal 117 "bahwa Badan Usaha Milik Desa yang selanjutnya disebut BUM
-                    Desa adalah Badan hukum yang didirikan oleh desa dan atau bersama desa-desa guna mengelola
-                    usaha, memanfaatkan aset, mengembangkan investasi dan produktivitas, menyediakan jasa
-                    pelayanan, dan atau jenis usaha lainnya untuk sebesar-besarnya kesejahteraan masyarakat desa." Status inilah yang menjadi dasar hukum pelaksanaan usaha didirikan dengan kegiatan Usaha Utama
-                    DBM. {{ lembagaNama }} didirikan di {{ lembagaAlamat }} berdasarkan PERATURAN BERSAMA
-                    KEPALA DESA NOMOR {{ peraturanDesa }} dan mendapatkan Sertifikat Badan Hukum dari Menteri
-                    Hukum dan Hak Asasi Manusia No. {{ skKemenkumham }}. {{ lembagaNama }} menjalankan usaha
-                    pinjaman Dana Bergulir Masyarakat yang masuk dalam kategori usaha mikrofinance dan berdomisili
-                    di {{ lembagaAlamat }} dengan perangkat organisasi sebagai berikut:
+                        <div v-if="customPointA" class="point-a" style="text-align: justify" v-html="customPointA"></div>
+                        <div v-else style="text-align: justify">
+                    {{ lembagaNama }} adalah Badan Usaha Milik Desa yang didirikan berdasarkan Peraturan
+                    Bersama Kepala Desa Nomor {{ peraturanDesa }}, dengan kegiatan usaha pelayanan pembiayaan
+                    dan pengembangan usaha masyarakat desa. {{ lembagaNama }} telah memperoleh Sertifikat Badan
+                    Hukum dari Menteri Hukum dan Hak Asasi Manusia No. {{ skKemenkumham }} dan berkedudukan di
+                    {{ lembagaAlamat }}, serta menjalankan usaha pembiayaan dan pengembangan usaha masyarakat
+                    desa yang berdomisili di {{ lembagaAlamat }} dengan perangkat organisasi sebagai berikut:
                         </div>
 
                     </li>
@@ -135,12 +122,18 @@
                                 <li style="margin-top: 6px;">
                                     Laba Ditahan Dari Laba Tahun
                                     <ol style="list-style: lower-latin; padding-left: 25px; text-align: justify;">
-                                        <li>Laba Ditahan untuk Penambahan Modal Kegiatan DBM Rp.</li>
+                                        <li>Laba Ditahan untuk Penambahan Modal Kegiatan Rp.</li>
                                         <li>Laba Ditahan untuk Penambahan Investasi Usaha Rp.</li>
                                         <li>Laba Ditahan untuk Pendirian Unit Usaha Rp.</li>
                                     </ol>
                                 </li>
                             </ol>
+                        </li>
+                        <li v-if="calkContent" data-block="sec-lain-lain" style="margin-top: 12px;">
+                            <div style="text-transform: uppercase;">
+                                Lain Lain
+                            </div>
+                            <div style="text-align: justify" v-html="calkContent"></div>
                         </li>
                         <li data-block="sec-penutup" style="margin-top: 12px;">
                             <div style="text-transform: uppercase;">
@@ -193,12 +186,18 @@
                                 <li style="margin-top: 6px;">
                                     Laba Ditahan Dari Laba Tahun
                                     <ol style="list-style: lower-latin; padding-left: 25px; text-align: justify;">
-                                        <li>Laba Ditahan untuk Penambahan Modal Kegiatan DBM Rp.</li>
+                                        <li>Laba Ditahan untuk Penambahan Modal Kegiatan Rp.</li>
                                         <li>Laba Ditahan untuk Penambahan Investasi Usaha Rp.</li>
                                         <li>Laba Ditahan untuk Pendirian Unit Usaha Rp.</li>
                                     </ol>
                                 </li>
                             </ol>
+                        </li>
+                        <li v-if="calkContent" data-block="sec-lain-lain" style="margin-top: 12px;">
+                            <div style="text-transform: uppercase;">
+                                Lain Lain
+                            </div>
+                            <div style="text-align: justify" v-html="calkContent"></div>
                         </li>
                         <li data-block="sec-penutup" style="margin-top: 12px;">
                             <div style="text-transform: uppercase;">
@@ -337,6 +336,37 @@ const peraturanDesa = computed(() => {
 const skKemenkumham = computed(() => {
   const v = props.payload?.lembaga?.sk_kemenkumham
   return v && String(v).trim() ? v : '—'
+})
+
+/**
+ * Point A (Gambaran Umum) kustom dari /settings/personalisasi-sop -> "Custom CALK".
+ * Kalau kosong (atau cuma tag <p><br></p> bawaan Quill) pakai teks bawaan,
+ * sama seperti `@if ($pointA) ... @else ... @endif` di sidbm calk.blade.php.
+ */
+const customPointA = computed(() => {
+  const raw = props.payload?.point_a
+  if (!raw || typeof raw !== 'string') return ''
+  const stripped = raw
+    .replace(/<p>\s*(<br\s*\/?>)?\s*<\/p>/gi, '')
+    .replace(/<[^>]*>/g, '')
+    .replace(/&nbsp;/gi, ' ')
+    .trim()
+  return stripped ? raw : ''
+})
+
+/**
+ * Catatan "Lain-lain" per periode (tabel `calks` -> payload.calk_content).
+ * Setara `@if ($keterangan) ... LAIN LAIN ... {!! $keterangan->catatan !!}` di sidbm.
+ */
+const calkContent = computed(() => {
+  const raw = props.payload?.calk_content
+  if (!raw || typeof raw !== 'string') return ''
+  const stripped = raw
+    .replace(/<p>\s*(<br\s*\/?>)?\s*<\/p>/gi, '')
+    .replace(/<[^>]*>/g, '')
+    .replace(/&nbsp;/gi, ' ')
+    .trim()
+  return stripped ? raw : ''
 })
 </script>
 
