@@ -1,53 +1,64 @@
 <template>
   <Teleport to="body">
     <Transition name="modal-fade">
-      <div v-if="show" class="fixed inset-0! z-50 flex items-center justify-center p-4! md:p-8!">
+      <div
+        v-if="show"
+        class="fixed inset-0! z-50 flex items-center justify-center p-0! sm:p-4! md:p-8!"
+      >
         <div class="absolute inset-0! bg-slate-900/60! backdrop-blur-sm!" @click="close"></div>
 
         <div
-          class="relative w-full! h-full! max-w-7xl! bg-white rounded-2xl! shadow-xl! border border-slate-200 flex flex-col overflow-hidden animate-slide-up"
+          class="relative w-full! h-full! max-w-7xl! bg-white rounded-none! sm:rounded-2xl! shadow-xl! border border-slate-200 flex flex-col overflow-hidden animate-slide-up"
         >
           <div
-            class="flex items-center! justify-between! px-6! py-4! border-b! border-slate-200! bg-white!"
+            class="flex items-center! justify-between! gap-3! px-4! sm:px-6! py-3! sm:py-4! border-b! border-slate-200! bg-white! shrink-0!"
           >
-            <div class="flex items-center gap-3!">
+            <div class="flex items-center! gap-3! min-w-0! flex-1!">
               <div
-                class="w-10! h-10! rounded-full! bg-cyan-600! text-white! flex items-center! justify-center!"
+                class="w-9! h-9! sm:w-10! sm:h-10! shrink-0! rounded-full! bg-cyan-600! text-white! flex items-center! justify-center!"
               >
                 <font-awesome-icon icon="file-alt" />
               </div>
-              <div>
-                <h2 class="text-lg! font-semibold! text-slate-800 leading-tight">
+              <div class="min-w-0!">
+                <h2
+                  class="text-sm! sm:text-lg! font-semibold! text-slate-800 leading-tight truncate!"
+                >
                   Hasil Input Pemakaian Air
                 </h2>
-                <p class="text-xs! text-slate-500! font-medium!">
+                <p class="text-[10px]! sm:text-xs! text-slate-500! font-medium! truncate!">
                   Periode: {{ filter.bulan }} {{ filter.tahun }}
                 </p>
               </div>
             </div>
+            <!-- Tombol X di pojok kanan header. -->
             <button
               @click="close"
-              class="w-9! h-9! hover:bg-slate-100! flex items-center! justify-center! text-slate-400! hover:text-slate-600! transition-all active:scale-95 rounded-md!"
+              aria-label="Tutup"
+              class="w-8! h-8! sm:w-9! sm:h-9! shrink-0! hover:bg-slate-100! flex items-center! justify-center! text-slate-400! hover:text-slate-600! transition-all active:scale-95 rounded-md!"
             >
               <font-awesome-icon icon="times" />
             </button>
           </div>
 
           <div
-            class="px-6! py-4! bg-slate-50/50! border-b! border-slate-100! flex flex-col! md:flex-row! md:items-center! justify-between! gap-4!"
+            class="px-4! sm:px-6! py-3! sm:py-4! bg-slate-50/50! border-b! border-slate-100! flex flex-col! md:flex-row! md:items-center! justify-between! gap-3! sm:gap-4! shrink-0!"
           >
-          <div class="flex flex-col! gap-y-1! text-sm!">
-            <div class="flex items-center! gap-2!">
-              <span class="text-slate-500! whitespace-nowrap! w-28!">Cater</span>
-              <span class="font-semibold! text-slate-700!">: {{ filter.cater || '-' }}</span>
+          <div class="flex flex-col! gap-y-1! text-xs! sm:text-sm! min-w-0!">
+            <div class="flex items-center! gap-2! min-w-0!">
+              <span class="text-slate-500! whitespace-nowrap! w-24! sm:w-28! shrink-0!">Cater</span>
+              <span class="font-semibold! text-slate-700! truncate!"
+                >: {{ filter.cater || '-' }}</span
+              >
             </div>
-            <div class="flex items-center! gap-2!">
-              <span class="text-slate-500! whitespace-nowrap! w-28!">Maksimal Bayar</span>
-              <span class="font-semibold! text-slate-700!">: {{ maksimalBayar }}</span>
+            <div class="flex items-center! gap-2! min-w-0!">
+              <span class="text-slate-500! whitespace-nowrap! w-24! sm:w-28! shrink-0!">Maksimal Bayar</span>
+              <span class="font-semibold! text-slate-700! truncate!"
+                >: {{ maksimalBayar }}</span
+              >
             </div>
           </div>
 
-            <div class="relative! w-full! md:w-72!">
+            <div class="relative! w-full! md:w-72! shrink-0!">
               <div
                 class="absolute! inset-y-0! left-0! pl-3! flex! items-center pointer-events-none!"
               >
@@ -62,8 +73,13 @@
             </div>
           </div>
 
-          <div class="flex-1 overflow-auto px-6! py-0! scrollbar-custom">
-            <table class="w-full border-collapse text-xs md:text-sm!">
+          <!-- Sama seperti modal di halaman teknisi: `min-w-max` menjaga tabel
+           10 kolom tetap punya lebar alaminya di layar HP, lalu
+           `overflow-x-auto` membuat tabel bisa digeser horizontal. -->
+          <div
+            class="flex-1 overflow-y-auto! overflow-x-auto! overscroll-contain! px-0! md:px-6! py-0! scrollbar-custom"
+          >
+            <table class="w-full min-w-[720px]! border-collapse text-xs md:text-sm!">
               <thead>
                 <tr class="bg-slate-700! text-white! sticky! top-0! z-20!">
                 <th
@@ -168,16 +184,12 @@
             </table>
           </div>
 
+          <!-- Dua tombol berbagi lebar, tetap berdampingan (kiri-kanan) di HP.
+               Label panjang dipecah dua baris supaya tombol tetap sempit.
+               Tombol tutup dihapus; modal ditutup lewat tap area gelap. -->
           <div
-            class="px-6! py-4! bg-slate-50! border-t! border-slate-200! flex justify-end items-center gap-3! min-h-[80px]!"
+            class="px-4! sm:px-6! py-3! sm:py-4! bg-slate-50! border-t! border-slate-200! flex items-stretch! gap-2! sm:gap-3! shrink-0!"
           >
-            <button
-              @click="close"
-              class="flex items-center! gap-2! bg-[#334155]! hover:bg-[#1e293b]! text-white! px-6! py-2.5! font-semibold! transition-all active:scale-95 rounded-lg! shadow-md!"
-            >
-              <font-awesome-icon icon="times" />
-              Tutup
-            </button>
             <button
               @click="handleCetakStruk"
               :disabled="selectedIds.length === 0"
@@ -186,12 +198,12 @@
                   ? 'Pilih minimal satu pelanggan untuk cetak struk'
                   : 'Cetak struk untuk ' + selectedIds.length + ' pelanggan'
               "
-              class="flex items-center! gap-2! bg-amber-500! hover:bg-amber-600! disabled:opacity-50! disabled:cursor-not-allowed! text-white! px-6! py-2.5! font-semibold! transition-all active:scale-95 rounded-lg! shadow-md! shadow-amber-200!"
+              class="flex-1! flex items-center! justify-center! gap-2! bg-amber-500! hover:bg-amber-600! disabled:opacity-50! disabled:cursor-not-allowed! text-white! px-2! sm:px-6! py-3.5! sm:py-2.5! font-semibold! transition-all active:scale-95 rounded-lg! shadow-md! shadow-amber-200!"
             >
-              <font-awesome-icon icon="print" />
-              Cetak Struk
+              <font-awesome-icon icon="print" class="shrink-0!" />
+              <span class="text-sm! whitespace-nowrap! leading-tight!">Cetak Struk</span>
             </button>
-           
+
             <button
               @click="handleCetakDaftarTagihan"
               :disabled="selectedIds.length === 0"
@@ -200,10 +212,15 @@
                   ? 'Pilih minimal satu pelanggan untuk cetak daftar tagihan'
                   : 'Cetak daftar tagihan untuk ' + selectedIds.length + ' pelanggan'
               "
-              class="flex items-center! gap-2! bg-cyan-600! hover:bg-cyan-700! disabled:opacity-50! disabled:cursor-not-allowed! text-white! px-6! py-2.5! font-semibold! transition-all active:scale-95 rounded-lg! shadow-md! shadow-cyan-200!"
+              class="flex-1! flex items-center! justify-center! gap-2! bg-cyan-600! hover:bg-cyan-700! disabled:opacity-50! disabled:cursor-not-allowed! text-white! px-2! sm:px-6! py-3.5! sm:py-2.5! font-semibold! transition-all active:scale-95 rounded-lg! shadow-md! shadow-cyan-200!"
             >
-              <font-awesome-icon icon="print" />
-              Cetak Daftar Tagihan
+              <font-awesome-icon icon="print" class="shrink-0!" />
+              <!-- Label HP disingkat jadi "Cetak Tagihan" supaya tetap satu baris;
+                   dari `sm` ke atas kembali penuh. -->
+              <span class="text-sm! whitespace-nowrap! leading-tight!"
+                ><span class="sm:hidden!">Cetak Tagihan</span
+                ><span class="hidden! sm:inline!">Cetak Daftar Tagihan</span></span
+              >
             </button>
           </div>
         </div>
