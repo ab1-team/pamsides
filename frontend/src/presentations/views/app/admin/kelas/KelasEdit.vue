@@ -1,5 +1,5 @@
 <template>
-  <div class="pricing-config-view w-full! max-w-5xl! mx-auto! pb-20!">
+  <div class="pricing-config-view w-full! pb-20!">
     <div class="mb-6! sm:mb-8! flex! items-center! gap-3! sm:gap-4!">
       <BaseButton
         variant="ghost"
@@ -53,13 +53,23 @@
         <div
           class="grid grid-cols-1 md:grid-cols-3 gap-4! sm:gap-6! mb-8! pb-8! border-b! border-slate-100!"
         >
-          <MaksMoneyInput v-model="installationFee" label="Biaya Pasang Baru" placeholder="0" />
-          <MaksMoneyInput v-model="abodemen" label="Biaya Abodemen" placeholder="0" />
-          <MaksMoneyInput v-model="denda" label="Denda Keterlambatan" placeholder="0" />
+          <MaksMoneyInput
+            v-model="installationFee"
+            label="Biaya Pasang Baru"
+            placeholder="0"
+            hide-prefix
+          />
+          <MaksMoneyInput v-model="abodemen" label="Biaya Abodemen" placeholder="0" hide-prefix />
+          <MaksMoneyInput
+            v-model="denda"
+            label="Denda Keterlambatan"
+            placeholder="0"
+            hide-prefix
+          />
         </div>
 
         <div
-          class="hidden sm:grid grid-cols-[1.5fr_2fr_2fr_80px] gap-4! px-6! mb-4! text-[11px]! font-bold! text-slate-400! uppercase! tracking-widest!"
+          class="hidden sm:grid grid-cols-[minmax(0,1.2fr)_minmax(0,1.5fr)_minmax(0,1.5fr)_80px] gap-4! mb-4! text-[11px]! font-bold! text-slate-400! uppercase! tracking-widest!"
         >
           <div>URUTAN BLOK</div>
           <div class="text-center!">RENTANG VOLUME (M3)</div>
@@ -71,7 +81,7 @@
           <div
             v-for="(block, index) in blocks"
             :key="index"
-            class="group relative! flex flex-col sm:grid sm:grid-cols-[1.5fr_2fr_2fr_80px] gap-4! sm:items-center! py-5! px-5! sm:py-4! sm:px-6! rounded-2xl! bg-slate-50/50! border! border-slate-100! sm:border-transparent! hover:border-blue-100! hover:bg-white! hover:shadow-lg! hover:shadow-blue-500/5! transition-all! duration-300!"
+            class="group relative! flex flex-col sm:grid sm:grid-cols-[minmax(0,1.2fr)_minmax(0,1.5fr)_minmax(0,1.5fr)_80px] gap-4! sm:items-center! py-5! px-5! sm:py-4! rounded-2xl! bg-slate-50/50! border! border-slate-100! sm:border-transparent! hover:border-blue-100! hover:bg-white! hover:shadow-lg! hover:shadow-blue-500/5! transition-all! duration-300!"
           >
             <div class="flex items-center justify-between w-full sm:w-auto!">
               <div class="flex items-center gap-3! sm:gap-4!">
@@ -107,12 +117,12 @@
                 class="sm:hidden! text-[10px]! font-bold! text-slate-400! uppercase! tracking-wider!"
                 >Rentang Volume (m³)</span
               >
-              <div class="flex items-center gap-3! w-full sm:w-auto!">
-                <div class="relative! w-full sm:w-24!">
+              <div class="flex items-center gap-2! sm:gap-3! w-full sm:w-auto! sm:max-w-xs! mx-auto!">
+                <div class="relative! w-1/2! sm:w-auto! sm:flex-1!">
                   <input
                     type="number"
                     v-model="block.from"
-                    class="w-full! text-center! py-2.5! bg-slate-50! border! border-slate-200! rounded-xl! text-sm! font-bold! text-slate-400! cursor-not-allowed! outline-none!"
+                    class="w-full! h-11! text-center! bg-slate-50! border! border-slate-200! rounded-xl! text-sm! font-bold! text-slate-400! cursor-not-allowed! outline-none!"
                     disabled
                   />
                   <span
@@ -123,14 +133,14 @@
 
                 <span class="text-slate-300! font-bold!">to</span>
 
-                <div class="relative! w-full sm:w-32!">
+                <div class="relative! w-1/2! sm:w-auto! sm:flex-1!">
                   <input
                     type="number"
                     step="0.01"
                     v-model="block.to"
                     @input="updateNextBlockFrom(index)"
-                    :placeholder="index === blocks.length - 1 ? 'âˆž' : '0'"
-                    class="w-full! text-center! py-2.5! bg-white! border! border-slate-200! rounded-xl! text-sm! font-bold! text-slate-700! focus:outline-none! focus:border-blue-500! focus:ring-4! focus:ring-blue-500/5! transition-all!"
+                    :placeholder="index === blocks.length - 1 ? '∞' : '0'"
+                    class="w-full! h-11! text-center! bg-white! border! border-slate-200! rounded-xl! text-sm! font-bold! text-slate-700! focus:outline-none! focus:border-blue-500! focus:ring-4! focus:ring-blue-500/5! transition-all!"
                   />
                   <span
                     class="absolute! -top-2! left-3! bg-white! px-1! text-[8px]! font-bold! text-slate-400! uppercase!"
@@ -140,7 +150,7 @@
                     v-if="index === blocks.length - 1 && !block.to"
                     class="absolute! right-3! top-1/2! -translate-y-1/2! text-[10px]! font-bold! text-blue-500! uppercase! pointer-events-none!"
                   >
-                    âˆž Bebas
+                    ∞ Bebas
                   </div>
                 </div>
               </div>
@@ -151,7 +161,7 @@
                 class="sm:hidden! block! mb-1.5! text-[10px]! font-bold! text-slate-400! uppercase! tracking-wider!"
                 >Harga per m³</span
               >
-              <MaksMoneyInput v-model="block.price" placeholder="0" no-margin />
+              <MaksMoneyInput v-model="block.price" placeholder="0" no-margin hide-prefix />
             </div>
 
             <div class="hidden sm:flex justify-center!">
