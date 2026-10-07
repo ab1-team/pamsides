@@ -1,5 +1,5 @@
 <template>
-  <BaseReportLayout :lembaga="payload?.lembaga" :config="payload?.config" :no-meta-header="!isFirstPage">
+  <BaseReportLayout :lembaga="payload?.lembaga" :config="payload?.config" :payload="payload" :no-meta-header="!isFirstPage">
     <div v-if="isFirstPage" class="header-section" style="text-align:center;margin-bottom:15px;font-family:sans-serif;">
       <h2 style="margin:0;font-size:14pt;font-weight:bold;text-transform:uppercase;color:#000;">
         LAPORAN PENGGUNAAN DANA (E-BUDGETING)
