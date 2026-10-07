@@ -1,5 +1,5 @@
 <template>
-    <BaseReportLayout :lembaga="payload?.lembaga" :config="payload?.config" :no-meta-header="!isFirstPage">
+    <BaseReportLayout :lembaga="payload?.lembaga" :config="payload?.config" :payload="payload" :no-meta-header="!isFirstPage">
 
         <div v-if="isFirstPage" class="main-report-header">
             <h2>
