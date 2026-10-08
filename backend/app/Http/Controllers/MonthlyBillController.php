@@ -211,15 +211,6 @@ class MonthlyBillController extends Controller
 
         $customers = $query->get();
 
-        // Batch-load prev bills (bulan N-1) untuk semua customer sekaligus.
-        // Tanpa ini, query `prevBill` di dalam closure akan jalan N kali (N+1).
-        $prevDate = Carbon::create($year, $month, 1)->subMonthsNoOverflow();
-        $prevBills = MonthlyBill::whereIn('customer_id', $customers->pluck('id'))
-            ->where('billing_period_year', $prevDate->year)
-            ->where('billing_period_month', $prevDate->month)
-            ->get()
-            ->keyBy('customer_id');
-
         // Batch-load bills periode ini + bill_payments + transactions (reverence bill_payment)
         // untuk menentukan status "Dibayar" dari tabel transactions (bukan dari monthly_bills.status).
         $currentBills = MonthlyBill::whereIn('customer_id', $customers->pluck('id'))
@@ -258,7 +249,7 @@ class MonthlyBillController extends Controller
             }
         }
 
-        $items = $customers->map(function ($customer) use ($month, $year, $prevBills, $prevDate, $currentBills, $paidAmountByBillId, $amountPaidFallbackByBillId) {
+        $items = $customers->map(function ($customer) use ($month, $year, $currentBills, $paidAmountByBillId, $amountPaidFallbackByBillId) {
             $reading = $customer->meterReadings()
                 ->where('reading_month', $month)
                 ->where('reading_year', $year)
@@ -283,29 +274,11 @@ class MonthlyBillController extends Controller
                 ? 'PAID'
                 : ($bill || $reading ? 'UNPAID' : 'PENDING');
 
+            // Denda sudah final di monthly_bills.penalty_amount dan sudah termasuk
+            // di total_amount (dihitung saat tagihan dibuat). Jangan ditambah runtime:
+            // billing akan dobel hitung dan nominal yang tersimpan jadi tidak cocok tagihan.
             $penalty = (float) ($bill?->penalty_amount ?? 0);
             $baseTotal = (float) ($bill?->total_amount ?? 0);
-
-            // Tambahan penalty runtime: tagihan bulan sebelumnya (N-1) yang masih unpaid
-            // dan sudah lewat due_date -> kena late_penalty paket (selaras logika apk lama).
-            $prevBill = $prevBills->get($customer->id);
-
-            $customerActivatedAt = $customer->activated_at ? Carbon::parse($customer->activated_at) : null;
-
-            if ($prevBill && strtolower($prevBill->status) === 'unpaid' && $prevBill->due_date) {
-                $customerEligible = ! $customerActivatedAt
-                    || $customerActivatedAt->lt(Carbon::create($prevDate->year, $prevDate->month, 1)->endOfMonth());
-                if ($customerEligible) {
-                    $due = Carbon::parse($prevBill->due_date)->endOfDay();
-                    if (Carbon::now()->gt($due)) {
-                        $latePenalty = (float) ($customer->ticket?->package?->late_penalty ?? 0);
-                        if ($latePenalty > 0) {
-                            $penalty += $latePenalty;
-                            $baseTotal += $latePenalty;
-                        }
-                    }
-                }
-            }
 
             return [
                 'id' => $customer->id,
