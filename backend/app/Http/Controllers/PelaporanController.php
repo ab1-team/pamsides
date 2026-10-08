@@ -859,7 +859,8 @@ class PelaporanController extends Controller
                 $billBulan = (int) $bill->billing_period_month;
                 $billTahun = (int) $bill->billing_period_year;
                 $selisih = (($targetTahun - $billTahun) * 12) + ($targetBulan - $billBulan);
-                $nominal = (float) $bill->total_amount + (float) $bill->penalty_amount;
+                // total_amount sudah termasuk penalty_amount; jangan ditambah lagi.
+                $nominal = (float) $bill->total_amount;
 
                 if ($selisih > 0) {
                     $sdBulanLalu += $nominal;
@@ -994,7 +995,8 @@ class PelaporanController extends Controller
                     $jumlahBulanTunggakan++;
                     $paid = (float) $bill->billPayments->sum('amount_paid');
                     $dibayar += $paid;
-                    $nominalTagihan = max(((float) $bill->total_amount + (float) $bill->penalty_amount) - $paid, 0);
+                    // total_amount sudah termasuk penalty_amount; jangan ditambah lagi.
+                    $nominalTagihan = max(((float) $bill->total_amount) - $paid, 0);
 
                     if ($selisihBulan === 0) {
                         $bulanIni += $nominalTagihan;
