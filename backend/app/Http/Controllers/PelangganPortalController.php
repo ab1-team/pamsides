@@ -11,12 +11,58 @@ use Illuminate\Support\Facades\Auth;
 
 class PelangganPortalController extends Controller
 {
+    /**
+     * Nama pelanggan dengan urutan prioritas yang SAMA dengan sisi admin.
+     *
+     * Admin membaca `customer.user.name` dulu lalu jatuh ke
+     * `customer.ticket.applicant_name` (lihat `CustomerController`,
+     * `BillingController`, dan `MonthlyBillController`). Portal dulu memakai
+     * urutan terbalik (`applicant_name` dulu), jadi begitu nama akun dan
+     * nama pemohon berbeda — misalnya akun dibuat ulang dengan ejaan lain —
+     * pelanggan melihat nama yang berbeda dari yang tampil di admin untuk
+     * tagihan yang sama. Ini yang harus dicegah: nama yang melekat pada
+     * tagihan harus selalu identik dengan yang dibaca admin.
+     */
+    private function customerName(Customer $customer): string
+    {
+        return $customer->user?->name
+            ?: $customer->ticket?->applicant_name
+            ?: 'Pelanggan Pamsimas';
+    }
+
+    /**
+     * Bentuk payload tagihan yang sama dengan yang dibaca admin.
+     *
+     * Semua nominal diambil dari baris `monthly_bills` milik pelanggan itu
+     * sendiri, bukan dihitung ulang dari paket/strata harga saat runtime:
+     * nominal yang tersimpan itulah yang dicetak di invoice admin, jadi
+     * inilah yang harus tampil untuk pelanggan.
+     */
+    private function billPayload(MonthlyBill $bill): array
+    {
+        return [
+            'id' => $bill->id,
+            'customer_id' => $bill->customer_id,
+            'billing_period_month' => $bill->billing_period_month,
+            'billing_period_year' => $bill->billing_period_year,
+            'meter_reading_start' => $bill->meter_reading_start,
+            'meter_reading_end' => $bill->meter_reading_end,
+            'usage_m3' => $bill->usage_m3,
+            'usage_charge' => $bill->usage_charge,
+            'abodemen' => $bill->abodemen,
+            'penalty_amount' => $bill->penalty_amount,
+            'total_amount' => $bill->total_amount,
+            'status' => $bill->status,
+            'due_date' => $bill->due_date?->toDateString(),
+        ];
+    }
+
     public function dashboard()
     {
         $user = Auth::user();
 
         // Find the customer associated with the user
-        $customer = Customer::with(['ticket.package'])
+        $customer = Customer::with(['ticket.package', 'user'])
             ->where('user_id', $user->id)
             ->first();
 
@@ -41,6 +87,61 @@ class PelangganPortalController extends Controller
                 ->orderBy('billing_period_month', 'desc')
                 ->first();
         }
+
+        // Ringkasan tunggakan.
+        //
+        // Definisi "tunggakan" harus sama dengan sisi admin supaya pelanggan
+        // dan petugas melihat angka yang sama untuk tagihan yang sama:
+        //   belum lunas  = `monthly_bills.status = 'unpaid'`
+        //   lewat jatuh tempo = `due_date` sudah lewat dari hari ini
+        //
+        // Admin memakai definisi yang sama persis di
+        // `DashboardController::stats()` (`overdue_bills`) dan
+        // `MonthlyBillController::report()` (`total_belum_dibayar`), jadi
+        // hitungan di sini tidak boleh mengulang definisinya sendiri.
+        $allUnpaid = MonthlyBill::where('customer_id', $customer->id)
+            ->where('status', 'unpaid')
+            ->orderBy('billing_period_year', 'desc')
+            ->orderBy('billing_period_month', 'desc')
+            ->get();
+
+        $today = Carbon::now()->toDateString();
+
+        $overdueCount = 0;
+        $maxOverdueDays = 0;
+        $overdueAmount = 0.0;
+        $totalUnpaidAmount = 0.0;
+
+        foreach ($allUnpaid as $b) {
+            $totalUnpaidAmount += (float) $b->total_amount;
+
+            $due = $b->due_date?->toDateString();
+
+            // Tanpa due_date tidak bisa dihitung usianya, jadi jangan ikut
+            // dihitung sebagai tunggakan — sama seperti filter admin yang
+            // memakai `whereDate('due_date', '<=', today)` (null tersingkir).
+            if ($due === null || $due > $today) {
+                // Belum lewat jatuh tempo: masih dalam tempo, bukan tunggakan.
+                continue;
+            }
+
+            $overdueCount++;
+            $overdueAmount += (float) $b->total_amount;
+
+            // Selisih hari jatuh tempo → hari ini.
+            $days = Carbon::parse($due)->diffInDays(Carbon::parse($today));
+            if ($days > $maxOverdueDays) {
+                $maxOverdueDays = (int) $days;
+            }
+        }
+
+        $arrears = [
+            'unpaid_count' => $allUnpaid->count(),
+            'total_unpaid_amount' => round($totalUnpaidAmount, 2),
+            'overdue_count' => $overdueCount,
+            'overdue_amount' => round($overdueAmount, 2),
+            'max_overdue_days' => $maxOverdueDays,
+        ];
 
         // Build 12-month usage series from meter_readings (fallback) or monthly_bills.
         // Pakai meter_readings dulu karena lebih real-time (termasuk bulan berjalan yg belum jadi tagihan).
@@ -100,12 +201,18 @@ class PelangganPortalController extends Controller
             'success' => true,
             'data' => [
                 'user' => [
-                    'name' => $customer->ticket->applicant_name ?? $user->name,
+                    'name' => $this->customerName($customer),
                     'customer_code' => $customer->customer_code,
-                    'address' => $customer->ticket->address ?? '-',
-                    'package_name' => $customer->ticket->package->name ?? '-',
+                    'address' => $customer->ticket?->address ?? '-',
+                    'package_name' => $customer->ticket?->package?->name ?? '-',
                 ],
-                'latest_bill' => $latestBill,
+                'latest_bill' => $latestBill ? $this->billPayload($latestBill) : null,
+                // `arrears` berisi tunggakan aktual. Nilai `balance` lama
+                // selalu 0 padahal ada tagihan unpaid — jadi tampil sebagai
+                // "Rp 0" padahal pelanggan punya utang. Sekarang dipakai
+                // jumlah seluruh tagihan yang belum lunas.
+                'arrears' => $arrears,
+                'balance' => $arrears['total_unpaid_amount'],
                 'usage_history' => array_reverse(array_slice($series, -5)), // 5 terakhir, urut naik (kronologis)
                 'distribution' => [
                     'series' => $series,
@@ -122,7 +229,6 @@ class PelangganPortalController extends Controller
                         'previous_avg_m3' => round($previousAvg),
                     ],
                 ],
-                'balance' => 0
             ]
         ]);
     }
@@ -208,7 +314,7 @@ class PelangganPortalController extends Controller
     public function billDetail($id = null)
     {
         $user = Auth::user();
-        $customer = Customer::with(['ticket.package'])
+        $customer = Customer::with(['ticket.package', 'user'])
             ->where('user_id', $user->id)
             ->first();
 
@@ -234,13 +340,16 @@ class PelangganPortalController extends Controller
         return response()->json([
             'success' => true,
             'data' => [
-                'bill' => $bill,
+                // Jangan kirim model mentah: `abodemen` di baris tagihan
+                // adalah angka yang benar-benar ditagihkan (sudah final saat
+                // tagihan dibuat), sedangkan `package.monthly_abodemen` bisa
+                // berbeda karena paket diubah setelah tagihan terbit.
+                'bill' => $this->billPayload($bill),
                 'customer' => [
-                    'name' => $customer->ticket->applicant_name ?? $user->name,
+                    'name' => $this->customerName($customer),
                     'customer_code' => $customer->customer_code,
-                    'address' => $customer->ticket->address ?? '-',
-                    'package_name' => $customer->ticket->package->name ?? '-',
-                    'monthly_abodemen' => $customer->ticket->package->monthly_abodemen ?? 0,
+                    'address' => $customer->ticket?->address ?? '-',
+                    'package_name' => $customer->ticket?->package?->name ?? '-',
                 ]
             ]
         ]);
@@ -269,21 +378,7 @@ class PelangganPortalController extends Controller
         return response()->json([
             'success' => true,
             'data' => [
-                'bills' => $bills->map(fn ($b) => [
-                    'id' => $b->id,
-                    'customer_id' => $b->customer_id,
-                    'billing_period_month' => $b->billing_period_month,
-                    'billing_period_year' => $b->billing_period_year,
-                    'meter_reading_start' => $b->meter_reading_start,
-                    'meter_reading_end' => $b->meter_reading_end,
-                    'usage_m3' => $b->usage_m3,
-                    'usage_charge' => $b->usage_charge,
-                    'abodemen' => $b->abodemen,
-                    'penalty_amount' => $b->penalty_amount,
-                    'total_amount' => $b->total_amount,
-                    'status' => $b->status,
-                    'due_date' => $b->due_date,
-                ])->values(),
+                'bills' => $bills->map(fn ($b) => $this->billPayload($b))->values(),
                 'stats' => [
                     'total_usage_3_months' => $totalUsage,
                     'avg_amount' => $avgAmount,

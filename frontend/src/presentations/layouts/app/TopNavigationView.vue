@@ -96,7 +96,7 @@
           </div>
         </div>
 
-        <div class="topnav-icon-wrapper" ref="bellRef">
+        <div v-if="canViewBillNotifications" class="topnav-icon-wrapper" ref="bellRef">
           <button
             type="button"
             class="topnav-icon-btn"
@@ -262,6 +262,22 @@ const router = useRouter()
 // bukan dibiarkan "tidak ada hasil" yang menyesatkan.
 const canSearchCustomers = computed(() => ['admin', 'surveyor'].includes(uiStore.userRole))
 const instalasiStore = useInstalasiStore()
+
+// Lonceng tagihan hanya untuk role yang MELEPASKAN endpoint
+// `GET /monthly-bills/unpaid-summary`.
+//
+// Cakupannya identical dengan `MonthlyBillController::unpaidSummary`, yang
+// menolak role selain admin/teknisi/pelanggan dengan 403 (lihat test
+// `NotifikasiTagihanTest::surveyor_ditolak`). Menampilkan lonceng untuk
+// surveyor berarti navbar menembak request yang PASTI ditolak tiap kali
+// halaman dimuat — gejalanya request 403 berulang di Network tab, padahal
+// bukan bug. Sembunyikan saja agar tidak issuing request sia-sia.
+//
+// Perhatikan ini BEDA dari `canSearchCustomers`: di sana surveyor justru
+// boleh, karena endpoint /installation-tickets memang terbuka untuknya.
+const canViewBillNotifications = computed(() =>
+  ['admin', 'teknisi', 'pelanggan'].includes(uiStore.userRole),
+)
 
 const userData = computed(() => {
   const data = localStorage.getItem('user_data')
@@ -519,7 +535,13 @@ onMounted(() => {
 
   // Badge counter diambil sekali saat navbar muncul. Isi lengkap daftar
   // tagihan baru diambil saat panelnya dibuka (lihat toggleBellPanel).
-  notificationStore.fetchBills()
+  //
+  // Hanya untuk role yang boleh memanggil endpoint summary (lihat
+  // canViewBillNotifications) — kalau tidak, role seperti surveyor menembak
+  // request yang dijawab 403 setiap kali navbar dimuat.
+  if (canViewBillNotifications.value) {
+    notificationStore.fetchBills()
+  }
   // Pastikan data instalasi sudah di-load agar pencarian langsung tersedia.
   // Hanya untuk role yang punya akses ke /installation-tickets
   // (admin & surveyor). Untuk pelanggan & teknisi endpoint itu 403, sehingga

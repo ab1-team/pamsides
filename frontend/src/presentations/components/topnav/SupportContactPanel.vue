@@ -58,14 +58,15 @@
 
 <script setup>
 /**
- * Panel notifikasi untuk icon tanda tanya (?) di navbar.
+ * Panel bantuan untuk icon tanda tanya (?) di navbar.
  *
- * Sengaja TIDAK membaca dari database. Isinya statis: kontak teknikal
- * support beserta daftar kendala yang perlu dihubungi. Jadi panel ini
- * tetap berfungsi walau backend sedang tidak bisa dihubungi.
+ * Sengaja TIDAK membaca dari `settings.telepon`. Nomor ini adalah nomor
+ * Teknikal Support yang khusus, berbeda dari nomor kantor lembaga. Kalau
+ * ikut membaca setting, nomor di sini akan ikut berubah setiap admin
+ * mengedit Profil Lembaga, padahal itu bukan nomor yang dipakai teknisi.
  *
- * Nomor support diubah di `SUPPORT_PHONE_DIGITS` (format internasional
- * tanpa tanda plus dan spasi) — dipakai untuk wa.me dan tel:.
+ * Mengubah nomor support dilakukan di satu tempat: `SUPPORT_PHONE_DIGITS`
+ * di bawah. Format internasional tanpa "+" dan spasi.
  */
 defineEmits(['close'])
 

@@ -7,6 +7,7 @@ use App\Models\MonthlyBill;
 use App\Models\Setting;
 use App\Models\WaterTariffBlock;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Log;
 
 class BillingService
 {
@@ -51,6 +52,42 @@ class BillingService
             $batasTagihan = $settings?->batas_tagihan ?? 27;
         }
 
+        // Tagihan Rp 0 bisa langsung berstatus `paid` — TAPI hanya kalau nolnya
+        // benar-benar bisa dibenarkan, yaitu pelanggan tidak mengonsumsi air.
+        //
+        // Dua penyebab total_amount == 0 sama sekali berbeda sifatnya:
+        //
+        // 1. usage_m3 == 0 → pelanggan memang tidak pakai air, jadi tidak ada
+        //    apa pun untuk dibayar. Nol ini sah. Kalau dibiarkan `unpaid`, dia
+        //    akan memenuhi lonceng navbar sebagai "tagihan belum bayar", ikut
+        //    dihitung menunggak di dashboard, dan menjatuhkan tiket jadi
+        //    `suspended` — semuanya untuk sesuatu yang tidak ada uangnya.
+        //
+        // 2. usage_m3 > 0 tapi total tetap 0 → berarti `calculateProgressiveCharge`
+        //    mengembalikan 0 padahal air mengalir. Penyebabnya hampir selalu
+        //    paket belum punya blok tarif (`water_tariff_blocks` kosong) atau
+        //    semua `price_per_m3`-nya 0. Paket dan blok tarif memang dibuat
+        //    terpisah lewat endpoint berbeda, jadi kondisi ini bisa tersimpan.
+        //    Auto-paid di sini berarti pelanggan yang benar-benar pakai air
+        //    dapat air gratis, dan paket rusak ikut tersembunyi selamanya.
+        //
+        // Jadi cases (2) sengaja dibiarkan `unpaid`: tagihannya Rp 0 tapi
+        // statusnya menggantung di daftar tagihan supaya terlihat dan bisa
+        // dibetulkan admin, bukan hilang diam-diam.
+        $isNihilLegitimate = $usageM3 <= 0 && $totalAmount <= 0;
+
+        if ($usageM3 > 0 && $totalAmount <= 0) {
+            Log::warning('Tagihan Rp 0 padahal pelanggan memakai air — konfigurasi paket kemungkinan bermasalah', [
+                'customer_id' => $customer->id,
+                'package_id' => $customer->ticket->package->id ?? null,
+                'usage_m3' => $usageM3,
+                'total_amount' => $totalAmount,
+                'period' => $year.'-'.$month,
+            ]);
+        }
+
+        $status = $isNihilLegitimate ? 'paid' : 'unpaid';
+
         return MonthlyBill::create([
             'customer_id' => $customer->id,
             'billing_period_year' => $year,
@@ -62,7 +99,7 @@ class BillingService
             'abodemen' => $abodemen,
             'penalty_amount' => $penaltyAmount,
             'total_amount' => $totalAmount,
-            'status' => 'unpaid',
+            'status' => $status,
             'due_date' => $this->computeDueDate($year, $month, $batasTagihan),
         ]);
     }

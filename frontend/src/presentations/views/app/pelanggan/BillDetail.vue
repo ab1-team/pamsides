@@ -114,9 +114,7 @@
                         Nomor Invoice
                       </p>
                       <p class="text-xs! lg:text-sm! font-black!">
-                        #INV/{{ bill.billing_period_year }}/{{ bill.billing_period_month }}/{{
-                          bill.id
-                        }}
+                        #{{ invoiceNumber }}
                       </p>
                     </div>
                     <div
@@ -172,7 +170,8 @@
                     Total Pemakaian
                   </h4>
                   <div class="text-xl! lg:text-3xl! font-black! text-slate-800!">
-                    {{ bill.usage_m3 }} <span class="text-[10px]! lg:text-sm! opacity-30!">m³</span>
+                    {{ formatMeter(bill.usage_m3) }}
+                    <span class="text-[10px]! lg:text-sm! opacity-30!">m³</span>
                   </div>
                 </div>
 
@@ -193,7 +192,7 @@
                       >
                     </div>
                     <span class="text-sm! lg:text-lg! font-black! text-slate-700!"
-                      >{{ bill.meter_reading_start ?? 0 }}
+                      >{{ formatMeter(bill.meter_reading_start ?? 0) }}
                       <span class="text-[9px]! opacity-30!">m³</span></span
                     >
                   </div>
@@ -211,7 +210,7 @@
                       >
                     </div>
                     <span class="text-sm! lg:text-lg! font-black! text-slate-900!"
-                      >{{ bill.meter_reading_end ?? 0 }}
+                      >{{ formatMeter(bill.meter_reading_end ?? 0) }}
                       <span class="text-[9px]! opacity-30!">m³</span></span
                     >
                   </div>
@@ -433,32 +432,89 @@ const getMonthName = (monthNum) => {
   return months[monthNum - 1] || '-'
 }
 
+/**
+ * Format angka dengan pembulatan ke rupiah penuh.
+ *
+ * Kolom `monthly_bills` bertipe `decimal`, jadi backend mengirim angka
+ * bertanda koma (mis. "15000.00"). Tanpa `maximumFractionDigits: 0`,
+ * `Intl` akan menampilkan "15.000,00" — berbeda dari admin yang selalu
+ * membulatkan ke rupiah penuh. Pecahan koma hanya diperbolehkan pada
+ * meteran (`usage_m3`), yang memang boleh berdesimal.
+ */
 const formatNumber = (num) => {
-  return new Intl.NumberFormat('id-ID').format(num || 0)
+  return new Intl.NumberFormat('id-ID', {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(Number(num) || 0)
 }
 
+/**
+ * Format volume meter yang boleh berdesimal (mis. 12,5 m³), dibulatkan
+ * ke 1 angka desimal agar tidak pernah berbeda dengan total tagihan.
+ */
+const formatMeter = (num) => {
+  return new Intl.NumberFormat('id-ID', {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 1,
+  }).format(Number(num) || 0)
+}
+
+/**
+ * Nomor invoice memakai format yang sama dengan admin
+ * (`detaiDaftarTagihan.vue` dan `daftarTagihan.vue`): `INV-{id}`.
+ * Sebelumnya portal mencetak `#INV/{tahun}/{bulan}/{id}` sehingga nomor
+ * yang sama tercetak berbeda di kedua sisi.
+ */
+const invoiceNumber = computed(() => {
+  if (!bill.value?.id) return '-'
+  return `INV-${bill.value.id}`
+})
+
+/**
+ * Rincian biaya harus persis sama dengan yang dibaca admin di
+ * `detaiDaftarTagihan.vue`: label, urutan, dan sumber nominalnya.
+ *
+ * Dua kesalahan lama di sini yang membuat tagihannya berbeda dari admin:
+ *   1. "Biaya Beban" memakai `customer.monthly_abodemen` (nilai paket
+ *      SAAT INI). Tagihan memakai `bill.abodemen` yang sudah final saat
+ *      tagihan dibuat — kalau paket diganti setelahnya, angkanya berbeda.
+ *   2. Denda (`penalty_amount`) tidak pernah ditampilkan, padahal sudah
+ *      termasuk di `total_amount`. Akibatnya rincian tidak pernah sama
+ *      dengan total yang tertera di invoice admin.
+ * Baris "Biaya Admin Rp 0" juga dihapus: tidak ada komponen seperti itu
+ * di perhitungan tagihan.
+ */
 const breakdownItems = computed(() => {
-  if (!bill.value || !customer.value) return []
-  return [
+  if (!bill.value) return []
+
+  const items = [
     {
-      name: 'Biaya Air',
-      sub: `${bill.value.usage_m3} m³ x Pemakaian`,
-      price: bill.value.usage_charge || 0,
+      name: 'Biaya Penggunaan Air',
+      sub: `${formatNumber(bill.value.usage_m3)} m³ x Pemakaian`,
+      price: Number(bill.value.usage_charge || 0),
       icon: 'tint',
     },
     {
-      name: 'Biaya Beban',
-      sub: `Abodemen Paket (${customer.value.package_name})`,
-      price: customer.value.monthly_abodemen || 0,
+      name: 'Biaya Beban Tetap (Abodemen)',
+      sub: customer.value?.package_name ? `Paket ${customer.value.package_name}` : 'Abodemen',
+      price: Number(bill.value.abodemen || 0),
       icon: 'wrench',
     },
-    {
-      name: 'Biaya Admin',
-      sub: 'Aplikasi Pamsides',
-      price: 0,
-      icon: 'receipt',
-    },
   ]
+
+  // Denda hanya ditampilkan bila memang ada, sama seperti admin yang
+  // menyembunyikannya saat 0.
+  const penalty = Number(bill.value.penalty_amount || 0)
+  if (penalty > 0) {
+    items.push({
+      name: 'Denda Keterlambatan',
+      sub: 'Denda tagihan sebelumnya',
+      price: penalty,
+      icon: 'exclamation-triangle',
+    })
+  }
+
+  return items
 })
 
 const fetchBillDetail = async () => {

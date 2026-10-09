@@ -127,7 +127,11 @@
                 >
                   Nomor WhatsApp
                 </div>
-                <div class="text-lg! lg:text-xl! font-black! text-slate-800!">0812-3456-7890</div>
+                <div
+                  :class="`text-lg! lg:text-xl! font-black! ${hasNumber ? 'text-slate-800!' : 'text-slate-400! italic!'}`"
+                >
+                  {{ hasNumber ? kontakTampil : 'Belum tersedia' }}
+                </div>
               </div>
               <div
                 class="w-10! h-10! lg:w-12! lg:h-12! bg-slate-900! text-white! rounded-xl! lg:rounded-2xl! flex! items-center! justify-center! shadow-lg! group-hover:bg-green-600! transition-all!"
@@ -186,7 +190,9 @@
                 >
                   Nomor Hotline
                 </div>
-                <div class="text-lg! lg:text-xl! font-black! text-slate-800!">(0274) 889-123</div>
+                <div class="text-lg! lg:text-xl! font-black! text-slate-800!">
+                  {{ hasNumber ? kontakTampil : 'Hubungi kantor' }}
+                </div>
               </div>
               <div
                 class="w-10! h-10! lg:w-12! lg:h-12! bg-slate-900! text-white! rounded-xl! lg:rounded-2xl! flex! items-center! justify-center! shadow-lg! group-hover:bg-red-600! transition-all!"
@@ -232,6 +238,12 @@
 <script setup>
 import ContentCard from '@/presentations/components/ui/ContentCard.vue'
 import BaseButton from '@/presentations/components/ui/BaseButton.vue'
+import Swal from 'sweetalert2'
+import { useKontakLembaga } from '@/composables/useKontakLembaga'
+
+// Nomor WA/telepon selalu mengikuti `settings.telepon` yang dikelola admin
+// lewat menu Profil Lembaga. Tidak ada nomor hardcode di halaman ini.
+const { display: kontakTampil, hasNumber, waLink, telLink } = useKontakLembaga()
 
 const steps = [
   {
@@ -249,11 +261,24 @@ const steps = [
 ]
 
 const openWhatsApp = () => {
-  window.open('https://wa.me/6281234567890', '_blank')
+  // Nomor diambil dari `settings.telepon` (Profil Lembaga, diisi admin),
+  // bukan konstanta di sini. Kalau nomor belum diisi, jangan buka wa.me
+  // dengan nomor kosong — tampilkan petunjuk yang bisa ditindaklanjuti.
+  if (!hasNumber.value) {
+    Swal.fire({
+      icon: 'info',
+      title: 'Nomor WhatsApp Belum Tersedia',
+      text: 'Silakan isi nomor telepon pada menu Profil Lembaga terlebih dahulu, atau laporkan gangguan lewat form.',
+      confirmButtonColor: '#4f46e5',
+    })
+    return
+  }
+  window.open(waLink.value, '_blank', 'noopener')
 }
 
 const makeCall = () => {
-  window.location.href = 'tel:0274889123'
+  if (!hasNumber.value) return
+  window.location.href = telLink.value
 }
 </script>
 

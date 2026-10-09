@@ -31,18 +31,19 @@
           </span>
         </div>
 
-        <!-- Konsekuensi: piutang dihapus, disimpan sbg pemakaian bulan tsb -->
+        <!-- Konsekuensi: piutang direklas jadi kas masuk, disimpan sbg pemakaian bulan tsb -->
         <div class="space-y-1!">
           <div class="flex! items-start! gap-1.5!">
             <font-awesome-icon
-              icon="trash-alt"
+              icon="exchange-alt"
               class="text-rose-600! text-[10px]! mt-0.5! flex-shrink-0!"
             />
             <span>
               Jurnal piutang
               <span class="font-mono! font-bold!">overdue_bill</span>
               yang pernah tercatat untuk tagihan ini akan
-              <strong class="text-rose-700!">dihapus permanen</strong>.
+              <strong class="text-rose-700!">direklas menjadi kas masuk</strong>
+              — barisnya tetap disimpan sebagai jejak audit, tidak dihapus.
             </span>
           </div>
           <div class="flex! items-start! gap-1.5!">
@@ -92,6 +93,7 @@
         v-model="tanggalStr"
         label="Tanggal Pembayaran"
         placeholder="Pilih tanggal pembayaran"
+        :max-date="todayStr"
         noMargin
       />
       <div>
@@ -165,8 +167,19 @@
       />
     </div>
 
-    <!-- Metode Pembayaran: Tunai / Transfer ke Bank -->
-    <div class="mb-5!">
+    <!-- Metode Pembayaran: Tunai / Transfer ke Bank
+
+         Hanya muncul kalau tanggal pembayaran BUKAN hari ini. Kalau dibayar
+         hari ini, metode tidak perlu ditanyakan — backend otomatis memakai
+         'cash' (lihat `effectivePaymentMethod`). Menghilangkan pilihan saat
+         tanggal hari ini juga mencegah salah pilih: user tidak bisa
+         menandai transfer untuk uang yang sebenarnya diterima di tangan.
+
+         Saat tanggal != hari ini (mis. mencatat pembayaran tertunda), metode
+         WAJIB dipilih eksplisit karena arah dananya berbeda: uang lewat bank
+         vs lewat tangan. Kas Tunai dan Kas di Bank BRI adalah dua akun
+         berbeda, jadi salah pilih berarti saldo kas meleset. -->
+    <div v-if="!isPaidToday" class="mb-5!">
       <label class="block! text-xs! font-bold! text-slate-500! mb-2!">
         Metode Pembayaran <span class="text-rose-500!">*</span>
       </label>
@@ -286,17 +299,32 @@
       </p>
     </div>
 
+    <!-- Metode Pembayaran otomatis: hari ini → Tunai -->
+    <div v-else class="mb-5!">
+      <div
+        class="flex! items-center! gap-2.5! px-3! py-2.5! rounded-xl! border! border-emerald-200! bg-emerald-50! text-xs!"
+      >
+        <font-awesome-icon icon="check-circle" class="text-emerald-600! text-sm!" />
+        <span class="text-emerald-800!">
+          Pembayaran dicatat hari ini — metode otomatis
+          <strong>Tunai</strong> (Kas Tunai <span class="font-mono!">1.1.01.01</span>).
+        </span>
+      </div>
+    </div>
+
     <!-- Tombol Konfirmasi -->
     <div class="flex! justify-end! pt-4! pb-2! border-t! border-slate-200/60!">
       <button
-        :disabled="hasOlderUnpaid || !paymentMethod"
-        :class="hasOlderUnpaid || !paymentMethod
+        :disabled="isConfirmDisabled"
+        :class="isConfirmDisabled
           ? 'px-6! py-2.5! text-sm! font-bold! text-slate-500! bg-slate-200! cursor-not-allowed! rounded-xl! flex! items-center! gap-2!'
           : 'px-6! py-2.5! text-sm! font-bold! text-white! bg-emerald-500! hover:bg-emerald-600! rounded-xl! shadow-lg! shadow-emerald-200/50! transition-all! flex! items-center! gap-2!'"
         @click="handleSave"
         @click.stop
       >
-        <font-awesome-icon :icon="paymentMethod === 'transfer_bri' ? 'university' : 'check-circle'" />
+        <font-awesome-icon
+          :icon="effectivePaymentMethod === 'transfer_bri' ? 'university' : 'check-circle'"
+        />
         Konfirmasi Pembayaran
       </button>
     </div>
@@ -418,6 +446,44 @@ const toDateString = (d) => {
 
 const tanggalStr = ref(toDateString(props.initialData.tanggal) || toDateString(new Date()))
 
+/**
+ * "Hari ini" dalam waktu LOKAL, format `YYYY-MM-DD`.
+ *
+ * Dipakai untuk dua hal: batas kalender (tanggal bayar tidak boleh di masa
+ * depan) dan menentukan apakah metode pembayaran perlu dipilih.
+ */
+const todayStr = toDateString(new Date())
+
+/**
+ * TRUE kalau pembayaran dicatat pada tanggal hari ini.
+ *
+ * Kalau TRUE, form TIDANNYA tanyakan metode — backend otomatis memakai
+ * 'cash'. Cash session normal setiap hari tidak perlu satu klik ekstra, dan
+ * petugas tidak bisa salah menandai transfer untuk uang di tangan.
+ */
+const isPaidToday = computed(() => tanggalStr.value === todayStr)
+
+/**
+ * Metode yang benar-benar dikirim ke backend.
+ *
+ * Saat tanggal hari ini, metode disembunyikan dan nilai yang dikirim
+ * adalah 'cash'. Backend memvalidasi `payment_method` jadi tetap konsisten
+ * dengan kontrak yang sudah ada.
+ */
+const effectivePaymentMethod = computed(() =>
+  isPaidToday.value ? 'cash' : paymentMethod.value,
+)
+
+/**
+ * Tombol konfirmasi nonaktif kalau masih ada tagihan lebih lama yang belum
+ * lunas, atau (untuk tanggal bukan hari ini) metode belum dipilih.
+ */
+const isConfirmDisabled = computed(() => {
+  if (hasOlderUnpaid.value) return true
+  if (!isPaidToday.value && !paymentMethod.value) return true
+  return false
+})
+
 const formData = reactive({
   periodId: props.initialData.periodId,
   meterAwal: props.initialData.meterAwal || 0,
@@ -527,7 +593,8 @@ const thresholdDateStr = computed(() => {
  * TRUE kalau tanggal pembayaran LEBIH AWAL dari threshold.
  * Logika SAMA dengan backend `MonthlyBillController::pay`:
  *   - threshold = hari `toleransi_tunggakan` di BULAN PEMAKAIAN tagihan
- *   - bayar < threshold → ADVANCE (piutang overdue_bill akan di-hapus)
+ *   - bayar < threshold → ADVANCE (jurnal piutang, bila ada, akan DIREKLAS jadi
+ *     kas masuk — bukan dihapus)
  *   - bayar >= threshold → NORMAL
  */
 const paidBeforeDueDate = computed(() => {
@@ -575,8 +642,9 @@ const handleSave = () => {
     return
   }
 
-  // Wajib pilih metode pembayaran dulu.
-  if (!paymentMethod.value) {
+  // Metode wajib dipilih HANYA kalau tanggal bukan hari ini. Pembayaran
+  // hari ini otomatis memakai Tunai (lihat effectivePaymentMethod).
+  if (!isPaidToday.value && !paymentMethod.value) {
     MySwal.fire({
       icon: 'warning',
       title: 'Pilih Metode Pembayaran',
@@ -596,12 +664,28 @@ const handleSave = () => {
     return
   }
 
-  // Advance payment: tampilkan konfirmasi bahwa piutang overdue_bill akan dihapus.
+  // Tanggal bayar tidak boleh di masa depan: uangnya belum masuk, jadi
+  // membukukannya sekarang akan membuat saldo kas hari ini meleset.
+  // Kalender sudah membatasi (`:max-date`), tapi nilainya masih bisa coming
+  // dari luar (mis. form dibuka ulang dengan tanggal lampau yang tersimpan),
+  // jadi dicek lagi di sini.
+  if (tanggalStr.value > todayStr) {
+    MySwal.fire({
+      icon: 'warning',
+      title: 'Tanggal tidak valid',
+      text: 'Tanggal pembayaran tidak boleh lebih dari hari ini.',
+      confirmButtonColor: '#0EA5E9',
+    })
+    return
+  }
+
+  // Advance payment: tampilkan konfirmasi bahwa jurnal piutang overdue_bill
+  // (bila ada) akan direklas menjadi kas masuk.
   if (paidBeforeDueDate.value) {
     MySwal.fire({
       icon: 'warning',
       iconColor: '#F59E0B',
-      title: 'Hapus Piutang & Catat Sebagai Pemakaian Bulan ' + formatDueDate(formData.dueDate, true),
+      title: 'Reklas Piutang & Catat Sebagai Pemakaian Bulan ' + formatDueDate(formData.dueDate, true),
       html: `
         <div class="text-left! text-sm! leading-relaxed!">
           <div class="p-3! rounded-lg! border! border-rose-200! bg-rose-50/60! space-y-2!">
@@ -613,12 +697,13 @@ const handleSave = () => {
               </div>
               <div class="flex-1!">
                 <div class="font-extrabold! text-rose-800! text-xs! uppercase! tracking-wide!">
-                  Piutang akan dihapus
+                  Piutang akan direklas
                 </div>
                 <div class="text-xs! text-rose-900! leading-snug! mt-0.5!">
                   Jurnal <span class="font-mono! font-bold!">overdue_bill</span>
-                  yang pernah tercatat untuk tagihan ini akan
-                  <strong>dihapus permanen</strong>.
+                  yang pernah tercatat untuk tagihan ini akan diubah menjadi
+                  <strong>kas masuk</strong>, bukan dihapus — saldonya tetap
+                  tercatat untuk audit.
                 </div>
               </div>
             </div>
@@ -646,7 +731,7 @@ const handleSave = () => {
         </div>
       `,
       showCancelButton: true,
-      confirmButtonText: 'Ya, Hapus Piutang & Lanjutkan',
+      confirmButtonText: 'Ya, Reklas Piutang & Lanjutkan',
       cancelButtonText: 'Batal, Kembali ke Form',
       confirmButtonColor: '#F59E0B',
       cancelButtonColor: '#94A3B8',
@@ -658,11 +743,19 @@ const handleSave = () => {
       },
     }).then((result) => {
       if (result.isConfirmed) {
-        emit('save', { ...formData, tanggal: tanggalStr.value, paymentMethod: paymentMethod.value })
+        emit('save', {
+          ...formData,
+          tanggal: tanggalStr.value,
+          paymentMethod: effectivePaymentMethod.value,
+        })
       }
     })
   } else {
-    emit('save', { ...formData, tanggal: tanggalStr.value, paymentMethod: paymentMethod.value })
+    emit('save', {
+      ...formData,
+      tanggal: tanggalStr.value,
+      paymentMethod: effectivePaymentMethod.value,
+    })
   }
 }
 
@@ -671,6 +764,9 @@ defineExpose({
   tanggalStr,
   resetForm: () => {
     tanggalStr.value = toDateString(new Date())
+    // Metode ikut dikosongkan supaya form yang dipakai ulang tidak mewarisi
+    // pilihan dari pembayaran sebelumnya.
+    paymentMethod.value = ''
     Object.assign(formData, {
       meterAwal: 0,
       meterAkhir: 0,

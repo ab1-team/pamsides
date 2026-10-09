@@ -80,6 +80,20 @@
         padding="none"
         class="border-0! shadow-xl! shadow-slate-200/40! overflow-hidden!"
       >
+        <div
+          v-if="loadError"
+          class="px-4! py-3! bg-rose-50! border-b! border-rose-200! text-rose-700! text-xs! font-semibold! flex! items-center! gap-2!"
+        >
+          <font-awesome-icon icon="exclamation-triangle" class="text-sm!" />
+          {{ loadError }}
+          <button
+            type="button"
+            class="ml-auto! font-black! underline! hover:no-underline!"
+            @click="fetchHistory"
+          >
+            Muat Ulang
+          </button>
+        </div>
         <DataTable
           v-if="!isMobile"
           :data="filteredBills"
@@ -97,23 +111,51 @@
         >
           <template #column-period="{ row }">
             <div class="font-bold! text-slate-800!">{{ row.period }}</div>
-            <div class="text-[10px]! text-slate-400! font-bold! mt-0.5!">INV-{{ row.id }}</div>
+            <div class="text-[10px]! text-slate-400! font-bold! mt-0.5!">{{ row.invoice }}</div>
+          </template>
+
+          <template #column-meter="{ row }">
+            <div class="flex! items-center! gap-2! font-semibold! text-xs!">
+              <span class="text-slate-400!">{{ formatMeter(row.meterStart) }}</span>
+              <span class="text-slate-300!">&rarr;</span>
+              <span class="text-indigo-600! font-bold!">{{ formatMeter(row.meterEnd) }}</span>
+            </div>
           </template>
 
           <template #column-usage="{ row }">
-            <div class="font-bold! text-slate-600!">
-              {{ row.usage }} <span class="text-[10px]! opacity-50!">m³</span>
+            <div class="font-bold! text-slate-800!">
+              {{ formatMeter(row.usage) }} <span class="text-[10px]! text-slate-400!">m³</span>
             </div>
           </template>
 
           <template #column-amount="{ row }">
-            <div class="font-black! text-slate-800!">Rp. {{ row.amount.toLocaleString() }}</div>
+            <div class="flex! flex-col!">
+              <span class="font-black! text-slate-800!">Rp. {{ formatNumber(row.amount) }}</span>
+              <span v-if="row.penalty > 0" class="text-[9px]! text-rose-500! font-bold!">
+                Termasuk Denda Rp. {{ formatNumber(row.penalty) }}
+              </span>
+            </div>
           </template>
 
-          <template #column-status="{ row }">
-            <span :class="getStatusClass(row.status)">
-              {{ row.status }}
-            </span>
+          <template #column-due_date="{ row }">
+            <div class="flex! flex-col!">
+              <span
+                :class="[
+                  'text-xs! font-bold! flex! items-center! gap-1!',
+                  row.status === 'Lunas' ? 'text-emerald-600!' : 'text-rose-500!',
+                ]"
+              >
+                {{ formatDueDate(row.dueDate) }}
+              </span>
+              <span
+                :class="[
+                  'text-[9px]! font-bold! uppercase! mt-0.5!',
+                  row.status === 'Lunas' ? 'text-emerald-500!' : 'text-rose-400!',
+                ]"
+              >
+                {{ row.status }}
+              </span>
+            </div>
           </template>
         </DataTable>
 
@@ -149,7 +191,7 @@
                     <div
                       class="text-[10px]! font-black! text-slate-400! uppercase! tracking-widest! mt-0.5!"
                     >
-                      #INV-{{ bill.id }}
+                      {{ bill.invoice }}
                     </div>
                   </div>
                 </div>
@@ -160,14 +202,36 @@
                 class="space-y-3! bg-slate-50/50! p-4! rounded-2xl! border! border-slate-100/50!"
               >
                 <div class="flex! justify-between! items-center!">
+                  <span class="text-xs! font-bold! text-slate-500!">Stand Meter</span>
+                  <span class="text-xs! font-black! text-slate-800!">
+                    {{ formatMeter(bill.meterStart) }} &rarr; {{ formatMeter(bill.meterEnd) }} m³
+                  </span>
+                </div>
+                <div class="w-full! h-px! bg-slate-100!"></div>
+                <div class="flex! justify-between! items-center!">
                   <span class="text-xs! font-bold! text-slate-500!">Pemakaian Air</span>
-                  <span class="text-xs! font-black! text-slate-800!"> {{ bill.usage }} m³ </span>
+                  <span class="text-xs! font-black! text-slate-800!">
+                    {{ formatMeter(bill.usage) }} m³
+                  </span>
+                </div>
+                <div class="w-full! h-px! bg-slate-100!"></div>
+                <div class="flex! justify-between! items-center!">
+                  <span class="text-xs! font-bold! text-slate-500!">Jatuh Tempo</span>
+                  <span class="text-xs! font-black! text-slate-800!">
+                    {{ formatDueDate(bill.dueDate) }}
+                  </span>
                 </div>
                 <div class="w-full! h-px! bg-slate-100!"></div>
                 <div class="flex! justify-between! items-center!">
                   <span class="text-xs! font-bold! text-slate-500!">Total Tagihan</span>
                   <span class="text-sm! font-black! text-indigo-600!">
-                    Rp. {{ bill.amount.toLocaleString() }}
+                    Rp. {{ formatNumber(bill.amount) }}
+                  </span>
+                </div>
+                <div v-if="bill.penalty > 0" class="flex! justify-between! items-center!">
+                  <span class="text-[10px]! font-bold! text-rose-500!">Termasuk Denda</span>
+                  <span class="text-[10px]! font-black! text-rose-500!">
+                    Rp. {{ formatNumber(bill.penalty) }}
                   </span>
                 </div>
               </div>
@@ -214,23 +278,42 @@ const historyStats = ref({
 })
 const customerCode = ref('-')
 const isLoading = ref(true)
+const loadError = ref('')
 
 const fetchHistory = async () => {
   isLoading.value = true
+  loadError.value = ''
   try {
     const response = await pelangganService.getBillHistory()
     if (response.success) {
       bills.value = response.data.bills.map((bill) => ({
         id: bill.id.toString(),
+        invoice: `INV-${bill.id}`,
         period: getMonthName(bill.billing_period_month) + ' ' + bill.billing_period_year,
-        usage: bill.usage_m3,
-        amount: bill.total_amount,
-        status: bill.status === 'paid' ? 'Lunas' : 'Belum Bayar',
+        usage: Number(bill.usage_m3 || 0),
+        meterStart: Number(bill.meter_reading_start || 0),
+        meterEnd: Number(bill.meter_reading_end || 0),
+        amount: Number(bill.total_amount || 0),
+        penalty: Number(bill.penalty_amount || 0),
+        dueDate: bill.due_date,
+        // Label status memakai kata yang sama dengan yang dicetak admin
+        // (`detaiDaftarTagihan.vue`: "Lunas" / "Belum Lunas"). Kolom
+        // `monthly_bills.status` hanya punya dua nilai: 'paid' | 'unpaid'
+        // (lihat struktur.sql), jadi tidak ada status ketiga yang bisa
+        // muncul di satu sisi dan tidak di sisi lain.
+        status: bill.status === 'paid' ? 'Lunas' : 'Belum Lunas',
       }))
       historyStats.value = response.data.stats
       customerCode.value = response.data.customer_code
     }
   } catch (error) {
+    // Jangan biarkan `catch` kosong. Kalau request gagal, pelanggan akan
+    // melihat daftar tagihan kosong tanpa penjelasan — yang terbaca sebagai
+    // "tidak punya tagihan", padahal admin melihat tagihan yang normal.
+    // Ini misrepresentation, jadi kegagalan harus terlihat.
+    loadError.value =
+      error.response?.data?.message || 'Gagal memuat riwayat tagihan. Silakan coba lagi.'
+    bills.value = []
   } finally {
     isLoading.value = false
   }
@@ -266,24 +349,28 @@ onUnmounted(() => {
 
 const searchQuery = ref('')
 
+// Susunan kolom meniru `daftarTagihan.vue` (admin) supaya pelanggan
+// dan admin membaca tagihan yang sama dengan cara yang sama: periode +
+// nomor invoice, stand meter, volume, total, jatuh tempo.
 const tableColumns = [
   { key: 'period', title: 'Periode / No. Invoice' },
+  { key: 'meter', title: 'Stand Meter' },
   { key: 'usage', title: 'Pemakaian' },
   { key: 'amount', title: 'Total Tagihan' },
-  { key: 'status', title: 'Status' },
+  { key: 'due_date', title: 'Jatuh Tempo' },
 ]
 
 const stats = computed(() => [
   {
     label: 'Total Pemakaian (3 Bln)',
-    value: `${historyStats.value.total_usage_3_months || 0} m³`,
+    value: `${formatMeter(historyStats.value.total_usage_3_months)} m³`,
     icon: 'droplet',
     bg: 'bg-blue-50',
     color: 'text-blue-600',
   },
   {
     label: 'Rata-rata Tagihan',
-    value: `Rp. ${new Intl.NumberFormat('id-ID').format(Math.round(historyStats.value.avg_amount))}`,
+    value: `Rp. ${formatNumber(historyStats.value.avg_amount)}`,
     icon: 'chart-line',
     bg: 'bg-indigo-50',
     color: 'text-indigo-600',
@@ -301,7 +388,8 @@ const filteredBills = computed(() => {
   if (!searchQuery.value) return bills.value
   const query = searchQuery.value.toLowerCase()
   return bills.value.filter(
-    (bill) => bill.period.toLowerCase().includes(query) || bill.id.toLowerCase().includes(query),
+    (bill) =>
+      bill.period.toLowerCase().includes(query) || bill.invoice.toLowerCase().includes(query),
   )
 })
 
@@ -310,6 +398,37 @@ const getStatusClass = (status) => {
     return 'px-3! py-1! bg-green-50! text-green-600! text-[10px]! font-black! rounded-full! border! border-green-100!'
   }
   return 'px-3! py-1! bg-red-50! text-red-600! text-[10px]! font-black! rounded-full! border! border-red-100!'
+}
+
+/**
+ * Format angka dengan pembulatan ke rupiah penuh, sama seperti admin.
+ * Kolom `monthly_bills` bertipe `decimal` sehingga backend mengirim
+ * "15000.00"; tanpa `maximumFractionDigits: 0` angka ini tampil sebagai
+ * "15.000,00" dan berbeda dari invoice admin.
+ */
+const formatNumber = (val) =>
+  Number(val || 0).toLocaleString('id-ID', {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  })
+
+/**
+ * Volume meter boleh berdesimal, jadi dibulatkan ke 1 angka desimal
+ * agar tidak pernah berbeda dari total tagihan.
+ */
+const formatMeter = (val) =>
+  Number(val || 0).toLocaleString('id-ID', {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 1,
+  })
+
+/** Jatuh tempo, diformat sama seperti admin (`formatDueDate`). */
+const formatDueDate = (dateStr) => {
+  if (!dateStr) return '-'
+  const d = new Date(dateStr)
+  if (Number.isNaN(d.getTime())) return dateStr
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des']
+  return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`
 }
 </script>
 

@@ -45,7 +45,7 @@
       </div>
     </div>
 
-    <ContentCard variant="elevated" padding="normal" hoverable class="mt-4! relative! z-[50]!">
+    <ContentCard variant="elevated" padding="normal" hoverable class="mt-4!">
       <div
         class="flex flex-col md:grid md:grid-cols-2 lg:flex lg:flex-row lg:items-end gap-3 md:gap-4!"
       >
