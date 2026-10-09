@@ -50,10 +50,17 @@ class SopController extends Controller
     /**
      * Identitas lembaga yang boleh dilihat semua role login.
      *
-     * Dipakai oleh chrome bersama (judul sidebar, kop surat/cetak) yang
-     * dirender untuk admin, teknisi, surveyor, dan pelanggan. Sengaja hanya
-     * mengembalikan nama & logo: data kontak lengkap (email, telepon,
-     * alamat, SK) tetap khusus admin lewat `index()` di atas.
+     * Dipakai oleh chrome bersama (judul sidebar, kop surat/cetak, nomor
+     * kontak untuk laporan gangguan) yang dirender untuk admin, teknisi,
+     * surveyor, dan pelanggan.
+     *
+     * `telepon` sengaja ikut dikembalikan: ini sumber nomor kontak resmi
+     * yang dikelola admin lewat menu "Profil Lembaga" (`updateLembaga`).
+     * Halaman pelanggan (mis. Lapor Gangguan) sebelumnya menampilkan nomor
+     * hardcode `0812-3456-7890` yang tidak pernah sama dengan yang diisi
+     * admin — jadi pelanggan menghubungi nomor yang bukan sebenarnya.
+     * Field yang sensitif lain (email, alamat, SK) tetap khusus admin lewat
+     * `index()` di atas.
      */
     public function publicIdentity()
     {
@@ -64,6 +71,7 @@ class SopController extends Controller
             'data' => [
                 'nama' => $s?->nama ?? '',
                 'logo' => $s?->logo ?? null,
+                'telepon' => $s?->telepon ?? '',
             ],
         ]);
     }

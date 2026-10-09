@@ -126,7 +126,10 @@
               <h5 class="text-sm! font-black! text-amber-800! mb-2!">Catatan Penting</h5>
               <ul class="text-xs! text-amber-700! space-y-1! font-medium!">
                 <li>• Laporan akan ditindaklanjuti maksimal 1x24 jam</li>
-                <li>• Untuk gangguan darurat, hubungi hotline: (0274) 889-123</li>
+                <li>
+                  • Untuk gangguan darurat, hubungi hotline:
+                  {{ hotlineDarurat || 'kantor Pamsimas' }}
+                </li>
                 <li>• Pastikan nomor telepon yang Anda berikan aktif</li>
               </ul>
             </div>
@@ -209,7 +212,17 @@ import ContentCard from '@/presentations/components/ui/ContentCard.vue'
 import BaseButton from '@/presentations/components/ui/BaseButton.vue'
 import cameraUtils from '@/utils/camera'
 import troubleReportService from '@/services/troubleReport.service'
+import { useKontakLembaga } from '@/composables/useKontakLembaga'
 import Swal from 'sweetalert2'
+
+// Nomor WA/telepon mengikuti `settings.telepon` yang dikelola admin lewat
+// menu Profil Lembaga. Tidak ada nomor hardcode di halaman ini.
+const { hasNumber, waLink, telLink, display: kontakTampil } = useKontakLembaga()
+
+// Teks "hotline darurat" di catatan penting cukup ditampilkan kalau nomornya
+// memang ada. Kalau `settings.telepon` kosong, lebih baik pelanggan menghubungi
+// kantor lewat nomor yang tertera di meter daripada melihat nomor palsu.
+const hotlineDarurat = computed(() => kontakTampil.value)
 
 const Toast = Swal.mixin({
   toast: true,
@@ -300,7 +313,13 @@ const submitReport = async () => {
 
     router.push('/app')
   } catch (error) {
-    Toast.fire({ icon: 'error', title: 'Gagal mengirim laporan' })
+    // Tampilkan pesan dari server kalau ada (mis. validasi), jangan hanya
+    // "Gagal mengirim laporan" — supaya pelanggan tahu apa yang salah.
+    Toast.fire({
+      icon: 'error',
+      title: 'Gagal mengirim laporan',
+      text: error?.response?.data?.message || error?.message || undefined,
+    })
   } finally {
     isSubmitting.value = false
     uiStore.setLoading(false)
@@ -308,11 +327,23 @@ const submitReport = async () => {
 }
 
 const openWhatsApp = () => {
-  window.open('https://wa.me/6281234567890', '_blank')
+  // Nomor selalu mengikuti `settings.telepon` (Profil Lembaga, diisi admin).
+  // Kalau belum diisi, jangan buka wa.me dengan nomor kosong.
+  if (!hasNumber.value) {
+    Swal.fire({
+      icon: 'info',
+      title: 'Nomor WhatsApp Belum Tersedia',
+      text: 'Silakan isi nomor telepon pada menu Profil Lembaga terlebih dahulu.',
+      confirmButtonColor: '#6366f1',
+    })
+    return
+  }
+  window.open(waLink.value, '_blank', 'noopener')
 }
 
 const makeCall = () => {
-  window.location.href = 'tel:0274889123'
+  if (!hasNumber.value) return
+  window.location.href = telLink.value
 }
 </script>
 

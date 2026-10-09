@@ -563,9 +563,17 @@ const meterProgressPercentage = computed(() => {
 })
 
 // Priority Tasks (Diambil dari tiket pemasangan yang perlu instalasi)
+//
+// `latest_tickets` berasal dari backend yang meng-cache payload dashboard.
+// Kalau cache kosong / request gagal, field ini bisa `null` (atau object),
+// bukan array — memanggil `.filter()` langsung di sana melempar
+// "latest_tickets.filter is not a function" dan seluruh dashboard gagal render.
+// Karena itu bentuk datanya diverifikasi dulu, bukan hanya keberadaan.
 const priorityTasks = computed(() => {
-  if (!dashboardData.value?.latest_tickets) return []
-  return dashboardData.value.latest_tickets
+  const tickets = dashboardData.value?.latest_tickets
+  if (!Array.isArray(tickets)) return []
+
+  return tickets
     .filter((ticket) => ticket.status === 'processing' || ticket.status === 'paid')
     .map((ticket) => {
       return {

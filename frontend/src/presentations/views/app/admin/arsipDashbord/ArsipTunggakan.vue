@@ -1,12 +1,16 @@
-<!-- eslint-disable vue/multi-word-component-names -->
 <template>
-  <div class="h-full bg-white flex flex-col pt-2 pb-4">
+  <ContentCard
+    variant="bordered"
+    padding="none"
+    rounded="2xl"
+    class="h-full! flex! flex-col! overflow-hidden! shadow-sm!"
+  >
     <DataTable
       v-model="searchQuery"
       :data="itemsList"
       :columns="columns"
       title="Detail Arsip Tunggakan"
-      searchPlaceholder="Cari nama atau nomor induk..."
+      searchPlaceholder="Cari nama atau nomor pelanggan..."
       v-model:current-page="currentPage"
       v-model:per-page="perPage"
       :total-entries="serverTotal"
@@ -15,45 +19,63 @@
       :no-card="true"
       server-side
       :loading="loading"
+      empty-title="Tidak Ada Tunggakan"
+      empty-message="Belum ada pelanggan dengan tunggakan denda. Semua tagihan sudah lunas."
+      empty-icon="file-invoice-dollar"
     >
+      <template #column-nomorInduk="{ row }">
+        <span class="text-[12px] text-slate-600 font-medium font-mono whitespace-nowrap">
+          {{ row.nomorInduk }}
+        </span>
+      </template>
+      <template #column-periodeLabel="{ row }">
+        <span class="text-[12px] text-slate-600 font-medium whitespace-nowrap">
+          {{ row.periodeLabel }}
+        </span>
+      </template>
       <template #column-tagihan="{ row }">
-        <span class="font-semibold text-slate-700">
-          {{ formatCurrency(row.tagihan) }}
+        <span
+          :class="[
+            'text-[12px] font-semibold font-mono whitespace-nowrap',
+            row.tagihan > 0 ? 'text-slate-700' : 'text-slate-400',
+          ]"
+        >
+          {{ formatRupiah(row.tagihan) }}
         </span>
       </template>
       <template #column-denda="{ row }">
-        <span :class="['font-semibold', row.denda > 0 ? 'text-rose-600' : 'text-slate-400']">
-          {{ formatCurrency(row.denda) }}
+        <span
+          :class="[
+            'text-[12px] font-semibold font-mono whitespace-nowrap',
+            row.denda > 0 ? 'text-rose-600' : 'text-slate-400',
+          ]"
+        >
+          {{ formatRupiah(row.denda) }}
         </span>
       </template>
       <template #column-total="{ row }">
-        <span class="font-bold text-slate-800">
-          {{ formatCurrency(row.total) }}
+        <span class="text-[12px] text-slate-800 font-bold font-mono whitespace-nowrap">
+          {{ formatRupiah(row.total) }}
         </span>
       </template>
-      <template #column-status>
+      <!-- Selalu "Belum Lunas": query backend sudah di-filter status='unpaid'. -->
+      <template #column-status="{ row }">
         <span
           class="px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider rounded-md bg-rose-50 text-rose-600"
         >
-          Belum Lunas
+          {{ row.status || 'Belum Lunas' }}
         </span>
       </template>
     </DataTable>
-  </div>
+  </ContentCard>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import DataTable from '@/presentations/components/ui/DataTable.vue'
+import ContentCard from '@/presentations/components/ui/ContentCard.vue'
+import { formatRupiah } from '@/composables/useFormatCurrency'
 import dashboardService from '@/services/dashboard.service'
-
-const formatCurrency = (amount) => {
-  return new Intl.NumberFormat('id-ID', {
-    style: 'currency',
-    currency: 'IDR',
-    minimumFractionDigits: 0,
-  }).format(amount)
-}
 
 const searchQuery = ref('')
 const currentPage = ref(1)
@@ -62,14 +84,35 @@ const loading = ref(false)
 const serverTotal = ref(0)
 const totalPages = ref(1)
 
+// Kolom nominal & tanggal rata kanan; header DataTable default text-left, jadi
+// perlu `!` agar override benar-benar menang (sama seperti KelasIndex/detailPemakaianAir).
 const columns = [
-  { key: 'nomorInduk', title: 'Nomor Induk' },
-  { key: 'customer', title: 'Customer' },
+  { key: 'nomorInduk', title: 'No. Pelanggan' },
+  { key: 'customer', title: 'Nama' },
   { key: 'alamat', title: 'Alamat' },
-  { key: 'periodeLabel', title: 'Periode' },
-  { key: 'tagihan', title: 'Tagihan' },
-  { key: 'denda', title: 'Denda' },
-  { key: 'total', title: 'Total Tunggakan' },
+  {
+    key: 'periodeLabel',
+    title: 'Periode',
+    thClass: 'whitespace-nowrap!',
+  },
+  {
+    key: 'tagihan',
+    title: 'Tagihan',
+    thClass: 'text-right!',
+    tdClass: 'text-right!',
+  },
+  {
+    key: 'denda',
+    title: 'Denda',
+    thClass: 'text-right!',
+    tdClass: 'text-right!',
+  },
+  {
+    key: 'total',
+    title: 'Total Tunggakan',
+    thClass: 'text-right!',
+    tdClass: 'text-right!',
+  },
   { key: 'status', title: 'Status' },
 ]
 
