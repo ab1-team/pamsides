@@ -1,5 +1,10 @@
 <template>
-  <div class="h-full bg-white flex flex-col pt-2 pb-4">
+  <ContentCard
+    variant="bordered"
+    padding="none"
+    rounded="2xl"
+    class="h-full! flex! flex-col! overflow-hidden! shadow-sm!"
+  >
     <DataTable
       v-model="searchQuery"
       :data="itemsList"
@@ -31,16 +36,23 @@
                 : 'bg-slate-100 text-slate-500'
           "
         >
-          {{ row.status === 'paid' ? 'Sudah Dicatat' : row.status === 'unpaid' ? 'Belum Lunas' : 'Belum Dicatat' }}
+          {{
+            row.status === 'paid'
+              ? 'Sudah Dicatat'
+              : row.status === 'unpaid'
+                ? 'Belum Lunas'
+                : 'Belum Dicatat'
+          }}
         </span>
       </template>
     </DataTable>
-  </div>
+  </ContentCard>
 </template>
 
 <script setup>
 import { ref, onMounted, watch } from 'vue'
 import DataTable from '@/presentations/components/ui/DataTable.vue'
+import ContentCard from '@/presentations/components/ui/ContentCard.vue'
 import dashboardService from '@/services/dashboard.service'
 
 const searchQuery = ref('')

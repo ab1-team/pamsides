@@ -1,5 +1,10 @@
 <template>
-  <div class="h-full bg-white flex flex-col pt-2 pb-4">
+  <ContentCard
+    variant="bordered"
+    padding="none"
+    rounded="2xl"
+    class="h-full! flex! flex-col! overflow-hidden! shadow-sm!"
+  >
     <DataTable
       v-model="searchQuery"
       v-model:selection="selectedRows"
@@ -28,7 +33,12 @@
         </span>
       </template>
       <template #column-denda="{ row }">
-        <span :class="['font-semibold text-[12px] font-mono whitespace-nowrap', row.denda > 0 ? 'text-rose-600' : 'text-slate-400']">
+        <span
+          :class="[
+            'font-semibold text-[12px] font-mono whitespace-nowrap',
+            row.denda > 0 ? 'text-rose-600' : 'text-slate-400',
+          ]"
+        >
           {{ formatRupiah(row.denda) }}
         </span>
       </template>
@@ -41,21 +51,20 @@
         <span
           class="px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider rounded-md"
           :class="
-            row.status === 'paid'
-              ? 'bg-emerald-50 text-emerald-600'
-              : 'bg-rose-50 text-rose-600'
+            row.status === 'paid' ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'
           "
         >
           {{ row.status === 'paid' ? 'Lunas' : 'Belum Lunas' }}
         </span>
       </template>
     </DataTable>
-  </div>
+  </ContentCard>
 </template>
 
 <script setup>
 import { ref, onMounted, watch, inject } from 'vue'
 import DataTable from '@/presentations/components/ui/DataTable.vue'
+import ContentCard from '@/presentations/components/ui/ContentCard.vue'
 import dashboardService from '@/services/dashboard.service'
 
 const searchQuery = ref('')

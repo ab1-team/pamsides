@@ -10,6 +10,7 @@
         :showIcon="false"
         :disabled="disabled"
         :yearRange="yearRange"
+        :maxDate="parsedMaxDate"
         showYear
         appendTo="body"
         class="base-input!"
@@ -22,7 +23,7 @@
 </template>
 
 <script setup>
-import { ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import DatePicker from 'primevue/datepicker'
 
 const props = defineProps({
@@ -62,9 +63,47 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  /**
+   * Batas tanggal TERAKHIR yang boleh dipilih (format `YYYY-MM-DD` atau Date).
+   *
+   * Dipakai untuk form pembayaran: tanggal pembayaran tidak boleh di masa
+   * depan karena uangnya belum masuk — pembukuan kas akan langsung saldo
+   * negativos.
+   */
+  maxDate: {
+    type: [String, Date],
+    default: null,
+  },
 })
 
 const emit = defineEmits(['update:modelValue', 'change'])
+
+/**
+ * Ubah `maxDate` jadi objek Date pada tengah malam WAKTU LOKAL.
+ *
+ * Penting: `new Date('2026-10-09')` di JS dibaca sebagai tengah malam UTC,
+ * bukan lokal. Untuk zona waktu di belakang UTC hasilnya bergeser ke tanggal
+ * sebelumnya, sehingga batas "hari ini" jadi kemarin dan kalender menolak
+ * tanggal hari ini sendiri. Karena itu string `YYYY-MM-DD` diurai manual.
+ */
+const parsedMaxDate = computed(() => {
+  const raw = props.maxDate
+  if (!raw) return null
+
+  if (raw instanceof Date) {
+    return Number.isNaN(raw.getTime()) ? null : raw
+  }
+
+  if (typeof raw === 'string') {
+    const m = raw.match(/^(\d{4})-(\d{2})-(\d{2})/)
+    if (m) {
+      return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]))
+    }
+  }
+
+  const parsed = new Date(raw)
+  return Number.isNaN(parsed.getTime()) ? null : parsed
+})
 
 const dateValue = ref(props.modelValue ? new Date(props.modelValue) : null)
 

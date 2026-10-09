@@ -2,6 +2,7 @@ import { ref, computed, onMounted } from 'vue'
 import { showSuccessToast, showErrorToast } from '@/utils/swal'
 import { storageUrl } from '@/utils/storage'
 import sopService from '@/services/sop.service'
+import { refreshKontak } from '@/composables/useKontakLembaga'
 import { useUiStore } from '@/stores/uiStore'
 
 export function useSop() {
@@ -139,6 +140,10 @@ export function useSop() {
       isSaving.value = true
       await sopService.saveLembaga({ ...lembagaForm.value })
       uiStore.bumpSettings()
+      // Nomor telepon yang baru disimpan di sini yang dipakai halaman
+      // pelanggan (Lapor Gangguan, dst). Segarkan cache-nya supaya perubahan
+      // langsung berlaku tanpa hard refresh.
+      refreshKontak()
       showSuccessToast('Profil Lembaga berhasil disimpan')
     } catch (error) {
       showErrorToast(error)

@@ -25,7 +25,6 @@
                 class="bg-gradient-to-r! from-indigo-600! to-blue-500! bg-clip-text! text-transparent!"
                 >{{ dashboardData.user.name }}</span
               >
-              ‘‹
             </h1>
             <p class="text-slate-500! font-medium! text-sm! lg:text-lg! max-w-md! lg:mx-0!">
               Kode Pelanggan:
@@ -35,6 +34,105 @@
             </p>
           </div>
         </div>
+      </div>
+
+      <!-- Error: jangan tampilkan "Rp 0 / LUNAS" sebagai nilai default saat gagal -->
+      <div
+        v-if="loadError"
+        class="mb-8! rounded-3xl! bg-rose-50! border! border-rose-200! p-4! lg:p-5! flex! flex-col! sm:flex-row! sm:items-center! justify-between! gap-3!"
+      >
+        <div class="flex! items-start! gap-3!">
+          <font-awesome-icon
+            icon="exclamation-triangle"
+            class="text-rose-600! mt-0.5!"
+          />
+          <div>
+            <p class="text-xs! font-black! text-rose-800!">{{ loadError }}</p>
+            <p class="text-[10px]! text-rose-600! mt-0.5!">
+              Data tagihan &amp; tunggakan di bawah belum dapat ditampilkan.
+            </p>
+          </div>
+        </div>
+        <button
+          type="button"
+          class="shrink-0! rounded-full! bg-rose-600! text-white! px-5! py-2! text-[10px]! font-black! uppercase! hover:bg-rose-700! transition-colors!"
+          @click="fetchDashboardData"
+        >
+          Muat Ulang
+        </button>
+      </div>
+
+      <!-- Info tunggakan -->
+      <div
+        v-if="arrears.overdue_count > 0"
+        class="mb-8! rounded-3xl! bg-gradient-to-br! from-rose-600! to-rose-700! text-white! p-5! lg:p-7! shadow-xl! shadow-rose-200! relative! overflow-hidden!"
+      >
+        <div
+          class="absolute! -right-10! -top-10! w-40! h-40! bg-white/10! rounded-full! blur-2xl! pointer-events-none!"
+        ></div>
+        <div class="relative! z-10! flex! flex-col! md:flex-row! md:items-center! justify-between! gap-5!">
+          <div class="flex! items-start! gap-4!">
+            <div
+              class="w-12! h-12! rounded-2xl! bg-white/15! flex! items-center! justify-center! flex-shrink-0! backdrop-blur-sm!"
+            >
+              <font-awesome-icon icon="exclamation-triangle" class="text-xl!" />
+            </div>
+            <div>
+              <h2 class="text-base! lg:text-xl! font-black! tracking-tight!">
+                Anda memiliki {{ arrears.overdue_count }} tagihan lewat jatuh tempo
+              </h2>
+              <p class="text-[11px]! lg:text-sm! font-medium! text-rose-100! mt-1!">
+                Total tagihan yang tertunda
+                <span class="font-black!">Rp. {{ formatNumber(arrears.overdue_amount) }}</span>
+                <template v-if="arrears.max_overdue_days > 0">
+                  • terlama <span class="font-black!">{{ arrears.max_overdue_days }} hari</span>
+                </template>
+              </p>
+            </div>
+          </div>
+          <BaseButton
+            variant="ghost"
+            block
+            class="md:flex-shrink-0! md:w-auto! rounded-full! bg-white! text-rose-700! font-black! h-11! px-7! text-xs! hover:bg-rose-50! shadow-lg! transition-all!"
+            @click="goToBillHistory"
+          >
+            LIHAT RIWAYAT
+            <font-awesome-icon icon="arrow-right" class="ml-2! text-[10px]!" />
+          </BaseButton>
+        </div>
+      </div>
+
+      <!-- Info belum lunas tapi masih dalam tempo -->
+      <div
+        v-else-if="arrears.unpaid_count > 0"
+        class="mb-8! rounded-3xl! bg-amber-50! border! border-amber-200! p-5! lg:p-6! flex! flex-col! md:flex-row! md:items-center! justify-between! gap-4!"
+      >
+        <div class="flex! items-start! gap-4!">
+          <div
+            class="w-11! h-11! rounded-2xl! bg-amber-100! text-amber-600! flex! items-center! justify-center! flex-shrink-0!"
+          >
+            <font-awesome-icon icon="clock" />
+          </div>
+          <div>
+            <h2 class="text-sm! lg:text-base! font-black! text-amber-900!">
+              {{ arrears.unpaid_count }} tagihan menunggu pembayaran
+            </h2>
+            <p class="text-[11px]! lg:text-sm! font-medium! text-amber-700! mt-0.5!">
+              Total
+              <span class="font-black!">Rp. {{ formatNumber(arrears.total_unpaid_amount) }}</span>
+              • belum melewati batas waktu pembayaran
+            </p>
+          </div>
+        </div>
+        <BaseButton
+          variant="ghost"
+          block
+          class="md:flex-shrink-0! md:w-auto! rounded-full! bg-amber-500! text-white! font-black! h-11! px-7! text-xs! hover:bg-amber-600! shadow-lg! transition-all!"
+          @click="goToBillHistory"
+        >
+          LIHAT RIWAYAT
+          <font-awesome-icon icon="arrow-right" class="ml-2! text-[10px]!" />
+        </BaseButton>
       </div>
 
       <div class="grid! grid-cols-1! lg:grid-cols-12! gap-10! mb-12!">
@@ -57,14 +155,19 @@
                 </div>
                 <div class="flex! items-center!">
                   <span
-                    v-if="dashboardData.latest_bill?.status === 'unpaid'"
+                    v-if="arrears.unpaid_count > 0"
                     class="px-4! py-1.5! bg-red-50! text-red-600! text-[10px]! font-black! rounded-full! border! border-red-100! tracking-widest!"
                     >BELUM LUNAS</span
                   >
                   <span
-                    v-else
+                    v-else-if="dashboardData.latest_bill"
                     class="px-4! py-1.5! bg-emerald-50! text-emerald-600! text-[10px]! font-black! rounded-full! border! border-emerald-100! tracking-widest!"
                     >LUNAS</span
+                  >
+                  <span
+                    v-else
+                    class="px-4! py-1.5! bg-slate-50! text-slate-500! text-[10px]! font-black! rounded-full! border! border-slate-200! tracking-widest!"
+                    >BELUM ADA TAGIHAN</span
                   >
                 </div>
               </div>
@@ -73,13 +176,13 @@
                 <h3
                   class="text-slate-400! text-[10px]! font-black! uppercase! tracking-widest! mb-2!"
                 >
-                  Total Tagihan
+                  {{ isOverdue ? 'Total Tunggakan' : 'Total Tagihan' }}
                 </h3>
                 <div class="flex! items-baseline! justify-end! gap-1!">
                   <span class="text-base! lg:text-lg! font-black! text-slate-400!">Rp.</span>
                   <span
-                    class="text-3xl! lg:text-4xl! font-black! text-slate-800! tracking-tighter!"
-                    >{{ formatNumber(dashboardData.latest_bill?.total_amount || 0) }}</span
+                    :class="`text-3xl! lg:text-4xl! font-black! tracking-tighter! ${isOverdue ? 'text-rose-600!' : 'text-slate-800!'}`"
+                    >{{ formatNumber(currentBillAmount) }}</span
                   >
                 </div>
               </div>
@@ -88,18 +191,36 @@
                 class="space-y-4! mb-10! bg-slate-50! p-5! rounded-3xl! border! border-slate-100!"
               >
                 <div class="flex! justify-between! items-center!">
+                  <span class="text-sm! font-bold! text-slate-500!">Periode Tagihan</span>
+                  <span class="text-sm! font-black! text-slate-800!">
+                    {{ formatPeriod(dashboardData.latest_bill) }}
+                  </span>
+                </div>
+                <div class="w-full! h-px! bg-slate-200!"></div>
+                <div class="flex! justify-between! items-center!">
                   <span class="text-sm! font-bold! text-slate-500!">Pemakaian Air</span>
                   <span class="text-sm! font-black! text-slate-800!">
-                    {{ dashboardData.latest_bill?.usage_m3 || 0 }} m³
+                    {{ formatMeter(dashboardData.latest_bill?.usage_m3) }} m³
                   </span>
                 </div>
                 <div class="w-full! h-px! bg-slate-200!"></div>
                 <div class="flex! justify-between! items-center!">
                   <span class="text-sm! font-bold! text-slate-500!">Jatuh Tempo</span>
-                  <span class="text-sm! font-black! text-slate-800!">
+                  <span
+                    :class="`text-sm! font-black! ${isOverdue ? 'text-rose-600!' : 'text-slate-800!'}`"
+                    >
                     {{ formatDate(dashboardData.latest_bill?.due_date) }}
                   </span>
                 </div>
+                <template v-if="arrears.unpaid_count > 1">
+                  <div class="w-full! h-px! bg-slate-200!"></div>
+                  <div class="flex! justify-between! items-center!">
+                    <span class="text-sm! font-bold! text-slate-500!">Total Belum Lunas</span>
+                    <span class="text-sm! font-black! text-indigo-600!">
+                      {{ arrears.unpaid_count }} tagihan
+                    </span>
+                  </div>
+                </template>
               </div>
 
               <BaseButton
@@ -133,16 +254,16 @@
               </div>
               <div class="flex! bg-slate-50! p-1.5! rounded-2xl! border! border-slate-100!">
                 <button
-                  @click="viewType = 'bar'"
-                  :class="`text-[10px]! font-black! px-4! py-2! rounded-xl! transition-all! ${viewType === 'bar' ? 'bg-white! shadow-md! text-indigo-600!' : 'text-slate-400! hover:text-slate-600!'}`"
-                >
-                  Batang
-                </button>
-                <button
                   @click="viewType = 'line'"
                   :class="`text-[10px]! font-black! px-4! py-2! rounded-xl! transition-all! ${viewType === 'line' ? 'bg-white! shadow-md! text-indigo-600!' : 'text-slate-400! hover:text-slate-600!'}`"
                 >
                   Garis
+                </button>
+                <button
+                  @click="viewType = 'bar'"
+                  :class="`text-[10px]! font-black! px-4! py-2! rounded-xl! transition-all! ${viewType === 'bar' ? 'bg-white! shadow-md! text-indigo-600!' : 'text-slate-400! hover:text-slate-600!'}`"
+                >
+                  Batang
                 </button>
               </div>
             </div>
@@ -207,33 +328,93 @@
                 v-else-if="viewType === 'bar'"
                 class="w-full! relative!"
               >
-                <svg viewBox="0 0 100 40" class="w-full! h-56! lg:h-64! overflow-visible!">
+                <!--
+                  `preserveAspectRatio="none"` WAJIB di sini.
+
+                  Tanpa itu, viewBox 100x40 dipaksa skalakan dengan mode
+                  default `xMidYMid meet`: saat elemennya jauh lebih lebar
+                  dari rasio 100:40 (mis. 800x256), seluruh SVG mengecil dan
+                  batangnya setipis rambut — praktis tidak terlihat.
+
+                  Konsekuensi samping: viewBox lalu dipanjangkan mengikuti
+                  lebar elemen, teks di dalam SVG ikut gepar (forge). Karena
+                  itu label angka TIDAK lagi digambar di dalam SVG, tapi
+                  dipindah ke bawah sebagai HTML supaya font & posisinya
+                  konsisten di semua ukuran layar.
+                -->
+                <svg viewBox="0 0 100 40" preserveAspectRatio="none" class="w-full! h-56! lg:h-64!">
                   <defs>
-                    <linearGradient id="barGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-                      <stop offset="0%" style="stop-color: #6366f1; stop-opacity: 1" />
-                      <stop offset="100%" style="stop-color: #a5b4fc; stop-opacity: 0.7" />
+                    <linearGradient id="barGradUp" x1="0%" y1="0%" x2="0%" y2="100%">
+                      <stop offset="0%" style="stop-color: #34d399; stop-opacity: 1" />
+                      <stop offset="100%" style="stop-color: #059669; stop-opacity: 0.9" />
                     </linearGradient>
-                    <linearGradient id="barGradCurrent" x1="0%" y1="0%" x2="0%" y2="100%">
-                      <stop offset="0%" style="stop-color: #4f46e5; stop-opacity: 1" />
-                      <stop offset="100%" style="stop-color: #06b6d4; stop-opacity: 0.8" />
+                    <linearGradient id="barGradDown" x1="0%" y1="0%" x2="0%" y2="100%">
+                      <stop offset="0%" style="stop-color: #fb7185; stop-opacity: 1" />
+                      <stop offset="100%" style="stop-color: #e11d48; stop-opacity: 0.9" />
+                    </linearGradient>
+                    <linearGradient id="barGradSame" x1="0%" y1="0%" x2="0%" y2="100%">
+                      <stop offset="0%" style="stop-color: #94a3b8; stop-opacity: 0.95" />
+                      <stop offset="100%" style="stop-color: #64748b; stop-opacity: 0.85" />
                     </linearGradient>
                   </defs>
-                  <g stroke="#f1f5f9" stroke-width="0.2">
+                  <g stroke="#f1f5f9" stroke-width="1" vector-effect="non-scaling-stroke">
                     <line x1="4" :y1="getPointY(maxUsage * 0.75)" x2="96" :y2="getPointY(maxUsage * 0.75)" />
                     <line x1="4" :y1="getPointY(maxUsage * 0.5)" x2="96" :y2="getPointY(maxUsage * 0.5)" />
                     <line x1="4" :y1="getPointY(maxUsage * 0.25)" x2="96" :y2="getPointY(maxUsage * 0.25)" />
-                    <line x1="4" :y1="34" x2="96" y2="34" stroke="#cbd5e1" stroke-width="0.3" />
+                    <line x1="4" :y1="34" x2="96" y2="34" stroke="#cbd5e1" stroke-width="1.5" />
                   </g>
                   <g v-if="avgLineY !== null">
-                    <line x1="4" :y1="avgLineY" x2="96" :y2="avgLineY" stroke="#f59e0b" stroke-width="0.3" stroke-dasharray="1,1" opacity="0.7" />
-                    <text x="95" :y="avgLineY - 0.8" text-anchor="end" class="text-[2.2px]! font-black! fill-amber-600!">RATA²</text>
+                    <line
+                      x1="4"
+                      :y1="avgLineY"
+                      x2="96"
+                      :y2="avgLineY"
+                      stroke="#f59e0b"
+                      stroke-width="1"
+                      vector-effect="non-scaling-stroke"
+                      stroke-dasharray="4,4"
+                      opacity="0.8"
+                    />
                   </g>
                   <g v-for="b in barChartData" :key="'bar-' + b.idx">
-                    <rect :x="b.barX" :y="b.barY" :width="b.barWidth" :height="b.barHeight" :fill="b.isCurrent ? 'url(#barGradCurrent)' : 'url(#barGrad)'" :opacity="b.hasData ? 1 : 0.25" rx="0.6" />
-                    <text v-if="b.value > 0" :x="b.cx" :y="b.barY - 1.2" text-anchor="middle" class="text-[2.2px]! font-black! fill-slate-700!">{{ formatDecimal(b.value) }}</text>
+                    <rect
+                      :x="b.barX"
+                      :y="b.barY"
+                      :width="b.barWidth"
+                      :height="b.barHeight"
+                      :fill="b.fill"
+                      :opacity="b.hasData ? 1 : 0.25"
+                      rx="0.4"
+                    >
+                      <title>
+                        {{ b.label }}: {{ formatDecimal(b.value) }} m³{{ b.changeSuffix }}
+                      </title>
+                    </rect>
                   </g>
                 </svg>
-                <div class="flex! justify-between! mt-3! px-1!">
+                <div class="flex! flex-wrap! items-center! justify-between! gap-3! mt-2! px-1!">
+                  <span class="text-[9px]! text-slate-400!">
+                    Warna = perubahan dibanding bulan sebelumnya
+                  </span>
+                  <span class="flex! items-center! gap-3!">
+                    <span class="flex! items-center! gap-1! text-[9px]! font-black! text-slate-400!">
+                      <span class="w-2.5! h-2.5! rounded-[3px]! bg-emerald-500!"></span>
+                      Naik
+                    </span>
+                    <span class="flex! items-center! gap-1! text-[9px]! font-black! text-slate-400!">
+                      <span class="w-2.5! h-2.5! rounded-[3px]! bg-rose-500!"></span>
+                      Turun
+                    </span>
+                    <span
+                      v-if="avgLineY !== null"
+                      class="flex! items-center! gap-1! text-[9px]! font-black! text-amber-600!"
+                    >
+                      <span class="w-3! h-px! bg-amber-400!"></span>
+                      Rata²
+                    </span>
+                  </span>
+                </div>
+                <div class="flex! justify-between! mt-2! px-1!">
                   <span
                     v-for="(label, idx) in usageLabelsCompact"
                     :key="'lbl-' + idx"
@@ -248,7 +429,10 @@
                 v-else-if="viewType === 'line'"
                 class="w-full! relative!"
               >
-                <svg viewBox="0 0 100 40" class="w-full! h-56! lg:h-64! overflow-visible!">
+                <!-- Sama seperti chart batang: `preserveAspectRatio="none"` supaya
+                     garis memenuhi lebar kartu. `vector-effect` menjaga
+                     ketebalan garis tetap normal meskipun viewBox dipanjangkan. -->
+                <svg viewBox="0 0 100 40" preserveAspectRatio="none" class="w-full! h-56! lg:h-64!">
                   <defs>
                     <linearGradient id="areaGradient" x1="0%" y1="0%" x2="0%" y2="100%">
                       <stop offset="0%" style="stop-color: #6366f1; stop-opacity: 0.35" />
@@ -260,25 +444,45 @@
                     :d="generateLinePath"
                     fill="none"
                     stroke="#6366f1"
-                    stroke-width="0.5"
+                    stroke-width="2"
+                    vector-effect="non-scaling-stroke"
                     stroke-linecap="round"
                     stroke-linejoin="round"
                   />
                   <g v-if="avgLineY !== null">
-                    <line x1="4" :y1="avgLineY" x2="96" :y2="avgLineY" stroke="#f59e0b" stroke-width="0.25" stroke-dasharray="1,1" opacity="0.7" />
+                    <line
+                      x1="4"
+                      :y1="avgLineY"
+                      x2="96"
+                      :y2="avgLineY"
+                      stroke="#f59e0b"
+                      stroke-width="1"
+                      vector-effect="non-scaling-stroke"
+                      stroke-dasharray="4,4"
+                      opacity="0.8"
+                    />
                   </g>
                   <g v-for="(p, idx) in distributionSeries" :key="'pt-' + idx">
                     <circle
                       :cx="getPointX(idx)"
                       :cy="getPointY(p.usage_m3)"
-                      :r="p.is_current ? 0.9 : 0.6"
+                      :r="p.is_current ? 1.6 : 1.1"
                       :fill="p.is_current ? '#4f46e5' : 'white'"
                       :stroke="p.is_current ? '#4f46e5' : '#6366f1'"
-                      stroke-width="0.3"
-                    />
-                    <title>{{ p.label }}: {{ formatDecimal(p.usage_m3) }} m³</title>
+                      stroke-width="1.5"
+                      vector-effect="non-scaling-stroke"
+                    >
+                      <title>{{ p.label }}: {{ formatDecimal(p.usage_m3) }} m³</title>
+                    </circle>
                   </g>
                 </svg>
+                <div
+                  v-if="avgLineY !== null"
+                  class="flex! justify-end! items-center! gap-1! mt-1! -mb-1!"
+                >
+                  <span class="w-3! h-px! bg-amber-400!"></span>
+                  <span class="text-[9px]! font-black! text-amber-600! uppercase!">Rata²</span>
+                </div>
                 <div class="flex! justify-between! mt-3! px-1!">
                   <span
                     v-for="(label, idx) in usageLabelsCompact"
@@ -403,17 +607,66 @@ const goToBillDetail = () => {
   router.push({ path: '/app/pelanggan/tagihan-detail', query: { id: billId } })
 }
 
+const goToBillHistory = () => {
+  router.push({ path: '/app/pelanggan/riwayat-tagihan', query: { from: 'dashboard' } })
+}
+
+/**
+ * Tunggakan aktual dari backend. Backend sudah memakai definisi yang sama
+ * dengan admin (`status = 'unpaid'` + `due_date` lewat dari hari ini), jadi
+ * angka di sini tidak boleh dihitung ulang dengan aturan sendiri.
+ */
+const arrears = computed(() => dashboardData.value.arrears || {
+  unpaid_count: 0,
+  total_unpaid_amount: 0,
+  overdue_count: 0,
+  overdue_amount: 0,
+  max_overdue_days: 0,
+})
+
+/** True bila tagihan yang tampil sudah lewat jatuh tempo. */
+const isOverdue = computed(() => arrears.value.overdue_count > 0)
+
+/**
+ * Nominal yang ditampilkan di kartu tagihan.
+ *
+ * Kalau ada tagihan lewat jatuh tempo, angka yang relevan bagi pelanggan
+ * adalah total tunggakan — bukan hanya satu tagihan yang kebetulan paling
+ * baru. Kalau tidak, tampilkan nominal tagihan terbaru seperti biasa.
+ */
+const currentBillAmount = computed(() =>
+  isOverdue.value ? arrears.value.overdue_amount : Number(dashboardData.value.latest_bill?.total_amount || 0),
+)
+
+/** Periode tagihan, mis. "Agustus 2026". */
+const formatPeriod = (bill) => {
+  if (!bill?.billing_period_month || !bill?.billing_period_year) return '-'
+  const months = [
+    'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+    'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember',
+  ]
+  return `${months[bill.billing_period_month - 1]} ${bill.billing_period_year}`
+}
+
 const MONTH_SHORT = [
   'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun',
   'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des',
 ]
 
 const viewType = ref('bar')
+const loadError = ref('')
 
 const dashboardData = ref({
   user: { name: '', customer_code: '' },
   latest_bill: null,
   usage_history: [],
+  arrears: {
+    unpaid_count: 0,
+    total_unpaid_amount: 0,
+    overdue_count: 0,
+    overdue_amount: 0,
+    max_overdue_days: 0,
+  },
   distribution: {
     series: [],
     months_count: 12,
@@ -442,8 +695,6 @@ const distributionSeries = computed(() => {
 })
 
 const usageValues = computed(() => distributionSeries.value.map((p) => Number(p.usage_m3 || 0)))
-
-const usageLabels = computed(() => distributionSeries.value.map((p) => p.label))
 
 const usageLabelsCompact = computed(() => distributionSeries.value.map((p) => p.shortLabel))
 
@@ -508,25 +759,67 @@ const avgLineY = computed(() => {
   return getPointY(avgUsage.value)
 })
 
-// Bar chart geometry untuk distribusi per bulan (lebih informatif dari pie)
+/**
+ * Geometri batang, gaya crypto/candlestick.
+ *
+ * Warnanya bukan dekorasi: hijau = pemakaian naik dari bulan sebelumnya,
+ * merah = turun, abu-abu = sama. Persis seperti grafik saham, supaya
+ * pelanggan bisa langsung membaca tren tanpa memeriksa angka satu per satu.
+ *
+ * `barWidth` dibatasi 62% dari lebar slot supaya batang bersebelahan
+ * tidak menyentuh — kalau penuh, chart terbaca sebagai blok padat dan
+ * perbandingan antar bulan hilang.
+ */
 const barChartData = computed(() => {
-  const len = distributionSeries.value.length
+  const series = distributionSeries.value
+  const len = series.length
   const slotWidth = (CHART_RIGHT - CHART_LEFT) / Math.max(len, 1)
-  const barWidth = Math.max(slotWidth * 0.55, 1.2)
-  return distributionSeries.value.map((p, idx) => {
+  const barWidth = Math.min(slotWidth * 0.62, 6)
+
+  return series.map((p, idx) => {
     const cx = CHART_LEFT + slotWidth * idx + slotWidth / 2
     const baseY = CHART_BOTTOM
     const topY = getPointY(p.usage_m3)
+
+    // Bulan pertama tidak punya pembanding, jadi netral (abu-abu).
+    const prev = idx > 0 ? Number(series[idx - 1].usage_m3 || 0) : null
+    const curr = Number(p.usage_m3 || 0)
+    let dir = 'same'
+    if (prev !== null) {
+      if (curr > prev) dir = 'up'
+      else if (curr < prev) dir = 'down'
+    }
+
+    // Bulan tanpa data (tidak ada meter reading & belum ada tagihan) tidak
+    // punya pembanding yang sah, jadi jangan diwarnai seolah-olah ada
+    // penurunan pemakaian.
+    if (!p.has_reading && !p.has_bill) dir = 'empty'
+
+    const fill =
+      dir === 'up' ? 'url(#barGradUp)' : dir === 'down' ? 'url(#barGradDown)' : 'url(#barGradSame)'
+
+    const diff = prev === null ? 0 : curr - prev
+
     return {
       idx,
       label: p.shortLabel,
       value: p.usage_m3,
       cx,
+      dir,
+      fill,
       barX: cx - barWidth / 2,
+      barWidth,
       barY: Math.min(topY, baseY),
-      barHeight: Math.max(Math.abs(baseY - topY), 0.5),
+      // Batang tanpa data tetap harus punya tinggi kecil supaya kelihatan
+      // sebagai "slot kosong" — bukan hilang, yang bikin sumbu-x terlihat
+      // tidak nyambung dengan batang.
+      barHeight: Math.max(Math.abs(baseY - topY), 0.6),
       hasData: p.has_reading || p.has_bill,
       isCurrent: p.is_current,
+      changeSuffix:
+        prev === null || diff === 0
+          ? ''
+          : ` (${diff > 0 ? '+' : ''}${formatDecimal(diff)} m³ vs bulan sebelumnya)`,
     }
   })
 })
@@ -538,17 +831,23 @@ const topMonths = computed(() => {
     .slice(0, 3)
 })
 
-const totalUsageRupiahEquivalent = computed(() => {
-  const bill = dashboardData.value.latest_bill
-  if (!bill) return null
-  const avg = avgUsage.value
-  if (!avg) return Number(bill.total_amount) || 0
-  // estimasi kasar: skala tagihan terakhir ke rata-rata pemakaian
-  const ratio = avg / Math.max(Number(bill.usage_m3) || 1, 1)
-  return Math.round((Number(bill.total_amount) || 0) * ratio)
-})
+/**
+ * Format angka dengan pembulatan ke rupiah penuh, sama seperti admin.
+ * Kolom `monthly_bills` bertipe `decimal`, jadi backend mengirim
+ * "15000.00"; tanpa `maximumFractionDigits: 0` tampilnya "15.000,00".
+ */
+const formatNumber = (num) =>
+  new Intl.NumberFormat('id-ID', {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(Number(num) || 0)
 
-const formatNumber = (num) => new Intl.NumberFormat('id-ID').format(Number(num) || 0)
+/** Volume meter boleh berdesimal, dibulatkan ke 1 angka desimal. */
+const formatMeter = (num) =>
+  new Intl.NumberFormat('id-ID', {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 1,
+  }).format(Number(num) || 0)
 
 const formatDecimal = (num) =>
   new Intl.NumberFormat('id-ID', { maximumFractionDigits: 0, minimumFractionDigits: 0 }).format(
@@ -572,9 +871,17 @@ const fetchDashboardData = async () => {
       dashboardData.value = {
         ...response.data,
         distribution: response.data.distribution || dashboardData.value.distribution,
+        arrears: response.data.arrears || dashboardData.value.arrears,
       }
+      loadError.value = ''
     }
   } catch (error) {
+    // Jangan biarkan `catch` kosong. Kalau request gagal, semua angka
+    // tunggakan akan tampil sebagai "Rp 0 / LUNAS" karena default state-nya
+    // nol — itu menyatakan pelanggan punya utang padahal sistem tidak tahu.
+    // Ini misrepresentation, jadi kegagalan harus terlihat.
+    loadError.value =
+      error.response?.data?.message || 'Gagal memuat data dashboard. Silakan coba lagi.'
   }
 }
 

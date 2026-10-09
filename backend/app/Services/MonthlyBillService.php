@@ -8,6 +8,7 @@ use App\Models\MonthlyBill;
 use App\Models\Setting;
 use App\Models\WaterTariffBlock;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Log;
 
 class MonthlyBillService
 {
@@ -97,6 +98,32 @@ class MonthlyBillService
 
             $total = $usage_charge + $abodemen + $penalty;
 
+            // Tagihan Rp 0 bisa langsung berstatus `paid` — tapi hanya kalau nolnya
+            // benar-benar bisa dibenarkan, yaitu pelanggan tidak mengonsumsi air.
+            //
+            // Kalau `$usage > 0` tapi total tetap 0, itu berarti paketnya belum
+            // punya blok tarif (atau semua price_per_m3-nya 0). Membiarkan tagihan
+            // seperti itu jadi `paid` berarti pelanggan yang benar-benar pakai
+            // air tidak ditagih sama sekali dan paket yang rusak ikut tersembunyi.
+            // Jadi kasus itu sengaja dibiarkan `unpaid` supaya kelihatan di
+            // daftar tagihan dan bisa dibetulkan admin.
+            //
+            // Sama seperti `BillingService::generateForCustomer` yang dipakai saat
+            // input pemakaian satu per satu.
+            $isNihilLegitimate = $usage <= 0 && $total <= 0;
+
+            if ($usage > 0 && $total <= 0) {
+                Log::warning('Tagihan Rp 0 padahal pelanggan memakai air — konfigurasi paket kemungkinan bermasalah', [
+                    'customer_id' => $reading->customer_id,
+                    'package_id' => $package->id,
+                    'usage_m3' => $usage,
+                    'total_amount' => $total,
+                    'period' => $tahun.'-'.$bulan,
+                ]);
+            }
+
+            $status = $isNihilLegitimate ? 'paid' : 'unpaid';
+
             MonthlyBill::create([
                 'customer_id' => $reading->customer_id,
                 'billing_period_month' => $bulan,
@@ -108,7 +135,7 @@ class MonthlyBillService
                 'abodemen' => $abodemen,
                 'penalty_amount' => $penalty,
                 'total_amount' => $total,
-                'status' => 'unpaid',
+                'status' => $status,
                 'due_date' => $this->computeDueDate($tahun, $bulan, $batasTagihan),
             ]);
 

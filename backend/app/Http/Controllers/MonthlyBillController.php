@@ -267,18 +267,40 @@ class MonthlyBillController extends Controller
                 ? $txPaid
                 : ($billStatusPaid && $bpPaid > 0 ? $bpPaid : 0);
 
-            // status = 'PAID' bila ada nominal bayar (transaksi ATAU fallback bill_payment).
-            // Kalau bill belum ada (belum digenerate), status PENDING.
-            // Kalau bill sudah ada tapi reading kosong / belum diinput, status UNPAID.
-            $statusLabel = $paidAmount > 0
-                ? 'PAID'
-                : ($bill || $reading ? 'UNPAID' : 'PENDING');
-
             // Denda sudah final di monthly_bills.penalty_amount dan sudah termasuk
             // di total_amount (dihitung saat tagihan dibuat). Jangan ditambah runtime:
             // billing akan dobel hitung dan nominal yang tersimpan jadi tidak cocok tagihan.
             $penalty = (float) ($bill?->penalty_amount ?? 0);
             $baseTotal = (float) ($bill?->total_amount ?? 0);
+
+            // Tagihan nihil: total Rp 0, jadi TIDAK ada pembayaran — dan memang
+            // tidak perlu ada. Generator menandainya `paid` supaya tidak
+            // memenuhi lonceng "tagihan belum bayar" dan tidak menjatuhkan
+            // tiket jadi suspended (lihat BillingService::generateForCustomer).
+            //
+            // Kasus ini harus ikut PAID. Kalau hanya mengandalkan `$paidAmount`,
+            // tagihan ini akan tampil UNPAID di halaman ini sementara sudah
+            // `paid` di DB dan tampil LUNAS di Daftar Tagihan — dua halaman
+            // berselisih soal status tagihan yang sama.
+            //
+            // Syaratnya `$billStatusPaid` HARUS ikut diperiksa, bukan totalnya
+            // saja. Total Rp 0 belum tentu berarti lunas: kalau pelanggan
+            // memakai air tapi tagihannya nol (karena paketnya belum punya
+            // blok tarif), generator sengaja membiarkannya `unpaid` supaya
+            // kelihatan dan bisa dibetulkan admin. Kalau tagihan seperti itu
+            // ikut-safe di sini, ia akan tampil PAID di halaman ini tapi
+            // UNPAID di Daftar Tagihan — persis masalah yang sama lagi, cuma
+            // di arah sebaliknya, dan konfigurasi paket yang rusak ikut
+            // tersembunyi.
+            $isNihilBill = $bill && $baseTotal <= 0 && $billStatusPaid;
+
+            // status = 'PAID' bila ada nominal bayar (transaksi ATAU fallback
+            // bill_payment), ATAU tagihannya nihil yang otomatis lunas.
+            // Kalau bill belum ada (belum digenerate), status PENDING.
+            // Kalau bill sudah ada tapi reading kosong / belum diinput, status UNPAID.
+            $statusLabel = ($paidAmount > 0 || $isNihilBill)
+                ? 'PAID'
+                : ($bill || $reading ? 'UNPAID' : 'PENDING');
 
             return [
                 'id' => $customer->id,
@@ -322,7 +344,12 @@ class MonthlyBillController extends Controller
             'amount_paid' => 'nullable|numeric|min:0',
             // Tanggal pembayaran dari date picker FE. Divalidasi sebagai date
             // supaya string rusak ditolak 422 (bukan 500 dari Carbon::parse).
-            'paid_at_date' => 'nullable|date',
+            //
+            // `before_or_equal:today` menolak tanggal masa depan: uangnya belum
+            // masuk, jadi membukukannya sekarang membuat saldo kas hari ini
+            // meleset. Frontend juga membatasi kalender, tapi validasi di sini
+            // yang menjamin data — endpoint bisa dipanggil langsung.
+            'paid_at_date' => ['nullable', 'date', 'before_or_equal:today'],
         ]);
 
         $bill = MonthlyBill::findOrFail($id);
@@ -339,7 +366,6 @@ class MonthlyBillController extends Controller
         $abodemen = (float) ($bill->abodemen ?? 0);
         $usageCharge = (float) ($bill->usage_charge ?? 0);
         $denda = (float) ($bill->penalty_amount ?? 0);
-        $isTunggakan = $denda > 0;
         $relasi = $bill->customer?->customer_code ?? 'Bill #'.$bill->id;
         $namaPelanggan = trim((string) ($bill->customer?->user?->name ?: $bill->customer?->ticket?->applicant_name));
 
@@ -366,11 +392,43 @@ class MonthlyBillController extends Controller
             ], 422);
         }
 
-        // Deteksi ADVANCE PAYMENT: bayar SEBELUM hari toleransi_tunggakan di
-        // BULAN PEMAKAIAN tagihan (billing_period_month/year).
-        //   - bayar < threshold  → ADVANCE (piutang overdue_bill di-hapus)
-        //   - bayar >= threshold → NORMAL
-        //   - bayar di bulan lain → NORMAL (threshold dihitung di bulan pemakaian)
+        // Sumber kebenaran "apakah tagihan ini sudah pernah dibukukan sebagai
+        // piutang": ADA JURNAL `overdue_bill` untuk tagihan ini — bukan
+        // `$denda > 0`.
+        //
+        // Proxy lama salah karena menebak dari komponen tagihan: tagihan
+        // menunggak yang dendanya 0 (cuma abodemen, atau denda terlewat) akan
+        // dianggap TIDAK menunggak dan dikreditkan ke pendapatan, padahal
+        // piutangnya sudah tercatat saat generate tunggakan. Akibatnya
+        // pendapatan diakui dua kali: sekali saat piutang dibukukan, sekali
+        // lagi saat pembayaran — padahal yang kedua harus menutup piutang.
+        //
+        // Jurnal overdue_bill adalah satu-satunya fakta yang bisa dipercaya:
+        // kalau baris ini ada, tagihan ini sudah membebani akun 1.1.03.01 dan
+        // pembayarannya wajib menutup piutang, bukan menambah pendapatan.
+        $overdueJournalRows = Transaction::where('reverence_type', 'overdue_bill')
+            ->where('reverence_id', $bill->id)
+            ->get(['id', 'account_debet', 'account_kredit', 'saldo', 'tgl_transaksi']);
+
+        // Hanya akun PIUTANG USAHA yang relevan. Jurnal overdue_bill lain
+        // (kalau ada di masa depan) tidak boleh mengubah routing pembayaran.
+        $piutangRows = $overdueJournalRows
+            ->filter(fn ($t) => $t->account_debet === '1.1.03.01')
+            ->keyBy('account_kredit');
+
+        $hasPiutang = $piutangRows->isNotEmpty();
+
+        // Tagihan dianggap "menunggak" untuk keperluan routing kalau piutangnya
+        // benar-benar tercatat. Dendanya sendiri TIDAK boleh jadi penentu:
+        // denda dihitung saat generate tunggakan, jadi tagihan bisa punya piutang
+        // tanpa sisa denda maupun sebaliknya.
+        $isTunggakan = $hasPiutang;
+
+        // Deteksi ADVANCE dari TANGGAL BAYAR, bukan dari ada/tidaknya jurnal piutang.
+        //
+        // Definisi bisnisnya tetap sama seperti versi lama: uang diterima
+        // SEBELUM ambang generate tunggakan, sehingga tagihan ini pada saat
+        // dibayar belum/seharusnya belum punya piutang.
         $toleransiTgl = (int) (\App\Models\Setting::first()?->toleransi_tunggakan ?? 0);
         $isAdvancePayment = false;
         $thresholdDate = null;
@@ -389,13 +447,28 @@ class MonthlyBillController extends Controller
             $isAdvancePayment = $paidAtDate->lt($thresholdDate);
         }
 
-        // Akun kredit saat ADVANCE → pendapatan langsung (4.1.01.02 / 4.1.01.03),
-        // bukan piutang 1.1.03.01, karena uang sudah diterima SEBELUM overdue_bill.
-        $revenueAbodemen = $isAdvancePayment ? '4.1.01.02' : ($isTunggakan ? '1.1.03.01' : '4.1.01.02');
-        $revenuePemakaian = $isAdvancePayment ? '4.1.01.03' : ($isTunggakan ? '1.1.03.01' : '4.1.01.03');
+        // Kombinasi yang TIDAK mungkin secara logika tapi tetap dijaga: tagihan
+        // terklasifikasi advance (tanggal bayar < ambang) TETAPI punya jurnal
+        // piutang. Terjadi kalau generate tunggakan telat, atau tanggal bayar
+        // direkam mundur setelah piutang tercatat. Di kasus ini piutang wajib
+        // dibalik supaya tidak menggantung — lewat UPDATE, bukan delete.
+        $needsPiutangRevert = $piutangRows->isNotEmpty() && $isAdvancePayment;
+
+        // Akun kredit saat pembayaran:
+        //   - ada piutang tercatat → menutup piutang (1.1.03.01), komponen yang
+        //     TIDAK punya piutang (mis. denda) tetap ke pendapatan/denda.
+        //   - tidak ada piutang       → pendapatan langsung.
+        //
+        // Pemetaan per komponen, bukan satu flag global: tagihan menunggak bisa
+        // punya piutang abodemen saja (pemakaian 0), atau sebaliknya. Kredit
+        // ke 1.1.03.01 hanya untuk komponen yang BENAR-BENAR punya baris
+        // piutang; kalau tidak, jurnal piutang dan jurnal pembayaran tidak akan
+        // pernah balance.
+        $revenueAbodemen = $piutangRows->has('4.1.01.02') ? '1.1.03.01' : '4.1.01.02';
+        $revenuePemakaian = $piutangRows->has('4.1.01.03') ? '1.1.03.01' : '4.1.01.03';
 
         $restoredTicket = false;
-        $overdueDeletedCount = 0;
+        $overdueRevertedCount = 0;
         // Metode bayar ikut ditulis di keterangan jurnal supaya saat cetak laporan
         // kas / buku besar, sumber dana (Tunai vs Transfer BRI) jelas terlihat.
         $methodLabel = $paymentMethod === 'transfer' ? 'Transfer BRI' : 'Tunai';
@@ -410,14 +483,12 @@ class MonthlyBillController extends Controller
         $ketPemakaian = $ket('Pemakaian');
         $ketDenda = $ket('Denda');
 
-        // NOTE: penghapusan jurnal piutang `overdue_bill` (kasus advance payment)
-        // dipindah KE DALAM DB::transaction di bawah. Sebelumnya ada di luar,
-        // sehingga kalau closure berikutnya gagal, jurnal piutang sudah hilang
-        // tanpa rollback -> data piutang vs jurnal tidak sinkron.
-        //
-        // DB::transaction(function () use (...) {
+        // Reklasifikasi jurnal piutang + pembuatan jurnal pembayaran dilakukan
+        // di dalam SATU DB::transaction. Kalau closure berikutnya gagal,
+        // perubahan piutang ikut rollback sehingga jurnal piutang dan jurnal
+        // pembayaran tidak pernah merusak transaksi setengah jadi.
         try {
-            DB::transaction(function () use ($bill, $request, $paidAtDate, $abodemen, $usageCharge, $denda, $isTunggakan, $isAdvancePayment, $revenueAbodemen, $revenuePemakaian, $relasi, $userId, $accountDebetKas, $methodLabel, $ketAbodemen, $ketPemakaian, $ketDenda, &$restoredTicket, &$overdueDeletedCount, &$payment) {
+            DB::transaction(function () use ($bill, $request, $paidAtDate, $abodemen, $usageCharge, $denda, $isTunggakan, $isAdvancePayment, $needsPiutangRevert, $revenueAbodemen, $revenuePemakaian, $relasi, $userId, $accountDebetKas, $methodLabel, $ketAbodemen, $ketPemakaian, $ketDenda, &$restoredTicket, &$overdueRevertedCount, &$payment) {
             // Kunci baris tagihan (SELECT ... FOR UPDATE) supaya 2 request bersamaan
             // tidak bisa sama-sama membaca status 'unpaid' lalu membayarkan dua
             // kali. Cek status diulang di sini dengan baris terkunci — sebelumnya
@@ -428,14 +499,50 @@ class MonthlyBillController extends Controller
                 throw new \RuntimeException('TAGIHAN_SUDAH_DIBAYAR');
             }
 
-            if ($isAdvancePayment) {
-                // Tanpa `lockForUpdate()` di sini: baris tagihan sudah terkunci
-                // oleh `MonthlyBill::lockForUpdate()` di atas, jadi tidak ada
-                // transaksi lain yang bisa menyentuh tagihan ini bersamaan.
-                // Memasang lock kedua hanya menambah durasi lock tanpa Benefit.
-                $overdueDeletedCount = \App\Models\Transaction::where('reverence_type', 'overdue_bill')
+            if ($needsPiutangRevert) {
+                // Reklasifikasi, BUKAN hapus.
+                //
+                // Baris overdue_bill diubah sehingga account_debet-nya bukan lagi
+                // Piutang Usaha tapi akun kas yang sama dengan metode pembayaran.
+                // Efeknya untuk saldo: piutang naik lagi (asli generate) lalu
+                // turun lagi (reklas ini) = 0, dan kas naik. Jurnal pembayaran
+                // di bawah tetap mengutup piutang, jadi total akhir tetap nol.
+                //
+                // Kenapa tidak `delete()`:
+                //   1. Jurnal piutang adalah jejak audit. Menghapusnya
+                //      menghilangkan bukti tagihan pernah masuk piutang, sehingga
+                //      selisih kas tidak bisa direkonstruksi.
+                //   2. `billing:generate-overdue-transactions` dijalankan ulang
+                //      setiap login. Dedup-nya berbasis (reverence_type,
+                //      reverence_id, account_kredit). Kalau baris di-soft-delete,
+                //      global scope SoftDeletes masih menambahkannya sebagai
+                //      "sudah punya jurnal" → jurnal tidak pernah dibuat ulang
+                //      dan piutang hilang selamanya dari pembukuan.
+                //   3. `->delete()` memicu observer `deleted` yang menjalankan
+                //      SUM() penuh per baris; `->save()` di sini dipanggil
+                //      maksimum 2 baris, jauh lebih murah.
+                //
+                // Kolom `account_kredit` SENGAJA tidak diubah: baris tetap
+                // berisi kode pendapatan asli supaya auditor bisa melihat
+                // piutang mana yang direklas. Yang berubah hanya sisi debet,
+                // sehingga piutang di 1.1.03.01 turun dan kas naik.
+                //
+                // Ditulis lewat DB::table() agar observer `updated` tidak
+                // menjalankan agregasi `amount` dua kali; trigger MySQL
+                // tetap yang pakai (sudah suspend di caller bila perlu).
+                $trxIdsRevert = Transaction::where('reverence_type', 'overdue_bill')
                     ->where('reverence_id', $bill->id)
-                    ->delete();
+                    ->where('account_debet', '1.1.03.01')
+                    ->pluck('id');
+
+                foreach ($trxIdsRevert as $revertId) {
+                    DB::table('transactions')->where('id', $revertId)->update([
+                        'account_debet' => $accountDebetKas,
+                        'tgl_transaksi' => $paidAtDate->toDateString(),
+                        'updated_at' => now(),
+                    ]);
+                    $overdueRevertedCount++;
+                }
             }
 
             $bill->update(['status' => 'paid']);
@@ -568,6 +675,9 @@ class MonthlyBillController extends Controller
                 'bill' => $bill,
                 'payment' => $payment,
                 'ticket_restored' => $restoredTicket,
+                // Berapa baris jurnal piutang yang direklas jadi kas masuk.
+                // 0 = tidak ada piutang yang perlu dibalik (pembayaran normal).
+                'piutang_direklas' => $overdueRevertedCount,
             ],
         ]);
     }
@@ -888,6 +998,25 @@ class MonthlyBillController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Hanya tagihan yang sudah lunas yang bisa di-rollback.',
+            ], 400);
+        }
+
+        // Tagihan Rp 0 tidak bisa di-rollback.
+        //
+        // Tagihan nihil tidak punya pembayaran: tidak ada baris `bill_payments`
+        // dan tidak ada jurnal. Yang ada hanya flag `status = 'paid'` yang
+        // dipasang generator. Mengembalikan flag itu ke `unpaid` tidak membatalkan
+        // apa pun — dan begitu generator berjalan lagi (atau generate bulanan
+        // dijalankan), tagihan yang sama otomatis kembali jadi `paid` karena
+        // nilainya memang 0. Akibatnya user melihat aksi "rollback berhasil"
+        // tapi statusnya balik sendiri beberapa saat kemudian.
+        //
+        // Jadi tolak lebih awal dengan pesan yang jelas, daripada memberi hasil
+        // yang menipu.
+        if ((float) ($bill->total_amount ?? 0) <= 0) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Tagihan Rp 0 tidak punya pembayaran sehingga tidak bisa di-rollback. Tagihan ini otomatis berstatus lunas.',
             ], 400);
         }
 
