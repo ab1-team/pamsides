@@ -204,39 +204,18 @@ class ImportLegacyBillPaymentsCommand extends Command
         $fallbackAdmin = DB::table('users')->where('role', 'admin')->value('id') ?? 1;
 
         // 5. Loop Bayar/Pendapatan transactions, group by (usage_id, tgl_transaksi)
-        $trxs = DB::connection('legacy')->table('transactions')
+        //    Streaming + agregasi per batch: tidak pernah menahan seluruh baris di memori.
+        //    Kelompok yang datanya sudah lengkap dalam satu batch langsung diproses & ditulis.
+        $baseQuery = fn () => DB::connection('legacy')->table('transactions')
             ->where(function ($q) {
                 $q->where('keterangan', 'LIKE', 'Bayar%')
                   ->orWhere('keterangan', 'LIKE', 'Pendapatan%');
             })
             ->where('usage_id', '>', 0)
-            ->when($bizFilter, fn ($q) => $q->where('business_id', $bizFilter))
-            ->orderBy('usage_id')
-            ->orderBy('tgl_transaksi')
-            ->orderBy('id')
-            ->get();
-        $this->info('Total Bayar/Pendapatan trx: '.count($trxs));
+            ->when($bizFilter, fn ($q) => $q->where('business_id', $bizFilter));
 
-        // Group in memory
-        $groups = [];
-        foreach ($trxs as $t) {
-            $uid = (int) $t->usage_id;
-            $tgl = (string) $t->tgl_transaksi;
-            $key = $uid.'|'.$tgl;
-            if (! isset($groups[$key])) {
-                $groups[$key] = [
-                    'usage_id' => $uid,
-                    'tgl_transaksi' => $tgl,
-                    'rows' => [],
-                    'total' => 0,
-                    'legacy_user_id' => (int) ($t->user_id ?? 0),
-                    'min_id' => (int) $t->id,
-                ];
-            }
-            $groups[$key]['rows'][] = $t;
-            $groups[$key]['total'] += (int) $t->total;
-        }
-        $this->info('Unique bayar events: '.count($groups));
+        $totalTrx = $baseQuery()->count();
+        $this->info('Total Bayar/Pendapatan trx: '.$totalTrx);
 
         $stats = [
             'created' => 0,
@@ -244,20 +223,35 @@ class ImportLegacyBillPaymentsCommand extends Command
             'skipped' => 0,
             'failed' => 0,
         ];
+        $scanned = 0;       // jumlah baris legacy yang dipindai
+        $events = 0;        // jumlah event unik (grup usage_id|tgl_transaksi)
         $skipped = [];
         $failed = [];
         $billsPaidByBp = []; // track bill_id yg ke-update ke paid
 
-        $i = 0;
-        foreach ($groups as $key => $g) {
-            $i++;
+        // Agregasi 1 grup (semantik identik dengan versi ->get(): user_id & id dari baris PERTAMA,
+        // total = jumlah seluruh baris dalam grup).
+        $emptyGroup = fn (int $uid, string $tgl, int $firstId, int $firstUser) => [
+            'usage_id'       => $uid,
+            'tgl_transaksi'  => $tgl,
+            'total'          => 0,
+            'legacy_user_id' => $firstUser,
+            'min_id'         => $firstId,
+        ];
+
+        // Proses & tulis satu grup event ke bill_payments (logika sama persis, tanpa 'rows').
+        $processGroup = function (array $g) use (
+            &$stats, &$skipped, &$failed, &$events, &$billsPaidByBp,
+            $usageToBill, $userMap, $fallbackAdmin, $existingBillPays, $isDryRun
+        ) {
+            $events++;
+            $usageId = (int) $g['usage_id'];
             try {
-                $usageId = (int) $g['usage_id'];
                 $billId = $usageToBill[$usageId] ?? null;
                 if (! $billId) {
                     $stats['skipped']++;
                     if (count($skipped) < 50) $skipped[] = ['usage_id' => $usageId, 'tgl' => $g['tgl_transaksi'], 'reason' => 'no monthly_bill mapping'];
-                    continue;
+                    return;
                 }
 
                 $paidAt = null;
@@ -272,7 +266,7 @@ class ImportLegacyBillPaymentsCommand extends Command
                 if (! $paidAt) {
                     $stats['skipped']++;
                     if (count($skipped) < 50) $skipped[] = ['usage_id' => $usageId, 'reason' => 'tgl_transaksi invalid'];
-                    continue;
+                    return;
                 }
 
                 $confirmedBy = $userMap[(int) ($g['legacy_user_id'] ?? 0)] ?? null;
@@ -301,15 +295,106 @@ class ImportLegacyBillPaymentsCommand extends Command
                     $stats['created']++;
                     $billsPaidByBp[$billId] = ($billsPaidByBp[$billId] ?? 0) + $amount;
                 }
-
-                if ($i % $chunkSize === 0 || $i === count($groups)) {
-                    $this->maybeLog($i, $chunkSize, count($groups), $stats);
-                }
             } catch (\Throwable $e) {
                 $stats['failed']++;
-                if (count($failed) < 50) $failed[] = ['key' => $key, 'error' => $e->getMessage()];
+                if (count($failed) < 50) $failed[] = ['key' => $usageId.'|'.$g['tgl_transaksi'], 'error' => $e->getMessage()];
+            }
+        };
+
+        // Urutan (usage_id, tgl_transaksi, id) dipertahankan persis seperti versi ->get():
+        // baris pertama tiap (usage_id|tgl_transaksi) tetap sama, sehingga legacy_user_id & total identik.
+        // Anchor dibuat NULL-safe: tgl_transaksi bisa '' (bukan tanggal valid) di legacy, dan
+        // membandingkan kolom DATE dengan '' memicu error 1525 di MySQL strict mode.
+        $lastUid  = 0;
+        $lastTgl  = null;   // null = belum ada baris sama sekali
+        $curAnchor = null;  // anchor yang sudah DIPROSES (null = belum proses baris apa pun)
+        $curKey   = null;   // key grup yang sedang diakumulasi
+        $cur      = null;
+        $after    = null;   // anchor untuk kelanjutan (resume)
+
+        $applyAfter = function ($q) use (&$after, &$curAnchor) {
+            if ($after === null) return $q;
+            [$auid, $atgl, $aid] = $after;
+            $q->where(function ($w) use ($auid, $atgl, $aid) {
+                $w->where('usage_id', '>', $auid)
+                  ->orWhere(function ($q2) use ($auid, $atgl, $aid) {
+                      $q2->where('usage_id', '=', $auid);
+                      if ($atgl === null) {
+                          $q2->whereNotNull('tgl_transaksi');
+                      } else {
+                          $q2->where(function ($q3) use ($atgl, $aid) {
+                              $q3->where('tgl_transaksi', '>', $atgl)
+                                 ->orWhere(function ($q4) use ($atgl, $aid) {
+                                     $q4->where('tgl_transaksi', '=', $atgl)->where('id', '>', $aid);
+                                 });
+                          });
+                      }
+                  });
+            });
+            return $q;
+        };
+
+        retry:
+        $attempt = 0;
+        $maxRetries = 8;
+        while (true) {
+            try {
+                $q = $baseQuery();
+                if ($after !== null) $q = $applyAfter($q);
+                $cursor = $q->orderBy('usage_id')
+                    ->orderBy('tgl_transaksi')
+                    ->orderBy('id')
+                    ->select(['id', 'usage_id', 'tgl_transaksi', 'total', 'user_id'])
+                    ->cursor();
+
+                $pendingResume = ($after !== null); // grup pertama loop ini pending bila lanjut dari anchor
+                foreach ($cursor as $t) {
+                    $scanned++;
+                    $uid = (int) $t->usage_id;
+                    $tgl = (string) $t->tgl_transaksi;
+                    $key = $uid.'|'.$tgl;
+
+                    if ($curKey !== $key) {
+                        // Baris berganti grup. Flush grup sebelumnya, kecuali grup itu adalah
+                        // kelanjutan resume yang belum utuh (pendResume=true) → dibiarkan utuh saat replay.
+                        if ($curKey !== null && ! $pendingResume) {
+                            $processGroup($cur);
+                            if ($scanned % $chunkSize === 0) $this->maybeLog($scanned, $chunkSize, $totalTrx, $stats, $events);
+                        }
+                        $pendingResume = false;
+                        $curKey = $key;
+                        $cur = $emptyGroup($uid, $tgl, (int) $t->id, (int) ($t->user_id ?? 0));
+                    }
+                    $cur['total'] += (int) $t->total;
+
+                    $lastUid = $uid;
+                    $lastTgl = $t->tgl_transaksi === null ? null : (string) $t->tgl_transaksi;
+                    $after   = [$uid, $lastTgl, (int) $t->id];
+                }
+                break; // selesai normal
+            } catch (\Throwable $e) {
+                $attempt++;
+                if ($attempt > $maxRetries) {
+                    $this->error('Max retries: '.$e->getMessage());
+                    break;
+                }
+                $wait = min(60, 5 * $attempt);
+                $anchorDesc = $after === null ? 'start' : ("usage_id={$after[0]}, tgl=".($after[1] ?? 'null').", id={$after[2]}");
+                $this->warn("Legacy putus (try {$attempt}/{$maxRetries}): ".substr($e->getMessage(), 0, 80)." — sleep {$wait}s, resume after ".$anchorDesc);
+                DB::purge('legacy');
+                // resume tanpa melewatkan baris: cross-check baris terakhir yang sudah diproses.
+                // Baris yang gagal saat fetch belum ada di $after → tidak ada yang terlewat.
+                sleep($wait);
             }
         }
+
+        // flush grup terakhir
+        if ($curKey !== null) {
+            $processGroup($cur);
+        }
+
+        $this->info('Legacy rows scanned: '.$scanned);
+        $this->info('Unique bayar events: '.$events);
 
         // 6. Update monthly_bills.status berdasarkan bill_payments total
         $this->line('');
@@ -355,13 +440,13 @@ class ImportLegacyBillPaymentsCommand extends Command
         return self::SUCCESS;
     }
 
-    private function maybeLog(int $current, int $chunkSize, int $total, array $stats): void
+    private function maybeLog(int $current, int $chunkSize, int $total, array $stats, int $events = 0): void
     {
         if ($current % $chunkSize === 0 || $current === $total) {
             $pct = round($current / max(1, $total) * 100, 1);
             $this->line(sprintf(
-                '  [%5d/%5d] %5.1f%%  created=%d updated=%d skip=%d fail=%d',
-                $current, $total, $pct,
+                '  [%5d/%5d] %5.1f%%  events=%d created=%d updated=%d skip=%d fail=%d',
+                $current, $total, $pct, $events,
                 $stats['created'], $stats['updated'], $stats['skipped'], $stats['failed']
             ));
         }
