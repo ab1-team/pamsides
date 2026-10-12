@@ -42,13 +42,43 @@ return new class extends Migration
             DB::table('accounts')->whereIn('id', $hapus)->delete();
         }
 
-        DB::statement('ALTER TABLE accounts DROP INDEX IF EXISTS idx_accounts_kode_akun');
-        DB::statement('ALTER TABLE accounts ADD UNIQUE INDEX accounts_kode_akun_unique (kode_akun)');
+        $this->dropIndexIfExists('accounts', 'idx_accounts_kode_akun');
+
+        // MySQL tidak punya `ADD UNIQUE INDEX IF NOT EXISTS`, jadi cek dulu
+        // lewat information_schema supaya migration ini idempoten.
+        if (! $this->indexExists('accounts', 'accounts_kode_akun_unique')) {
+            DB::statement('ALTER TABLE accounts ADD UNIQUE INDEX accounts_kode_akun_unique (kode_akun)');
+        }
     }
 
     public function down(): void
     {
-        DB::statement('ALTER TABLE accounts DROP INDEX IF EXISTS accounts_kode_akun_unique');
-        DB::statement('ALTER TABLE accounts ADD INDEX idx_accounts_kode_akun (kode_akun)');
+        $this->dropIndexIfExists('accounts', 'accounts_kode_akun_unique');
+
+        if (! $this->indexExists('accounts', 'idx_accounts_kode_akun')) {
+            DB::statement('ALTER TABLE accounts ADD INDEX idx_accounts_kode_akun (kode_akun)');
+        }
+    }
+
+    /**
+     * MySQL tidak mendukung `DROP INDEX IF EXISTS` -- syntax itu milik
+     * PostgreSQL/SQLite. Memakainya di sini membuat MySQL 8 gagal dengan
+     * SQLSTATE[42000] error 1064. Karena itu existence dicek dulu lewat
+     * information_schema, baru statement-nya dijalankan.
+     */
+    private function indexExists(string $table, string $index): bool
+    {
+        return DB::table('information_schema.statistics')
+            ->whereRaw('table_schema = DATABASE()')
+            ->where('table_name', $table)
+            ->where('index_name', $index)
+            ->exists();
+    }
+
+    private function dropIndexIfExists(string $table, string $index): void
+    {
+        if ($this->indexExists($table, $index)) {
+            DB::statement('ALTER TABLE '.$table.' DROP INDEX '.$index);
+        }
     }
 };

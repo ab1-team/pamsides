@@ -200,9 +200,19 @@ return new class extends Migration
 
     public function down(): void
     {
-        DB::unprepared('DROP TRIGGER IF EXISTS create_amount_debit');
-        DB::unprepared('DROP TRIGGER IF EXISTS update_amount_debit');
-        DB::unprepared('DROP TRIGGER IF EXISTS delete_amount_debit');
+        // MySQL tidak mendukung `DROP TRIGGER IF EXISTS` (syntax itu
+        // PostgreSQL/SQLite) -- MySQL 8 akan menolak dengan error 1064.
+        // Existence dicek dulu lewat information_schema.TRIGGERS.
+        foreach (['create_amount_debit', 'update_amount_debit', 'delete_amount_debit'] as $trigger) {
+            $exists = DB::table('information_schema.TRIGGERS')
+                ->whereRaw('TRIGGER_SCHEMA = DATABASE()')
+                ->where('TRIGGER_NAME', $trigger)
+                ->exists();
+
+            if ($exists) {
+                DB::unprepared('DROP TRIGGER IF EXISTS '.$trigger);
+            }
+        }
 
         Schema::dropIfExists('amount');
     }
