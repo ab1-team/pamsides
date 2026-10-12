@@ -100,12 +100,27 @@ class ImportLegacyAccountsCommand extends Command
         if (! $isDryRun && ! empty($buf)) DB::table('akun_level_3')->insert($buf);
 
         // 4. accounts (filter by business_id)
+        //
+        // DB lama menyimpan lebih dari satu baris untuk sebagian `kode_akun`
+        // (mis. '2.1.02.02' x3) -- sisa blok lama berdampingan dengan blok
+        // seeder terbaru. DB baru sudah punya UNIQUE INDEX
+        // `accounts_kode_akun_unique` (migration 2026_10_10), jadi menyisipkan
+        // seluruh baris legacy mentah MUSTAHIL di DB bersih (error 1062).
+        // Aturan yang dipakai produksi: pertahankan SATU baris MAX(id) per
+        // `kode_akun`, buang sisanya -- identik dengan hapusAkunDuplikat().
+        // Dedup dilakukan atas hasil filter --business, bukan 200 baris penuh.
         $this->info('Import accounts...');
         $q = DB::connection('legacy')->table('accounts');
         if ($bizFilter) $q->where('business_id', (int) $bizFilter);
         $rows = $q->get();
+
+        $legacyCount = $rows->count();
+
+        // Pertahankan baris dengan id terbesar untuk setiap kode_akun, buang sisanya.
+        $unik = $rows->sortByDesc('id')->unique('kode_akun')->values();
+
         $buf = [];
-        foreach ($rows as $r) {
+        foreach ($unik as $r) {
             $buf[] = [
                 'id'           => (int) $r->id,
                 'parent_id'    => (int) $r->parent_id,
@@ -121,7 +136,7 @@ class ImportLegacyAccountsCommand extends Command
                 'updated_at'   => $r->updated_at ?: now(),
             ];
         }
-        $this->line('  rows: '.count($buf));
+        $this->line('  legacy rows: '.$legacyCount.' | unik (dedup MAX(id)): '.count($buf).' | di-insert: '.(! $isDryRun ? count($buf) : 0));
         if (! $isDryRun && ! empty($buf)) DB::table('accounts')->insert($buf);
 
         // 5. jenis_transactions
