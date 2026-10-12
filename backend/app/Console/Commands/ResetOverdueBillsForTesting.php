@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Models\Transaction;
+use App\Support\TransactionTriggers;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -22,12 +23,12 @@ use Illuminate\Support\Facades\Log;
  *   ke tabel transactions untuk setiap UPDATE â€” ini sangat lambat untuk bulk update
  *   (lebih dari 20k baris = timeout).
  *   MySQL tidak punya syntax disable trigger, jadi command ini:
- *     1. DROP trigger (definisi hardcode â€” lihat $triggerDefs)
+ *     1. DROP trigger (App\Support\TransactionTriggers::dropAll)
  *     2. Bulk UPDATE (soft-delete)
- *     3. RECREATE trigger dari definisi yang sama
+ *     3. RECREATE trigger dari definisi yang sama (TransactionTriggers::createAll)
  *
- *   Definisi trigger hardcode SUMBER: database/migrations/2026_06_23_034006_create_amount_table.php
- *   Jika trigger di migrasi berubah, update juga $triggerDefs di sini.
+ *   SUMBER TUNGGAL definisi trigger: app/Support/TransactionTriggers.php
+ *   (ekstraksi persis dari migrasi 2026_06_23_034006_create_amount_table.php).
  *
  * Keamanan:
  *   - Wajib konfirmasi interaktif (kecuali --yes).
@@ -39,85 +40,6 @@ class ResetOverdueBillsForTesting extends Command
                             {--dry-run : Hanya hitung, jangan hapus}';
 
     protected $description = 'Hapus semua jurnal overdue_bill (untuk testing). TIDAK mengubah status bill.';
-
-    /**
-     * Definisi trigger HARDCODED (lihat migrasi 2026_06_23_034006_create_amount_table).
-     * Pakai placeholders {target} untuk NEW/OLD yang konsisten.
-     */
-    private function triggerDefs(): array
-    {
-        $insertUpdateBody = function (string $target): string {
-            // $target = 'NEW' atau 'OLD'
-            return "
-                INSERT INTO amount (id, account_id, tahun, bulan, debit, kredit)
-                SELECT
-                    CONCAT(a.id, YEAR({$target}.tgl_transaksi), LPAD(MONTH({$target}.tgl_transaksi), 2, '0')),
-                    a.id,
-                    YEAR({$target}.tgl_transaksi),
-                    LPAD(MONTH({$target}.tgl_transaksi), 2, '0'),
-                    (SELECT IFNULL(SUM(saldo), 0) FROM transactions
-                     WHERE account_debet = {$target}.account_debet
-                       AND deleted_at IS NULL
-                       AND tgl_transaksi BETWEEN CONCAT(YEAR({$target}.tgl_transaksi), '-01-01') AND LAST_DAY({$target}.tgl_transaksi)),
-                    (SELECT IFNULL(SUM(saldo), 0) FROM transactions
-                     WHERE account_kredit = {$target}.account_debet
-                       AND deleted_at IS NULL
-                       AND tgl_transaksi BETWEEN CONCAT(YEAR({$target}.tgl_transaksi), '-01-01') AND LAST_DAY({$target}.tgl_transaksi))
-                FROM accounts a
-                WHERE a.kode_akun = {$target}.account_debet
-                ON DUPLICATE KEY UPDATE
-                    debit = (SELECT IFNULL(SUM(saldo), 0) FROM transactions
-                             WHERE account_debet = {$target}.account_debet
-                               AND deleted_at IS NULL
-                               AND tgl_transaksi BETWEEN CONCAT(YEAR({$target}.tgl_transaksi), '-01-01') AND LAST_DAY({$target}.tgl_transaksi)),
-                    kredit = (SELECT IFNULL(SUM(saldo), 0) FROM transactions
-                              WHERE account_kredit = {$target}.account_debet
-                                AND deleted_at IS NULL
-                                AND tgl_transaksi BETWEEN CONCAT(YEAR({$target}.tgl_transaksi), '-01-01') AND LAST_DAY({$target}.tgl_transaksi));
-
-                INSERT INTO amount (id, account_id, tahun, bulan, debit, kredit)
-                SELECT
-                    CONCAT(a.id, YEAR({$target}.tgl_transaksi), LPAD(MONTH({$target}.tgl_transaksi), 2, '0')),
-                    a.id,
-                    YEAR({$target}.tgl_transaksi),
-                    LPAD(MONTH({$target}.tgl_transaksi), 2, '0'),
-                    (SELECT IFNULL(SUM(saldo), 0) FROM transactions
-                     WHERE account_debet = {$target}.account_kredit
-                       AND deleted_at IS NULL
-                       AND tgl_transaksi BETWEEN CONCAT(YEAR({$target}.tgl_transaksi), '-01-01') AND LAST_DAY({$target}.tgl_transaksi)),
-                    (SELECT IFNULL(SUM(saldo), 0) FROM transactions
-                     WHERE account_kredit = {$target}.account_kredit
-                       AND deleted_at IS NULL
-                       AND tgl_transaksi BETWEEN CONCAT(YEAR({$target}.tgl_transaksi), '-01-01') AND LAST_DAY({$target}.tgl_transaksi))
-                FROM accounts a
-                WHERE a.kode_akun = {$target}.account_kredit
-                ON DUPLICATE KEY UPDATE
-                    debit = (SELECT IFNULL(SUM(saldo), 0) FROM transactions
-                             WHERE account_debet = {$target}.account_kredit
-                               AND deleted_at IS NULL
-                               AND tgl_transaksi BETWEEN CONCAT(YEAR({$target}.tgl_transaksi), '-01-01') AND LAST_DAY({$target}.tgl_transaksi)),
-                    kredit = (SELECT IFNULL(SUM(saldo), 0) FROM transactions
-                              WHERE account_kredit = {$target}.account_kredit
-                                AND deleted_at IS NULL
-                                AND tgl_transaksi BETWEEN CONCAT(YEAR({$target}.tgl_transaksi), '-01-01') AND LAST_DAY({$target}.tgl_transaksi));
-            ";
-        };
-
-        return [
-            'create_amount_debit' => "CREATE TRIGGER create_amount_debit AFTER INSERT ON transactions
-                FOR EACH ROW BEGIN
-                    " . $insertUpdateBody('NEW') . "
-                END",
-            'update_amount_debit' => "CREATE TRIGGER update_amount_debit AFTER UPDATE ON transactions
-                FOR EACH ROW BEGIN
-                    " . $insertUpdateBody('NEW') . "
-                END",
-            'delete_amount_debit' => "CREATE TRIGGER delete_amount_debit AFTER DELETE ON transactions
-                FOR EACH ROW BEGIN
-                    " . $insertUpdateBody('OLD') . "
-                END",
-        ];
-    }
 
     public function handle()
     {
@@ -161,13 +83,10 @@ class ResetOverdueBillsForTesting extends Command
         }
 
         $startedAt = microtime(true);
-        $triggerDefs = $this->triggerDefs();
 
         // 1. Drop trigger
         $this->info('Drop trigger transactions...');
-        foreach (array_keys($triggerDefs) as $name) {
-            DB::statement("DROP TRIGGER IF EXISTS `{$name}`");
-        }
+        TransactionTriggers::dropAll();
 
         $deleted = 0;
         try {
@@ -186,9 +105,7 @@ class ResetOverdueBillsForTesting extends Command
 
             // 3. Recreate trigger
             $this->info('Recreate trigger transactions...');
-            foreach ($triggerDefs as $name => $sql) {
-                DB::statement($sql);
-            }
+            TransactionTriggers::createAll();
 
             $duration = (int) ((microtime(true) - $startedAt) * 1000);
             $this->newLine();
@@ -200,9 +117,7 @@ class ResetOverdueBillsForTesting extends Command
         } catch (\Throwable $e) {
             // Upayakan recreate trigger agar DB tidak rusak
             try {
-                foreach ($triggerDefs as $name => $sql) {
-                    DB::statement($sql);
-                }
+                TransactionTriggers::createAll();
                 $this->warn('Trigger di-recreate kembali setelah error.');
             } catch (\Throwable $e2) {
                 $this->error('GAGAL RECREATE TRIGGER! Harap restore manual. Error: ' . $e2->getMessage());
