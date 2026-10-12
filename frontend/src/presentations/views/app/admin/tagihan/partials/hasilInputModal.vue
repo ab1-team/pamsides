@@ -45,7 +45,7 @@
           >
           <div class="flex flex-col! gap-y-1! text-xs! sm:text-sm! min-w-0!">
             <div class="flex items-center! gap-2! min-w-0!">
-              <span class="text-slate-500! whitespace-nowrap! w-24! sm:w-28! shrink-0!">Cater</span>
+              <span class="text-slate-500! whitespace-nowrap! w-24! sm:w-28! shrink-0!">Teknisi</span>
               <span class="font-semibold! text-slate-700! truncate!"
                 >: {{ filter.cater || '-' }}</span
               >

@@ -18,7 +18,7 @@
             <span class="meta-value">{{ filter.bulan || '-' }} {{ filter.tahun || '' }}</span>
           </div>
           <div class="meta-row">
-            <span class="meta-label">Cater</span>
+            <span class="meta-label">Teknisi</span>
             <span class="meta-sep">:</span>
             <span class="meta-value">{{ filter.cater || 'Admin' }}</span>
           </div>

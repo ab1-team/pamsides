@@ -91,7 +91,7 @@ export function usePemakaianAir() {
 
   const selectedTeknisiName = computed(() => selectedTeknisi.value?.name || 'Admin')
 
-  const resolveCaterLabel = (rawValue) => {
+  const resolveTeknisiLabel = (rawValue) => {
     if (rawValue === '' || rawValue == null) return ''
     const asString = String(rawValue).trim()
     if (/^\d+$/.test(asString)) {
@@ -298,7 +298,7 @@ export function usePemakaianAir() {
     bulanOptions,
     teknisiOptions,
     selectedTeknisiName,
-    resolveCaterLabel,
+    resolveTeknisiLabel,
 
     // Data
     tableData,

@@ -101,7 +101,7 @@ import { useUiStore } from '@/stores/uiStore'
 
 const route = useRoute()
 const uiStore = useUiStore()
-const { tableData, filter, refreshData, groupedData, resolveCaterLabel, teknisiOptions, loadTeknisiOptions } = usePemakaianAir()
+const { tableData, filter, refreshData, groupedData, resolveTeknisiLabel, teknisiOptions, loadTeknisiOptions } = usePemakaianAir()
 
 const caterName = computed(() => {
   const rawCater = route.query.cater
@@ -109,7 +109,7 @@ const caterName = computed(() => {
     return uiStore.userData?.nama || 'Admin'
   }
   if (rawCater) {
-    return resolveCaterLabel(rawCater) || 'Admin'
+    return resolveTeknisiLabel(rawCater) || 'Admin'
   }
   const teknisiId = route.query.teknisi
   if (teknisiId) {
@@ -245,7 +245,7 @@ onMounted(async () => {
     if (route.query.tahun) filter.value.tahun = parseInt(route.query.tahun)
     if (route.query.bulan) filter.value.bulan = route.query.bulan
     if (route.query.teknisi) filter.value.teknisi = route.query.teknisi
-    if (route.query.cater) filter.value.cater = resolveCaterLabel(route.query.cater)
+    if (route.query.cater) filter.value.cater = resolveTeknisiLabel(route.query.cater)
 
     document.title = `Cetak Form Input`
 

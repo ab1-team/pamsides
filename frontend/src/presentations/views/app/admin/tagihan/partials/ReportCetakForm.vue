@@ -25,7 +25,7 @@
         </div>
         <div class="meta-col meta-col-right">
           <div class="meta-row">
-            <span class="met-label">Cater</span>
+            <span class="met-label">Teknisi</span>
             <span class="meta-sep">:</span>
             <span class="meta-value">{{ filter.cater || 'Admin' }}</span>
           </div>
