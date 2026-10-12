@@ -1161,8 +1161,48 @@ class PelaporanController extends Controller
         $data['bulan_name'] = $this->bulanName($bulan);
 
         // 1. Ambil data akun
+        //
+        // Neraca saldo bersifat KUMULATIF: saldo per 31 Agustus = saldo yang
+        // dibawa masuk 1 Januari (akumulasi tahun-tahun sebelumnya) + mutasi
+        // Januari..Agustus tahun berjalan.
+        //
+        // Versi lama (siap_mapan) mencapai ini karena tabel `amounts`-nya
+        // menyimpan saldo bertumpuk: baris `bulan = '0'` = carry-over 1 Januari,
+        // baris `bulan = '08'` = akumulasi Jan..Agu. Query-nya cuma mengambil
+        // dua baris itu. Tabel `amount` di app ini menyimpan mutasi per bulan
+        // (bukan saldo bertumpuk), jadi carry-over harus dijumlah ulang dari
+        // tahun-tahun sebelumnya -- kalau tidak, Kas Tunai-Agustus hanya
+        // 839.034.500 dan bukan 1.645.098.590 seperti di app lama.
+        //
+        // `bulan` berupa string '01'..'12', jadi perbandingannya aman secara
+        // leksikografis karena semua panjangnya sama.
         $accounts = Account::with(['amount' => function ($q) use ($tahun, $bulan) {
-            $q->where('tahun', $tahun)->where('bulan', '<=', $bulan);
+            $q->where(function ($q) use ($tahun, $bulan) {
+                // Tahun-tahun sebelumnya: ambil MUTASI bulan 01..12 saja.
+                //
+                // Dua baris penutup HARUS dikecualikan karena isinya bukan
+                // mutasi, melainkan saldo yang sudah tercermin di mutasi:
+                //   bulan '13' = saldo akhir tahun tersebut (hasil TutupBuku)
+                //   bulan '00' = carry-over 1 Januari (saldo akhir tahun lalu)
+                //
+                // Tanpa filter ini saldo terhitung dua kali: tahun 2025 penuh
+                // + saldo akhirnya (bulan '13'), atau untuk tahun berikutnya
+                // carry 2026 (bulan '00') ikut dijumlahkan padahal isinya
+                // sudah tercermin di mutasi 2024-2025. Kas Tunai Januari 2026
+                // sempat tampil 1.676.823.680 padahal seharusnya 868.785.590.
+                $q->where(function ($q) use ($tahun) {
+                    $q->where('tahun', '<', $tahun)
+                        ->where('bulan', '>=', '01')
+                        ->where('bulan', '<=', '12');
+                })->orWhere(function ($q) use ($tahun, $bulan) {
+                    // Tahun berjalan juga jangan ikut baris '00'/'13' kalau
+                    // laporan dibuka pada bulan 1 (carry masih relevan
+                    // sebagai ganti mutasi tahun sebelumnya, bukan tambahan).
+                    $q->where('tahun', $tahun)
+                        ->where('bulan', '>=', '01')
+                        ->where('bulan', '<=', $bulan);
+                });
+            });
         }])->orderBy('kode_akun', 'ASC')->get();
 
         $surplus = $this->pelaporanService->hitungSurplus($tahun, $bulan);
@@ -1207,38 +1247,65 @@ class PelaporanController extends Controller
 
         $surplus = $this->pelaporanService->hitungSurplus($tahun, $bulan);
 
-        $totalAset = 0;
-        $aktiva = $akun1->firstWhere('lev1', 1);
-        if ($aktiva) {
-            $totalAset = (float) $aktiva->total_saldo_lev1;
-        }
+        /*
+         * Perhitungan ulangi level3 dengan menyubstitusi 3.2.02.01 (Laba/Rugi
+         * Tahun Berjalan) dengan surplus periode berjalan. WAJIB lewat
+         * akunUnikLevel3: `accounts` punya dua baris untuk kode yang sama
+         * (mis. 3.2.02.01 id 47 & 640), sehingga tanpa dedupe surplus ikut
+         * dijumlah dua kali -- neraca sempat menampilkan Laba Tahun Berjalan
+         * 1.933.060.200 (2 x 966.530.100).
+         *
+         * Setelah total_saldo level3 dihitung ulang, subtotal level1 harus
+         * dihitung ulang juga; kalau tidak, $totalAset masih memakai angka
+         * lama yang belum memperhitungkan surplus.
+         */
+        /*
+         * 3.2.02.01 (Laba/Rugi Tahun Berjalan) tidak punya mutasi bulanan --
+         * laba dihitung dari jurnal setiap kali laporan dibuka. Tapi laba
+         * tahun yang SUDAH ditutup (baris `amount` bulan '13') tidak pernah
+         * ikut karena query loadAkunTree hanya mengambil bulan 01..bulan
+         * laporan.
+         *
+         * Versi lama hanya menempelkan $surplus (laba tahun berjalan),
+         * sehingga laba tahun sebelumnya hilang dari neraca: Aset
+         * 1.977.012.500 vs Kew+Ekwitas 979.087.950, selisih 997.924.550
+         * -- persis laba 2025. Akun 3.x lain tetap pakai saldo `amount`
+         * supaya Laba Ditahan hasil alokasi laba ikut terhitung.
+         */
+        $akun1->each(function ($lev1) use ($surplus, $tahun) {
+            $lev1->akunLevel2->each(function ($lev2) use ($surplus, $tahun) {
+                $lev2->akunLevel3->each(function ($lev3) use ($surplus, $tahun) {
+                    $lev3->total_saldo = $this->pelaporanService->akunUnikLevel3($lev3->accountParent)
+                        ->sum(function ($acc) use ($surplus, $tahun) {
+                            if ($acc->kode_akun === '3.2.02.01') {
+                                // Laba tahun yang sudah ditutup + laba tahun berjalan
+                                return $this->pelaporanService->labaTahunTertutup($tahun) + (float) $surplus;
+                            }
+                            $d = $acc->amount ? $acc->amount->sum('debit') : 0;
+                            $k = $acc->amount ? $acc->amount->sum('kredit') : 0;
 
-        $kewajibanEkuitas = $akun1->filter(fn ($a) => in_array($a->lev1, [2, 3]));
-        $totalLiabilitasEkuitas = (float) $kewajibanEkuitas->sum('total_saldo_lev1');
-
-        if (abs($totalLiabilitasEkuitas - $totalAset) > 0.01) {
-            $ekuitas3 = $akun1->firstWhere('lev1', 3);
-            if ($ekuitas3) {
-                $ekuitas3->total_saldo_lev1 = (float) $ekuitas3->total_saldo_lev1 + ($totalAset - $totalLiabilitasEkuitas);
-                $totalLiabilitasEkuitas = (float) $kewajibanEkuitas->sum('total_saldo_lev1');
-            }
-        }
-
-        $akun1->each(function ($lev1) use ($surplus) {
-            $lev1->akunLevel2->each(function ($lev2) use ($surplus) {
-                $lev2->akunLevel3->each(function ($lev3) use ($surplus) {
-                    $lev3->total_saldo = $lev3->accountParent->sum(function ($acc) use ($surplus) {
-                        if ($acc->kode_akun === '3.2.02.01') {
-                            return $surplus;
-                        }
-                        $d = $acc->amount ? $acc->amount->sum('debit') : 0;
-                        $k = $acc->amount ? $acc->amount->sum('kredit') : 0;
-
-                        return ($acc->jenis_mutasi == 'kredit') ? ($k - $d) : ($d - $k);
-                    });
+                            return PelaporanService::isKredit($acc->jenis_mutasi) ? ($k - $d) : ($d - $k);
+                        });
                 });
             });
         });
+
+        $akun1->each(function ($lev1) {
+            $lev1->total_saldo_lev1 = $lev1->akunLevel2->sum(function ($lev2) {
+                return $lev2->akunLevel3->sum('total_saldo');
+            });
+        });
+
+        $totalAset = (float) ($akun1->firstWhere('lev1', 1)->total_saldo_lev1 ?? 0);
+        $kewajibanEkuitas = $akun1->filter(fn ($a) => in_array($a->lev1, [2, 3]));
+        $totalLiabilitasEkuitas = (float) $kewajibanEkuitas->sum('total_saldo_lev1');
+
+        /*
+         * Neraca harus seimbang dengan sendirinya: aset = kewajiban + modal.
+         * Kalau masih ada selisih, berarti pembukuan belum lengkap (mis. modal
+         * disetor belum pernah dicatat), jadi selisihnya ditampilkan apa
+         * adanya -- TIDAK dipaksakan supaya terlihat seimbang.
+         */
 
         return response()->json([
             'success' => true,
@@ -1304,9 +1371,10 @@ class PelaporanController extends Controller
             ->orderBy('id', 'ASC')
             ->get();
 
-        $saldoKas = (float) Transaction::where(function ($q) {
-            $q->where('account_debet', 'LIKE', '1.1.01.%')->orWhere('account_kredit', 'LIKE', '1.1.01.%');
-        })
+$saldoKas = (float) Transaction::whereNull('deleted_at')
+            ->where(function ($q) {
+                $q->where('account_debet', 'LIKE', '1.1.01.%')->orWhere('account_kredit', 'LIKE', '1.1.01.%');
+            })
             ->where('tgl_transaksi', '<=', $tgl_akhir)
             ->selectRaw("SUM(CASE WHEN account_debet LIKE '1.1.01.%' THEN saldo ELSE -saldo END) as total")
             ->value('total') ?? 0;
@@ -1333,17 +1401,33 @@ class PelaporanController extends Controller
             return implode('.', $parts);
         };
 
-        $computeSaldo = function ($child) use ($tgl_awal, $tgl_akhir, $buildPrefix) {
+$computeSaldo = function ($child) use ($tgl_awal, $tgl_akhir, $buildPrefix) {
+            /*
+             * Arus kas: akun di sisi KREDIT menambah kas (penerimaan),
+             * akun di sisi DEBET mengurangi kas (pengeluaran).
+             *
+             * Dua kekeliruan lama:
+             *  1) kolom `account_debit` tidak ada di tabel `transactions`
+             *     -- nama kolom sebenarnya `account_debet`. Setiap baris
+             *     bertanda debit memicu QueryException sehingga subtotal
+             *     section (dan seluruh laporan) gagal dimuat.
+             *  2) tanda terbalik: kredit dikurangi dan debit ditambah.
+             *     Pendapatan jadi tampil negatif (mis. "-145.815.000").
+             */
             $saldo = 0;
-            if ($child->debit) {
-                $prefix = $buildPrefix($child->debit);
-                $saldo += (float) Transaction::where('account_debet', 'LIKE', $prefix.'.%')
+
+            if ($child->kredit) {
+                $prefix = $buildPrefix($child->kredit);
+                $saldo += (float) Transaction::whereNull('deleted_at')
+                    ->where('account_kredit', 'LIKE', $prefix.'.%')
                     ->whereBetween('tgl_transaksi', [$tgl_awal, $tgl_akhir])
                     ->sum('saldo');
             }
-            if ($child->kredit) {
-                $prefix = $buildPrefix($child->kredit);
-                $saldo -= (float) Transaction::where('account_kredit', 'LIKE', $prefix.'.%')
+
+            if ($child->debit) {
+                $prefix = $buildPrefix($child->debit);
+                $saldo -= (float) Transaction::whereNull('deleted_at')
+                    ->where('account_debet', 'LIKE', $prefix.'.%')
                     ->whereBetween('tgl_transaksi', [$tgl_awal, $tgl_akhir])
                     ->sum('saldo');
             }
@@ -1433,8 +1517,12 @@ class PelaporanController extends Controller
         $accounts = Account::where('kode_akun', 'LIKE', '1.2.03%')
             ->where('lev3', 1)
             ->orderBy('lev4', 'ASC')
+            ->orderBy('id', 'ASC')
             ->get();
 
+        // Relasi inventory di-load lebih dulu (akunUnikLevel3() mengembalikan
+        // Collection biasa yang tidak punya method load()), baru dedupe
+        // satu akun per kode_akun -- lihat catatan lengkap di ati().
         $accounts->load(['inventory' => function ($q) use ($tglKondisi) {
             $q->where('tgl_beli', '<=', $tglKondisi)
                 ->where('status', '!=', '0')
@@ -1442,6 +1530,8 @@ class PelaporanController extends Controller
                 ->orderBy('kategori', 'ASC')
                 ->orderBy('tgl_beli', 'ASC');
         }]);
+
+        $accounts = $this->pelaporanService->akunUnikLevel3($accounts);
 
         $accounts = $accounts->map(function ($a) {
             $a->setRelation('inventory', $a->inventory->where('kategori', (string) $a->lev4)->values());
@@ -1488,8 +1578,26 @@ class PelaporanController extends Controller
         $accounts = Account::where('kode_akun', 'LIKE', '1.2.01%')
             ->where('lev3', 1)
             ->orderBy('lev4', 'ASC')
+            ->orderBy('id', 'ASC')
             ->get();
 
+        /*
+         * Relasi inventory harus di-load SEBELUM dedupe: akunUnikLevel3()
+         * mengembalikan Collection biasa (bukan Eloquent Collection) yang
+         * tidak punya method load() -- memanggil load() sesudahnya memicu
+         * "Method Illuminate\Support\Collection::load does not exist" (500).
+         *
+         * Tabel `accounts` menyimpan dua baris untuk kode akun yang sama
+         * (mis. 1.2.01.02 "Gedung & Bangunan" ada di id 17 dan id 610 --
+         * sisa baris lama dari migrasi/seed). Tanpa dedupe, setiap kategori
+         * tampil DUA HALAMAN karena frontend memecah `items` satu halaman
+         * per grup.
+         *
+         * Ambil satu akun per kode_akun lewat akunUnikLevel3() supaya
+         * aturan prioritasnya sama dengan laporan Neraca (punya saldo;
+         * kalau sama-sama nol ambil id terbesar). Inventory tetap ikut
+         * terbawa karena relasinya sudah ter-load pada tiap model.
+         */
         $accounts->load(['inventory' => function ($q) use ($tglKondisi) {
             $q->where('tgl_beli', '<=', $tglKondisi)
                 ->where('status', '!=', '0')
@@ -1497,6 +1605,8 @@ class PelaporanController extends Controller
                 ->orderBy('kategori', 'ASC')
                 ->orderBy('tgl_beli', 'ASC');
         }]);
+
+        $accounts = $this->pelaporanService->akunUnikLevel3($accounts);
 
         $accounts = $accounts->map(function ($a) {
             $a->setRelation('inventory', $a->inventory->where('kategori', (string) $a->lev4)->values());
@@ -1654,16 +1764,28 @@ class PelaporanController extends Controller
             $account->jenis_mutasi = 'debit';
         }
 
-        $saldoAwal = Amount::where('account_id', $account->id)
+        // Saldo awal tahun berjalan = mutasi tahun-tahun sebelumnya.
+// Hanya bulan 01..12 yang boleh ikut: baris '00' (carry-over) dan
+// '13' (saldo akhir hasil TutupBuku) berisi saldo yang sudah tercermin
+// di mutasi, bukan mutasi itu sendiri. Tanpa filter ini Kas Tunai
+// menampilkan saldo awal 1.616.076.180 (termasuk carry 2026 '00')
+// dan saldo akhir Agustus jadi 2.459.942.680, bukan 1.651.904.590.
+$saldoAwal = Amount::where('account_id', $account->id)
             ->where('tahun', '<', $tahun)
+            ->where('bulan', '>=', '01')
+            ->where('bulan', '<=', '12')
             ->selectRaw('SUM(debit) as d, SUM(kredit) as k')->first();
         $saldoAwalTahun = [
             'debit' => (float) ($saldoAwal->d ?? 0),
             'kredit' => (float) ($saldoAwal->k ?? 0),
         ];
 
-        $saldoSebelum = Amount::where('account_id', $account->id)
+        // Sama seperti saldo awal: baris '00' (carry-over) dan '13' (saldo akhir
+// TutupBuku) bukan mutasi. Tanpa batas bawah '01', carry 2026 ikut terambil
+// karena '00' < '08' secara leksikografis.
+$saldoSebelum = Amount::where('account_id', $account->id)
             ->where('tahun', $tahun)
+            ->where('bulan', '>=', '01')
             ->where('bulan', '<', $bulan)
             ->selectRaw('SUM(debit) as d, SUM(kredit) as k')->first();
         $saldoBulanLalu = [

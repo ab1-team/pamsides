@@ -232,9 +232,9 @@ class ImportLegacyMonthlyBillsCommand extends Command
                     $dueDate = $date->copy()->addMonth()->day(20)->toDateString();
                 }
 
-                // Penalty: cek tagihan 2 bulan sebelum (Bulan N-2) → kalau unpaid, pakai late_penalty dari paket
+                // Penalty: cek tagihan 1 bulan sebelum (Bulan N-1) → kalau unpaid, pakai late_penalty dari paket
                 $penalty = 0;
-                $checkDate = $date->copy()->subMonths(2);
+                $checkDate = $date->copy()->subMonths(1);
                 $checkKey = "{$customerId}|{$checkDate->year}|{$checkDate->month}";
                 if (isset($existingMB[$checkKey])) {
                     $checkBillId = $existingMB[$checkKey];

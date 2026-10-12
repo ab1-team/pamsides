@@ -167,6 +167,9 @@ export function usePemakaianAir() {
             pemakaian_charge: Number(item.pemakaian_charge ?? item.usage_charge ?? 0),
             tagihan: Number(item.tagihan ?? item.total_amount ?? 0),
             denda: Number(item.denda ?? item.penalty_amount ?? 0),
+            // Bulan yang sumber dendanya (N-1), mis. "Juli 2026". null kalau
+            // tagihan ini tidak punya denda.
+            denda_bulan: item.denda_bulan || null,
             abodemen: Number(item.abodemen ?? 0),
             jatuhTempo: item.due_date || null,
             status: statusLabel,

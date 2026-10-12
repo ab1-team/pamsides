@@ -182,7 +182,7 @@ class MonthlyBillService
 
     private function calculatePenalty($customer_id, $bulan, $tahun, $package)
     {
-        $date = Carbon::create($tahun, $bulan, 1)->subMonths(2);
+        $date = Carbon::create($tahun, $bulan, 1)->subMonths(1);
 
         $bill = MonthlyBill::where('customer_id', $customer_id)
             ->where('billing_period_month', $date->month)
