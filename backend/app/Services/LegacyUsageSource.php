@@ -18,7 +18,7 @@ use Illuminate\Support\Facades\DB;
  *                    usage_m3            = akhir - awal
  *                    usage_charge        = usages.nominal
  *                    abodemen            = installation_packages.monthly_abodemen
- *                    penalty_amount      = late_penalty bila tagihan 2 bulan lalu unpaid
+ *                    penalty_amount      = late_penalty bila tagihan 1 bulan lalu unpaid
  *                    total_amount        = nominal + abodemen + penalty
  *                    status              = PAID→paid, UNPAID/NON→unpaid
  *                    due_date            = usages.tgl_akhir
@@ -164,7 +164,7 @@ class LegacyUsageSource
 
             $penalty = 0.0;
             if ($applyPenalty) {
-                $prevKey = $r['customer_id'].'|'.self::shiftPeriod($r['year'], $r['month'], -2);
+                $prevKey = $r['customer_id'].'|'.self::shiftPeriod($r['year'], $r['month'], -1);
                 $prev = $byCustomer[$r['customer_id']][$prevKey] ?? null;
                 if ($prev !== null && $prev['status'] === 'unpaid') {
                     $penalty = $package[$packageId]['penalty'] ?? 0.0;

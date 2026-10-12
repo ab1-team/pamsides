@@ -11,7 +11,7 @@
         </div>
 
         <div v-if="caterVisible" class="cater-teknisi">
-            Cater : <b>{{ namaTeknisiFormatted }}</b>
+            Teknisi : <b>{{ namaTeknisiFormatted }}</b>
         </div>
 
         <table class="data-table" :class="{ 'data-table-tight': caterVisible }">

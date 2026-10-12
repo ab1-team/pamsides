@@ -374,18 +374,38 @@ class AlokasiLabaController extends Controller
         return $default;
     }
 
+    /**
+ * * Konfigurasi alokasi laba default.
+     *
+     * Hanya memuat akun yang benar-benar ada di tabel `accounts`. Versi lama
+     * menunjuk `2.2.01.01`/`2.2.01.02` (Utang Bank 1 & 2) yang saldonya selalu
+     * nol, `2.2.02.01` yang juga kosong, serta `2.2.99.01` (Cadangan Dividen)
+     * yang TIDAK ADA sama sekali -- sehingga alokasi tidak bisa dijalankan.
+     *
+     * Akun yang sebenarnya dipakai untuk distribute laba di data lama:
+     *   2.1.01.01 Utang Dividen Pemdes
+     *   2.1.01.02 Utang Dividen Masy Penyerta Modal
+     * keduanya sudah pernah dipakai (Rp1 juta/bulan sejak April 2025,
+     * jurnal "Dividen Pemdes tahun 2024" dari 3.2.01.01 Laba Ditahan).
+     *
+     * Default: 50% dividen Pemdes, 50% dividen Masy -- dibagi rata karena
+     * tidak ada ketentuan RUPS yang tercatat di sistem.
+     *
+     * Catatan: `3.2.01.01` (Laba Ditahan) TIDAK boleh dipakai sebagai item
+     * alokasi karena `save()` melewatinya -- akun itu hanya jadi sumber
+     * debit untuk memindahkan laba ke akun tujuan. Sisa laba yang tidak
+     * dibagikan tetap tertahan di Laba Ditahan secara alami karena tidak
+     * ada jurnal yang menguranginya.
+     */
     private function getAlokasiConfig(): array
     {
         $default = [
             'dibagikan' => [
-                ['kode_akun' => '2.2.01.01', 'nama_akun' => 'Utang Bank 1',                       'kategori' => 'Utang Bank (45%)',            'persen' => 45],
-                ['kode_akun' => '2.2.01.02', 'nama_akun' => 'Utang Bank 2',                       'kategori' => 'Utang Bank (40%)',            'persen' => 40],
-                ['kode_akun' => '2.2.02.01', 'nama_akun' => 'Utang Jangka Panjang Lainnya',        'kategori' => 'Utang Jangka Panjang (5%)',   'persen' => 5],
-                ['kode_akun' => '2.2.99.01', 'nama_akun' => 'Cadangan Dividen',                    'kategori' => 'Cadangan Dividen (5%)',       'persen' => 5],
+                ['kode_akun' => '2.1.01.01', 'nama_akun' => 'Utang Dividen Pemdes',                 'kategori' => 'Dividen Pemdes (50%)',                'persen' => 50],
+                ['kode_akun' => '2.1.01.02', 'nama_akun' => 'Utang Dividen Masy Penyerta Modal',    'kategori' => 'Dividen Masy Penyerta Modal (50%)',     'persen' => 50],
             ],
             'ditahan' => [
-                ['kode_akun' => '3.1.01.01', 'nama_akun' => 'Modal Pemdes',                         'kategori' => 'Pemupukan Modal (60%)',       'persen' => 60],
-                ['kode_akun' => '3.1.02.01', 'nama_akun' => 'Modal Lain-lain',                      'kategori' => 'Cadangan Umum (40%)',         'persen' => 40],
+                ['kode_akun' => '3.1.01.01', 'nama_akun' => 'Modal Pemdes',                         'kategori' => 'Pemupukan Modal (0%)',                'persen' => 0],
             ],
         ];
 

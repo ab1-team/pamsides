@@ -130,7 +130,21 @@ class TransactionObserver
 
     protected function updateAmountForAccount($kodeAkun, $tahun, $bulan)
     {
-        $account = DB::table('accounts')->where('kode_akun', $kodeAkun)->first();
+        /*
+         * WAJIB orderBy id DESC: tabel `accounts` menyisakan blok lama
+         * berdampingan dengan blok seeder terbaru untuk kode_akun yang sama.
+         * Tanpa pengurutan, first() mengambil ID terkecil -- sehingga jurnal
+         * Oktober 2026 menulis `amount` ke akun lama dan saldo satu kode
+         * terbagi di dua baris (mis. 1.1.01.01 di id 1 dan 594).
+         *
+         * ID terbesar = blok seeder terbaru = yang dipakai seluruh data.
+         * Setelah migration 2026_10_10 dedupe, kode_akun sudah unik sehingga
+         * order ini hanya jadi pengaman bila migration belum dijalankan.
+         */
+        $account = DB::table('accounts')
+            ->where('kode_akun', $kodeAkun)
+            ->orderByDesc('id')
+            ->first();
         if (! $account) {
             return;
         }

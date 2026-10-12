@@ -204,18 +204,18 @@ Tagihan bulanan pelanggan. Satu baris = satu tagihan untuk satu bulan tertentu.
 
 Ketika admin men-trigger generate tagihan bulan `N`, sistem menjalankan langkah berikut untuk setiap pelanggan aktif:
 
-1. Cek tagihan bulan `N-2` — jika statusnya masih `unpaid`, pelanggan dianggap terlambat
+1. Cek tagihan bulan `N-1` — jika statusnya masih `unpaid`, pelanggan dianggap terlambat
 2. Ambil nilai `late_penalty` dari `installation_packages` sesuai paket pelanggan tersebut
 3. Masukkan nilai tersebut ke kolom `penalty_amount` pada tagihan bulan `N` yang baru dibuat
-4. Jika tagihan bulan `N-2` sudah `paid`, maka `penalty_amount` diisi `0`
+4. Jika tagihan bulan `N-1` sudah `paid`, maka `penalty_amount` diisi `0`
 
 **Contoh:**
 | Bulan Tagihan | Bulan Bayar Normal | Cek Keterlambatan Dari | Denda Muncul Di |
 |---|---|---|---|
-| Januari | Februari | Januari (cek saat buat tagihan Maret) | Maret |
-| Februari | Maret | Februari (cek saat buat tagihan April) | April |
+| Februari | Maret | Februari (cek saat buat tagihan Maret) | Maret |
+| Maret | April | Maret (cek saat buat tagihan April) | April |
 
-Setiap keterlambatan dihitung terpisah — jika Januari dan Februari sama-sama terlambat, denda keduanya muncul di bulan yang berbeda (Maret dan April), tidak digabung.
+Setiap keterlambatan dihitung terpisah — jika Februari dan Maret sama-sama terlambat, denda keduanya muncul di bulan yang berbeda (Maret dan April), tidak digabung.
 
 ---
 

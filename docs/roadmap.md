@@ -91,7 +91,7 @@ Teknisi catat meter → Admin generate tagihan → Pelanggan bayar → Admin kon
   - Hitung pemakaian (m³)
   - Kalkulasi biaya pemakaian menggunakan blok tarif progresif sesuai paket pelanggan
   - Tambahkan abodemen dari paket
-  - Cek tagihan 2 bulan lalu — jika belum lunas saat jatuh tempo, tambahkan denda di tagihan bulan ini
+  - Cek tagihan 1 bulan lalu — jika belum lunas saat jatuh tempo, tambahkan denda di tagihan bulan ini
 - Endpoint daftar tagihan per pelanggan
 - Endpoint detail tagihan (breakdown biaya)
 - Endpoint konfirmasi pembayaran tagihan oleh admin

@@ -51,7 +51,7 @@
 
             <div class="form-group! mb-8!">
               <label class="block! text-sm! font-bold! text-slate-700! mb-2!"
-                >Petugas Cater (Staff)</label
+                >Petugas Teknisi (Staff)</label
               >
               <div class="relative!">
                 <input

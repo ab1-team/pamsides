@@ -5,7 +5,7 @@
         <!-- HEADER -->
         <div class="header">
           <div class="meta-left">
-            <div><span class="lbl-meta">CATER</span><span>:</span><span>{{ (payload?.cater || '-').toString().toUpperCase() }}</span></div>
+            <div><span class="lbl-meta">TEKNISI</span><span>:</span><span>{{ (payload?.cater || '-').toString().toUpperCase() }}</span></div>
             <div><span class="lbl-meta">NO URUT</span><span>:</span><span>{{ item.customer.noUrut || '-' }}</span></div>
             <div><span class="lbl-meta">PEMAKAIAN</span><span>:</span><span>{{ periodeText }}</span></div>
           </div>

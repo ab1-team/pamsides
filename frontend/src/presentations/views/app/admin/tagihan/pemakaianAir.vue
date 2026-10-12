@@ -141,6 +141,18 @@
             })
           }}
         </div>
+        <div
+          v-if="Number(row.denda || 0) > 0"
+          class="mt-0.5! text-[10px]! font-semibold! text-red-500! leading-tight!"
+        >
+          + denda <span v-if="row.denda_bulan"> {{ row.denda_bulan }}</span>
+          Rp.{{
+            Number(row.denda).toLocaleString('id-ID', {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            })
+          }}
+        </div>
       </template>
 
       <template #column-jatuhTempo="{ row }">
