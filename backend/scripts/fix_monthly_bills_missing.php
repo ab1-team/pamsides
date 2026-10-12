@@ -140,9 +140,9 @@ foreach ($custRows as $cr) {
             $dueDate = $date->copy()->addMonth()->day(20)->toDateString();
         }
 
-        // Penalty: cek 2 bulan sebelum unpaid → pakai late_penalty paket
+        // Penalty: cek 1 bulan sebelum unpaid → pakai late_penalty paket
         $penalty = 0;
-        $checkDate = $date->copy()->subMonths(2);
+        $checkDate = $date->copy()->subMonths(1);
         $checkKey = (int) $cr->cust_id . '|' . $checkDate->year . '|' . $checkDate->month;
         if (isset($existingMB[$checkKey])) {
             $checkBill = DB::connection('mysql')->table('monthly_bills')->where('id', $existingMB[$checkKey])->first();

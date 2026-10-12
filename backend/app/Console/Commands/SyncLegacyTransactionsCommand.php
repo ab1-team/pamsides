@@ -157,7 +157,11 @@ class SyncLegacyTransactionsCommand extends Command
                 $penerimaKomisi = $tid !== null ? ($technisiByTicket[$tid] ?? null) : null;
             }
 
-            if ($r['reverence_type'] !== 'other' && $reverenceId === null && $r['usage_id'] > 0) {
+            // Tipe yang wajib punya relasi tagihan/pembayaran.
+            // 'commission' & 'writeoff' tidak butuh reverence_id (hanya penerima komisi),
+            // jadi ikut tercakup di sini lewat daftar tipe.
+            $needRef = in_array($r['reverence_type'], ['monthly_bill', 'overdue_bill', 'bill_payment', 'payment'], true);
+            if ($needRef && $reverenceId === null && $r['usage_id'] > 0) {
                 $skipped++;
                 continue;
             }

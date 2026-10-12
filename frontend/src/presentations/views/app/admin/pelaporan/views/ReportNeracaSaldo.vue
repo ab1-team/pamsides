@@ -40,7 +40,7 @@
 
             <tbody>
 
-                <tr v-for="item in payload?.items" :key="item.kode_akun">
+                <tr v-for="item in payload?.items" :key="item.id ?? item.kode_akun">
                     <td>
                         {{ item.kode_akun }}. {{ item.nama_akun }}
                     </td>

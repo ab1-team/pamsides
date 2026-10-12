@@ -101,7 +101,7 @@ import { usePdfPreview, THUMB_RENDER_BUFFER } from '@/composables/usePdfPreview'
 
 const route = useRoute()
 const uiStore = useUiStore()
-const { tableData, filter, refreshData, teknisiOptions, resolveCaterLabel } = usePemakaianAir()
+const { tableData, filter, refreshData, teknisiOptions, resolveTeknisiLabel } = usePemakaianAir()
 
 const PAGE_CONFIG = { paper_size: 'A4', orientation: 'portrait' }
 
@@ -109,7 +109,7 @@ const caterName = computed(() => {
   const raw = route.query.cater
   if (!raw) return uiStore.userData?.nama || 'Admin'
   if (String(uiStore.userData?.id) === String(raw)) return uiStore.userData?.nama || 'Admin'
-  return resolveCaterLabel(raw) || 'Admin'
+  return resolveTeknisiLabel(raw) || 'Admin'
 })
 
 const isLoading = ref(true)
@@ -260,7 +260,7 @@ onMounted(async () => {
     if (route.query.tahun) filter.value.tahun = parseInt(route.query.tahun)
     if (route.query.bulan) filter.value.bulan = route.query.bulan
     if (route.query.teknisi) filter.value.teknisi = route.query.teknisi
-    if (route.query.cater) filter.value.cater = resolveCaterLabel(route.query.cater)
+    if (route.query.cater) filter.value.cater = resolveTeknisiLabel(route.query.cater)
 
     document.title = `Cetak Struk`
 

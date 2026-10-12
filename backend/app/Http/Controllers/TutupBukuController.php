@@ -46,7 +46,18 @@ class TutupBukuController extends Controller
     {
         $year = (int) $year;
 
-        $accounts = Account::select('id', 'kode_akun', 'nama_akun', 'lev1', 'lev2', 'lev3', 'lev4', 'jenis_mutasi')
+        // Hanya akun yang punya data jurnal (lihat catatan di close()).
+        // Kalau tidak, preview menampilkan 200 baris padahal close()
+        // hanya menulis 10 -- user akan lihat angka yang tak akan disimpan.
+        $liveIds = DB::table('amount')->distinct()->pluck('account_id')->all();
+        if (empty($liveIds)) {
+            $liveIds = DB::table('transactions')->whereNull('deleted_at')->distinct()->pluck('account_debet')
+                ->merge(DB::table('transactions')->whereNull('deleted_at')->distinct()->pluck('account_kredit'))
+                ->filter()->unique()->all();
+        }
+
+        $accounts = Account::whereIn('id', $liveIds)
+            ->select('id', 'kode_akun', 'nama_akun', 'lev1', 'lev2', 'lev3', 'lev4', 'jenis_mutasi')
             ->orderBy('kode_akun')
             ->get();
 
@@ -77,15 +88,17 @@ class TutupBukuController extends Controller
                 $saldoMap[$r->kode_akun] = (float) $r->debit - (float) $r->kredit;
             }
         } else {
-            $start = "{$year}-01-01";
             $end   = "{$year}-12-31";
             $kodeList = $accounts->pluck('kode_akun')->all();
 
+            // Sama seperti close(): kumulatif sampai akhir tahun, bukan
+            // cuma mutasi 1 tahun, supaya angka di preview ini sama
+            // dengan yang benar-benar ditulis.
             $debits = DB::table('transactions')
                 ->select('account_debet as kode_akun', DB::raw('SUM(saldo) as total'))
                 ->whereIn('account_debet', $kodeList)
                 ->whereNull('deleted_at')
-                ->whereBetween('tgl_transaksi', [$start, $end])
+                ->where('tgl_transaksi', '<=', $end)
                 ->groupBy('account_debet')
                 ->pluck('total', 'kode_akun');
 
@@ -93,14 +106,14 @@ class TutupBukuController extends Controller
                 ->select('account_kredit as kode_akun', DB::raw('SUM(saldo) as total'))
                 ->whereIn('account_kredit', $kodeList)
                 ->whereNull('deleted_at')
-                ->whereBetween('tgl_transaksi', [$start, $end])
+                ->where('tgl_transaksi', '<=', $end)
                 ->groupBy('account_kredit')
                 ->pluck('total', 'kode_akun');
 
             foreach ($accounts as $acc) {
                 $debit  = (float) ($debits[$acc->kode_akun]  ?? 0);
                 $kredit = (float) ($kredits[$acc->kode_akun] ?? 0);
-                $saldoMap[$acc->kode_akun] = $acc->jenis_mutasi === 'kredit'
+                $saldoMap[$acc->kode_akun] = self::isKredit($acc->jenis_mutasi)
                     ? ($kredit - $debit)
                     : ($debit - $kredit);
             }
@@ -169,16 +182,56 @@ class TutupBukuController extends Controller
             }
         }
 
-        $accounts = Account::orderBy('kode_akun')->get();
-        $start = "{$tahun}-01-01";
-        $end   = "{$tahun}-12-31";
+        /*
+ * Hanya akun yang BENAR-benar dipakai jurnal yang perlu ditutup.
+ *
+ * Tabel `accounts` menyisakan baris lama (id 1-92 & 186-208) di samping
+ * blok seeder terbaru (id 594-689) untuk kode yang sama. Baris lama
+ * tidak pernah disentuh `transactions` maupun `amount`, jadi menutup
+ * semuanya akan menulis carry-over untuk akun yang saldonya nol --
+ * dan karena `amount` primary key-nya `account_id.tahun.bulan`, dua
+ * baris berkode sama tidak bentrok tapi angkanya dobel di laporan.
+ *
+ * Jadi: ambil id yang benar-benar punya baris di `amount` atau dipakai
+ * transaksi. Kalau `amount` belum ada (install baru), jatuh ke id
+ * terbesar per kode agar tetap deterministik.
+ */
+$accountIds = DB::table('amount')->distinct()->pluck('account_id')->all();
+
+if (empty($accountIds)) {
+    $accountIds = DB::table('transactions')->whereNull('deleted_at')->distinct()->pluck('account_debet')
+        ->merge(DB::table('transactions')->whereNull('deleted_at')->distinct()->pluck('account_kredit'))
+        ->filter()->unique()->all();
+}
+
+$accounts = collect($accountIds)
+    ->map(fn ($id) => Account::find($id))
+    ->filter()
+    ->sortBy('kode_akun')
+    ->values();
+
+$end   = "{$tahun}-12-31";
         $kodeList = $accounts->pluck('kode_akun')->all();
 
+        /*
+         * Saldo AKHIR tahun $tahun = seluruh mutasi dari awal pembukuan
+         * sampai 31 Desember $tahun, BUKAN cuma mutasi selama 1 tahun.
+         *
+         * Versi lama memakai whereBetween(tahun-01-01, tahun-12-31) sehingga
+         * opening balance dari tahun-tahun sebelumnya hilang -- saldo Kas Tunai
+         * akhir 2025 jadi 807.158.090 (mutasi 2025 saja) sedangkan
+         * seharusnya 808.038.090. Mutasi 2024 (/ sebelum periode awal)
+         * ikut terlewat.
+         *
+         * Baris bulan '00' (carry-over) sengaja dikecualikan: isinya
+         * saldo yang SUDAH tercermin di mutasi bulan 01..12, jadi
+         * menghitungnya akan dobel.
+         */
         $debits = DB::table('transactions')
             ->select('account_debet as kode_akun', DB::raw('SUM(saldo) as total'))
             ->whereIn('account_debet', $kodeList)
             ->whereNull('deleted_at')
-            ->whereBetween('tgl_transaksi', [$start, $end])
+            ->where('tgl_transaksi', '<=', $end)
             ->groupBy('account_debet')
             ->pluck('total', 'kode_akun');
 
@@ -186,7 +239,7 @@ class TutupBukuController extends Controller
             ->select('account_kredit as kode_akun', DB::raw('SUM(saldo) as total'))
             ->whereIn('account_kredit', $kodeList)
             ->whereNull('deleted_at')
-            ->whereBetween('tgl_transaksi', [$start, $end])
+            ->where('tgl_transaksi', '<=', $end)
             ->groupBy('account_kredit')
             ->pluck('total', 'kode_akun');
 
@@ -194,7 +247,7 @@ class TutupBukuController extends Controller
         foreach ($accounts as $a) {
             $debit  = (float) ($debits[$a->kode_akun]  ?? 0);
             $kredit = (float) ($kredits[$a->kode_akun] ?? 0);
-            $saldo = $a->jenis_mutasi === 'kredit' ? ($kredit - $debit) : ($debit - $kredit);
+            $saldo = self::isKredit($a->jenis_mutasi) ? ($kredit - $debit) : ($debit - $kredit);
 
             if (array_key_exists($a->kode_akun, $overrides)) {
                 $saldo = $overrides[$a->kode_akun];
@@ -228,7 +281,7 @@ class TutupBukuController extends Controller
 
                 $first = substr($a->kode_akun, 0, 1);
 
-                if ($a->jenis_mutasi === 'debit') {
+                if (! self::isKredit($a->jenis_mutasi)) {
                     $debitVal = $saldo;
                     $kreditVal = 0;
                 } else {
@@ -274,12 +327,27 @@ class TutupBukuController extends Controller
 
             $amountRows00 = [];
             foreach ($accounts as $a) {
+                /*
+                 * Akun pendapatan (4.x) dan beban (5.x) TIDAK boleh dibawa
+                 * ke tahun berikutnya sebagai carry-over.they harus ditutup
+                 * ke laba ditahan lewat AlokasiLabaController, kalau tidak
+                 * neraca 2026 akan ikut memuat pendapatan 2025 dan neraca
+                 * saldo tidak akan seimbang (debit aset vs kredit 4.x).
+                 *
+                 * Yang Carry hanya akun neraca (1.x aset, 2.x kewajiban,
+                 * 3.x ekuitas).
+                 */
+                $first = substr($a->kode_akun, 0, 1);
+                if ($first === '4' || $first === '5') {
+                    continue;
+                }
+
                 $saldo = $saldoAkhir[$a->kode_akun] ?? 0;
                 if (abs($saldo) < 0.01) continue;
 
                 $id = (int) ($a->id . $tahunDepan . '00');
 
-                if ($a->jenis_mutasi === 'debit') {
+                if (! self::isKredit($a->jenis_mutasi)) {
                     $amountRows00[] = [
                         'id'         => $id,
                         'account_id' => $a->id,
@@ -378,6 +446,21 @@ class TutupBukuController extends Controller
             'success' => true,
             'data'    => $cfg,
         ]);
+    }
+
+    /**
+     * Cek apakah jenis mutasi akun bersifat kredit.
+     *
+     * Kolom `jenis_mutasi` tidak konsisten kapitalisasinya di tabel
+     * `accounts`: sebagian baris 'kredit', sebagian 'Kredit' (kapital K).
+     * Perbandingan `=== 'kredit'` diam-dimmerespons FALSE untuk yang
+     * kapital, sehingga akun kewajiban 2.1.02.02 (id 685, 'Kredit')
+     * diperlakukan sebagai akun debit -- saldoProcessorоя terbalik
+     * saat tutup buku.
+     */
+    private static function isKredit(?string $jenisMutasi): bool
+    {
+        return strtolower(trim((string) $jenisMutasi)) === 'kredit';
     }
 
     private function getClosingConfig(): array

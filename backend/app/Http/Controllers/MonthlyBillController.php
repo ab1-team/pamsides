@@ -219,6 +219,14 @@ class MonthlyBillController extends Controller
             ->get()
             ->keyBy('customer_id');
 
+        // Periode N-1 - sumber denda. Denda dihitung saat tagihan dibuat bila
+        // tagihan bulan sebelumnya masih `unpaid`, jadi bulan N-1 inilah yang
+        // menunggak. Cukup dihitung dari index bulan, tidak perlu query tagihan
+        // N-1 karena label bulan ini sama untuk semua pelanggan pada periode
+        // yang sedang difilter.
+        $prevMonthIndex = ($month === 1 ? 12 : $month - 1);
+        $prevYearIndex = ($month === 1 ? $year - 1 : $year);
+
         $billPayments = BillPayment::whereIn('bill_id', $currentBills->pluck('id'))
             ->get();
 
@@ -249,7 +257,7 @@ class MonthlyBillController extends Controller
             }
         }
 
-        $items = $customers->map(function ($customer) use ($month, $year, $currentBills, $paidAmountByBillId, $amountPaidFallbackByBillId) {
+        $items = $customers->map(function ($customer) use ($month, $year, $currentBills, $prevMonthIndex, $prevYearIndex, $paidAmountByBillId, $amountPaidFallbackByBillId) {
             $reading = $customer->meterReadings()
                 ->where('reading_month', $month)
                 ->where('reading_year', $year)
@@ -319,6 +327,12 @@ class MonthlyBillController extends Controller
                 'pemakaian_charge' => $bill?->usage_charge ?? 0,
                 'tagihan' => $baseTotal > 0 ? $baseTotal : (($bill?->usage_charge ?? 0) + ($bill?->abodemen ?? 0) + $penalty),
                 'denda' => $penalty,
+                // Bulan yang jadi sumber denda = N-1, hanya dikirim kalau denda
+                // memang terpasang. Berasal dari index periode, bukan dari
+                // `due_date`, supaya tetap benar walau batas tagihan diubah admin.
+                'denda_bulan' => $penalty > 0
+                    ? $this->namaBulanIndonesia($prevMonthIndex, $prevYearIndex)
+                    : null,
                 'abodemen' => $bill?->abodemen,
                 'status' => $statusLabel,
                 'is_paid' => $statusLabel === 'PAID',
@@ -1041,5 +1055,21 @@ class MonthlyBillController extends Controller
             'message' => 'Tagihan dikembalikan ke status belum dibayar.',
             'data' => $bill,
         ]);
+    }
+
+    /**
+     * "Juli 2026" dari index bulan (1-12) + tahun.
+     *
+     * Carbon::format('F') menghasilkan nama bulan Bahasa Inggris, sedangkan
+     * sisanya di app ini Bahasa Indonesia, jadi pakai daftar sendiri.
+     */
+    private function namaBulanIndonesia(int $month, int $year): string
+    {
+        $months = [
+            1 => 'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+            'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember',
+        ];
+
+        return ($months[$month] ?? (string) $month).' '.$year;
     }
 }
