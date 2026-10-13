@@ -59,7 +59,7 @@ class LegacyUsageSource
         $usages = $L->table('usages')
             ->where('business_id', $legacyBusinessId)
             ->orderBy('id')
-            ->get();
+            ->cursor();
 
         $readings = [];
         $noCustomer = 0;
