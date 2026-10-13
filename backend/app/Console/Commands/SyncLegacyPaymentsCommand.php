@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Services\LegacyPaymentSource;
+use App\Support\MemoryLimit;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 
@@ -13,7 +14,9 @@ class SyncLegacyPaymentsCommand extends Command
                             {--force   : Terapkan perubahan}
                             {--business=5 : business_id legacy yang jadi acuan}
                             {--only=both : bills | fees | both}
-                            {--payments-only=0 : Abaikan awalan "Pendapatan", hanya "Bayar" saja}';
+                            {--payments-only=0 : Abaikan awalan "Pendapatan", hanya "Bayar" saja}
+                            {--memory=512M : memory_limit proses (dataset legacy butuh >128M)}
+                            {--allow-mass-delete : Izinkan hapus bila >10% bill_payments (hampir pasti bug matcher)}';
 
     protected $description = 'Selaraskan bill_payments + payments dengan legacy transactions (relasi lewat usage_id, bukan nama)';
 
@@ -25,6 +28,12 @@ class SyncLegacyPaymentsCommand extends Command
 
             return self::FAILURE;
         }
+
+        // Dataset legacy (usage->bill map + ~79rb transaksi + event) tidak
+        // muat di memory_limit default 128M. Naikkan runtime bila perlu --
+        // hanya menaikkan, tidak menyentuh php.ini global.
+        $this->line(MemoryLimit::describe(MemoryLimit::ensure((string) $this->option('memory'))));
+
         $biz = (int) $this->option('business');
         $only = (string) $this->option('only');
         // Default: "Pendapatan" di legacy = pengakuan bahwa pelanggan lunas.
@@ -55,9 +64,15 @@ class SyncLegacyPaymentsCommand extends Command
             $this->line('  bill_payments DB baru sekarang    : '.$N->table('bill_payments')->count());
 
             // Baris DB baru: index dengan key komposit yang sama.
+            // PENTING: `bill_payments.paid_at` tersimpan dalam UTC (app timezone),
+            // sedangkan event legacy dikunci dengan tanggal WIB. Tanggal tengah-malam
+            // WIB hasil import tersimpan sebagai `YYYY-MM-DD 17:00:00` UTC, jadi
+            // `substr(...,0,10)` mentah bergeser satu hari dan TIDAK PERNAH cocok
+            // (akibatnya hampir seluruh riwayat dianggap "perlu dibuat"+"perlu dihapus").
+            // Selalu normalisasi lewat LegacyPaymentSource::legacyDateOfPaidAt().
             $existing = [];
             foreach ($N->table('bill_payments')->get(['id', 'bill_id', 'amount_paid', 'paid_at', 'confirmed_by']) as $bp) {
-                $date = substr((string) $bp->paid_at, 0, 10);
+                $date = LegacyPaymentSource::legacyDateOfPaidAt($bp->paid_at);
                 $existing[$bp->bill_id.'|'.$date][] = $bp;
             }
 
@@ -121,6 +136,26 @@ class SyncLegacyPaymentsCommand extends Command
             $this->line('  perlu dihapus  : '.count($deletes).' (tidak ada pembayaran legacy untuk tagihan/tanggal itu)');
 
             if (! $dry) {
+                // -------- Pengaman mass-delete --------
+                // Bila >10% bill_payments akan dihapus, rasio sebesar itu HAMPIR
+                // PASTI bug matcher (mis. kunci tanggal bergeser zona waktu),
+                // bukan data kosong. Batalkan lebih dulu alih-alih memusnahkan
+                // riwayat pembayaran; jalur --dry-run tidak terpengaruh karena
+                // cabang ini hanya berjalan saat benar-benar menghapus.
+                $willDelete = count($deletes);
+                $totalBp = (int) $N->table('bill_payments')->count();
+                $ratio = $totalBp > 0 ? $willDelete / $totalBp : 0.0;
+
+                if ($willDelete > 0 && $ratio > 0.10 && ! $this->option('allow-mass-delete')) {
+                    $pct = number_format($ratio * 100, 2);
+                    $this->error('DIBATALKAN: akan menghapus '.$willDelete.' dari '.$totalBp.' baris bill_payments ('.$pct.'%).');
+                    $this->error('Ambang aman 10%. Rasio sebesar ini hampir pasti bug matcher (kunci tanggal/tagihan tidak cocok),');
+                    $this->error('bukan karena data legacy memang kosong -- periksa normalisasi tanggal/zona waktu sebelum menghapus.');
+                    $this->error('Bila rasio besar memang disengaja, tinjau ulang matcher lalu jalankan lagi dengan --allow-mass-delete.');
+
+                    return self::FAILURE;
+                }
+
                 foreach (array_chunk($inserts, 400) as $chunk) {
                     $N->table('bill_payments')->insert($chunk);
                 }

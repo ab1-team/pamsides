@@ -40,13 +40,38 @@ class LegacyTransactionSource
     ];
 
     /**
+     * Peta RINGKAS transaksi legacy: signature → daftar `legacy_id`.
+     *
+     * Sengaja TIDAK menyimpan baris penuh (~79.000 array) supaya pemanggil
+     * tidak OOM di memory_limit default. Urutan id mengikuti urutan
+     * `stream()` (ORDER BY id), jadi pencocokan satu-lawan-satu
+     * (`array_shift`) tetap sama seperti versi `rows` lama.
+     *
      * @return array{
-     *   rows: array<int,array>,
-     *   signatureIndex: array<string,int>,
+     *   signatureIds: array<string,array<int,int>>,
      *   total: int
      * }
      */
     public static function collect(int $legacyBusinessId = 5): array
+    {
+        $index = [];
+        $total = 0;
+        foreach (self::stream($legacyBusinessId) as $row) {
+            $index[self::signature($row)][] = (int) $row['legacy_id'];
+            $total++;
+        }
+
+        return ['signatureIds' => $index, 'total' => $total];
+    }
+
+    /**
+     * Versi streaming dari collect(): hasilkan baris legacy satu per satu
+     * lewat `cursor()`, TANPA menahan ~79.000 baris di memori sekaligus.
+     * Isi & urutan baris identik dengan collect()['rows'].
+     *
+     * @return \Generator<int,array>
+     */
+    public static function stream(int $legacyBusinessId = 5): \Generator
     {
         $L = DB::connection('legacy');
 
@@ -61,12 +86,11 @@ class LegacyTransactionSource
         $rows = $L->table('transactions')
             ->where('business_id', $legacyBusinessId)
             ->orderBy('id')
-            ->get(['id', 'tgl_transaksi', 'rekening_debit', 'rekening_kredit', 'user_id',
+            ->select(['id', 'tgl_transaksi', 'rekening_debit', 'rekening_kredit', 'user_id',
                 'usage_id', 'installation_id', 'total', 'transaction_id', 'relasi', 'keterangan', 'urutan',
-                'created_at']);
+                'created_at'])
+            ->cursor();
 
-        $out = [];
-        $index = [];
         foreach ($rows as $t) {
             $debet = $accCode[(int) $t->rekening_debit] ?? null;
             $kredit = $accCode[(int) $t->rekening_kredit] ?? null;
@@ -80,7 +104,8 @@ class LegacyTransactionSource
             }
 
             $keterangan = trim((string) $t->keterangan);
-            $row = [
+
+            yield [
                 'legacy_id' => (int) $t->id,
                 'tgl_transaksi' => $date->toDateString(),
                 'account_debet' => $debet,
@@ -96,11 +121,7 @@ class LegacyTransactionSource
                 'reverence_type' => self::reverenceType($keterangan),
                 'created_at' => $t->created_at ? self::parseDateTime($t->created_at) : null,
             ];
-            $out[] = $row;
-            $index[self::signature($row)] = ($index[self::signature($row)] ?? 0) + 1;
         }
-
-        return ['rows' => $out, 'signatureIndex' => $index, 'total' => count($out)];
     }
 
     /** signature unik untuk mencocokkan transaksi legacy ↔ DB baru */
