@@ -30,6 +30,12 @@ class ImportLegacyCustomersCommand extends Command
      */
     private array $newTicketByLegacyInstId = [];
 
+    /**
+     * Cache: legacy installation.id → baris installations lengkap.
+     * Diisi SEKALI (batch) di buildTicketMap(), dibaca tanpa query di mapRow().
+     */
+    private array $legacyInstById = [];
+
     public function handle(): int
     {
         $isDryRun = (bool) $this->option('dry-run');
@@ -89,6 +95,12 @@ class ImportLegacyCustomersCommand extends Command
         $skipped = [];
         $failed  = [];
 
+        // Password default seragam ('password') → hash bcrypt SEKALI saja.
+        // Semua insert user baru memakai hash yang sama (bcrypt valid, login tetap 'password').
+        $defaultPasswordHash = Hash::make('password');
+
+        $startedAt = microtime(true);
+
         foreach ($rows as $i => $row) {
             try {
                 $reason = null;
@@ -117,7 +129,7 @@ class ImportLegacyCustomersCommand extends Command
                     $userId = DB::table('users')->insertGetId([
                         'name'       => $mapped['applicant_name'],
                         'email'      => $email,
-                        'password'   => Hash::make('password'),
+                        'password'   => $defaultPasswordHash,
                         'role'       => 'pelanggan',
                         'created_at' => $now,
                         'updated_at' => $now,
@@ -192,8 +204,11 @@ class ImportLegacyCustomersCommand extends Command
             }
         }
 
+        $elapsed = microtime(true) - $startedAt;
+
         $this->line('');
         $this->info('Ringkasan:');
+        $this->line(sprintf('  total baris       : %d', $totalRows));
         $this->line(sprintf('  users_created     : %d', $stats['users_created']));
         $this->line(sprintf('  users_updated     : %d', $stats['users_updated']));
         $this->line(sprintf('  customers_created : %d', $stats['customers_created']));
@@ -201,6 +216,7 @@ class ImportLegacyCustomersCommand extends Command
         $this->line(sprintf('  tickets_linked    : %d', $stats['tickets_linked']));
         $this->line(sprintf('  dilewati          : %d', $stats['skipped']));
         $this->line(sprintf('  gagal             : %d', $stats['failed']));
+        $this->line(sprintf('  durasi total      : %.1f detik', $elapsed));
 
         if (! empty($skipped)) {
             $this->line('');
@@ -251,6 +267,12 @@ class ImportLegacyCustomersCommand extends Command
             ->table('installations')
             ->whereIn('id', $legacyInstIds)
             ->get(['id', 'kode_instalasi', 'package_id', 'desa', 'aktif']);
+
+        // Cache hasil batch ke property supaya mapRow() tidak query per-baris.
+        $this->legacyInstById = [];
+        foreach ($legacyInsts as $li) {
+            $this->legacyInstById[(int) $li->id] = $li;
+        }
 
         // Step 3: pre-load semua new tickets index by (applicant_name|village_id|package_id)
         // untuk lookup cepat di loop. TicketMap akan berisi triple key → ticket baru.
@@ -345,7 +367,8 @@ class ImportLegacyCustomersCommand extends Command
         }
         $newTicketId = $this->newTicketByLegacyInstId[$legacyInstId];
 
-        $legacyInst = DB::connection('legacy')->table('installations')->where('id', $legacyInstId)->first();
+        // Baca dari cache batch (diisi di buildTicketMap) -- TANPA query per-baris.
+        $legacyInst = $this->legacyInstById[$legacyInstId] ?? null;
         if (! $legacyInst) {
             $reason = "legacy installation_id={$legacyInstId} missing";
             return null;

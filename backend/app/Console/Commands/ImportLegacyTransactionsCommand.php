@@ -28,7 +28,9 @@ class ImportLegacyTransactionsCommand extends Command
 
         $this->warn($isDryRun ? 'DRY-RUN' : 'FORCE MODE');
         $this->line("chunk=$chunk batch=$batch limit=$limit");
-        if ($biz) $this->info("Filter business_id=$biz");
+        if ($biz) {
+            $this->info("Filter business_id=$biz");
+        }
 
         // ============ 1. Cache semua lookup di memory ============
         $this->info('Loading maps...');
@@ -54,8 +56,10 @@ class ImportLegacyTransactionsCommand extends Command
         // userLegacyId → userNewId (by name+role)
         $newUsersByNameRole = [];
         foreach (DB::table('users')->get(['id', 'name', 'role']) as $u) {
-            $k = strtolower(trim((string) $u->name)) . '|' . strtolower((string) $u->role);
-            if (! isset($newUsersByNameRole[$k])) $newUsersByNameRole[$k] = [];
+            $k = strtolower(trim((string) $u->name)).'|'.strtolower((string) $u->role);
+            if (! isset($newUsersByNameRole[$k])) {
+                $newUsersByNameRole[$k] = [];
+            }
             $newUsersByNameRole[$k][] = (int) $u->id;
         }
         $userMap = [];
@@ -66,7 +70,7 @@ class ImportLegacyTransactionsCommand extends Command
                 7 => 'teknisi',
                 default => 'admin',
             };
-            $k = strtolower(trim((string) $lu->nama)) . '|' . strtolower($role);
+            $k = strtolower(trim((string) $lu->nama)).'|'.strtolower($role);
             if (isset($newUsersByNameRole[$k]) && ! empty($newUsersByNameRole[$k])) {
                 $userMap[(int) $lu->id] = (int) array_shift($newUsersByNameRole[$k]);
             } else {
@@ -82,23 +86,31 @@ class ImportLegacyTransactionsCommand extends Command
         $newPkgs = DB::table('installation_packages')->get();
         $pkgMap = [];
         foreach (DB::connection('legacy')->table('packages')->get(['id', 'business_id', 'kelas']) as $lp) {
-            $want = $lp->kelas . ' (B' . $lp->business_id . ')';
+            $want = $lp->kelas.' (B'.$lp->business_id.')';
             $matched = null;
             foreach ($newPkgs as $np) {
-                if (strcasecmp((string) $np->name, $want) === 0) { $matched = (int) $np->id; break; }
+                if (strcasecmp((string) $np->name, $want) === 0) {
+                    $matched = (int) $np->id;
+                    break;
+                }
             }
             if ($matched === null) {
                 foreach ($newPkgs as $np) {
-                    if (strcasecmp(trim((string) $np->name), trim((string) $lp->kelas)) === 0) { $matched = (int) $np->id; break; }
+                    if (strcasecmp(trim((string) $np->name), trim((string) $lp->kelas)) === 0) {
+                        $matched = (int) $np->id;
+                        break;
+                    }
                 }
             }
-            if ($matched !== null) $pkgMap[(int) $lp->id] = $matched;
+            if ($matched !== null) {
+                $pkgMap[(int) $lp->id] = $matched;
+            }
         }
 
         // tickets new: name|package → [ticketId...]
         $ticketKey = [];
         foreach (DB::table('installation_tickets')->get(['id', 'applicant_name', 'package_id']) as $t) {
-            $k = strtolower(trim((string) $t->applicant_name)) . '|' . $t->package_id;
+            $k = strtolower(trim((string) $t->applicant_name)).'|'.$t->package_id;
             $ticketKey[$k][] = (int) $t->id;
         }
         // customer by ticket
@@ -110,29 +122,40 @@ class ImportLegacyTransactionsCommand extends Command
         $instToTicket = [];
         foreach (DB::connection('legacy')->table('installations')->join('customers', 'installations.customer_id', '=', 'customers.id')->get(['installations.id', 'installations.package_id', 'customers.nama']) as $li) {
             $pid = $pkgMap[(int) $li->package_id] ?? null;
-            if (! $pid) continue;
-            $keyA = strtolower(trim((string) $li->nama)) . '|' . $pid;
+            if (! $pid) {
+                continue;
+            }
+            $keyA = strtolower(trim((string) $li->nama)).'|'.$pid;
             $candidates = $ticketKey[$keyA] ?? [];
-            if (! $candidates) continue;
+            if (! $candidates) {
+                continue;
+            }
             $picked = null;
             foreach ($candidates as $cid) {
-                if (isset($custByTicket[(int) $cid])) { $picked = (int) $cid; break; }
+                if (isset($custByTicket[(int) $cid])) {
+                    $picked = (int) $cid;
+                    break;
+                }
             }
-            if ($picked === null) $picked = (int) $candidates[0];
+            if ($picked === null) {
+                $picked = (int) $candidates[0];
+            }
             $instToTicket[(int) $li->id] = $picked;
         }
-        $this->line('  inst→ticket: ' . count($instToTicket));
+        $this->line('  inst→ticket: '.count($instToTicket));
 
         // bill cache: customerId|year|month → billId
         $billKey = [];
         foreach (DB::table('monthly_bills')->get(['id', 'customer_id', 'billing_period_year', 'billing_period_month']) as $b) {
-            $billKey[(int) $b->customer_id . '|' . (int) $b->billing_period_year . '|' . (int) $b->billing_period_month] = (int) $b->id;
+            $billKey[(int) $b->customer_id.'|'.(int) $b->billing_period_year.'|'.(int) $b->billing_period_month] = (int) $b->id;
         }
 
         // bill_payments cache: billId → [{id, paid_at_day, amount_str}]
         $bpByBill = [];
         foreach (DB::table('bill_payments')->get(['id', 'bill_id', 'amount_paid', 'paid_at']) as $bp) {
-            if (! $bp->paid_at) continue;
+            if (! $bp->paid_at) {
+                continue;
+            }
             $day = date('Y-m-d', strtotime((string) $bp->paid_at));
             $amt = number_format((float) $bp->amount_paid, 2, '.', '');
             $bpByBill[(int) $bp->bill_id][] = ['id' => (int) $bp->id, 'day' => $day, 'amt' => $amt];
@@ -148,19 +171,29 @@ class ImportLegacyTransactionsCommand extends Command
         $usageToBill = [];
         foreach (DB::connection('legacy')->table('usages')->whereNotNull('tgl_pemakaian')->get(['id', 'tgl_pemakaian', 'id_instalasi']) as $u) {
             $tgl = trim((string) $u->tgl_pemakaian);
-            if (strlen($tgl) < 8) continue;
+            if (strlen($tgl) < 8) {
+                continue;
+            }
             $ts = strtotime($tgl);
-            if ($ts === false) continue;
+            if ($ts === false) {
+                continue;
+            }
             $y = (int) date('Y', $ts);
             $m = (int) date('n', $ts);
             $tid = $instToTicket[(int) $u->id_instalasi] ?? null;
-            if (! $tid) continue;
+            if (! $tid) {
+                continue;
+            }
             $cid = $custByTicket[$tid] ?? null;
-            if (! $cid) continue;
-            $billId = $billKey[$cid . '|' . $y . '|' . $m] ?? null;
-            if ($billId) $usageToBill[(int) $u->id] = $billId;
+            if (! $cid) {
+                continue;
+            }
+            $billId = $billKey[$cid.'|'.$y.'|'.$m] ?? null;
+            if ($billId) {
+                $usageToBill[(int) $u->id] = $billId;
+            }
         }
-        $this->line('  usage→bill: ' . count($usageToBill));
+        $this->line('  usage→bill: '.count($usageToBill));
 
         // ============ 2. Truncate kalau diminta ============
         if (! $isDryRun && $this->option('truncate')) {
@@ -174,16 +207,16 @@ class ImportLegacyTransactionsCommand extends Command
         $total = DB::connection('legacy')->table('transactions')
             ->when($biz, fn ($q) => $q->where('business_id', $biz))
             ->count();
-        $this->line('  legacy total: ' . $total);
+        $this->line('  legacy total: '.$total);
 
         $stats = ['created' => 0, 'skipped' => 0, 'orphan' => 0, 'zero' => 0,
-                  'monthly' => 0, 'overdue' => 0, 'billpay' => 0, 'payment' => 0, 'other' => 0];
+            'monthly' => 0, 'overdue' => 0, 'billpay' => 0, 'payment' => 0, 'other' => 0];
         $i = 0;
         $buffer = [];
         $lastId = 0;
         $maxRetries = 8;
+        $badDates = [];   // contoh baris legacy yang tanggalnya tidak bisa disimpan
 
-        retry:
         $attempt = 0;
         while (true) {
             try {
@@ -196,14 +229,37 @@ class ImportLegacyTransactionsCommand extends Command
 
                 foreach ($cursor as $t) {
                     $lastId = (int) $t->id;
-                    if ($limit > 0 && $i >= $limit) break 2;
+                    if ($limit > 0 && $i >= $limit) {
+                        break 2;
+                    }
                     $i++;
 
-                    $tgl = trim((string) ($t->tgl_transaksi ?? ''));
-                    if (strlen($tgl) < 8) { $stats['skipped']++; continue; }
+                    // Normalisasi tanggal. Kolom `tgl_transaksi` di DB baru adalah
+                    // DATE NOT NULL, jadi baris tanpa tanggal valid TIDAK bisa disimpan.
+                    // Nilai sentinel legacy ('0000-00-00', '') sengaja DILEWATI -- tapi
+                    // DIHITUNG dan DILAPORKAN, bukan `continue` diam-diam yang
+                    // membuat satu tahap terlihat "berhasil" padahal tidak menyimpan apa pun.
+                    $tgl = $this->normalizeDate($t->tgl_transaksi ?? null);
+                    if ($tgl === null) {
+                        $stats['skipped']++;
+                        if (count($badDates) < 50) {
+                            $badDates[] = [
+                                'legacy_trx_id' => (int) $t->id,
+                                'tgl_transaksi' => (string) ($t->tgl_transaksi ?? '(null)'),
+                                'saldo' => (float) ($t->total ?? 0),
+                                'keterangan' => substr((string) ($t->keterangan ?? ''), 0, 60),
+                            ];
+                        }
+
+                        continue;
+                    }
 
                     $saldo = (float) ($t->total ?? 0);
-                    if ($saldo <= 0) { $stats['zero']++; continue; }
+                    if ($saldo <= 0) {
+                        $stats['zero']++;
+
+                        continue;
+                    }
 
                     $dId = (int) $t->rekening_debit;
                     $kId = (int) $t->rekening_kredit;
@@ -211,6 +267,7 @@ class ImportLegacyTransactionsCommand extends Command
                     $kredit = $accCode[$kId] ?? null;
                     if (! $debet || ! $kredit) {
                         $stats['orphan']++;
+
                         continue;
                     }
 
@@ -218,8 +275,8 @@ class ImportLegacyTransactionsCommand extends Command
                     $idUser = $userMap[$uid] ?? $fallbackUser;
 
                     $usageId = (int) $t->usage_id;
-                    $instId  = (int) $t->installation_id;
-                    $tglDay  = substr($tgl, 0, 10);
+                    $instId = (int) $t->installation_id;
+                    $tglDay = substr($tgl, 0, 10);
                     $saldoFmt = number_format($saldo, 2, '.', '');
 
                     // klasifikasi reverence
@@ -252,19 +309,30 @@ class ImportLegacyTransactionsCommand extends Command
                         if ($billId && isset($bpByBill[$billId])) {
                             $found = null;
                             foreach ($bpByBill[$billId] as $cand) {
-                                if ($cand['day'] === $tglDay && $cand['amt'] === $saldoFmt) { $found = $cand['id']; break; }
+                                if ($cand['day'] === $tglDay && $cand['amt'] === $saldoFmt) {
+                                    $found = $cand['id'];
+                                    break;
+                                }
                             }
                             if ($found === null) {
                                 // fallback: cari paid_at paling dekat dalam 35 hari
-                                $best = null; $bestDiff = PHP_INT_MAX;
+                                $best = null;
+                                $bestDiff = PHP_INT_MAX;
                                 $targetTs = strtotime($tglDay);
                                 foreach ($bpByBill[$billId] as $cand) {
                                     $cts = strtotime($cand['day']);
-                                    if ($cts === false) continue;
+                                    if ($cts === false) {
+                                        continue;
+                                    }
                                     $diff = abs($cts - $targetTs);
-                                    if ($diff < $bestDiff) { $bestDiff = $diff; $best = $cand['id']; }
+                                    if ($diff < $bestDiff) {
+                                        $bestDiff = $diff;
+                                        $best = $cand['id'];
+                                    }
                                 }
-                                if ($best !== null && $bestDiff <= 86400 * 35) $found = $best;
+                                if ($best !== null && $bestDiff <= 86400 * 35) {
+                                    $found = $best;
+                                }
                             }
                             $revId = $found;
                         }
@@ -283,25 +351,27 @@ class ImportLegacyTransactionsCommand extends Command
 
                     $keterangan = (string) ($t->keterangan ?? '');
                     $relasi = trim((string) ($t->relasi ?? ''));
-                    if ($relasi === '') $relasi = null;
+                    if ($relasi === '') {
+                        $relasi = null;
+                    }
                     $created = $t->created_at ?: now();
                     $updated = $t->updated_at ?: now();
 
                     $buffer[] = [
-                        'tgl_transaksi'        => $tgl,
-                        'account_debet'        => $debet,
-                        'account_kredit'       => $kredit,
-                        'transaction_group'    => $this->parseTransactionGroup((string) ($t->transaction_id ?? '')),
-                        'reverence_type'       => $revType,
-                        'reverence_id'         => $revId,
-                        'penerima_komisi_id'   => $penerimaKomisi,
+                        'tgl_transaksi' => $tgl,
+                        'account_debet' => $debet,
+                        'account_kredit' => $kredit,
+                        'transaction_group' => $this->parseTransactionGroup((string) ($t->transaction_id ?? '')),
+                        'reverence_type' => $revType,
+                        'reverence_id' => $revId,
+                        'penerima_komisi_id' => $penerimaKomisi,
                         'keterangan_transaksi' => $keterangan !== '' ? $keterangan : null,
-                        'relasi'               => $relasi,
-                        'saldo'                => $saldo,
-                        'urutan'               => (int) ($t->urutan ?? 0),
-                        'id_user'              => $idUser,
-                        'created_at'           => $created,
-                        'updated_at'           => $updated,
+                        'relasi' => $relasi,
+                        'saldo' => $saldo,
+                        'urutan' => (int) ($t->urutan ?? 0),
+                        'id_user' => $idUser,
+                        'created_at' => $created,
+                        'updated_at' => $updated,
                     ];
 
                     if (count($buffer) >= $batch) {
@@ -323,11 +393,11 @@ class ImportLegacyTransactionsCommand extends Command
             } catch (\Throwable $e) {
                 $attempt++;
                 if ($attempt > $maxRetries) {
-                    $this->error('Max retries: ' . $e->getMessage());
+                    $this->error('Max retries: '.$e->getMessage());
                     break;
                 }
                 $wait = min(60, 5 * $attempt);
-                $this->warn("Legacy putus (try {$attempt}/{$maxRetries}): " . substr($e->getMessage(), 0, 80) . " — sleep {$wait}s, resume after id={$lastId}");
+                $this->warn("Legacy putus (try {$attempt}/{$maxRetries}): ".substr($e->getMessage(), 0, 80)." — sleep {$wait}s, resume after id={$lastId}");
                 DB::purge('legacy');
                 sleep($wait);
             }
@@ -335,33 +405,104 @@ class ImportLegacyTransactionsCommand extends Command
 
         // Sisa buffer
         if (! empty($buffer)) {
-            if (! $isDryRun) DB::table('transactions')->insert($buffer);
+            if (! $isDryRun) {
+                DB::table('transactions')->insert($buffer);
+            }
             $stats['created'] += count($buffer);
             $buffer = [];
         }
 
         $this->line('');
         $this->info('Selesai:');
-        foreach ($stats as $k => $v) $this->line("  $k = $v");
-        $this->line('  total in new.transactions: ' . DB::table('transactions')->count());
+        foreach ($stats as $k => $v) {
+            $this->line("  $k = $v");
+        }
+        $this->line('  total in new.transactions: '.DB::table('transactions')->count());
+
+        // Baris bermasalah tidak boleh hilang diam-diam: kalau semua baris punya
+        // tanggal kosong, tahap ini akan terlihat "sukses" padahal menyimpan nol baris.
+        if ($stats['skipped'] > 0) {
+            $this->line('');
+            $this->warn("Ada {$stats['skipped']} baris legacy TIDAK tersimpan karena tgl_transaksi kosong/tidak valid.");
+            $this->warn('Kolom tgl_transaksi di DB baru adalah DATE NOT NULL, jadi baris ini memang tidak bisa disimpan.');
+            foreach (array_slice($badDates, 0, 10) as $b) {
+                $this->line(sprintf(
+                    '  legacy_trx_id=%s tgl=%s saldo=%s keterangan=%s',
+                    $b['legacy_trx_id'],
+                    $b['tgl_transaksi'],
+                    number_format($b['saldo'], 2, '.', ''),
+                    $b['keterangan'] !== '' ? $b['keterangan'] : '-'
+                ));
+            }
+            if ($stats['skipped'] >= 50) {
+                $this->line('  ... (maksimal 10 contoh ditampilkan)');
+            }
+        }
+
+        if ($stats['created'] === 0 && $total > 0) {
+            $this->line('');
+            $this->error('Tidak ada satu pun transaksi yang tersimpan, padahal legacy punya '.$total.' baris.');
+
+            return self::FAILURE;
+        }
 
         return self::SUCCESS;
+    }
+
+    /**
+     * Ubah nilai tanggal legacy menjadi string `Y-m-d` yang layak disimpan.
+     *
+     * Mengembalikan null bila nilai TIDAK bisa dipakai, sehingga pemanggil bisa
+     * menghitung & melaporkan baris tersebut alih-alih melewatkannya diam-diam.
+     *
+     * Nilai yang ditolak: null, '', '0000-00-00', '0000-00-00 00:00:00', dan
+     * apa pun yang gagal di-parse. Kolom `tgl_transaksi` di DB baru adalah
+     * DATE NOT NULL, jadi tidak ada nilai lain yang bisa diterima.
+     */
+    private function normalizeDate(mixed $raw): ?string
+    {
+        $val = trim((string) $raw);
+        if ($val === '' || str_starts_with($val, '0000-00-00')) {
+            return null;
+        }
+
+        $ts = strtotime($val);
+        if ($ts === false) {
+            return null;
+        }
+
+        $y = (int) date('Y', $ts);
+        // Menolak tanggal yang hanya consists dari nol setelah parse (mis. '0000-00-00'
+        // yang lolos strtotime sebagai epoch).
+        if ($y === 0) {
+            return null;
+        }
+
+        return date('Y-m-d', $ts);
     }
 
     private function parseTransactionGroup(string $raw): ?int
     {
         $raw = trim($raw);
-        if ($raw === '' || $raw === '0') return null;
+        if ($raw === '' || $raw === '0') {
+            return null;
+        }
         if (preg_match('/^\d+\.\d+\.\d+$/', $raw)) {
             $p = explode('.', $raw);
-            $u = (int) $p[1]; $i = (int) $p[2];
-            if ($u === 0 && $i === 0) return null;
+            $u = (int) $p[1];
+            $i = (int) $p[2];
+            if ($u === 0 && $i === 0) {
+                return null;
+            }
+
             return $u * 1000000 + $i;
         }
         if (ctype_digit($raw)) {
             $n = (int) $raw;
+
             return $n > 0 ? $n : null;
         }
+
         return null;
     }
 }
