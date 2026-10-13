@@ -227,9 +227,18 @@ class TransactionTriggers
 
     /**
      * Recreate ketiga trigger dari definisi kanonik.
+     *
+     * Idempoten: trigger yang sudah ada DULU di-drop lebih dulu. Tanpa ini
+     * `CREATE TRIGGER` gagal dengan errno 1359 "Trigger already exists" --
+     * kondisi yang justru penting untuk command `legacy:restore-triggers`,
+     * karena perintah itu dipanggil saat trigger MASIH utuh (mis. setelah migrasi
+     * sebelumnya selesai normal), bukan hanya saat trigger hilang.
      */
     public static function createAll(): void
     {
+        // Drop dulu supaya aman dijalankan pada kondisi trigger sudah ada.
+        self::dropAll();
+
         foreach (self::definitions() as $sql) {
             DB::unprepared($sql);
         }
@@ -299,5 +308,4 @@ SQL;
 
         return DB::affectingStatement($sql);
     }
-
 }

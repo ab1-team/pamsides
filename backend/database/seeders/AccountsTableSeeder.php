@@ -12,10 +12,36 @@ class AccountsTableSeeder extends Seeder
      */
     public function run(): void
     {
-        // Kosongkan tabel terlebih dahulu sebelum diisi
-        DB::table('accounts')->truncate();
+        // Tabel `amount` punya FK `account_id -> accounts.id` (CASCADE), jadi
+        // `truncate()` pada accounts akan gagal dengan errno 1451 (FK constraint)
+        // selama masih ada baris amount.
+        //
+        // FK_check dimatikan tepat sebelum truncate dan DINYALAKAN KEMBALI di
+        // `finally` -- selalu, walau truncate/insert gagal.
+        //
+        // SENGAJA TIDAK memakai DB::transaction() di sini: truncate() adalah DDL
+        // yang melakukan COMMIT implisit di MySQL, sehingga PDO kehilangan transaksi
+        // aktif dan commit()-nya melempar "There is no active transaction".
+        DB::statement('SET FOREIGN_KEY_CHECKS=0');
 
-        $data = [
+        try {
+            // Truncate dulu supaya seeder bisa dijalankan berulang pada DB yang
+            // sudah terisi (mis. setelah import:accounts).
+            DB::table('accounts')->truncate();
+            DB::table('accounts')->insert($this->data());
+        } finally {
+            DB::statement('SET FOREIGN_KEY_CHECKS=1');
+        }
+    }
+
+    /**
+     * Data akun master (96 kode akun unik, id 594-689).
+     *
+     * Dipisah dari run() supaya insert &fk toggling berada dalam satu transaksi.
+     */
+    private function data(): array
+    {
+        return [
             ['id' => 594, 'parent_id' => 111, 'lev1' => 1, 'lev2' => 1, 'lev3' => 1, 'lev4' => 1, 'kode_akun' => '1.1.01.01', 'nama_akun' => 'Kas Tunai', 'jenis_mutasi' => 'debet', 'tgl_nonaktif' => null, 'created_at' => null, 'updated_at' => null],
             ['id' => 595, 'parent_id' => 111, 'lev1' => 1, 'lev2' => 1, 'lev3' => 1, 'lev4' => 2, 'kode_akun' => '1.1.01.02', 'nama_akun' => 'Kas Kas Kecil', 'jenis_mutasi' => 'debet', 'tgl_nonaktif' => null, 'created_at' => null, 'updated_at' => null],
             ['id' => 596, 'parent_id' => 111, 'lev1' => 1, 'lev2' => 1, 'lev3' => 1, 'lev4' => 3, 'kode_akun' => '1.1.01.03', 'nama_akun' => 'Kas di Bank BRI', 'jenis_mutasi' => 'debet', 'tgl_nonaktif' => null, 'created_at' => null, 'updated_at' => null],
@@ -113,7 +139,5 @@ class AccountsTableSeeder extends Seeder
             ['id' => 688, 'parent_id' => 512, 'lev1' => 5, 'lev2' => 5, 'lev3' => 1, 'lev4' => 2, 'kode_akun' => '5.1.02.03', 'nama_akun' => 'Beban Bonus Prestasi Kerja', 'jenis_mutasi' => 'debet', 'tgl_nonaktif' => null, 'created_at' => null, 'updated_at' => null],
             ['id' => 689, 'parent_id' => 512, 'lev1' => 5, 'lev2' => 5, 'lev3' => 1, 'lev4' => 2, 'kode_akun' => '5.1.02.04', 'nama_akun' => 'Beban FEE Kolektor', 'jenis_mutasi' => 'debet', 'tgl_nonaktif' => null, 'created_at' => null, 'updated_at' => null],
         ];
-
-        DB::table('accounts')->insert($data);
     }
 }
