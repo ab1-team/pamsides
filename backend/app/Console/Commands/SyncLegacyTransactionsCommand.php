@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Services\LegacyPaymentSource;
 use App\Services\LegacyTicketAligner;
 use App\Services\LegacyTransactionSource;
+use App\Support\MemoryLimit;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 
@@ -14,7 +15,8 @@ class SyncLegacyTransactionsCommand extends Command
                             {--dry-run : Simulasi, tidak ada perubahan}
                             {--force   : Terapkan perubahan}
                             {--business=5 : business_id legacy yang jadi acuan}
-                            {--only=missing : missing | all}';
+                            {--only=missing : missing | all}
+                            {--memory=512M : memory_limit proses (dataset legacy butuh >128M)}';
 
     protected $description = 'Selaraskan tabel transactions dengan legacy transactions (signature: tgl + kode_debet + kode_kredit + nominal + keterangan)';
 
@@ -26,6 +28,11 @@ class SyncLegacyTransactionsCommand extends Command
 
             return self::FAILURE;
         }
+        // Dataset legacy (~79.000 transaksi + indeks signature) tidak muat di
+        // memory_limit default 128M. Naikkan runtime bila perlu -- hanya
+        // menaikkan, tidak menyentuh php.ini global.
+        $this->line(MemoryLimit::describe(MemoryLimit::ensure((string) $this->option('memory'))));
+
         $biz = (int) $this->option('business');
         $only = (string) $this->option('only');
 
@@ -37,32 +44,51 @@ class SyncLegacyTransactionsCommand extends Command
         $N = DB::connection();
 
         $this->info('Mengumpulkan legacy transactions...');
+        // Peta RINGKAS legacy: signature → daftar legacy_id (bukan 79.000 baris penuh).
         $src = LegacyTransactionSource::collect($biz);
-        $legacy = $src['rows'];
-        $this->line('  legacy biz'.$biz.' : ' . count($legacy) . ' transaksi (akun terpetakan)');
+        $legacySig = $src['signatureIds'];
+        $this->line('  legacy biz'.$biz.' : ' . $src['total'] . ' transaksi (akun terpetakan)');
         $this->line('  DB baru            : ' . $N->table('transactions')->count());
         $this->line('');
 
-        // Signature DB baru
+        // Indeks signature DB baru: signature → daftar id (peta ringkas, bukan objek penuh).
         $newIdx = [];
-        foreach ($N->table('transactions')->get(['id', 'tgl_transaksi', 'account_debet', 'account_kredit', 'saldo', 'keterangan_transaksi']) as $r) {
+        foreach ($N->table('transactions')->select(['id', 'tgl_transaksi', 'account_debet', 'account_kredit', 'saldo', 'keterangan_transaksi'])->cursor() as $r) {
             $newIdx[LegacyTransactionSource::signatureOfNew($r)][] = (int) $r->id;
         }
         $this->line('  signature unik DB baru : ' . count($newIdx));
 
-        // Cocokkan
-        $missing = [];
+        // Cocokkan lewat PETA SIGNATURE saja (tanpa menahan baris penuh).
+        // Tiap signature: berapa banyak id legacy vs berapa banyak baris DB baru
+        // → yang cocok = min(...), sisanya "belum ada". Jumlah ini IDENTIK dengan
+        // pencocokan baris satu per satu (legacy di-shift selama kuota DB baru ada).
         $matched = 0;
-        foreach ($legacy as $row) {
-            $sig = LegacyTransactionSource::signature($row);
-            if (! empty($newIdx[$sig])) {
-                array_shift($newIdx[$sig]);
-                $matched++;
-            } else {
-                $missing[] = $row;
+        $sisaPerSig = [];
+        foreach ($legacySig as $sig => $ids) {
+            $want = count($ids);
+            $have = count($newIdx[$sig] ?? []);
+            $take = min($want, $have);
+            $matched += $take;
+            if ($want > $take) {
+                $sisaPerSig[$sig] = $want - $take; // baris legacy yang belum ada di DB baru
             }
+            // sisa id baris DB baru yang belum terpakai legacy tetap di $newIdx → orphan
+            $newIdx[$sig] = array_slice($newIdx[$sig] ?? [], $take);
         }
         $this->line('  sudah ada (cocok)     : ' . $matched);
+
+        // Ambil baris legacy yang BELUM ada lewat stream kedua (urutan tetap
+        // ORDER BY id), dengan kuota per signature agar tidak double-hitung.
+        $missing = [];
+        if ($sisaPerSig) {
+            foreach (LegacyTransactionSource::stream($biz) as $row) {
+                $sig = LegacyTransactionSource::signature($row);
+                if (($sisaPerSig[$sig] ?? 0) > 0) {
+                    $sisaPerSig[$sig]--;
+                    $missing[] = $row;
+                }
+            }
+        }
         $this->line('  belum ada (perlu insert) : ' . count($missing));
 
         // Transaksi DB baru yang tidak punya pasangan legacy
@@ -112,6 +138,7 @@ class SyncLegacyTransactionsCommand extends Command
 
         if ($dry) {
             $this->warn('DRY-RUN selesai. Jalankan --force untuk menambahkan.');
+            $this->line('  peak memory : ' . MemoryLimit::formatBytes(memory_get_peak_usage(true)));
 
             return self::SUCCESS;
         }
@@ -199,6 +226,7 @@ class SyncLegacyTransactionsCommand extends Command
         $this->line('  transaksi ditambahkan : '.$inserted);
         $this->line('  dilewati (tanpa relasi) : '.$skipped);
         $this->line('  transactions sekarang   : '.$N->table('transactions')->count());
+        $this->line('  peak memory : ' . MemoryLimit::formatBytes(memory_get_peak_usage(true)));
 
         return self::SUCCESS;
     }

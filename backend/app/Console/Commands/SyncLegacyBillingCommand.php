@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Services\LegacyUsageSource;
+use App\Support\MemoryLimit;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 
@@ -14,7 +15,8 @@ class SyncLegacyBillingCommand extends Command
                             {--business=5 : business_id legacy yang jadi acuan}
                             {--only=both : readings | bills | both}
                             {--no-penalty=0 : Hitung denda tunggakan seperti app baru}
-                            {--keep-orphan=0 : Hanya perbaiki baris yang sudah ada, jangan buat baru}';
+                            {--keep-orphan=0 : Hanya perbaiki baris yang sudah ada, jangan buat baru}
+                            {--memory=512M : memory_limit proses (dataset legacy butuh >128M)}';
 
     protected $description = 'Selaraskan meter_readings + monthly_bills dengan legacy usages (relasi lewat kode instalasi, bukan nama)';
 
@@ -26,6 +28,10 @@ class SyncLegacyBillingCommand extends Command
 
             return self::FAILURE;
         }
+        // Dataset legacy (30.809 usages + turunannya) tidak muat di memory_limit
+        // default 128M. Naikkan runtime bila perlu -- hanya menaikkan.
+        $this->line(MemoryLimit::describe(MemoryLimit::ensure((string) $this->option('memory'))));
+
         $biz = (int) $this->option('business');
         $only = (string) $this->option('only');
         $applyPenalty = ! $this->option('no-penalty');
@@ -59,9 +65,14 @@ class SyncLegacyBillingCommand extends Command
         // ---------- meter_readings ----------
         if ($only === 'readings' || $only === 'both') {
             $this->info('--- meter_readings ---');
+            // Streaming + peta RINGKAS (kunci → skalar) supaya 30.805 baris tidak
+            // dimuat sebagai objek penuh sekaligus (OOM 128M).
             $existing = [];
-            foreach ($N->table('meter_readings')->get(['id', 'customer_id', 'reading_year', 'reading_month', 'meter_value', 'recorded_at']) as $r) {
-                $existing[$r->customer_id.'|'.$r->reading_year.'|'.$r->reading_month] = $r;
+            foreach ($N->table('meter_readings')->select(['id', 'customer_id', 'reading_year', 'reading_month', 'meter_value'])->cursor() as $r) {
+                $existing[$r->customer_id.'|'.$r->reading_year.'|'.$r->reading_month] = [
+                    'id' => (int) $r->id,
+                    'meter_value' => (float) $r->meter_value,
+                ];
             }
             $this->line('  DB baru sekarang : '.count($existing));
 
@@ -94,7 +105,7 @@ class SyncLegacyBillingCommand extends Command
                     continue;
                 }
 
-                $curValue = (float) $cur->meter_value;
+                $curValue = (float) $cur['meter_value'];
                 $expValue = (float) $r['reading_end'];
                 if (abs($curValue - $expValue) < 0.001) {
                     $total['mr_same']++;
@@ -105,7 +116,7 @@ class SyncLegacyBillingCommand extends Command
                 if (self::valueExistsElsewhere($N, $key, $expValue)) {
                     $swapped++;
                 }
-                $updates[] = ['id' => (int) $cur->id, 'key' => $key, 'meter_value' => $expValue, 'recorded_at' => $r['recorded_at']];
+                $updates[] = ['id' => (int) $cur['id'], 'key' => $key, 'meter_value' => $expValue, 'recorded_at' => $r['recorded_at']];
                 $total['mr_update']++;
             }
 
@@ -129,7 +140,7 @@ class SyncLegacyBillingCommand extends Command
                     $cur = $existing[$u['key']];
                     echo sprintf(
                         "     cust=%s %d-%02d  meter_value: %s -> %s\n",
-                        $parts[0], $parts[1], $parts[2], $cur->meter_value, $u['meter_value']
+                        $parts[0], $parts[1], $parts[2], $cur['meter_value'], $u['meter_value']
                     );
                 }
                 $this->line('');
@@ -169,13 +180,25 @@ class SyncLegacyBillingCommand extends Command
         // ---------- monthly_bills ----------
         if ($only === 'bills' || $only === 'both') {
             $this->info('--- monthly_bills ---');
+            // Peta RINGKAS: hanya kolom yang dibandingkan, bertipe skalar --
+            // bukan 30.805 objek model penuh (OOM 128M).
             $existingB = [];
-            foreach ($N->table('monthly_bills')->get([
-                'id', 'customer_id', 'billing_period_year', 'billing_period_month',
+            $mbCols = ['id', 'customer_id', 'billing_period_year', 'billing_period_month',
                 'meter_reading_start', 'meter_reading_end', 'usage_m3',
-                'usage_charge', 'abodemen', 'penalty_amount', 'total_amount', 'status', 'due_date',
-            ]) as $r) {
-                $existingB[$r->customer_id.'|'.$r->billing_period_year.'|'.$r->billing_period_month] = $r;
+                'usage_charge', 'abodemen', 'penalty_amount', 'total_amount', 'status', 'due_date'];
+            foreach ($N->table('monthly_bills')->select($mbCols)->cursor() as $r) {
+                $existingB[$r->customer_id.'|'.$r->billing_period_year.'|'.$r->billing_period_month] = [
+                    'id' => (int) $r->id,
+                    'meter_reading_start' => $r->meter_reading_start,
+                    'meter_reading_end' => $r->meter_reading_end,
+                    'usage_m3' => $r->usage_m3,
+                    'usage_charge' => $r->usage_charge,
+                    'abodemen' => $r->abodemen,
+                    'penalty_amount' => $r->penalty_amount,
+                    'total_amount' => $r->total_amount,
+                    'status' => $r->status,
+                    'due_date' => $r->due_date,
+                ];
             }
             $this->line('  DB baru sekarang : '.count($existingB));
 
@@ -207,7 +230,7 @@ class SyncLegacyBillingCommand extends Command
                     'due_date' => 'due_date',
                 ] as $col => $tag) {
                     $want = $b[$col];
-                    $have = $cur->$col;
+                    $have = $cur[$col];
                     $equal = is_string($want) || $want === null
                         ? (string) $have === (string) $want
                         : abs((float) $have - (float) $want) < 0.005;
@@ -223,8 +246,8 @@ class SyncLegacyBillingCommand extends Command
                     }
                 }
                 // penalty: ikut legacy? recalc hanya jika beda & tidak ada payment.
-                if (abs((float) $cur->penalty_amount - (float) $b['penalty_amount']) >= 0.005) {
-                    $hasPayment = $N->table('bill_payments')->where('bill_id', $cur->id)->exists();
+                if (abs((float) $cur['penalty_amount'] - (float) $b['penalty_amount']) >= 0.005) {
+                    $hasPayment = $N->table('bill_payments')->where('bill_id', $cur['id'])->exists();
                     if (! $hasPayment) {
                         $set['penalty_amount'] = $b['penalty_amount'];
                         $statDiff['total']++;
@@ -232,7 +255,7 @@ class SyncLegacyBillingCommand extends Command
                 }
 
                 if ($set) {
-                    $billUpdates[] = ['id' => (int) $cur->id, 'set' => $set];
+                    $billUpdates[] = ['id' => (int) $cur['id'], 'set' => $set];
                     $total['mb_update']++;
                 } else {
                     $total['mb_same']++;
@@ -293,7 +316,7 @@ class SyncLegacyBillingCommand extends Command
         static $byPeriod = null;
         if ($byPeriod === null) {
             $byPeriod = [];
-            foreach ($N->table('meter_readings')->get(['reading_year', 'reading_month', 'meter_value']) as $r) {
+            foreach ($N->table('meter_readings')->select(['reading_year', 'reading_month', 'meter_value'])->cursor() as $r) {
                 $byPeriod[$r->reading_year.'-'.$r->reading_month][] = (float) $r->meter_value;
             }
         }

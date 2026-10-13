@@ -25,6 +25,44 @@ use Illuminate\Support\Facades\DB;
 class LegacyPaymentSource
 {
     /**
+     * Zona waktu aplikasi legacy (server SIM-SPPG / 103.177.95.92).
+     *
+     * Legacy menyimpan `tgl_transaksi` sebagai DATE polos di zona ini (WIB).
+     * Saat data ditimpakan ke DB baru (app timezone = UTC), tanggal itu
+     * tersimpan sebagai tengah-malam WIB yang dikonversi ke UTC -- jadi
+     * 2025-03-26 (WIB) menjadi `2025-03-25 17:00:00` (UTC).
+     *
+     * Semua pencocokan pembayaran yang membandingkan `bill_payments.paid_at`
+     * (UTC di DB baru) dengan tanggal event legacy HARUS menormalkan ke zona
+     * ini lebih dulu, kalau tidak tanggalnya bergeser satu hari dan matcher
+     * menganggap SEMUA pembayaran legacy tidak punya pasangan.
+     */
+    public const LEGACY_TZ = 'Asia/Jakarta';
+
+    /**
+     * Tanggal lokal-legacy (Y-m-d) dari `bill_payments.paid_at` DB baru.
+     *
+     * DB baru menyimpan waktu dalam UTC; legacy memakai WIB. Helper ini
+     * memulihkan tanggal asli legacy dari timestamp UTC tersebut sehingga
+     * kunci `bill_id|YYYY-MM-DD` di sisi legacy dan sisi DB baru sebanding.
+     */
+    public static function legacyDateOfPaidAt(?string $paidAt): string
+    {
+        $v = trim((string) $paidAt);
+        if ($v === '' || str_starts_with($v, '0000-00-00')) {
+            return '';
+        }
+
+        try {
+            return \Illuminate\Support\Carbon::parse($v, 'UTC')
+                ->setTimezone(self::LEGACY_TZ)
+                ->toDateString();
+        } catch (\Throwable) {
+            return substr($v, 0, 10);
+        }
+    }
+
+    /**
      * Klasifikasi `keterangan` legacy.
      *
      * Di legacy, pembayaran pelanggan dicatat dengan awalan "Pendapatan"
@@ -62,13 +100,17 @@ class LegacyPaymentSource
         $noUsage = 0;
         $unmatched = [];
 
+        // Streaming via cursor(): ~79.000 baris legacy tidak lagi dimuat
+        // sekaligus ke array objek. Urutan & isi baris identik dengan ->get(),
+        // jadi hasil akumulasi (events, billTotals, noUsage) tidak berubah.
         $rows = $L->table('transactions')
             ->where('business_id', $legacyBusinessId)
             ->where('usage_id', '>', 0)
             ->orderBy('usage_id')
             ->orderBy('tgl_transaksi')
             ->orderBy('id')
-            ->get(['id', 'usage_id', 'tgl_transaksi', 'total', 'user_id', 'keterangan', 'installation_id']);
+            ->select(['id', 'usage_id', 'tgl_transaksi', 'total', 'user_id', 'keterangan', 'installation_id'])
+            ->cursor();
 
         foreach ($rows as $t) {
             if (! self::isPayment($t->keterangan)) {
@@ -143,7 +185,8 @@ class LegacyPaymentSource
             ->where('business_id', $legacyBusinessId)
             ->where('keterangan', 'LIKE', 'Biaya instalasi%')
             ->orderBy('id')
-            ->get(['id', 'installation_id', 'tgl_transaksi', 'total', 'user_id']);
+            ->select(['id', 'installation_id', 'tgl_transaksi', 'total', 'user_id'])
+            ->cursor();
 
         foreach ($rows as $t) {
             $instId = (int) $t->installation_id;
@@ -184,7 +227,11 @@ class LegacyPaymentSource
             ->pluck('kode_instalasi', 'id')->all();
 
         $map = [];
-        foreach ($L->table('usages')->where('business_id', $legacyBusinessId)->get(['id', 'id_instalasi', 'tgl_pemakaian']) as $u) {
+        $usageRows = $L->table('usages')
+            ->where('business_id', $legacyBusinessId)
+            ->select(['id', 'id_instalasi', 'tgl_pemakaian'])
+            ->cursor();
+        foreach ($usageRows as $u) {
             $code = trim((string) ($codeByInst[(int) $u->id_instalasi] ?? ''));
             $customerId = $code === '' ? null : ($customerByCode[$code] ?? null);
             if ($customerId === null) {

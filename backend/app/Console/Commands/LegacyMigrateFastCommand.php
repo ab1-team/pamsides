@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Support\MemoryLimit;
 use App\Support\TransactionTriggers;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Artisan;
@@ -75,7 +76,7 @@ class LegacyMigrateFastCommand extends Command
         // set-based, di bawah). Default 512M mengikuti memory_limit asli
         // environment ini (/etc/php.ini.rpmsave). Tidak menyentuh php.ini global.
         $targetMemory = (string) $this->option('memory');
-        $this->ensureMemoryLimit($targetMemory);
+        $this->line(MemoryLimit::describe(MemoryLimit::ensure($targetMemory)));
 
         $this->newLine();
         $this->warn('============================================================');
@@ -277,45 +278,6 @@ class LegacyMigrateFastCommand extends Command
         $this->info($ok ? '     Prasyarat terpenuhi.' : '     Prasyarat BELUM terpenuhi.');
 
         return $ok;
-    }
-
-    /**
-     * Naikkan memory_limit proses ini bila perlu (memory_limit adalah
-     * PHP_INI_ALL, bisa diubah runtime di CLI). Hanya menaikkan, tidak menurunkan.
-     */
-    protected function ensureMemoryLimit(string $target): void
-    {
-        $bytes = $this->parseBytes($target);
-        $current = $this->parseBytes((string) ini_get('memory_limit'));
-
-        if ($current !== -1 && $bytes > 0 && $current < $bytes) {
-            ini_set('memory_limit', $target);
-            $this->line('memory_limit: '.ini_get('memory_limit').' (semula '.$this->formatBytes($current).')');
-        } else {
-            $this->line('memory_limit: '.ini_get('memory_limit').' (tidak diubah)');
-        }
-    }
-
-    protected function parseBytes(string $value): int
-    {
-        $value = trim($value);
-        if ($value === '' || $value === '-1') {
-            return -1;
-        }
-        $unit = strtolower(substr($value, -1));
-        $num = (int) $value;
-
-        return match ($unit) {
-            'g' => $num * 1024 * 1024 * 1024,
-            'm' => $num * 1024 * 1024,
-            'k' => $num * 1024,
-            default => $num,
-        };
-    }
-
-    protected function formatBytes(int $bytes): string
-    {
-        return round($bytes / 1048576).'M';
     }
 
     protected function countChain(?string $from): int
