@@ -32,11 +32,11 @@ jobs:
       - name: Build frontend
         working-directory: frontend
         env:
-          VITE_API_BASE_URL: https://pamsides.siupk.com/api
+          VITE_API_BASE_URL: https://tirtomulo-pamsides.astamart.net/api
         run: pnpm run build
 
       - name: Guard production API URL in bundle
-        run: grep -rq "pamsides.siupk.com/api" frontend/dist || { echo "::error::VITE_API_BASE_URL missing from built bundle"; exit 1; }
+        run: grep -rq "tirtomulo-pamsides.astamart.net/api" frontend/dist || { echo "::error::VITE_API_BASE_URL missing from built bundle"; exit 1; }
 
       - uses: actions/upload-artifact@v7
         with:
@@ -74,8 +74,8 @@ jobs:
 
       - name: Smoke test production
         run: |
-          site=$(curl -s -o /dev/null -w '%{http_code}' https://pamsides.siupk.com/)
-          api=$(curl -s -o /dev/null -w '%{http_code}' https://pamsides.siupk.com/api/health)
+          site=$(curl -s -o /dev/null -w '%{http_code}' https://tirtomulo-pamsides.astamart.net/)
+          api=$(curl -s -o /dev/null -w '%{http_code}' https://tirtomulo-pamsides.astamart.net/api/health)
           echo "site=$site api=$api"
           test "$site" = "200"
           test "$api" = "200"

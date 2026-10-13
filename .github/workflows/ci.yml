@@ -28,7 +28,7 @@ jobs:
       - name: Build (catches case-sensitive import breakage)
         working-directory: frontend
         env:
-          VITE_API_BASE_URL: https://pamsides.siupk.com/api
+          VITE_API_BASE_URL: https://tirtomulo-pamsides.astamart.net/api
         run: pnpm run build
 
   backend:
