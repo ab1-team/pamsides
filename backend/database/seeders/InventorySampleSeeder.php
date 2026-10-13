@@ -2,9 +2,9 @@
 
 namespace Database\Seeders;
 
+use Carbon\Carbon;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
-use Carbon\Carbon;
 
 class InventorySampleSeeder extends Seeder
 {
@@ -12,13 +12,15 @@ class InventorySampleSeeder extends Seeder
     {
         $now = Carbon::now();
 
+        // Kolom `harset` sengaja TIDAK diisi: migration 2026_07_09_000002_drop_harset_from_inventories_table
+        // sudah menghapusnya, jadi menyebut kolom itu membuat insert gagal dengan
+        // errno 1054 "Unknown column 'harset'". Harga ada di `harsat`.
         $data = [
             // Tanah (kategori 1)
             [
                 'nama_barang' => 'Tanah Kantor Pusat',
                 'tgl_beli' => '2020-01-15',
                 'unit' => '1',
-                'harset' => 500000000,
                 'harsat' => 500000000,
                 'umur_ekonomis' => 0,
                 'jenis' => '1',
@@ -33,7 +35,6 @@ class InventorySampleSeeder extends Seeder
                 'nama_barang' => 'Gedung Kantor PDAM',
                 'tgl_beli' => '2021-06-10',
                 'unit' => '1',
-                'harset' => 1200000000,
                 'harsat' => 1200000000,
                 'umur_ekonomis' => 240,
                 'jenis' => '1',
@@ -47,7 +48,6 @@ class InventorySampleSeeder extends Seeder
                 'nama_barang' => 'Gudang Material Utara',
                 'tgl_beli' => '2022-03-20',
                 'unit' => '1',
-                'harset' => 350000000,
                 'harsat' => 350000000,
                 'umur_ekonomis' => 240,
                 'jenis' => '1',
@@ -62,7 +62,6 @@ class InventorySampleSeeder extends Seeder
                 'nama_barang' => 'Pickup Suzuki Carry',
                 'tgl_beli' => '2023-02-05',
                 'unit' => '2',
-                'harset' => 180000000,
                 'harsat' => 180000000,
                 'umur_ekonomis' => 96,
                 'jenis' => '1',
@@ -76,7 +75,6 @@ class InventorySampleSeeder extends Seeder
                 'nama_barang' => 'Pompa Air Grundfos 7.5kW',
                 'tgl_beli' => '2022-08-12',
                 'unit' => '3',
-                'harset' => 25000000,
                 'harsat' => 25000000,
                 'umur_ekonomis' => 96,
                 'jenis' => '1',
@@ -90,7 +88,6 @@ class InventorySampleSeeder extends Seeder
                 'nama_barang' => 'Generator Set 50kVA',
                 'tgl_beli' => '2021-11-25',
                 'unit' => '1',
-                'harset' => 95000000,
                 'harsat' => 95000000,
                 'umur_ekonomis' => 120,
                 'jenis' => '1',
@@ -105,7 +102,6 @@ class InventorySampleSeeder extends Seeder
                 'nama_barang' => 'Komputer PC Admin',
                 'tgl_beli' => '2024-01-15',
                 'unit' => '10',
-                'harset' => 8500000,
                 'harsat' => 8500000,
                 'umur_ekonomis' => 48,
                 'jenis' => '1',
@@ -119,7 +115,6 @@ class InventorySampleSeeder extends Seeder
                 'nama_barang' => 'Laptop Dell Latitude',
                 'tgl_beli' => '2024-05-20',
                 'unit' => '5',
-                'harset' => 12500000,
                 'harsat' => 12500000,
                 'umur_ekonomis' => 48,
                 'jenis' => '1',
@@ -133,7 +128,6 @@ class InventorySampleSeeder extends Seeder
                 'nama_barang' => 'Printer Epson L3210',
                 'tgl_beli' => '2023-07-08',
                 'unit' => '4',
-                'harset' => 2800000,
                 'harsat' => 2800000,
                 'umur_ekonomis' => 48,
                 'jenis' => '1',
@@ -147,7 +141,6 @@ class InventorySampleSeeder extends Seeder
                 'nama_barang' => 'Meja Kerja Staff',
                 'tgl_beli' => '2022-12-01',
                 'unit' => '15',
-                'harset' => 1500000,
                 'harsat' => 1500000,
                 'umur_ekonomis' => 60,
                 'jenis' => '1',
@@ -161,7 +154,6 @@ class InventorySampleSeeder extends Seeder
                 'nama_barang' => 'Kursi Putar Staff',
                 'tgl_beli' => '2022-12-01',
                 'unit' => '15',
-                'harset' => 750000,
                 'harsat' => 750000,
                 'umur_ekonomis' => 60,
                 'jenis' => '1',
@@ -175,7 +167,6 @@ class InventorySampleSeeder extends Seeder
                 'nama_barang' => 'Lemari Arsip Besi',
                 'tgl_beli' => '2020-09-15',
                 'unit' => '8',
-                'harset' => 2200000,
                 'harsat' => 2200000,
                 'umur_ekonomis' => 60,
                 'jenis' => '1',
@@ -189,7 +180,6 @@ class InventorySampleSeeder extends Seeder
                 'nama_barang' => 'AC Split Daikin 1PK',
                 'tgl_beli' => '2023-04-12',
                 'unit' => '6',
-                'harset' => 4500000,
                 'harsat' => 4500000,
                 'umur_ekonomis' => 60,
                 'jenis' => '1',
@@ -203,7 +193,6 @@ class InventorySampleSeeder extends Seeder
                 'nama_barang' => 'Proyektor Epson EB-X51',
                 'tgl_beli' => '2023-08-22',
                 'unit' => '2',
-                'harset' => 6800000,
                 'harsat' => 6800000,
                 'umur_ekonomis' => 48,
                 'jenis' => '1',
@@ -218,6 +207,6 @@ class InventorySampleSeeder extends Seeder
         DB::table('inventories')->truncate();
         DB::table('inventories')->insert($data);
 
-        $this->command->info('✓ Inventories seeded: ' . count($data) . ' rows');
+        $this->command->info('✓ Inventories seeded: '.count($data).' rows');
     }
 }

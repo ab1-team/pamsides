@@ -6,7 +6,6 @@ use App\Models\Transaction;
 use App\Support\TransactionTriggers;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 
 /**
  * RESET jurnal overdue_bill untuk testing.
@@ -47,6 +46,7 @@ class ResetOverdueBillsForTesting extends Command
 
         if ($count === 0) {
             $this->info('Tidak ada jurnal overdue_bill aktif untuk dihapus.');
+
             return self::SUCCESS;
         }
 
@@ -71,6 +71,7 @@ class ResetOverdueBillsForTesting extends Command
 
         if ($this->option('dry-run')) {
             $this->info('--dry-run aktif: tidak ada data yang dihapus.');
+
             return self::SUCCESS;
         }
 
@@ -78,6 +79,7 @@ class ResetOverdueBillsForTesting extends Command
             $this->newLine();
             if (! $this->confirm("Hapus {$count} jurnal overdue_bill? (Status bill TIDAK berubah)", false)) {
                 $this->info('Dibatalkan.');
+
                 return self::SUCCESS;
             }
         }
@@ -113,6 +115,7 @@ class ResetOverdueBillsForTesting extends Command
             $this->comment('1. Login di tanggal generate (saat ini tgl 1) untuk trigger generate ulang.');
             $this->comment('2. Cek tabel transactions: harus ada jurnal baru dengan reverence_type=overdue_bill.');
             $this->comment('3. Bill unpaid tetap 3.295 (tidak berubah).');
+
             return self::SUCCESS;
         } catch (\Throwable $e) {
             // Upayakan recreate trigger agar DB tidak rusak
@@ -120,9 +123,10 @@ class ResetOverdueBillsForTesting extends Command
                 TransactionTriggers::createAll();
                 $this->warn('Trigger di-recreate kembali setelah error.');
             } catch (\Throwable $e2) {
-                $this->error('GAGAL RECREATE TRIGGER! Harap restore manual. Error: ' . $e2->getMessage());
+                $this->error('GAGAL RECREATE TRIGGER! Harap restore manual. Error: '.$e2->getMessage());
             }
-            $this->error('Gagal: ' . $e->getMessage());
+            $this->error('Gagal: '.$e->getMessage());
+
             return self::FAILURE;
         }
     }

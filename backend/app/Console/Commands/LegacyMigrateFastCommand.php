@@ -6,6 +6,7 @@ use App\Support\TransactionTriggers;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 /**
  * Jalur migrasi legacy CEPAT: trigger OFF -> import -> recompute -> trigger ON.
@@ -100,6 +101,12 @@ class LegacyMigrateFastCommand extends Command
         $overallStart = microtime(true);
         $timings = [];
 
+        // Prasyarat chain. Tanpa ini, `import:users` gagal FK bila tabel jabatan
+        // kosong, dan `import:tickets` gagal bila village belum ter-import.
+        if (! $this->preflight($from)) {
+            return self::FAILURE;
+        }
+
         try {
             // (a) Drop trigger + verifikasi hilang.
             $this->info('[1/4] Drop trigger transactions...');
@@ -186,6 +193,90 @@ class LegacyMigrateFastCommand extends Command
         $this->info('VERIFIKASI OK: ketiga trigger ada ('.implode(', ', TransactionTriggers::names()).').');
 
         return self::SUCCESS;
+    }
+
+    /**
+     * Prasyarat sebelum menjalankan chain: pastikan tabel yang dibutuhkan tiap
+     * tahap sudah terisi, supaya kegagalan tidak terjadi di tengah migrasi
+     * (setelah trigger sudah dimatikan).
+     *
+     * Dievaluasi HANYA untuk tahap yang memang akan dijalankan (sesuai --from).
+     *
+     * @return bool true bila aman dilanjutkan
+     */
+    protected function preflight(?string $from): bool
+    {
+        $names = array_column($this->chain, 'command');
+        $startIdx = 0;
+        if ($from !== null && $from !== '') {
+            $idx = array_search($from, $names, true);
+            if ($idx !== false) {
+                $startIdx = $idx;
+            }
+        }
+        $willRun = array_slice($names, $startIdx);
+
+        $this->newLine();
+        $this->info('Prasyarat chain...');
+        $ok = true;
+
+        // import:users menulis users.jabatan_id -> jabatans.id (FK, nullable).
+        // Kalau tabel jabatan kosong, SEMUA user gagal tersimpan.
+        if (in_array('import:users', $willRun, true)) {
+            $count = DB::table('jabatans')->count();
+            if ($count === 0) {
+                $this->error('import:users butuh tabel `jabatans` terisi (relasi FK users.jabatan_id).');
+                $this->error('Isi dulu: php artisan db:seed --class=JabatanSeeder');
+                $ok = false;
+            } else {
+                $this->line("     jabatans: {$count} baris OK");
+            }
+        }
+
+        // import:tickets menunjuk village_id -> villages.id (FK).
+        if (in_array('import:tickets', $willRun, true)) {
+            $villages = DB::table('villages')->count();
+            if ($villages === 0) {
+                $this->error('import:tickets butuh tabel `villages` terisi (relasi FK installation_tickets.village_id).');
+                $this->error('Jalankan import:villages lebih dulu (atau hapus --from agar rantai mulai dari awal).');
+                $ok = false;
+            } else {
+                $this->line("     villages: {$villages} baris OK");
+            }
+        }
+
+        // import:customers & sesudahnya butuh paket; tabel installation_packages
+        // diisi oleh import:packages.
+        if (in_array('import:customers', $willRun, true)) {
+            $packages = DB::table('installation_packages')->count();
+            if ($packages === 0) {
+                $this->error('import:customers butuh tabel `installation_packages` terisi.');
+                $this->error('Jalankan import:packages lebih dulu (atau hapus --from agar rantai mulai dari awal).');
+                $ok = false;
+            } else {
+                $this->line("     installation_packages: {$packages} baris OK");
+            }
+        }
+
+        // Seluruh tahap menulis ke tabel yang harus sudah ada (hasil migrate).
+        $tables = ['accounts', 'transactions', 'monthly_bills', 'bill_payments', 'customers', 'users'];
+        $missing = [];
+        foreach ($tables as $table) {
+            if (! Schema::hasTable($table)) {
+                $missing[] = $table;
+            }
+        }
+        if ($missing !== []) {
+            $this->error('Tabel berikut belum ada di DB baru: '.implode(', ', $missing));
+            $this->error('Jalankan: php artisan migrate --force');
+            $ok = false;
+        } else {
+            $this->line('     tabel inti: semua ada OK');
+        }
+
+        $this->info($ok ? '     Prasyarat terpenuhi.' : '     Prasyarat BELUM terpenuhi.');
+
+        return $ok;
     }
 
     /**
