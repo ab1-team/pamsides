@@ -274,6 +274,56 @@ class LegacyImportIdentityTest extends TestCase
     }
 
     // =========================================================
+    // SYNC RT/RW: anchor legacy_installation_id
+    // =========================================================
+
+    /**
+     * Tiket punya `legacy_installation_id` terisi -> rt/rw HARUS terisi dari
+     * instalasi legacy itu, MESKIPUN `village_id` tiket berbeda dari `desa`
+     * legacy (fakta produksi: desa legacy 67/68 vs village_id baru 61..75,
+     * sehingga aligner berbasis desa|package tidak pernah ketemu).
+     */
+    #[Test]
+    public function sync_rt_rw_pakai_legacy_installation_id_walau_village_id_beda(): void
+    {
+        $this->seedAppTargets();
+        $this->seedLegacyFixture();
+
+        $adminId = (int) DB::table('users')->where('role', 'teknisi')->value('id');
+        $pkgId = (int) DB::table('installation_packages')->value('id');
+
+        // Tiket menghubungkan instalasi legacy A, tapi village_id-nya SENGAJA
+        // dibuat tidak sama dengan desa legacy (null pun tidak masalah).
+        $ticket = InstallationTicket::create([
+            'legacy_installation_id' => self::SUNARTO_A['inst'],
+            'package_id' => $pkgId,
+            'applicant_name' => 'Sunarto',
+            'nik' => '3201010101010001',
+            'rt' => null,
+            'rw' => null,
+            'address' => 'Kp. A',
+            'lat' => 0,
+            'lng' => 0,
+            'status' => 'pending',
+            'village_id' => null,
+            'created_by' => $adminId,
+        ]);
+
+        $exit = Artisan::call('legacy:sync-ticket-rtrw', ['--force' => true, '--business' => 5]);
+        $this->assertSame(0, $exit, 'sync rt/rw harus sukses');
+
+        $fresh = $ticket->fresh();
+        // Instalasi legacy A: rt='01', rw='02' (leading zero WAJIB dipertahankan).
+        $this->assertSame('01', $fresh->rt, 'rt terisi dari legacy_installation_id walau village_id beda');
+        $this->assertSame('02', $fresh->rw, 'rw terisi dari legacy_installation_id walau village_id beda');
+
+        // Dry-run mengisi ringkasan anchor valid & jumlah terisi.
+        $this->artisan('legacy:sync-ticket-rtrw', ['--dry-run' => true, '--business' => 5])
+            ->expectsOutputToContain('Anchor legacy-id valid')
+            ->assertExitCode(0);
+    }
+
+    // =========================================================
     // Fixture helpers
     // =========================================================
 
