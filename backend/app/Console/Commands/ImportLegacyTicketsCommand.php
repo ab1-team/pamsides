@@ -6,6 +6,7 @@ use App\Models\InstallationPackage;
 use App\Models\InstallationTicket;
 use App\Models\User;
 use App\Models\Village;
+use App\Support\LegacyIdentity;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 
@@ -125,13 +126,10 @@ class ImportLegacyTicketsCommand extends Command
                     continue;
                 }
 
-                // Idempotent: match by applicant + village + package + nik
-                $existing = InstallationTicket::query()
-                    ->where('package_id', $mapped['package_id'])
-                    ->where('village_id', $mapped['village_id'])
-                    ->where('applicant_name', $mapped['applicant_name'])
-                    ->where('nik', $mapped['nik'])
-                    ->first();
+                // Idempotent: kunci UTAMA = legacy_installation_id (satu instalasi
+                // legacy = satu tiket). Kunci lemah (package + village + name + nik)
+                // HANYA dipakai kalau legacy_installation_id tidak tersedia.
+                $existing = $this->findExistingTicket($mapped);
 
                 if ($existing) {
                     $existing->update($mapped);
@@ -395,6 +393,7 @@ class ImportLegacyTicketsCommand extends Command
         $lng = 0.0;
 
         return [
+            'legacy_installation_id' => (int) $row->id,
             'package_id'     => $this->packageMap[(int) $row->package_id],
             'applicant_name' => $applicantName,
             'nik'            => $nik,
@@ -411,6 +410,44 @@ class ImportLegacyTicketsCommand extends Command
             'user_id'        => $teknisiId,
             'created_by'     => $createdBy,
         ];
+    }
+
+    /**
+     * Cari tiket yang sudah ada (idempotensi).
+     *
+     * Kunci UTAMA adalah `legacy_installation_id` bila tiket punya pasangan
+     * instalasi legacy. Kunci lama (package_id, village_id, applicant_name, nik)
+     * hanya dipakai kalau legacy_installation_id kosong -- kalau tidak, dua
+     * instalasi legacy berbeda dengan identitas ticket sama akan dianggap satu
+     * tiket (penyebab 53 tiket hilang di business 5).
+     *
+     * @param  array<string,mixed>  $mapped
+     */
+    private function findExistingTicket(array $mapped): ?InstallationTicket
+    {
+        $key = LegacyIdentity::ticketKey($mapped);
+
+        if ($key['primary']) {
+            $byLegacy = InstallationTicket::query()
+                ->where('legacy_installation_id', $mapped['legacy_installation_id'])
+                ->first();
+            if ($byLegacy) {
+                return $byLegacy;
+            }
+        }
+
+        // Jaring terakhir: kecocokan lemah (hanya kalau legacy key tidak ada).
+        if (! $key['primary']) {
+            return InstallationTicket::query()
+                ->whereNull('legacy_installation_id')
+                ->where('package_id', $mapped['package_id'])
+                ->where('village_id', $mapped['village_id'])
+                ->where('applicant_name', $mapped['applicant_name'])
+                ->where('nik', $mapped['nik'])
+                ->first();
+        }
+
+        return null;
     }
 
     private function parseDate(mixed $val): ?string

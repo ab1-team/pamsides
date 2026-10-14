@@ -31,15 +31,25 @@ class ImportLegacyUsersCommand extends Command
     public function handle(): int
     {
         $isDryRun = (bool) $this->option('dry-run');
+        $bizFilter = $this->option('business');
 
         $this->info('=== Import Users: DB Lama â†’ DB Baru ===');
         if ($isDryRun) {
             $this->warn('MODE DRY-RUN: tidak ada perubahan data.');
         }
+        if ($bizFilter) {
+            $this->info("Filter: hanya business_id={$bizFilter} di DB lama.");
+        }
         $this->line('');
 
-        // 1. Ambil semua user legacy
-        $legacyUsers = DB::connection('legacy')->table('users')->orderBy('id')->get();
+        // 1. Ambil user legacy. Kolom `business_id` ADA di tabel `users`
+        //    legacy; tanpa opsi --business perilaku lama (semua business)
+        //    tetap dipertahankan supaya pemakaian lain tidak pecah.
+        $legacyUsers = DB::connection('legacy')
+            ->table('users')
+            ->when($bizFilter, fn ($q) => $q->where('business_id', $bizFilter))
+            ->orderBy('id')
+            ->get();
         $this->info('User di DB lama: '.$legacyUsers->count());
 
         // 2. Cek legacy_id terbesar untuk offset ID biar ga tabrakan
