@@ -211,6 +211,53 @@ class LegacyImportIdentityTest extends TestCase
     }
 
     // =========================================================
+    // REGRESI: RT/RW legacy ikut terisi ke tiket + address
+    // =========================================================
+
+    /**
+     * Dua instalasi legacy beda RT (01 vs 07) wajib menghasilkan kolom `rt`
+     * yang berbeda pada tiket baru, DAN `address` masing-masing memuat RT-nya.
+     *
+     * Cacat lama: mapRow() tidak mengisi `rt`/`rw` sama sekali (semua NULL di
+     * produksi: 1.812/1.812) dan buildAddress() membuang parameter RT/RW.
+     */
+    #[Test]
+    public function rt_legacy_berbeda_terisi_di_tiket_dan_address(): void
+    {
+        $this->seedAppTargets();
+        $this->seedLegacyFixture();
+
+        // RT beda (01 vs 07), RW sengaja kosong -> format "RT <rt>" saja
+        // sekaligus menguji penjagaan leading zero ('01' tidak jadi '1').
+        DB::connection('legacy')->table('installations')
+            ->where('id', self::SUNARTO_A['inst'])
+            ->update(['rt' => '01', 'rw' => '']);
+        DB::connection('legacy')->table('installations')
+            ->where('id', self::SUNARTO_B['inst'])
+            ->update(['rt' => '07', 'rw' => '0']);
+
+        $exit = Artisan::call('import:tickets', ['--force' => true, '--business' => 5]);
+        $this->assertSame(0, $exit, 'import:tickets harus sukses');
+
+        $a = InstallationTicket::where('legacy_installation_id', self::SUNARTO_A['inst'])->firstOrFail();
+        $b = InstallationTicket::where('legacy_installation_id', self::SUNARTO_B['inst'])->firstOrFail();
+
+        // Kolom rt terisi apa adanya (leading zero terjaga).
+        $this->assertSame('01', $a->rt, "rt legacy '01' tidak boleh jadi '1'/NULL");
+        $this->assertSame('07', $b->rt, "rt legacy '07' tidak boleh jadi '7'/NULL");
+        $this->assertNotSame($a->rt, $b->rt, 'dua RT berbeda harus menghasilkan rt berbeda');
+
+        // RW kosong/'0' -> NULL (bukan string kosong).
+        $this->assertNull($a->rw, "rw kosong harus NULL, bukan ''");
+        $this->assertNull($b->rw, "rw '0' harus NULL, bukan '0'");
+
+        // address memuat RT masing-masing.
+        $this->assertStringContainsString('RT 01', $a->address, 'address tiket A harus memuat RT 01');
+        $this->assertStringNotContainsString('RT 07', $a->address, 'address tiket A tidak boleh memuat RT tiket B');
+        $this->assertStringContainsString('RT 07', $b->address, 'address tiket B harus memuat RT 07');
+    }
+
+    // =========================================================
     // REGRESI: customer_code tidak boleh tersuffix saat impor ulang
     // =========================================================
 

@@ -7,6 +7,7 @@ use App\Models\InstallationTicket;
 use App\Models\User;
 use App\Models\Village;
 use App\Support\LegacyIdentity;
+use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 
@@ -62,12 +63,13 @@ class ImportLegacyTicketsCommand extends Command
     public function handle(): int
     {
         $isDryRun = (bool) $this->option('dry-run');
-        $isForce  = (bool) $this->option('force');
-        $limit    = (int)  $this->option('limit');
+        $isForce = (bool) $this->option('force');
+        $limit = (int) $this->option('limit');
         $bizFilter = $this->option('business');
 
         if (! $isDryRun && ! $isForce) {
             $this->error('Wajib pakai --dry-run atau --force');
+
             return self::FAILURE;
         }
 
@@ -85,7 +87,9 @@ class ImportLegacyTicketsCommand extends Command
 
         // Quick stats legacy
         $totalQuery = DB::connection('legacy')->table('installations');
-        if ($bizFilter) $totalQuery->where('business_id', $bizFilter);
+        if ($bizFilter) {
+            $totalQuery->where('business_id', $bizFilter);
+        }
         $totalLegacy = $totalQuery->count();
         $this->info("Total legacy installations: {$totalLegacy}");
 
@@ -101,13 +105,13 @@ class ImportLegacyTicketsCommand extends Command
         $this->info("Memproses {$totalRows} baris (chunk={$chunkSize})...");
 
         $stats = [
-            'created'   => 0,
-            'updated'   => 0,
-            'skipped'   => 0,
-            'failed'    => 0,
+            'created' => 0,
+            'updated' => 0,
+            'skipped' => 0,
+            'failed' => 0,
         ];
         $skipped = [];
-        $failed  = [];
+        $failed = [];
 
         foreach ($rows as $i => $row) {
             try {
@@ -118,11 +122,13 @@ class ImportLegacyTicketsCommand extends Command
                     $stats['skipped']++;
                     $skipped[] = ['legacy_id' => $row->id, 'kode' => $row->kode_instalasi, 'reason' => $reason];
                     $this->maybeLog($i + 1, $chunkSize, $totalRows, $stats);
+
                     continue;
                 }
 
                 if ($isDryRun) {
                     $this->maybeLog($i + 1, $chunkSize, $totalRows, $stats);
+
                     continue;
                 }
 
@@ -189,7 +195,7 @@ class ImportLegacyTicketsCommand extends Command
 
         foreach ($rows as $legacy) {
             $wantNameSuffixed = "{$legacy->kelas} (B{$legacy->business_id})";
-            $wantNamePlain    = $legacy->kelas;
+            $wantNamePlain = $legacy->kelas;
             $match = null;
             foreach ($newPkgs as $p) {
                 if (strcasecmp($p->name, $wantNameSuffixed) === 0) {
@@ -247,14 +253,14 @@ class ImportLegacyTicketsCommand extends Command
                 $newId = $existingMax + (int) $lu->id;
                 try {
                     User::create([
-                        'id'          => $newId,
-                        'name'        => trim((string) $lu->nama),
-                        'email'       => "legacy_{$lu->id}_{$role}@pamsides.local",
-                        'password'    => \Hash::make('legacy'),
-                        'role'        => $role,
-                        'jabatan_id'  => (int) ($lu->jabatan ?? 0) ?: null,
-                        'created_at'  => now(),
-                        'updated_at'  => now(),
+                        'id' => $newId,
+                        'name' => trim((string) $lu->nama),
+                        'email' => "legacy_{$lu->id}_{$role}@pamsides.local",
+                        'password' => \Hash::make('legacy'),
+                        'role' => $role,
+                        'jabatan_id' => (int) ($lu->jabatan ?? 0) ?: null,
+                        'created_at' => now(),
+                        'updated_at' => now(),
                     ]);
                 } catch (\Throwable) {
                     // Kalau ID bentrok (existing user dengan ID sama), ambil ID existing
@@ -289,6 +295,7 @@ class ImportLegacyTicketsCommand extends Command
         // 1. Package
         if (! isset($this->packageMap[(int) $row->package_id])) {
             $reason = "package_id={$row->package_id} tidak ada mapping ke DB baru";
+
             return null;
         }
 
@@ -301,10 +308,11 @@ class ImportLegacyTicketsCommand extends Command
             ->first();
         if (! $legacyVillage) {
             $reason = "desa={$legacyVillageId} tidak ada di legacy.villages";
+
             return null;
         }
         $villageName = strtolower(trim((string) $legacyVillage->nama));
-        $hamletName  = strtolower(trim((string) ($legacyVillage->dusun ?? '')));
+        $hamletName = strtolower(trim((string) ($legacyVillage->dusun ?? '')));
         if ($hamletName === '-' || $hamletName === '') {
             // legacy kadang dusun kosong → match by nama saja, ambil yg pertama
             $villageMatch = Village::whereRaw('LOWER(village_name) = ?', [$villageName])
@@ -317,6 +325,7 @@ class ImportLegacyTicketsCommand extends Command
         }
         if (! $villageMatch) {
             $reason = "desa={$legacyVillageId} '{$legacyVillage->nama}/{$legacyVillage->dusun}' tidak ada di villages DB baru";
+
             return null;
         }
         $villageId = (int) $villageMatch->id;
@@ -326,6 +335,7 @@ class ImportLegacyTicketsCommand extends Command
         //    untuk filter laporan per teknisi).
         if (! isset($this->userMap[(int) $row->cater_id])) {
             $reason = "cater_id={$row->cater_id} (legacy user) tidak ada di DB baru";
+
             return null;
         }
         $teknisiId = $this->userMap[(int) $row->cater_id];
@@ -338,6 +348,7 @@ class ImportLegacyTicketsCommand extends Command
         $status = $this->statusMap[(string) $row->status] ?? null;
         if ($status === null) {
             $reason = "status legacy='{$row->status}' tidak dikenal";
+
             return null;
         }
 
@@ -349,6 +360,7 @@ class ImportLegacyTicketsCommand extends Command
 
         if (! $customer || trim((string) $customer->nama) === '') {
             $reason = "customer_id={$row->customer_id} missing/nama kosong";
+
             return null;
         }
 
@@ -363,8 +375,8 @@ class ImportLegacyTicketsCommand extends Command
         }
 
         $gender = match (strtoupper((string) $customer->jk)) {
-            'L'  => 'male',
-            'P'  => 'female',
+            'L' => 'male',
+            'P' => 'female',
             default => null,
         };
 
@@ -376,39 +388,47 @@ class ImportLegacyTicketsCommand extends Command
         // Phone: customers.hp biasanya numeric, dibersihkan ke digit saja, fallback null
         $phone = $this->cleanPhone($customer->hp ?? null);
 
-        // 6. Address: gabung `alamat` + RT/RW
+        // 6. RT/RW: legacy varchar (contoh '01', '07'). Kosong / '0' / null -> null
+        //    supaya tidak tersimpan sebagai string kosong. Format apa adanya
+        //    (TIDAK di-cast integer) agar leading zero terjaga.
+        $rt = $this->normalizeRtRw($row->rt ?? null);
+        $rw = $this->normalizeRtRw($row->rw ?? null);
+
+        // 7. Address: gabung `alamat` + RT/RW
         $address = $this->buildAddress(
             $customer->alamat ?? null,
             $row->alamat ?? null,
-            $row->rt ?? null,
-            $row->rw ?? null
+            $rt,
+            $rw
         );
 
-        // 7. order_date
+        // 8. order_date
         $orderDate = $this->parseDate($row->order ?? null);
 
-        // 8. lat/lng: kolom DB baru NOT NULL, data legacy invalid → fallback (0,0)
+        // 9. lat/lng: kolom DB baru NOT NULL, data legacy invalid → fallback (0,0)
         // Bisa di-update nanti via surveyor di lapangan.
         $lat = 0.0;
         $lng = 0.0;
 
         return [
             'legacy_installation_id' => (int) $row->id,
-            'package_id'     => $this->packageMap[(int) $row->package_id],
+            'package_id' => $this->packageMap[(int) $row->package_id],
             'applicant_name' => $applicantName,
-            'nik'            => $nik,
-            'gender'         => $gender,
-            'birth_place'    => $birthPlace,
-            'birth_date'     => $birthDate,
-            'phone'          => $phone,
-            'address'        => $address,
-            'village_id'     => $villageId,
-            'lat'            => $lat,
-            'lng'            => $lng,
-            'status'         => $status,
-            'order_date'     => $orderDate,
-            'user_id'        => $teknisiId,
-            'created_by'     => $createdBy,
+            'nik' => $nik,
+            'gender' => $gender,
+            'birth_place' => $birthPlace,
+            'birth_date' => $birthDate,
+            'phone' => $phone,
+            'rt' => $rt,
+            'rw' => $rw,
+            'address' => $address,
+            'village_id' => $villageId,
+            'lat' => $lat,
+            'lng' => $lng,
+            'status' => $status,
+            'order_date' => $orderDate,
+            'user_id' => $teknisiId,
+            'created_by' => $createdBy,
         ];
     }
 
@@ -460,7 +480,7 @@ class ImportLegacyTicketsCommand extends Command
             return null;
         }
         try {
-            return \Carbon\Carbon::parse($val)->toDateString();
+            return Carbon::parse($val)->toDateString();
         } catch (\Throwable) {
             return null;
         }
@@ -482,19 +502,62 @@ class ImportLegacyTicketsCommand extends Command
         if (strlen($digits) > 20) {
             $digits = substr($digits, -20);
         }
+
         return $digits;
     }
 
+    /**
+     * Normalisasi RT/RW legacy (varchar).
+     *
+     * Legacy menyimpan seperti '01', '07' (leading zero penting). Nilai
+     * kosong / '0' / null -> null supaya tidak tersimpan sebagai string kosong.
+     * Selain itu dikembalikan apa adanya (TIDAK di-cast integer).
+     */
+    private function normalizeRtRw(mixed $val): ?string
+    {
+        if ($val === null) {
+            return null;
+        }
+        $s = trim((string) $val);
+        if ($s === '' || $s === '0' || $s === '-') {
+            return null;
+        }
+
+        return $s;
+    }
+
+    /**
+     * Susun alamat: alamat pelanggan/instalasi + RT/RW bila tersedia.
+     *
+     * Format operator air: "<alamat> RT <rt>/RW <rw>", hanya RT:
+     * "<alamat> RT <rt>". Bila RT/RW keduanya null -> perilaku lama (alamat saja).
+     */
     private function buildAddress(mixed $customerAlamat, mixed $installationAlamat, mixed $rt = null, mixed $rw = null): string
     {
+        $alamat = '-';
         foreach ([$customerAlamat, $installationAlamat] as $src) {
             if ($src !== null) {
                 $s = trim((string) $src);
                 if ($s !== '' && $s !== '-') {
-                    return $s;
+                    $alamat = $s;
+                    break;
                 }
             }
         }
-        return '-';
+
+        $rt = $this->normalizeRtRw($rt);
+        $rw = $this->normalizeRtRw($rw);
+
+        if ($rt !== null && $rw !== null) {
+            $suffix = " RT {$rt}/RW {$rw}";
+        } elseif ($rt !== null) {
+            $suffix = " RT {$rt}";
+        } elseif ($rw !== null) {
+            $suffix = " RW {$rw}";
+        } else {
+            return $alamat;
+        }
+
+        return $alamat === '-' ? ltrim($suffix) : $alamat.$suffix;
     }
 }
