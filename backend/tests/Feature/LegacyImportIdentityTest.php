@@ -211,6 +211,69 @@ class LegacyImportIdentityTest extends TestCase
     }
 
     // =========================================================
+    // REGRESI: customer_code tidak boleh tersuffix saat impor ulang
+    // =========================================================
+
+    /**
+     * Impor ulang TIDAK boleh mengubah customer_code. Dulu baris yang sedang
+     * di-update dianggap bentrok dengan dirinya sendiri -> 'INS-501_c9001'
+     * (produksi: 1.01.0002 -> 1.01.0002_c8805) sehingga pencocokan
+     * legacy customer_code <-> kode_instalasi putus dan cakupan denda = 0.
+     */
+    #[Test]
+    public function impor_ulang_tidak_mengubah_customer_code(): void
+    {
+        $this->seedAppTargets();
+        $this->seedLegacyFixture();
+
+        Artisan::call('import:tickets', ['--force' => true, '--business' => 5]);
+        Artisan::call('import:customers', ['--force' => true, '--business' => 5]);
+
+        $before = Customer::query()->orderBy('id')->pluck('customer_code', 'id')->all();
+        $this->assertContains(self::SUNARTO_A['kode'], $before, 'kode instalasi legacy harus dipakai apa adanya');
+        $this->assertContains(self::SUNARTO_B['kode'], $before, 'kode instalasi legacy harus dipakai apa adanya');
+
+        // Jalur kedua persis data yang sama.
+        Artisan::call('import:tickets', ['--force' => true, '--business' => 5]);
+        Artisan::call('import:customers', ['--force' => true, '--business' => 5]);
+
+        $after = Customer::query()->orderBy('id')->pluck('customer_code', 'id')->all();
+        $this->assertSame($before, $after, 'customer_code TIDAK boleh berubah saat impor ulang (tidak boleh tersuffix).');
+        $this->assertSame('INS-501', $after[array_key_first($after)], 'kode baris sendiri tidak boleh disuffix jadi INS-501_c9001');
+    }
+
+    /**
+     * Suffix HARUS tetap muncul untuk kasus asli: dua pelanggan berbeda yang
+     * kode_instalasi-nya sama persis (duplikat di data legacy). Yang kedua
+     * harus disuffix '_c<legacy_cust_id>' supaya unik, tanpa merusak yang pertama.
+     */
+    #[Test]
+    public function dua_pelanggan_beda_dengan_kode_sama_tetap_disuffix(): void
+    {
+        $this->seedAppTargets();
+        $this->seedLegacyFixture();
+
+        // Jadikan instalasi B memakai kode yang SAMA dengan A (duplikat asli).
+        DB::connection('legacy')->table('installations')
+            ->where('id', self::SUNARTO_B['inst'])
+            ->update(['kode_instalasi' => self::SUNARTO_A['kode']]);
+
+        Artisan::call('import:tickets', ['--force' => true, '--business' => 5]);
+        Artisan::call('import:customers', ['--force' => true, '--business' => 5]);
+
+        $codes = Customer::query()->orderBy('id')->pluck('customer_code')->all();
+
+        // Satu baris memakai kode asli, satu baris disuffix dengan id legacy pelanggan.
+        $this->assertContains(self::SUNARTO_A['kode'], $codes, 'baris pertama tetap pakai kode asli');
+        $this->assertContains(
+            self::SUNARTO_A['kode'].'_c'.self::SUNARTO_B['cust'],
+            $codes,
+            'pelanggan berbeda dengan kode sama harus disuffix _c<legacy_cust_id>'
+        );
+        $this->assertCount(2, array_unique($codes), 'customer_code akhir harus unik');
+    }
+
+    // =========================================================
     // Fixture helpers
     // =========================================================
 

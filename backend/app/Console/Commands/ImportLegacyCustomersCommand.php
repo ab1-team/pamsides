@@ -159,7 +159,17 @@ class ImportLegacyCustomersCommand extends Command
                 // 2. customers row (kunci: satu tiket = satu baris pelanggan).
                 $ticketId = $mapped['ticket_id'];
                 $code = $mapped['customer_code'];
-                if ($code !== '' && $this->codeTaken($code, $existingCustomerCodes)) {
+
+                // Baris customers target (kalau ada) = baris yang SEDANG di-update.
+                $existingCustomerId = $existingCustomersByTicket[$ticketId] ?? null;
+                $codeOwnedByTarget = $existingCustomerId !== null
+                    && $code !== ''
+                    && (string) DB::table('customers')->where('id', $existingCustomerId)->value('customer_code') === $code;
+
+                // Suffix HANYA kalau kode benar-benar dipakai baris customers LAIN
+                // (atau baris BARU). Saat impor ulang, kode baris sendiri JANGAN disentuh
+                // -- dulu dianggap bentrok dengan dirinya sendiri -> '1.01.0002_c8805'.
+                if (! $codeOwnedByTarget && $code !== '' && $this->codeTaken($code, $existingCustomerCodes)) {
                     $code = $code.'_c'.$inst->legacy_cust_id;
                 }
 
