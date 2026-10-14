@@ -34,58 +34,100 @@ class SyncLegacyTicketRtRwCommand extends Command
         $L = DB::connection('legacy');
         $N = DB::connection();
 
-        $align = LegacyTicketAligner::build($biz);
-        $map = $align['map'];
-        $this->info(sprintf(
-            'Alignment: %d pasang | akurasi %.2f%% (anchor %d/%d)',
-            count($map), $align['acc'], $align['anchors'], $align['total']
-        ));
-        if ($align['acc'] < $minAcc) {
-            $this->error(sprintf('Akurasi %.2f%% < batas %.2f%%. DIBATALKAN.', $align['acc'], $minAcc));
-
-            return self::FAILURE;
+        // ---------------------------------------------------------------
+        // ANCHOR UTAMA: legacy_installation_id pada tiket.
+        //
+        // Legacy desa (biz5 = 67/68) TIDAK sejajar dengan village_id baru
+        // (61..75), jadi pengelompokan (desa|package) milik aligner lama tidak
+        // pernah ketemu. `legacy_installation_id` adalah kunci identitas resmi
+        // hasil migrasi, jadi tiket bisa langsung mengambil rt/rw/direction.
+        // ---------------------------------------------------------------
+        $legacyById = [];
+        foreach ($L->table('installations AS i')
+            ->leftJoin('customers AS c', 'c.id', '=', 'i.customer_id')
+            ->where('i.business_id', $biz)
+            ->get(['i.id', 'i.kode_instalasi', 'i.rt', 'i.rw', 'c.nama AS customer_nama']) as $i) {
+            $legacyById[(int) $i->id] = $i;
         }
-        $this->line('');
+        $this->info(sprintf('Instalasi legacy (business_id=%d): %d', $biz, count($legacyById)));
 
-        $legacy = $L->table('installations')->where('business_id', $biz)
-            ->get(['id', 'kode_instalasi', 'rt', 'rw']);
-        $tickets = $N->table('installation_tickets')->get(['id', 'rt', 'rw'])->keyBy('id');
+        $tickets = $N->table('installation_tickets')->get(['id', 'legacy_installation_id', 'rt', 'rw'])->keyBy('id');
 
         $updates = [];
         $same = 0;
-        $noPair = 0;
+        $totalTickets = $tickets->count();
+        $anchorValid = 0;       // tiket dgn legacy_installation_id yang ketemu di legacy
+        $noLegacyId = 0;        // tiket tanpa legacy_installation_id -> jalur cadangan
+        $unknownLegacyId = 0;   // legacy_installation_id ada tapi tak ada di legacy bisnis ini
 
-        foreach ($legacy as $i) {
-            $ticketId = $map[(int) $i->id] ?? null;
-            if ($ticketId === null || ! isset($tickets[$ticketId])) {
-                $noPair++;
+        foreach ($tickets as $t) {
+            $lid = $t->legacy_installation_id;
+            if ($lid === null || (int) $lid <= 0) {
+                $noLegacyId++;
+
                 continue;
             }
-            $t = $tickets[$ticketId];
+            $row = $legacyById[(int) $lid] ?? null;
+            if ($row === null) {
+                $unknownLegacyId++;
 
-            // Legacy kosong (NULL / '' / '-') disamakan menjadi NULL.
-            $expRt = self::clean($i->rt);
-            $expRw = self::clean($i->rw);
-            $curRt = self::clean($t->rt);
-            $curRw = self::clean($t->rw);
+                continue;
+            }
+            $anchorValid++;
 
-            $set = [];
-            if ((string) $expRt !== (string) $curRt) {
-                $set['rt'] = $expRt;
-            }
-            if ((string) $expRw !== (string) $curRw) {
-                $set['rw'] = $expRw;
-            }
-            if ($set) {
-                $updates[] = [
-                    'ticket_id' => $ticketId,
-                    'kode' => (string) $i->kode_instalasi,
-                    'set' => $set,
-                ];
-            } else {
-                $same++;
-            }
+            self::planUpdate($updates, $same, (int) $t->id, (string) $row->kode_instalasi, $t->rt, $t->rw, $row->rt, $row->rw);
         }
+
+        $this->info(sprintf(
+            'Anchor legacy-id valid: %d/%d | tanpa legacy-id: %d | legacy-id tak dikenal: %d',
+            $anchorValid, $totalTickets, $noLegacyId, $unknownLegacyId
+        ));
+
+        // ---------------------------------------------------------------
+        // JALUR CADANGAN (aligner lama desa|package) HANYA untuk tiket yang
+        // legacy_installation_id-nya NULL. Perilaku lama dipertahankan.
+        // ---------------------------------------------------------------
+        $fallbackPairs = 0;
+        if ($noLegacyId > 0) {
+            $align = LegacyTicketAligner::build($biz);
+            $map = $align['map'];
+            $this->info(sprintf(
+                'Cadangan aligner (desa|package): %d pasang | akurasi %.2f%% (anchor %d/%d)',
+                count($map), $align['acc'], $align['anchors'], $align['total']
+            ));
+
+            // Pemetaan legacy-installation.id => ticket.id dari aligner lama.
+            $alreadyUsed = [];
+            foreach ($tickets as $t) {
+                if ($t->legacy_installation_id !== null && (int) $t->legacy_installation_id > 0) {
+                    $alreadyUsed[(int) $t->id] = true;
+                }
+            }
+
+            foreach ($legacyById as $legacyId => $legacyRow) {
+                $ticketId = $map[$legacyId] ?? null;
+                if ($ticketId === null || ! isset($tickets[$ticketId]) || isset($alreadyUsed[$ticketId])) {
+                    continue;
+                }
+                $t = $tickets[$ticketId];
+                // Hanya untuk tiket yang memang belum punya legacy-id.
+                if ($t->legacy_installation_id !== null && (int) $t->legacy_installation_id > 0) {
+                    continue;
+                }
+                $fallbackPairs++;
+                self::planUpdate($updates, $same, (int) $t->id, (string) $legacyRow->kode_instalasi, $t->rt, $t->rw, $legacyRow->rt, $legacyRow->rw);
+                $alreadyUsed[(int) $t->id] = true;
+            }
+
+            if ($align['acc'] < $minAcc) {
+                $this->error(sprintf('Akurasi cadangan %.2f%% < batas %.2f%%. DIBATALKAN.', $align['acc'], $minAcc));
+
+                return self::FAILURE;
+            }
+        } else {
+            $this->line('Tidak ada tiket tanpa legacy-id: jalur cadangan aligner tidak dipakai.');
+        }
+        $this->line('');
 
         $rtFill = count(array_filter($updates, fn ($u) => array_key_exists('rt', $u['set'])));
         $rwFill = count(array_filter($updates, fn ($u) => array_key_exists('rw', $u['set'])));
@@ -98,14 +140,17 @@ class SyncLegacyTicketRtRwCommand extends Command
             }
         }
 
-        $this->line(sprintf('Tiket_pairs   : %d', count($legacy) - $noPair));
-        $this->line(sprintf('Sudah sama   : %d', $same));
-        $this->line(sprintf('Perlu update  : %d', count($updates)));
-        $this->line(sprintf('  rt berubah  : %d', $rtFill));
-        $this->line(sprintf('  rw berubah  : %d', $rwFill));
-        $this->line(sprintf('Di becoming NULL: %d', $toNull));
-        if ($noPair) {
-            $this->line(sprintf('Legacy tanpa pasangan tiket: %d', $noPair));
+        $this->line(sprintf('Total tiket              : %d', $totalTickets));
+        $this->line(sprintf('Anchor legacy-id valid   : %d', $anchorValid));
+        $this->line(sprintf('Tiket tanpa legacy-id    : %d', $noLegacyId));
+        $this->line(sprintf('Cadangan (desa|package)  : %d', $fallbackPairs));
+        $this->line(sprintf('Sudah sama               : %d', $same));
+        $this->line(sprintf('Baris berubah            : %d', count($updates)));
+        $this->line(sprintf('  terisi rt              : %d', $rtFill));
+        $this->line(sprintf('  terisi rw              : %d', $rwFill));
+        $this->line(sprintf('Menjadi NULL             : %d', $toNull));
+        if ($unknownLegacyId) {
+            $this->line(sprintf('Legacy-id tak dikenal    : %d', $unknownLegacyId));
         }
         $this->line('');
 
@@ -115,7 +160,10 @@ class SyncLegacyTicketRtRwCommand extends Command
             foreach ($u['set'] as $k => $v) {
                 $parts[] = $k.'='.json_encode($v);
             }
-            $this->line(sprintf('   ticket=%-5d kode=%-18s %s', $u['ticket_id'], $u['kode'], implode(' ', $parts)));
+            $this->line(sprintf(
+                '   ticket=%-5d kode=%-18s arah=%-6s %s',
+                $u['ticket_id'], $u['kode'], $u['direction'], implode(' ', $parts)
+            ));
         }
         if (count($updates) > 12) {
             $this->line('   ... +'.(count($updates) - 12).' lainnya');
@@ -133,7 +181,6 @@ class SyncLegacyTicketRtRwCommand extends Command
         $done = 0;
         $N->transaction(function () use ($N, $updates, &$done) {
             foreach (array_chunk($updates, 300) as $chunk) {
-                $ids = array_column($chunk, 'ticket_id');
                 foreach ($chunk as $u) {
                     $N->table('installation_tickets')->where('id', $u['ticket_id'])
                         ->update($u['set'] + ['updated_at' => now()]);
@@ -148,9 +195,53 @@ class SyncLegacyTicketRtRwCommand extends Command
     }
 
     /**
-     * Bersihkan nilai legacy: NULL / '' / '-' menjadi NULL.
-     * Nilai lain dipertahankan apa adanya (tanpa padding, legacy sudah
-     * konsisten 2-3 karakter).
+     * Hitung perubahan rt/rw satu tiket dan tambahkan ke rencana bila berbeda.
+     *
+     * @param  array<int,array{ticket_id:int,kode:string,direction:string,set:array<string,?string>}>  $updates
+     */
+    private static function planUpdate(array &$updates, int &$same, int $ticketId, string $kode, $curRt, $curRw, $legacyRt, $legacyRw): void
+    {
+        $expRt = self::clean($legacyRt);
+        $expRw = self::clean($legacyRw);
+        $nowRt = self::clean($curRt);
+        $nowRw = self::clean($curRw);
+
+        $set = [];
+        if ((string) $expRt !== (string) $nowRt) {
+            $set['rt'] = $expRt;
+        }
+        if ((string) $expRw !== (string) $nowRw) {
+            $set['rw'] = $expRw;
+        }
+
+        if ($set) {
+            $updates[] = [
+                'ticket_id' => $ticketId,
+                'kode' => $kode,
+                'direction' => self::direction($kode),
+                'set' => $set,
+            ];
+        } else {
+            $same++;
+        }
+    }
+
+    /**
+     * Arah/varian pemasangan dari kode instalasi legacy.
+     *
+     * Konvensi legacy: kode berakhiran `_D` (mis. `INS-501_D`) berarti
+     * pemasangan DEMPET. Selain itu dianggap NORMAL.
+     */
+    private static function direction(string $kode): string
+    {
+        $k = strtoupper(trim($kode));
+
+        return str_ends_with($k, '_D') ? 'DEMPET' : 'NORMAL';
+    }
+
+    /**
+     * Bersihkan nilai legacy: NULL / '' / '-'(/0) menjadi NULL.
+     * Nilai lain dipertahankan apa adanya (leading zero TIDAK dibuang).
      */
     private static function clean($v): ?string
     {
