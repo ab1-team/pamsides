@@ -370,6 +370,65 @@ class LegacyImportIdentityTest extends TestCase
             ->assertExitCode(0);
     }
 
+    /**
+     * Jalur cadangan (aligner) BEST-EFFORT: kalau akurasi aligner di bawah
+     * min-accuracy, cukup peringatkan & lewati pembaruan dari cadangan — JANGAN
+     * batalkan seluruh proses. Anchor utama tetap diterapkan.
+     *
+     * Skenario: satu tiket ber-anchor (rt/rw terisi dari legacy) + satu tiket
+     * TANPA legacy_installation_id (memicu jalur cadangan). Aligner tidak punya
+     * anchor customer -> akurasi 0.00% < batas, tapi dry-run tetap sukses dan
+     * tetap melaporkan update dari anchor utama.
+     */
+    #[Test]
+    public function dry_run_cadangan_akurasi_rendah_tetap_lanjut_dari_anchor_utama(): void
+    {
+        $this->seedAppTargets();
+        $this->seedLegacyFixture();
+
+        $adminId = (int) DB::table('users')->where('role', 'teknisi')->value('id');
+        $pkgId = (int) DB::table('installation_packages')->value('id');
+
+        // Tiket ber-anchor (legacy-installation-id valid) -> jalur utama.
+        InstallationTicket::create([
+            'legacy_installation_id' => self::SUNARTO_A['inst'],
+            'package_id' => $pkgId,
+            'applicant_name' => 'Sunarto',
+            'nik' => '3201010101010001',
+            'rt' => null,
+            'rw' => null,
+            'address' => 'Kp. A',
+            'lat' => 0,
+            'lng' => 0,
+            'status' => 'pending',
+            'village_id' => null,
+            'created_by' => $adminId,
+        ]);
+
+        // Tiket tanpa legacy-id -> memicu jalur cadangan aligner.
+        InstallationTicket::create([
+            'legacy_installation_id' => null,
+            'package_id' => $pkgId,
+            'applicant_name' => 'Tanpa Anchor',
+            'nik' => '3201010101010002',
+            'rt' => null,
+            'rw' => null,
+            'address' => 'Kp. B',
+            'lat' => 0,
+            'lng' => 0,
+            'status' => 'pending',
+            'village_id' => null,
+            'created_by' => $adminId,
+        ]);
+
+        // Dry-run HARUS tetap sukses meski akurasi cadangan rendah, dan tetap
+        // melaporkan anchor utama valid (proses tidak dibatalkan).
+        $this->artisan('legacy:sync-ticket-rtrw', ['--dry-run' => true, '--business' => 5])
+            ->expectsOutputToContain('Anchor legacy-id valid')
+            ->expectsOutputToContain('Cadangan aligner')
+            ->assertExitCode(0);
+    }
+
     // =========================================================
     // Fixture helpers
     // =========================================================
