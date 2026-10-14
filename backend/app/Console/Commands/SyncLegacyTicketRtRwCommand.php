@@ -96,33 +96,37 @@ class SyncLegacyTicketRtRwCommand extends Command
                 count($map), $align['acc'], $align['anchors'], $align['total']
             ));
 
-            // Pemetaan legacy-installation.id => ticket.id dari aligner lama.
-            $alreadyUsed = [];
-            foreach ($tickets as $t) {
-                if ($t->legacy_installation_id !== null && (int) $t->legacy_installation_id > 0) {
+            // Jalur cadangan bersifat BEST-EFFORT: kalau akurasi di bawah batas,
+            // cukup peringatkan dan LEWATI pembaruan dari cadangan — proses tetap
+            // lanjut memakai hasil anchor utama. Jangan pernah membatalkan proses.
+            if ($align['acc'] < $minAcc) {
+                $this->warn(sprintf(
+                    'Akurasi cadangan %.2f%% < batas %.2f%%: perbarui dari cadangan DILEWATI (anchor utama tetap diterapkan).',
+                    $align['acc'], $minAcc
+                ));
+            } else {
+                // Pemetaan legacy-installation.id => ticket.id dari aligner lama.
+                $alreadyUsed = [];
+                foreach ($tickets as $t) {
+                    if ($t->legacy_installation_id !== null && (int) $t->legacy_installation_id > 0) {
+                        $alreadyUsed[(int) $t->id] = true;
+                    }
+                }
+
+                foreach ($legacyById as $legacyId => $legacyRow) {
+                    $ticketId = $map[$legacyId] ?? null;
+                    if ($ticketId === null || ! isset($tickets[$ticketId]) || isset($alreadyUsed[$ticketId])) {
+                        continue;
+                    }
+                    $t = $tickets[$ticketId];
+                    // Hanya untuk tiket yang memang belum punya legacy-id.
+                    if ($t->legacy_installation_id !== null && (int) $t->legacy_installation_id > 0) {
+                        continue;
+                    }
+                    $fallbackPairs++;
+                    self::planUpdate($updates, $same, (int) $t->id, (string) $legacyRow->kode_instalasi, $t->rt, $t->rw, $legacyRow->rt, $legacyRow->rw);
                     $alreadyUsed[(int) $t->id] = true;
                 }
-            }
-
-            foreach ($legacyById as $legacyId => $legacyRow) {
-                $ticketId = $map[$legacyId] ?? null;
-                if ($ticketId === null || ! isset($tickets[$ticketId]) || isset($alreadyUsed[$ticketId])) {
-                    continue;
-                }
-                $t = $tickets[$ticketId];
-                // Hanya untuk tiket yang memang belum punya legacy-id.
-                if ($t->legacy_installation_id !== null && (int) $t->legacy_installation_id > 0) {
-                    continue;
-                }
-                $fallbackPairs++;
-                self::planUpdate($updates, $same, (int) $t->id, (string) $legacyRow->kode_instalasi, $t->rt, $t->rw, $legacyRow->rt, $legacyRow->rw);
-                $alreadyUsed[(int) $t->id] = true;
-            }
-
-            if ($align['acc'] < $minAcc) {
-                $this->error(sprintf('Akurasi cadangan %.2f%% < batas %.2f%%. DIBATALKAN.', $align['acc'], $minAcc));
-
-                return self::FAILURE;
             }
         } else {
             $this->line('Tidak ada tiket tanpa legacy-id: jalur cadangan aligner tidak dipakai.');
