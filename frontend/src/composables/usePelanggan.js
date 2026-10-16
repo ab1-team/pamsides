@@ -3,6 +3,7 @@ import { STATUS_TYPES, STATUS_COLORS } from '@/types/pelanggan'
 import customerService from '@/services/customer.service'
 import { confirmDelete } from '@/utils/deleteHandler'
 import { MySwal } from '@/utils/swal'
+import { formatAlamat } from '@/utils/alamat'
 
 export function usePelanggan(router = null) {
   // State untuk filter pencarian
@@ -46,7 +47,11 @@ export function usePelanggan(router = null) {
       : '??',
     avatarColor: ['#0ea5e9', '#f43f5e', '#10b981', '#8b5cf6', '#f59e0b'][c.id % 5],
     nik: c.nik || '-',
-    alamat: c.address || '-',
+    // Alamat dirakit dari beberapa sumber (address, village, hamlet, rt, rw),
+    // bukan hanya `address`. Tanpa itu pelanggan berbeda yang `address`-nya
+    // kosong/sama tampil identik ('Sunarto | - | - | -'). Logika disatukan di
+    // formatAlamat() supaya tidak diduplikasi di tempat lain (mis. laporan).
+    alamat: formatAlamat(c),
     no_telp: c.no_telp || '-',
     customer_code: c.customer_code || null,
     status: c.status || 'draft',
