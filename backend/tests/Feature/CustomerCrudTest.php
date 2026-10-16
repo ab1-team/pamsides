@@ -6,6 +6,7 @@ use App\Models\Customer;
 use App\Models\InstallationPackage;
 use App\Models\InstallationTicket;
 use App\Models\User;
+use App\Models\Village;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Laravel\Sanctum\Sanctum;
@@ -258,5 +259,100 @@ class CustomerCrudTest extends TestCase
 
         $this->postJson('/api/customers', $this->payload())->assertForbidden();
         $this->deleteJson('/api/customers/1')->assertForbidden();
+    }
+
+    /**
+     * RT/RW endpoint pelanggan diambil dari TIKET, bukan dari desa.
+     *
+     * Bug lama: search() membaca `$t->village?->rt`, padahal tabel `villages`
+     * tidak punya kolom rt/rw sama sekali — jadi endpoint SELALU mengembalikan
+     * rt=null rw=null walau tiketnya punya rt (mis. tiket 1593 rt='07').
+     * Sumber yang benar sama dengan MonthlyBillController: `$ticket->rt`.
+     */
+    #[Test]
+    public function rt_rw_pelanggan_diambil_dari_tiket_bukan_desa(): void
+    {
+        Sanctum::actingAs($this->admin(), ['*']);
+
+        // Desa sengaja dipasang supaya bila kode kembali membaca village,
+        // nilai desa yang salah (mis. '99') akan ketahuan lewat assertion.
+        $village = Village::create([
+            'code' => '2.07',
+            'village_name' => 'Sukamaju',
+            'hamlet_name' => 'Dusun Satu',
+        ]);
+
+        $this->makeActiveTicket('Warga Rt Tujuh', '3273010101010077', $village->id, rt: '07', rw: '03');
+
+        $res = $this->getJson('/api/customers/search?q=Warga Rt Tujuh');
+        $res->assertOk();
+        $this->assertCount(1, $res->json('data'));
+
+        $row = $res->json('data.0');
+        $this->assertSame('07', $row['rt'], 'rt harus diambil dari tiket, bukan dari desa.');
+        $this->assertSame('03', $row['rw'], 'rw harus diambil dari tiket, bukan dari desa.');
+    }
+
+    /**
+     * Nilai RT/RW kosong pada tiket dinormalisasi jadi null di respons:
+     * string kosong, whitespace, dan placeholder '-'.
+     */
+    #[Test]
+    public function rt_rw_kosong_dinormalisasi_jadi_null(): void
+    {
+        Sanctum::actingAs($this->admin(), ['*']);
+
+        $this->makeActiveTicket('Warga Rt Kosong', '3273010101010078', null, rt: '-', rw: '');
+        $this->makeActiveTicket('Warga Rt Spasi', '3273010101010079', null, rt: '   ', rw: '-');
+
+        $plain = $this->getJson('/api/customers/search?q=Warga Rt Kosong')->json('data.0');
+        $this->assertNull($plain['rt'], "rt '-' harus jadi null.");
+        $this->assertNull($plain['rw'], "rw '' harus jadi null.");
+
+        $spaced = $this->getJson('/api/customers/search?q=Warga Rt Spasi')->json('data.0');
+        $this->assertNull($spaced['rt'], 'rt whitespace harus jadi null.');
+        $this->assertNull($spaced['rw'], "rw '-' harus jadi null.");
+    }
+
+    /**
+     * Tiket aktif (punya record customer) yang punya rt/rw di DB.
+     * search() hanya menyaring status completed/suspended/terminated dan
+     * membuang baris tanpa customer, jadi tiket di sini harus punya keduanya.
+     */
+    private function makeActiveTicket(string $name, string $nik, ?int $villageId, string $rt, string $rw): InstallationTicket
+    {
+        $packageId = $this->packageId();
+
+        $owner = User::create([
+            'name' => $name,
+            'email' => strtolower(str_replace(' ', '-', $name)).'@pdam.test',
+            'password' => Hash::make('rahasia123'),
+            'role' => 'pelanggan',
+        ]);
+
+        $ticket = InstallationTicket::create([
+            'package_id' => $packageId,
+            'user_id' => $owner->id,
+            'applicant_name' => $name,
+            'nik' => $nik,
+            'rt' => $rt,
+            'rw' => $rw,
+            'address' => 'Jl. Uji RT/RW',
+            'phone' => '081200000099',
+            'lat' => 0,
+            'lng' => 0,
+            'status' => 'completed',
+            'village_id' => $villageId,
+            'created_by' => $owner->id,
+        ]);
+
+        Customer::create([
+            'ticket_id' => $ticket->id,
+            'user_id' => $owner->id,
+            'customer_code' => '005.'.substr($nik, -4).'.100.1',
+            'initial_meter_reading' => 0,
+        ]);
+
+        return $ticket;
     }
 }

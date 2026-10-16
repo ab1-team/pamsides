@@ -199,8 +199,12 @@ class CustomerController extends Controller
                 'address' => $t->address ?? '-',
                 'village' => $t->village?->village_name ?? '-',
                 'hamlet' => $t->village?->hamlet_name ?? '-',
-                'rt' => $t->village?->rt ?? null,
-                'rw' => $t->village?->rw ?? null,
+                // RT/RW milik TIKET instalasi, bukan desa: tabel `villages`
+                // tidak punya kolom rt/rw sama sekali, jadi `$t->village?->rt`
+                // SELALU null. Sumber yang benar sama dengan
+                // MonthlyBillController ('rt' => $customer->ticket?->rt).
+                'rt' => $this->blankToNull($t->rt),
+                'rw' => $this->blankToNull($t->rw),
                 'cater' => $t->user?->name ?? '-',
                 'package_id' => $package?->id ?? null,
                 'packageName' => $package?->name ?? 'Paket Standar',
