@@ -47,95 +47,23 @@ class ImportLegacyBillPaymentsCommand extends Command
 
         $this->info('Legacy usages with valid date: '.count($usages));
 
-        // legacy_inst_id → new_ticket_id → customer_id (di DB baru)
-        $packageMap = [];
-        $legacyPkgs = DB::connection('legacy')->table('packages')->get(['id', 'business_id', 'kelas']);
-        $newPkgs = DB::table('installation_packages')->get();
-        foreach ($legacyPkgs as $lp) {
-            $wantSuffixed = "{$lp->kelas} (B{$lp->business_id})";
-            $wantPlain = $lp->kelas;
-            foreach ($newPkgs as $np) {
-                if (strcasecmp($np->name, $wantSuffixed) === 0 || strcasecmp($np->name, $wantPlain) === 0) {
-                    $packageMap[(int) $lp->id] = (int) $np->id;
-                    break;
-                }
-            }
-        }
-
-        $instRows = DB::connection('legacy')
-            ->table('installations')
-            ->where('status', 'A')
-            ->get(['id', 'desa', 'package_id', 'customer_id']);
-
-        $customersById = [];
-        foreach (DB::connection('legacy')->table('customers')->get(['id', 'nama']) as $c) {
-            $customersById[(int) $c->id] = $c;
-        }
-
-        // Build legacy.villages.id → new.villages.id map by nama+dusun
-        $villageMap = [];
-        $legacyVillages = DB::connection('legacy')->table('villages')->get();
-        $localVillages = DB::table('villages')->get();
-        foreach ($legacyVillages as $lv) {
-            $nama = strtolower(trim((string) $lv->nama));
-            $dusun = strtolower(trim((string) ($lv->dusun ?? '')));
-            foreach ($localVillages as $nv) {
-                $matchNama = strtolower(trim((string) $nv->village_name)) === $nama;
-                $matchDusun = $dusun === '' || $dusun === '-'
-                    ? strtolower(trim((string) $nv->hamlet_name)) === ''
-                    : strtolower(trim((string) $nv->hamlet_name)) === $dusun;
-                if ($matchNama && $matchDusun) {
-                    $villageMap[(int) $lv->id] = (int) $nv->id;
-                    break;
-                }
-            }
-        }
-
-        $byTriple = [];
-        foreach ($instRows as $li) {
-            $cust = $customersById[(int) $li->customer_id] ?? null;
-            if (! $cust) {
-                continue;
-            }
-            $name = strtolower(trim((string) ($cust->nama ?? '')));
-            if ($name === '') {
-                continue;
-            }
-            $newVillage = $villageMap[(int) $li->desa] ?? null;
-            if ($newVillage === null) {
-                continue;
-            }
-            $key = $name.'|'.$newVillage.'|'.((int) $li->package_id);
-            if (! isset($byTriple[$key])) {
-                $byTriple[$key] = [];
-            }
-            $byTriple[$key][] = (int) $li->id;
-        }
-
-        $newTickets = DB::table('installation_tickets')->orderBy('id')->get(['id', 'applicant_name', 'village_id', 'package_id']);
-        $newByTriple = [];
-        foreach ($newTickets as $nt) {
-            $name = strtolower(trim((string) $nt->applicant_name));
-            $key = $name.'|'.((int) $nt->village_id).'|'.((int) $nt->package_id);
-            if (! isset($newByTriple[$key])) {
-                $newByTriple[$key] = (int) $nt->id;
-            }
-        }
-
-        $instToTicket = [];
-        foreach ($byTriple as $key => $instIds) {
-            $parts = explode('|', $key);
-            $newPkg = $packageMap[(int) $parts[2]] ?? null;
-            if ($newPkg === null) {
-                continue;
-            }
-            $newKey = $parts[0].'|'.$parts[1].'|'.$newPkg;
-            if (isset($newByTriple[$newKey])) {
-                foreach ($instIds as $iid) {
-                    $instToTicket[(int) $iid] = $newByTriple[$newKey];
-                }
-            }
-        }
+        // Identitas instalasi legacy → tiket baru memakai anchor PASTI
+        // `installation_tickets.legacy_installation_id` (lihat
+        // 2026_10_14_000001_add_legacy_installation_id_to_installation_tickets_table).
+        //
+        // Sebelumnya pemetaan menebak lewat triple nama|desa|paket. Kunci itu
+        // TIDAK unik (dua pelanggan nama sama di desa+paket sama saling
+        // menimpa), sehingga pembayaran bisa tertempel ke tagihan pelanggan
+        // lain. Anchor legacy id satu-satu, jadi tidak ada tebakan di sini.
+        //
+        // Satu query saja (kolom berindeks), tanpa N+1.
+        $instToTicket = DB::table('installation_tickets')
+            ->whereNotNull('legacy_installation_id')
+            ->orderBy('id')
+            ->get(['id', 'legacy_installation_id'])
+            ->mapWithKeys(fn ($t) => [(int) $t->legacy_installation_id => (int) $t->id])
+            ->all();
+        $this->info('inst→ticket (legacy_installation_id): '.count($instToTicket));
 
         // ticket → customer row id
         $ticketToCustomer = DB::table('customers')
@@ -146,6 +74,8 @@ class ImportLegacyBillPaymentsCommand extends Command
         $usageToBill = [];   // legacy_usage_id → monthly_bills.id
         $usageToDate = [];   // legacy_usage_id → ['year'=>Y, 'month'=>M]
         $skippedUsages = [];
+        $usageNoTicket = 0;   // usage tanpa tiket (legacy_installation_id tidak ketemu)
+        $usageNoBill = 0;     // usage bertiket tapi tanpa tagihan pada bulan itu
 
         // Peta tagihan bulanan dimuat SEKALI lewat satu query, lalu dipakai
         // sebagai lookup in-memory.
@@ -180,6 +110,7 @@ class ImportLegacyBillPaymentsCommand extends Command
             $instId = (int) $u->id_instalasi;
             $ticketId = $instToTicket[$instId] ?? null;
             if (! $ticketId) {
+                $usageNoTicket++;
                 $skippedUsages[] = ['usage_id' => $u->id, 'reason' => 'no inst→ticket'];
 
                 continue;
@@ -194,6 +125,7 @@ class ImportLegacyBillPaymentsCommand extends Command
             $billId = $billIndex[BillPaymentImporter::billIndexKey((int) $customerId, $year, $month)] ?? null;
 
             if (! $billId) {
+                $usageNoBill++;
                 $skippedUsages[] = ['usage_id' => $u->id, 'reason' => "no monthly_bill for cust={$customerId} {$year}-{$month}"];
 
                 continue;
@@ -204,6 +136,9 @@ class ImportLegacyBillPaymentsCommand extends Command
         }
         $this->info('usage→bill mapped: '.count($usageToBill));
         $this->info('usage→bill skipped: '.count($skippedUsages));
+        $this->info('inst→ticket: '.count($instToTicket));
+        $this->info('usage tanpa tiket: '.$usageNoTicket);
+        $this->info('usage tanpa tagihan: '.$usageNoBill);
 
         // 3. Existing bill_payments by bill_id (1 bayar event per bill, kita track by composite key bill_id+paid_at)
         $existingBillPays = [];
@@ -571,6 +506,9 @@ class ImportLegacyBillPaymentsCommand extends Command
 
         $this->line('');
         $this->info('Ringkasan:');
+        $this->line('  inst→ticket: '.count($instToTicket));
+        $this->line('  usage tanpa tiket: '.$usageNoTicket);
+        $this->line('  usage tanpa tagihan: '.$usageNoBill);
         foreach ($stats as $k => $v) {
             $this->line("  $k : $v");
         }
