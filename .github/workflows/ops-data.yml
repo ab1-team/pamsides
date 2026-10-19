@@ -108,43 +108,31 @@ jobs:
           echo "run: import:bill-payments $FLAGS --business=5"
           ssh -p ${{ secrets.SSH_PORT }} -o IdentitiesOnly=yes "$SSH_USER@$SSH_HOST" "set -e; docker exec pamsides-app php artisan import:bill-payments $FLAGS --business=5 --no-interaction" | tee -a import-bill-payments.log
 
-      # Flags: baca + hitung dulu (tanpa ubah apa pun), lalu set kolom HANYA untuk
-      # baris yang password-nya sama dengan password bawaan "password"
-      # (lihat ImportLegacyUsersCommand / ImportLegacyCustomersCommand). Baris lain
-      # tidak disentuh; tidak ada penghapusan data. Cetak jumlah yang diubah.
+      # Flags: baca + hitung dulu, lalu set kolom HANYA untuk baris yang
+      # password-nya sama dengan password bawaan (lihat ImportLegacyUsersCommand /
+      # ImportLegacyCustomersCommand). Baris lain tidak disentuh; tidak ada delete.
+      # Pola sama dengan step lain di file ini (lihat .github/workflows/deploy.yml):
+      # `docker exec pamsides-app php artisan tinker --execute="..."`.
+      # Kode PHP dikirim sebagai argumen --execute, BUKAN lewat stdin/heredoc.
+      # Versi lama `... tinker | tee -a flags.log <<'PHP'` memberi heredoc ke
+      # `tee`, sehingga PHP tidak pernah sampai ke tinker: step tampak sukses
+      # padahal users_total/flagged_changed tidak pernah tercetak.
+      #
+      # Lapisan kutip: YAML block scalar -> shell -> ssh -> docker -> PHP.
+      # Perintah jarak-jauh dibungkus kutip tunggal (satu argumen ssh), jadi
+      # kutip tunggal PHP ditulis '"'"' agar pembungkus tidak tertutup.
+      # Remote shell lalu mengevaluasi --execute="...": setiap `$` ditulis
+      # `\$` supaya diteruskan apa adanya ke PHP (tidak diekspansi). Tanda `"`
+      # hanya membungkus --execute; kutip ganda lain tidak dipakai.
+      # Alur: baca + hitung dulu (echo default_password_matched), baru update
+      # HANYA id yang cocok (whereIn). Tidak ada delete.
       - name: Flag default-password accounts
         if: steps.plan.outputs.run_flags == 'true'
         env:
           SSH_HOST: ${{ secrets.SSH_HOST }}
           SSH_USER: ${{ secrets.SSH_USER }}
         run: |
-          ssh -p ${{ secrets.SSH_PORT }} -o IdentitiesOnly=yes "$SSH_USER@$SSH_HOST" 'set -e; docker exec -i pamsides-app php artisan tinker' | tee -a flags.log <<'PHP'
-          $default = 'password';
-          $total   = DB::table('users')->count();
-          $already = DB::table('users')->where('must_change_password', true)->count();
-
-          // Tahap 1: hanya baca + hitung.
-          $matched = [];
-          foreach (DB::table('users')->where('must_change_password', false)->orderBy('id')->pluck('id') as $id) {
-              $hash = DB::table('users')->where('id', $id)->value('password');
-              if (is_string($hash) && $hash !== '' && Hash::check($default, $hash)) {
-                  $matched[] = $id;
-              }
-          }
-          echo 'users_total=' . $total . ' already_flagged=' . $already . ' default_password_matched=' . count($matched) . PHP_EOL;
-
-          // Tahap 2: set kolom hanya untuk id yang cocok (tanpa menyentuh baris lain).
-          $changed = 0;
-          if (! empty($matched)) {
-              $changed = DB::table('users')
-                  ->whereIn('id', $matched)
-                  ->where('must_change_password', false)
-                  ->update(['must_change_password' => true]);
-          }
-          echo 'flagged_changed=' . $changed . PHP_EOL;
-          echo 'flagged_after=' . DB::table('users')->where('must_change_password', true)->count() . PHP_EOL;
-          PHP
-
+          ssh -p ${{ secrets.SSH_PORT }} -o IdentitiesOnly=yes "$SSH_USER@$SSH_HOST" 'set -e; docker exec pamsides-app php artisan tinker --execute="\$default = '"'"'password'"'"'; \$total = DB::table('"'"'users'"'"')->count(); \$already = DB::table('"'"'users'"'"')->where('"'"'must_change_password'"'"', true)->count(); \$matched = DB::table('"'"'users'"'"')->where('"'"'must_change_password'"'"', false)->pluck('"'"'password'"'"', '"'"'id'"'"')->filter(fn (\$h) => is_string(\$h) && \$h !== '"'"''"'"' && Hash::check(\$default, \$h))->keys()->map(fn (\$id) => (int) \$id)->all(); echo '"'"'users_total='"'"' . \$total . '"'"' already_flagged='"'"' . \$already . '"'"' default_password_matched='"'"' . count(\$matched) . PHP_EOL; \$changed = empty(\$matched) ? 0 : DB::table('"'"'users'"'"')->whereIn('"'"'id'"'"', \$matched)->where('"'"'must_change_password'"'"', false)->update(['"'"'must_change_password'"'"' => true]); echo '"'"'flagged_changed='"'"' . \$changed . PHP_EOL; echo '"'"'flagged_after='"'"' . DB::table('"'"'users'"'"')->where('"'"'must_change_password'"'"', true)->count() . PHP_EOL;"' | tee -a flags.log
       # Counter akhir: sama persis dengan "Counts before" untuk pembanding.
       - name: Counts after
         run: |
