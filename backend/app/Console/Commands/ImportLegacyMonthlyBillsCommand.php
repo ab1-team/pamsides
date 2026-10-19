@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Models\Customer;
 use App\Models\InstallationPackage;
+use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 
@@ -20,99 +21,44 @@ class ImportLegacyMonthlyBillsCommand extends Command
     public function handle(): int
     {
         $isDryRun = (bool) $this->option('dry-run');
-        $isForce  = (bool) $this->option('force');
+        $isForce = (bool) $this->option('force');
         $bizFilter = $this->option('business');
         $chunkSize = max(1, (int) $this->option('chunk'));
 
         if (! $isDryRun && ! $isForce) {
             $this->error('Wajib --dry-run atau --force');
+
             return self::FAILURE;
         }
         $this->warn($isDryRun ? 'DRY-RUN' : 'FORCE MODE');
-        if ($bizFilter) $this->info("Filter: hanya business_id={$bizFilter} di DB lama.");
+        if ($bizFilter) {
+            $this->info("Filter: hanya business_id={$bizFilter} di DB lama.");
+        }
 
-        // 1. Build ticket/customer mapping (sama seperti meter_readings)
+        // 1. Build ticket/customer mapping
+        //
+        // ANCHOR IDENTITAS: `installation_tickets.legacy_installation_id`
+        // (lihat docs/database.md §4 `installation_tickets`). Heuristik triple
+        // nama|desa|paket sudah DIBUANG dari jalur ini: pada data produksi ia
+        // menautkan 198/201 instalasi ke tiket yang SALAH (nama ganda).
         $this->info('Building mappings...');
 
-        $packageMap = [];
-        $legacyPkgs = DB::connection('legacy')->table('packages')->get(['id', 'business_id', 'kelas']);
-        $newPkgs = DB::table('installation_packages')->get();
-        foreach ($legacyPkgs as $lp) {
-            $wantSuffixed = "{$lp->kelas} (B{$lp->business_id})";
-            $wantPlain    = $lp->kelas;
-            foreach ($newPkgs as $np) {
-                if (strcasecmp($np->name, $wantSuffixed) === 0 || strcasecmp($np->name, $wantPlain) === 0) {
-                    $packageMap[(int) $lp->id] = (int) $np->id;
-                    break;
-                }
-            }
-        }
-
-        $instRows = DB::connection('legacy')
-            ->table('installations')
-            ->where('status', 'A')
-            ->get(['id', 'desa', 'package_id', 'customer_id']);
-
-        $customersById = [];
-        foreach (DB::connection('legacy')->table('customers')->get(['id', 'nama']) as $c) {
-            $customersById[(int) $c->id] = $c;
-        }
-
-        // Build legacy.villages.id → new.villages.id map by nama+dusun
-        $villageMap = [];
-        $legacyVillages = DB::connection('legacy')->table('villages')->get();
-        $localVillages = DB::table('villages')->get();
-        foreach ($legacyVillages as $lv) {
-            $nama = strtolower(trim((string) $lv->nama));
-            $dusun = strtolower(trim((string) ($lv->dusun ?? '')));
-            foreach ($localVillages as $nv) {
-                $matchNama = strtolower(trim((string) $nv->village_name)) === $nama;
-                $matchDusun = $dusun === '' || $dusun === '-'
-                    ? strtolower(trim((string) $nv->hamlet_name)) === ''
-                    : strtolower(trim((string) $nv->hamlet_name)) === $dusun;
-                if ($matchNama && $matchDusun) {
-                    $villageMap[(int) $lv->id] = (int) $nv->id;
-                    break;
-                }
-            }
-        }
-
-        $byTriple = [];
-        foreach ($instRows as $li) {
-            $cust = $customersById[(int) $li->customer_id] ?? null;
-            if (! $cust) continue;
-            $name = strtolower(trim((string) ($cust->nama ?? '')));
-            if ($name === '') continue;
-            $newVillage = $villageMap[(int) $li->desa] ?? null;
-            if ($newVillage === null) continue;
-            $key = $name.'|'.$newVillage.'|'.((int) $li->package_id);
-            if (! isset($byTriple[$key])) $byTriple[$key] = [];
-            $byTriple[$key][] = (int) $li->id;
-        }
-
-        $newTickets = DB::table('installation_tickets')->orderBy('id')->get(['id', 'applicant_name', 'village_id', 'package_id']);
-        $newByTriple = [];
-        foreach ($newTickets as $nt) {
-            $name = strtolower(trim((string) $nt->applicant_name));
-            $key = $name.'|'.((int) $nt->village_id).'|'.((int) $nt->package_id);
-            if (! isset($newByTriple[$key])) {
-                $newByTriple[$key] = (int) $nt->id;
-            }
-        }
-
+        // legacy installations: TANPA filter status ('A' dulu membuang 31
+        // instalasi yang tetap punya usages/tagihan). Penentu akhir tetap
+        // keberadaan baris `customers` ($ticketToCustomer) di bawah. Karena
+        // itu `$instRows` / `$villageMap` / `$byTriple` / `$newByTriple` /
+        // `$packageMap` tidak lagi dibutuhkan oleh mapping ini dan DIHAPUS
+        // (tidak ada bagian lain di file ini yang memakainya).
         $instToTicket = [];
-        foreach ($byTriple as $key => $instIds) {
-            $parts = explode('|', $key);
-            $newPkg = $packageMap[(int) $parts[2]] ?? null;
-            if ($newPkg === null) continue;
-            $newKey = $parts[0].'|'.$parts[1].'|'.$newPkg;
-            if (isset($newByTriple[$newKey])) {
-                foreach ($instIds as $iid) {
-                    $instToTicket[(int) $iid] = $newByTriple[$newKey];
-                }
+        foreach (DB::table('installation_tickets')
+            ->whereNotNull('legacy_installation_id')
+            ->orderBy('id')
+            ->get(['id', 'legacy_installation_id']) as $t) {
+            $legacyInstId = (int) $t->legacy_installation_id;
+            if (! isset($instToTicket[$legacyInstId])) {
+                $instToTicket[$legacyInstId] = (int) $t->id;
             }
         }
-        $this->info('inst→ticket: '.count($instToTicket));
 
         // ticket → customer row + package_id
         $ticketInfo = DB::table('installation_tickets')
@@ -164,9 +110,11 @@ class ImportLegacyMonthlyBillsCommand extends Command
             'updated' => 0,
             'skipped' => 0,
             'failed' => 0,
+            'no_ticket' => 0,
+            'no_customer' => 0,
         ];
         $skipped = [];
-        $failed  = [];
+        $failed = [];
 
         $batch = [];
         $batchSize = 500;
@@ -178,13 +126,21 @@ class ImportLegacyMonthlyBillsCommand extends Command
                 $ticketId = $instToTicket[$legacyInstId] ?? null;
                 if (! $ticketId) {
                     $stats['skipped']++;
-                    if (count($skipped) < 50) $skipped[] = ['usage_id' => $u->id, 'reason' => 'no inst→ticket'];
+                    $stats['no_ticket']++;
+                    if (count($skipped) < 50) {
+                        $skipped[] = ['usage_id' => $u->id, 'reason' => 'no inst→ticket'];
+                    }
+
                     continue;
                 }
                 $customerId = $ticketToCustomer[$ticketId] ?? null;
                 if (! $customerId) {
                     $stats['skipped']++;
-                    if (count($skipped) < 50) $skipped[] = ['usage_id' => $u->id, 'reason' => 'no customer'];
+                    $stats['no_customer']++;
+                    if (count($skipped) < 50) {
+                        $skipped[] = ['usage_id' => $u->id, 'reason' => 'no customer'];
+                    }
+
                     continue;
                 }
                 $newPkgId = (int) ($ticketInfo[$ticketId]->package_id ?? 0);
@@ -193,27 +149,35 @@ class ImportLegacyMonthlyBillsCommand extends Command
                 $tgl = trim((string) ($u->tgl_pemakaian ?? ''));
                 if ($tgl === '' || strlen($tgl) < 8) {
                     $stats['skipped']++;
+
                     continue;
                 }
                 try {
-                    $date = \Carbon\Carbon::parse($tgl);
+                    $date = Carbon::parse($tgl);
                 } catch (\Throwable) {
                     $stats['skipped']++;
+
                     continue;
                 }
-                $year  = (int) $date->year;
+                $year = (int) $date->year;
                 $month = (int) $date->month;
 
                 // meter values
                 $start = (int) filter_var((string) ($u->awal ?? '0'), FILTER_SANITIZE_NUMBER_INT);
-                $end   = (int) filter_var((string) ($u->akhir ?? '0'), FILTER_SANITIZE_NUMBER_INT);
-                if ($start < 0) $start = 0;
-                if ($end < 0)   $end = 0;
+                $end = (int) filter_var((string) ($u->akhir ?? '0'), FILTER_SANITIZE_NUMBER_INT);
+                if ($start < 0) {
+                    $start = 0;
+                }
+                if ($end < 0) {
+                    $end = 0;
+                }
                 $usageM3 = max(0, $end - $start);
 
                 // usage_charge dari legacy `nominal` (varchar/numeric)
                 $nominal = (int) filter_var((string) ($u->nominal ?? '0'), FILTER_SANITIZE_NUMBER_INT);
-                if ($nominal < 0) $nominal = 0;
+                if ($nominal < 0) {
+                    $nominal = 0;
+                }
 
                 // status
                 $statusMap = ['PAID' => 'paid', 'UNPAID' => 'unpaid', 'NON' => 'unpaid'];
@@ -224,7 +188,7 @@ class ImportLegacyMonthlyBillsCommand extends Command
                 $tglAkhir = trim((string) ($u->tgl_akhir ?? ''));
                 if ($tglAkhir !== '' && strlen($tglAkhir) >= 8) {
                     try {
-                        $dueDate = \Carbon\Carbon::parse($tglAkhir)->toDateString();
+                        $dueDate = Carbon::parse($tglAkhir)->toDateString();
                     } catch (\Throwable) {
                         $dueDate = $date->copy()->addMonth()->day(20)->toDateString();
                     }
@@ -256,19 +220,19 @@ class ImportLegacyMonthlyBillsCommand extends Command
                 $key = "{$customerId}|{$year}|{$month}";
                 $now = now();
                 $data = [
-                    'customer_id'           => (int) $customerId,
-                    'billing_period_year'   => $year,
-                    'billing_period_month'  => $month,
-                    'meter_reading_start'   => $start,
-                    'meter_reading_end'     => $end,
-                    'usage_m3'              => $usageM3,
-                    'usage_charge'          => $nominal,
-                    'abodemen'              => $abodemen,
-                    'penalty_amount'        => $penalty,
-                    'total_amount'          => $total,
-                    'status'                => $status,
-                    'due_date'              => $dueDate,
-                    'updated_at'            => $now,
+                    'customer_id' => (int) $customerId,
+                    'billing_period_year' => $year,
+                    'billing_period_month' => $month,
+                    'meter_reading_start' => $start,
+                    'meter_reading_end' => $end,
+                    'usage_m3' => $usageM3,
+                    'usage_charge' => $nominal,
+                    'abodemen' => $abodemen,
+                    'penalty_amount' => $penalty,
+                    'total_amount' => $total,
+                    'status' => $status,
+                    'due_date' => $dueDate,
+                    'updated_at' => $now,
                 ];
 
                 if (isset($existingMB[$key])) {
@@ -305,7 +269,9 @@ class ImportLegacyMonthlyBillsCommand extends Command
                 }
             } catch (\Throwable $e) {
                 $stats['failed']++;
-                if (count($failed) < 50) $failed[] = ['usage_id' => $u->id, 'error' => $e->getMessage()];
+                if (count($failed) < 50) {
+                    $failed[] = ['usage_id' => $u->id, 'error' => $e->getMessage()];
+                }
             }
         }
 
@@ -317,17 +283,31 @@ class ImportLegacyMonthlyBillsCommand extends Command
         }
 
         $this->line('');
+        $this->info('Mapping (anchor legacy_installation_id):');
+        $this->line('  inst→ticket: '.count($instToTicket));
+        $this->line('  usages tanpa tiket: '.$stats['no_ticket']);
+        $this->line('  usages tanpa pelanggan: '.$stats['no_customer']);
+
+        $this->line('');
         $this->info('Ringkasan:');
-        foreach ($stats as $k => $v) $this->line("  $k : $v");
+        foreach ($stats as $k => $v) {
+            $this->line("  $k : $v");
+        }
+        $this->line('  pasangan dibuat: '.$stats['created']);
+        $this->line('  pasangan diupdate: '.$stats['updated']);
         if (! empty($skipped)) {
             $this->line('');
             $this->warn('Skipped (10):');
-            foreach (array_slice($skipped, 0, 10) as $s) $this->line('  '.json_encode($s, JSON_UNESCAPED_UNICODE));
+            foreach (array_slice($skipped, 0, 10) as $s) {
+                $this->line('  '.json_encode($s, JSON_UNESCAPED_UNICODE));
+            }
         }
         if (! empty($failed)) {
             $this->line('');
             $this->error('Failed (10):');
-            foreach (array_slice($failed, 0, 10) as $f) $this->line('  '.json_encode($f, JSON_UNESCAPED_UNICODE));
+            foreach (array_slice($failed, 0, 10) as $f) {
+                $this->line('  '.json_encode($f, JSON_UNESCAPED_UNICODE));
+            }
         }
 
         return self::SUCCESS;
