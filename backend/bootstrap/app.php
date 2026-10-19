@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Middleware\CheckRole;
+use App\Http\Middleware\EnforcePasswordChange;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -19,6 +20,14 @@ return Application::configure(basePath: dirname(__DIR__))
         // Aktifkan throttle bawaan untuk seluruh grup `api`. Tanpa ini
         // tidak ada limiter yang berlaku pada route di routes/api.php.
         $middleware->throttleApi();
+
+        // Wajib ganti password: ditaruh di grup `api` SETELAH `auth:sanctum`
+        // milik route, sehingga hanya request ter-auth yang dinilai (request
+        // login publik tanpa user tetap lolos). Lihat EnforcePasswordChange
+        // untuk daftar endpoint yang dikecualikan.
+        $middleware->appendToGroup('api', [
+            EnforcePasswordChange::class,
+        ]);
 
         $middleware->alias([
             'role' => CheckRole::class,

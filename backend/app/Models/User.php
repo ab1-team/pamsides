@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -11,11 +10,11 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 
-#[Fillable(['name', 'email', 'password', 'role', 'avatar_path', 'jabatan_id'])]
+#[Fillable(['name', 'email', 'password', 'role', 'avatar_path', 'jabatan_id', 'must_change_password'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
-    use HasFactory, Notifiable, HasApiTokens;
+    use HasApiTokens, HasFactory, Notifiable;
 
     /** Status tiket instalasi yang boleh dilihat oleh teknisi. */
     public const TICKET_STATUSES_FOR_TEKNISI = ['surveyed', 'unpaid', 'processing', 'completed'];
@@ -68,7 +67,8 @@ class User extends Authenticatable
     {
         return [
             'email_verified_at' => 'datetime',
-            'password'          => 'hashed',
+            'password' => 'hashed',
+            'must_change_password' => 'boolean',
         ];
     }
 }
