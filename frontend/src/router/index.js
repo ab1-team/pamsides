@@ -45,6 +45,8 @@ import ArsipInstalasi from '@/presentations/views/app/admin/arsipDashbord/ArsipI
 import NotFoundView from '@/presentations/views/app/NotFoundView.vue'
 
 import { getDashboardRoute } from './dashboardRoutes'
+import { useUiStore } from '@/stores/uiStore'
+import profileService from '@/services/profile.service'
 
 // NOTE: DashboardHome merender dashboard per-role lewat dynamic component,
 // jadi admin/surveyor/pelanggan berbagi path /app. Teknisi punya route khusus
@@ -464,6 +466,7 @@ router.beforeEach((to) => {
   const expiresAt = localStorage.getItem('auth_expires_at')
   const storedRole = localStorage.getItem('user_role')
   const isAuthPage = to.name === 'login'
+  const isProfilPage = to.name === 'profil'
   const now = Date.now()
 
   if (token && expiresAt && now > parseInt(expiresAt)) {
@@ -471,6 +474,7 @@ router.beforeEach((to) => {
     localStorage.removeItem('user_data')
     localStorage.removeItem('user_role')
     localStorage.removeItem('auth_expires_at')
+    localStorage.removeItem('must_change_password')
 
     return {
       name: 'login'
@@ -510,9 +514,48 @@ router.beforeEach((to) => {
     localStorage.removeItem('user_data')
     localStorage.removeItem('user_role')
     localStorage.removeItem('auth_expires_at')
+    localStorage.removeItem('must_change_password')
 
     return {
       name: 'login'
+    }
+  }
+
+  // ── Kewajiban ganti password (B3) ────────────────────────────
+  // Sumber flag: respons login (LoginView menyimpan ke uiStore) dan
+  // GET /me (disinkronkan di bawah saat flag belum aktif, mis. setelah
+  // refresh halaman atau sesi dibuat sebelum fitur ini ada).
+  //
+  // Anti-loop: halaman tujuan (/app/profil) DIKECUALIKAN lewat `isProfilPage`
+  // dan redirect memakai `{ name: 'profil' }` (bukan path mentah), sehingga
+  // evaluasi berikutnya untuk /app/profil selalu lolos. Blok ini diletakkan
+  // SETELAH penanganan login/token/role agar redirect yang sudah ada tidak
+  // menimpa profil dan sebaliknya.
+  const uiStore = useUiStore()
+  const mustChangePassword =
+    uiStore.mustChangePassword || localStorage.getItem('must_change_password') === 'true'
+
+  if (!mustChangePassword) {
+    // Satu kali per sesi saat flag belum aktif. Endpoint /me tetap boleh
+    // diakses backend selama flag true, jadi ini aman walau store basi.
+    if (localStorage.getItem('must_change_password_checked') !== token) {
+      localStorage.setItem('must_change_password_checked', token)
+      profileService
+        .getMe()
+        .then((res) => {
+          const flag = (res?.data || res)?.must_change_password
+          if (flag === true && localStorage.getItem('auth_token') === token) {
+            uiStore.setMustChangePassword(true)
+          }
+        })
+        .catch(() => {
+          // Gagal cek: jangan blokir navigasi; request ter-auth lain akan
+          // tetap 403 dan halaman profil tetap dapat dibuka manual.
+        })
+    }
+  } else if (!isProfilPage) {
+    return {
+      name: 'profil'
     }
   }
 
