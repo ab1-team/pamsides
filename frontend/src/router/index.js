@@ -532,31 +532,59 @@ router.beforeEach((to) => {
   // SETELAH penanganan login/token/role agar redirect yang sudah ada tidak
   // menimpa profil dan sebaliknya.
   const uiStore = useUiStore()
+  // Flag bisa tersimpan di uiStore (respons login versi baru) atau di
+  // user_data (respons login lama: `must_change_password` ada di objek user
+  // yang disimpan LoginView). Tanpa fallback user_data, flag dari login tidak
+  // pernah terbaca selama pengecekan /me sesi ini belum berjalan.
+  let userDataFlag = undefined
+  try {
+    userDataFlag = JSON.parse(localStorage.getItem('user_data') || 'null')?.must_change_password
+  } catch {
+    userDataFlag = undefined
+  }
   const mustChangePassword =
-    uiStore.mustChangePassword || localStorage.getItem('must_change_password') === 'true'
+    uiStore.mustChangePassword ||
+    localStorage.getItem('must_change_password') === 'true' ||
+    userDataFlag === true
 
-  if (!mustChangePassword) {
-    // Satu kali per sesi saat flag belum aktif. Endpoint /me tetap boleh
-    // diakses backend selama flag true, jadi ini aman walau store basi.
-    if (localStorage.getItem('must_change_password_checked') !== token) {
-      localStorage.setItem('must_change_password_checked', token)
-      profileService
-        .getMe()
-        .then((res) => {
-          const flag = (res?.data || res)?.must_change_password
-          if (flag === true && localStorage.getItem('auth_token') === token) {
-            uiStore.setMustChangePassword(true)
-          }
-        })
-        .catch(() => {
-          // Gagal cek: jangan blokir navigasi; request ter-auth lain akan
-          // tetap 403 dan halaman profil tetap dapat dibuka manual.
-        })
+  // Bila sudah di profil, lanjutkan ke pengecekan role di bawah (bukan
+  // return true prematur); profil tidak ada di GUARDED_PREFIXES sehingga
+  // hasilnya tetap lolos.
+  // Hanya sinkronkan store saat flag tidak aktif di store — setelah
+  // setMustChangePassword(false) (password berhasil diubah), jangan
+  // membaliknya lagi dari penanda yang tersisa.
+  if (mustChangePassword) {
+    if (!uiStore.mustChangePassword) uiStore.setMustChangePassword(true)
+    if (!isProfilPage) {
+      return {
+        name: 'profil'
+      }
     }
-  } else if (!isProfilPage) {
-    return {
-      name: 'profil'
-    }
+  }
+
+  // Flag belum aktif: cek /me SEKALI per sesi (penanda per token). Hasilnya
+  // HARUS ditunggu pada navigasi pertama — kalau tidak, router sudah
+  // meneruskan ke tujuan awal (mis. /app) sebelum flag sempat diketahui.
+  // Setelah dicek (apa pun hasilnya), penanda token mencegah cek berulang,
+  // jadi `false` tidak memicu request di tiap navigasi.
+  if (!isProfilPage && localStorage.getItem('must_change_password_checked') !== token) {
+    localStorage.setItem('must_change_password_checked', token)
+    return Promise.resolve()
+      .then(() => profileService.getMe())
+      .then((res) => {
+        const flag = (res?.data || res)?.must_change_password
+        // Fail-open: hanya redirect bila backend tegas menyatakan true.
+        if (flag === true && localStorage.getItem('auth_token') === token) {
+          uiStore.setMustChangePassword(true)
+          return { name: 'profil' }
+        }
+        return true
+      })
+      .catch(() => {
+        // Gagal cek: jangan blokir navigasi; request ter-auth lain akan
+        // tetap 403 dan halaman profil tetap dapat dibuka manual.
+        return true
+      })
   }
 
   // Temukan prefix yang cocok. Prefix terpanjang didahulukan supaya
