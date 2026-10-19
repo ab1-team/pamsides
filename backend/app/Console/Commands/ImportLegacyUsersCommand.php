@@ -2,11 +2,10 @@
 
 namespace App\Console\Commands;
 
+use App\Models\User;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Log;
-use App\Models\User;
 
 class ImportLegacyUsersCommand extends Command
 {
@@ -56,7 +55,13 @@ class ImportLegacyUsersCommand extends Command
         $existingMaxId = User::max('id') ?? 0;
         $this->info('ID tertinggi di DB baru saat ini: '.$existingMaxId);
 
-        $created = 0; $updated = 0; $skipped = 0; $errors = [];
+        $created = 0;
+        $updated = 0;
+        $skipped = 0;
+        $errors = [];
+        // Akun staff yang memakai password bawaan (legacy non-bcrypt/kosong)
+        // -> wajib reset; dicatat untuk laporan migrasi.
+        $needsReset = [];
         $bar = $this->output->createProgressBar($legacyUsers->count());
         $bar->start();
 
@@ -68,8 +73,11 @@ class ImportLegacyUsersCommand extends Command
                 // Skip baris tanpa nama (data rusak)
                 if ($name === '') {
                     $skipped++;
-                    if (! $isDryRun) $this->line("\n  [SKIP] legacy_id={$row->id} nama kosong");
+                    if (! $isDryRun) {
+                        $this->line("\n  [SKIP] legacy_id={$row->id} nama kosong");
+                    }
                     $bar->advance();
+
                     continue;
                 }
 
@@ -88,6 +96,7 @@ class ImportLegacyUsersCommand extends Command
                         $password['mode']
                     ));
                     $bar->advance();
+
                     continue;
                 }
 
@@ -97,13 +106,18 @@ class ImportLegacyUsersCommand extends Command
                 $user = User::updateOrCreate(
                     ['email' => $email],
                     [
-                        'id'          => $newId,
-                        'name'        => $name,
-                        'password'    => $password['hash'],
-                        'role'        => $role,
-                        'jabatan_id'  => (int) ($row->jabatan ?? 0) ?: null,
+                        'id' => $newId,
+                        'name' => $name,
+                        'password' => $password['hash'],
+                        'must_change_password' => $password['must_change'],
+                        'role' => $role,
+                        'jabatan_id' => (int) ($row->jabatan ?? 0) ?: null,
                     ]
                 );
+
+                if ($password['must_change']) {
+                    $needsReset[$user->id] = ['id' => $user->id, 'email' => $user->email, 'role' => $user->role];
+                }
 
                 if ($user->wasRecentlyCreated) {
                     $created++;
@@ -118,7 +132,8 @@ class ImportLegacyUsersCommand extends Command
         }
 
         $bar->finish();
-        $this->line(''); $this->line('');
+        $this->line('');
+        $this->line('');
         $this->info('Ringkasan:');
         $this->line("  - Dibuat       : {$created}");
         $this->line("  - Diupdate     : {$updated}");
@@ -130,6 +145,18 @@ class ImportLegacyUsersCommand extends Command
             $this->warn('Detail error:');
             foreach ($errors as $err) {
                 $this->line(sprintf('  - legacy_id=%s nama=%s | %s', $err['legacy_id'], $err['nama'], $err['error']));
+            }
+        }
+
+        // Daftar staff pemakai password bawaan -> wajib reset (B4).
+        if (! $isDryRun) {
+            $this->line('');
+            $this->warn('Akun staff yang wajib reset password (password bawaan): '.count($needsReset));
+            if (! empty($needsReset)) {
+                $this->table(
+                    ['ID', 'Email', 'Role'],
+                    array_values($needsReset)
+                );
             }
         }
 
@@ -153,26 +180,32 @@ class ImportLegacyUsersCommand extends Command
         $local = $username !== '' ? $username : "user{$legacyId}";
         // Bersihkan karakter yang ga valid di email
         $local = preg_replace('/[^a-zA-Z0-9._-]/', '_', $local);
+
         return "{$local}@legacy.local";
     }
 
     /**
      * Resolve password dari hash legacy.
-     * Return ['hash' => bcrypt, 'mode' => 'bcrypt-legacy' | 'plain-legacy' | 'placeholder'].
-     * bcrypt-legacy: pakai hash langsung (format $2y$ atau $2b$)
-     * plain-legacy : hash MD5/non-bcrypt â†’ bcrypt ulang pakai password plain (placeholder)
-     * placeholder  : hash kosong/null â†’ bcrypt "password" (default, harus reset)
+     * Return ['hash' => bcrypt, 'mode' => ..., 'must_change' => bool].
+     * bcrypt-legacy: pakai hash langsung (format $2y$ atau $2b$) -> TIDAK wajib ganti
+     * plain-legacy : hash MD5/non-bcrypt -> password bawaan "password", WAJIB ganti
+     * placeholder  : hash kosong/null -> password bawaan "password", WAJIB ganti
      */
     private function resolvePassword(?string $legacyHash): array
     {
         if (! $legacyHash || trim($legacyHash) === '') {
-            return ['hash' => Hash::make('password'), 'mode' => 'placeholder'];
+            return ['hash' => Hash::make('password'), 'mode' => 'placeholder', 'must_change' => true];
         }
         if (preg_match('/^\$2[aby]\$/', $legacyHash)) {
             // bcrypt legacy â†’ pakai langsung (kompatibel dengan Laravel)
-            return ['hash' => $legacyHash, 'mode' => 'bcrypt-legacy'];
+            return ['hash' => $legacyHash, 'mode' => 'bcrypt-legacy', 'must_change' => false];
         }
+
         // Plain / md5 / sha1 â†’ hash ulang sebagai placeholder, wajib reset nanti
-        return ['hash' => Hash::make('password'), 'mode' => "plain-legacy(was:" . substr($legacyHash, 0, 8) . "...)"];
+        return [
+            'hash' => Hash::make('password'),
+            'mode' => 'plain-legacy(was:'.substr($legacyHash, 0, 8).'...)',
+            'must_change' => true,
+        ];
     }
 }

@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Models\Customer;
 use App\Models\User;
 use App\Support\LegacyIdentity;
+use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -40,12 +41,13 @@ class ImportLegacyCustomersCommand extends Command
     public function handle(): int
     {
         $isDryRun = (bool) $this->option('dry-run');
-        $isForce  = (bool) $this->option('force');
+        $isForce = (bool) $this->option('force');
         $bizFilter = $this->option('business');
         $chunkSize = max(1, (int) $this->option('chunk'));
 
         if (! $isDryRun && ! $isForce) {
             $this->error('Wajib pakai --dry-run atau --force');
+
             return self::FAILURE;
         }
 
@@ -118,6 +120,7 @@ class ImportLegacyCustomersCommand extends Command
                         'reason' => $reason,
                     ];
                     $this->maybeLog($i + 1, $chunkSize, $totalRows, $stats);
+
                     continue;
                 }
 
@@ -134,6 +137,7 @@ class ImportLegacyCustomersCommand extends Command
                         $stats['customers_created']++;
                     }
                     $this->maybeLog($i + 1, $chunkSize, $totalRows, $stats);
+
                     continue;
                 }
 
@@ -145,10 +149,11 @@ class ImportLegacyCustomersCommand extends Command
                 } else {
                     $now = now();
                     $userId = DB::table('users')->insertGetId([
-                        'name'       => $mapped['applicant_name'],
-                        'email'      => $email,
-                        'password'   => $defaultPasswordHash,
-                        'role'       => 'pelanggan',
+                        'name' => $mapped['applicant_name'],
+                        'email' => $email,
+                        'password' => $defaultPasswordHash,
+                        'must_change_password' => true,
+                        'role' => 'pelanggan',
                         'created_at' => $now,
                         'updated_at' => $now,
                     ]);
@@ -174,14 +179,14 @@ class ImportLegacyCustomersCommand extends Command
                 }
 
                 $customerData = [
-                    'ticket_id'   => $ticketId,
-                    'user_id'     => $userId,
+                    'ticket_id' => $ticketId,
+                    'user_id' => $userId,
                     'customer_code' => $code,
                     'initial_meter_reading' => 0,
                     'meter_photo_url' => null,
                     'activated_at' => $mapped['activated_at'],
-                    'created_at'  => now(),
-                    'updated_at'  => now(),
+                    'created_at' => now(),
+                    'updated_at' => now(),
                 ];
 
                 if (isset($existingCustomersByTicket[$ticketId])) {
@@ -303,6 +308,7 @@ class ImportLegacyCustomersCommand extends Command
             if (isset($out[$kode])) {
                 $dupe[$kode] = true;
                 unset($out[$kode]);
+
                 continue;
             }
             if (! isset($dupe[$kode])) {
@@ -354,10 +360,10 @@ class ImportLegacyCustomersCommand extends Command
 
         return [
             'applicant_name' => $name,
-            'email'          => LegacyIdentity::customerEmail($name, (int) $inst->legacy_cust_id),
-            'ticket_id'      => $ticketIdByLegacyInst[$legacyInstId],
-            'customer_code'  => trim((string) ($inst->kode_instalasi ?? '')),
-            'activated_at'   => $this->parseDateTime($inst->aktif ?? null),
+            'email' => LegacyIdentity::customerEmail($name, (int) $inst->legacy_cust_id),
+            'ticket_id' => $ticketIdByLegacyInst[$legacyInstId],
+            'customer_code' => trim((string) ($inst->kode_instalasi ?? '')),
+            'activated_at' => $this->parseDateTime($inst->aktif ?? null),
         ];
     }
 
@@ -388,7 +394,7 @@ class ImportLegacyCustomersCommand extends Command
             return null;
         }
         try {
-            return \Carbon\Carbon::parse($val)->toDateTimeString();
+            return Carbon::parse($val)->toDateTimeString();
         } catch (\Throwable) {
             return null;
         }
