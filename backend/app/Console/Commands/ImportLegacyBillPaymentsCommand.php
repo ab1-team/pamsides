@@ -256,7 +256,7 @@ class ImportLegacyBillPaymentsCommand extends Command
 
         // Proses & tulis satu grup event ke bill_payments (logika sama persis, tanpa 'rows').
         $processGroup = function (array $g) use (
-            &$stats, &$skipped, &$failed, &$events, &$billsPaidByBp, &$insertBatch,
+            &$stats, &$skipped, &$failed, &$events, &$billsPaidByBp, &$insertBatch, &$flushBatch,
             $usageToBill, $userMap, $fallbackAdmin, $existingBillPays, $validUserIds, $isDryRun
         ) {
             $events++;
