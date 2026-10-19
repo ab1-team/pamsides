@@ -1,0 +1,154 @@
+name: Ops Data (production)
+
+# Manual-only operational data jobs. No push/pull_request triggers by design.
+on:
+  workflow_dispatch:
+    inputs:
+      steps:
+        description: 'Operasi yang dijalankan'
+        type: choice
+        required: true
+        default: all
+        options:
+          - monthly-bills
+          - bill-payments
+          - flags
+          - all
+      dry_run:
+        description: 'Dry run (impor tidak mengubah data; langkah flags dilewati)'
+        type: boolean
+        required: true
+        default: true
+
+concurrency:
+  group: ops-data
+  cancel-in-progress: false
+
+jobs:
+  ops:
+    name: Ops data business=5
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Resolve selected steps
+        id: plan
+        env:
+          INPUT_STEPS: ${{ inputs.steps }}
+          INPUT_DRY_RUN: ${{ inputs.dry_run }}
+        run: |
+          set -euo pipefail
+          case "$INPUT_STEPS" in
+            monthly-bills|bill-payments|flags|all) ;;
+            *) echo "::error::steps tidak valid: $INPUT_STEPS"; exit 1 ;;
+          esac
+          run_bills=false; run_payments=false; run_flags=false
+          case "$INPUT_STEPS" in
+            monthly-bills|all) run_bills=true ;;
+          esac
+          case "$INPUT_STEPS" in
+            bill-payments|all) run_payments=true ;;
+          esac
+          case "$INPUT_STEPS" in
+            flags|all) run_flags=true ;;
+          esac
+          if [ "$INPUT_DRY_RUN" = "true" ]; then
+            run_flags=false
+            echo "::notice::dry_run=true -> langkah flags DILEWATI (flags tidak punya mode dry-run; tidak ada perubahan data)."
+          fi
+          {
+            echo "run_bills=$run_bills"
+            echo "run_payments=$run_payments"
+            echo "run_flags=$run_flags"
+          } >> "$GITHUB_OUTPUT"
+          echo "steps=$INPUT_STEPS dry_run=$INPUT_DRY_RUN bills=$run_bills payments=$run_payments flags=$run_flags"
+
+      - name: Setup SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.DEPLOY_SSH_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -p ${{ secrets.SSH_PORT }} ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
+
+      # Counter tagihan mengikuti kunci bisnis docs/database.md §9:
+      # customer_id + billing_period_year + billing_period_month (unique per pelanggan per bulan).
+      - name: Counts before
+        run: |
+          ssh -p ${{ secrets.SSH_PORT }} -o IdentitiesOnly=yes "$SSH_USER@$SSH_HOST" 'set -e; docker exec pamsides-app php artisan tinker --execute="\$b = DB::table(\"monthly_bills\")->selectRaw(\"COUNT(*) AS rows, COUNT(DISTINCT customer_id, billing_period_year, billing_period_month) AS keys\")->first(); echo \"BEFORE monthly_bills_rows=\" . \$b->rows . \" monthly_bills_keys=\" . \$b->keys . \" bill_payments=\" . DB::table(\"bill_payments\")->count() . PHP_EOL;"' | tee -a counts-before.log
+        env:
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_USER: ${{ secrets.SSH_USER }}
+
+      - name: Import monthly bills
+        if: steps.plan.outputs.run_bills == 'true'
+        env:
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_USER: ${{ secrets.SSH_USER }}
+          DRY_RUN: ${{ inputs.dry_run }}
+        run: |
+          if [ "$DRY_RUN" = "true" ]; then FLAGS="--dry-run"; else FLAGS="--force"; fi
+          echo "run: import:monthly-bills $FLAGS --business=5"
+          ssh -p ${{ secrets.SSH_PORT }} -o IdentitiesOnly=yes "$SSH_USER@$SSH_HOST" "set -e; docker exec pamsides-app php artisan import:monthly-bills $FLAGS --business=5 --no-interaction" | tee -a import-monthly-bills.log
+
+      - name: Import bill payments
+        if: steps.plan.outputs.run_payments == 'true'
+        env:
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_USER: ${{ secrets.SSH_USER }}
+          DRY_RUN: ${{ inputs.dry_run }}
+        run: |
+          if [ "$DRY_RUN" = "true" ]; then FLAGS="--dry-run"; else FLAGS="--force"; fi
+          echo "run: import:bill-payments $FLAGS --business=5"
+          ssh -p ${{ secrets.SSH_PORT }} -o IdentitiesOnly=yes "$SSH_USER@$SSH_HOST" "set -e; docker exec pamsides-app php artisan import:bill-payments $FLAGS --business=5 --no-interaction" | tee -a import-bill-payments.log
+
+      # Flags: baca + hitung dulu (tanpa ubah apa pun), lalu set kolom HANYA untuk
+      # baris yang password-nya sama dengan password bawaan "password"
+      # (lihat ImportLegacyUsersCommand / ImportLegacyCustomersCommand). Baris lain
+      # tidak disentuh; tidak ada penghapusan data. Cetak jumlah yang diubah.
+      - name: Flag default-password accounts
+        if: steps.plan.outputs.run_flags == 'true'
+        env:
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_USER: ${{ secrets.SSH_USER }}
+        run: |
+          ssh -p ${{ secrets.SSH_PORT }} -o IdentitiesOnly=yes "$SSH_USER@$SSH_HOST" 'set -e; docker exec -i pamsides-app php artisan tinker' | tee -a flags.log <<'PHP'
+          $default = 'password';
+          $total   = DB::table('users')->count();
+          $already = DB::table('users')->where('must_change_password', true)->count();
+
+          // Tahap 1: hanya baca + hitung.
+          $matched = [];
+          foreach (DB::table('users')->where('must_change_password', false)->orderBy('id')->pluck('id') as $id) {
+              $hash = DB::table('users')->where('id', $id)->value('password');
+              if (is_string($hash) && $hash !== '' && Hash::check($default, $hash)) {
+                  $matched[] = $id;
+              }
+          }
+          echo 'users_total=' . $total . ' already_flagged=' . $already . ' default_password_matched=' . count($matched) . PHP_EOL;
+
+          // Tahap 2: set kolom hanya untuk id yang cocok (tanpa menyentuh baris lain).
+          $changed = 0;
+          if (! empty($matched)) {
+              $changed = DB::table('users')
+                  ->whereIn('id', $matched)
+                  ->where('must_change_password', false)
+                  ->update(['must_change_password' => true]);
+          }
+          echo 'flagged_changed=' . $changed . PHP_EOL;
+          echo 'flagged_after=' . DB::table('users')->where('must_change_password', true)->count() . PHP_EOL;
+          PHP
+
+      # Counter akhir: sama persis dengan "Counts before" untuk pembanding.
+      - name: Counts after
+        run: |
+          ssh -p ${{ secrets.SSH_PORT }} -o IdentitiesOnly=yes "$SSH_USER@$SSH_HOST" 'set -e; docker exec pamsides-app php artisan tinker --execute="\$b = DB::table(\"monthly_bills\")->selectRaw(\"COUNT(*) AS rows, COUNT(DISTINCT customer_id, billing_period_year, billing_period_month) AS keys\")->first(); echo \"AFTER monthly_bills_rows=\" . \$b->rows . \" monthly_bills_keys=\" . \$b->keys . \" bill_payments=\" . DB::table(\"bill_payments\")->count() . PHP_EOL;"' | tee -a counts-after.log
+        env:
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_USER: ${{ secrets.SSH_USER }}
+
+      - name: Summary (before vs after)
+        if: always()
+        run: |
+          echo "===== counts before ====="; cat counts-before.log 2>/dev/null || echo "(tidak ada)"
+          echo "===== counts after =====";  cat counts-after.log 2>/dev/null || echo "(tidak ada)"
+          echo "========================"
+          echo "steps=${{ inputs.steps }} dry_run=${{ inputs.dry_run }}"
