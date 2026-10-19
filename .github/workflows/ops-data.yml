@@ -73,7 +73,7 @@ jobs:
       # customer_id + billing_period_year + billing_period_month (unique per pelanggan per bulan).
       - name: Counts before
         run: |
-          ssh -p ${{ secrets.SSH_PORT }} -o IdentitiesOnly=yes "$SSH_USER@$SSH_HOST" 'set -e; docker exec pamsides-app php artisan tinker --execute="\$b = DB::table(\"monthly_bills\")->selectRaw(\"COUNT(*) AS rows, COUNT(DISTINCT customer_id, billing_period_year, billing_period_month) AS keys\")->first(); echo \"BEFORE monthly_bills_rows=\" . \$b->rows . \" monthly_bills_keys=\" . \$b->keys . \" bill_payments=\" . DB::table(\"bill_payments\")->count() . PHP_EOL;"' | tee -a counts-before.log
+          ssh -p ${{ secrets.SSH_PORT }} -o IdentitiesOnly=yes "$SSH_USER@$SSH_HOST" 'set -e; docker exec pamsides-app php artisan tinker --execute="\$b = DB::table(\"monthly_bills\")->selectRaw(\"COUNT(*) AS bill_rows, COUNT(DISTINCT customer_id, billing_period_year, billing_period_month) AS bill_keys\")->first(); echo \"BEFORE monthly_bills_rows=\" . \$b->bill_rows . \" monthly_bills_keys=\" . \$b->bill_keys . \" bill_payments=\" . DB::table(\"bill_payments\")->count() . PHP_EOL;"' | tee -a counts-before.log
         env:
           SSH_HOST: ${{ secrets.SSH_HOST }}
           SSH_USER: ${{ secrets.SSH_USER }}
@@ -88,6 +88,14 @@ jobs:
           if [ "$DRY_RUN" = "true" ]; then FLAGS="--dry-run"; else FLAGS="--force"; fi
           echo "run: import:monthly-bills $FLAGS --business=5"
           ssh -p ${{ secrets.SSH_PORT }} -o IdentitiesOnly=yes "$SSH_USER@$SSH_HOST" "set -e; docker exec pamsides-app php artisan import:monthly-bills $FLAGS --business=5 --no-interaction" | tee -a import-monthly-bills.log
+
+      # Cek anchor: pastikan tiket sudah tertaut ke instalasi legacy (legacy_installation_id).
+      - name: Verify anchor
+        run: |
+          ssh -p ${{ secrets.SSH_PORT }} -o IdentitiesOnly=yes "$SSH_USER@$SSH_HOST" 'set -e; docker exec pamsides-app php artisan tinker --execute="echo \"tickets_with_legacy_id=\" . DB::table(\"installation_tickets\")->whereNotNull(\"legacy_installation_id\")->count() . PHP_EOL;"' | tee -a verify-anchor.log
+        env:
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_USER: ${{ secrets.SSH_USER }}
 
       - name: Import bill payments
         if: steps.plan.outputs.run_payments == 'true'
@@ -140,7 +148,7 @@ jobs:
       # Counter akhir: sama persis dengan "Counts before" untuk pembanding.
       - name: Counts after
         run: |
-          ssh -p ${{ secrets.SSH_PORT }} -o IdentitiesOnly=yes "$SSH_USER@$SSH_HOST" 'set -e; docker exec pamsides-app php artisan tinker --execute="\$b = DB::table(\"monthly_bills\")->selectRaw(\"COUNT(*) AS rows, COUNT(DISTINCT customer_id, billing_period_year, billing_period_month) AS keys\")->first(); echo \"AFTER monthly_bills_rows=\" . \$b->rows . \" monthly_bills_keys=\" . \$b->keys . \" bill_payments=\" . DB::table(\"bill_payments\")->count() . PHP_EOL;"' | tee -a counts-after.log
+          ssh -p ${{ secrets.SSH_PORT }} -o IdentitiesOnly=yes "$SSH_USER@$SSH_HOST" 'set -e; docker exec pamsides-app php artisan tinker --execute="\$b = DB::table(\"monthly_bills\")->selectRaw(\"COUNT(*) AS bill_rows, COUNT(DISTINCT customer_id, billing_period_year, billing_period_month) AS bill_keys\")->first(); echo \"AFTER monthly_bills_rows=\" . \$b->bill_rows . \" monthly_bills_keys=\" . \$b->bill_keys . \" bill_payments=\" . DB::table(\"bill_payments\")->count() . PHP_EOL;"' | tee -a counts-after.log
         env:
           SSH_HOST: ${{ secrets.SSH_HOST }}
           SSH_USER: ${{ secrets.SSH_USER }}
