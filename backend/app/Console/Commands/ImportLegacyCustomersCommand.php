@@ -23,7 +23,7 @@ use Illuminate\Support\Facades\Hash;
  *     - email user = slug(nama) sehingga pelanggan berbeda berbagi 1 akun
  *       (~191 tabrakan user).
  *
- *   Sekarang iterasi per INSTALASI legazy status='A' (satu instalasi = satu
+ *   Sekarang iterasi per INSTALASI legazy SEMUA STATUS (satu instalasi = satu
  *   baris customers), tautkan ke tiket baru lewat
  *   `installation_tickets.legacy_installation_id` (pasti), dan email user
  *   unik per pelanggan legacy (slug(nama) + customer_id legacy).
@@ -36,7 +36,7 @@ class ImportLegacyCustomersCommand extends Command
                             {--business= : Filter business_id tertentu di DB lama (mis. 5)}
                             {--chunk=200 : Ukuran chunk progress logging}';
 
-    protected $description = 'Import pelanggan legacy (per instalasi aktif) → users + customers row';
+    protected $description = 'Import pelanggan legacy (per instalasi, semua status) → users + customers row';
 
     public function handle(): int
     {
@@ -74,12 +74,14 @@ class ImportLegacyCustomersCommand extends Command
             count($existingCustomersByTicket)
         ));
 
-        // Iterasi PER INSTALASI legacy status='A' (bukan per baris customers).
+        // Iterasi PER INSTALASI legacy, TANPA filter status ('A' dulu membuang
+        // 32 instalasi non-A yang tetap punya tiket -- R/C/I/B -- sehingga
+        // tiketnya tak pernah punya baris `customers` dan tagihannya hilang.
+        // Cakupan ini disamakan dengan import:monthly-bills.
         $insts = DB::connection('legacy')
             ->table('installations AS i')
             ->join('customers AS c', 'c.id', '=', 'i.customer_id')
             ->when($bizFilter, fn ($q) => $q->where('i.business_id', $bizFilter))
-            ->where('i.status', 'A')
             ->orderBy('i.id')
             ->select([
                 'i.id AS inst_id', 'i.kode_instalasi', 'i.aktif',
@@ -89,7 +91,7 @@ class ImportLegacyCustomersCommand extends Command
             ->get();
 
         $totalRows = count($insts);
-        $this->info("Memproses {$totalRows} instalasi legacy status='A'...");
+        $this->info("Memproses {$totalRows} instalasi legacy (semua status)...");
 
         $stats = [
             'users_created' => 0,
@@ -216,14 +218,14 @@ class ImportLegacyCustomersCommand extends Command
 
         $this->line('');
         $this->info($isDryRun ? 'Ringkasan (DRY-RUN, estimasi):' : 'Ringkasan:');
-        $this->line(sprintf('  total instalasi A      : %d', $totalRows));
+        $this->line(sprintf('  total instalasi        : %d', $totalRows));
         $this->line(sprintf('  customers akan dibuat  : %d', $stats['customers_created']));
         $this->line(sprintf('  customers akan update  : %d', $stats['customers_updated']));
         $this->line(sprintf('  users baru             : %d', $stats['users_created']));
         $this->line(sprintf('  users sudah ada (pakai): %d', $stats['users_reused']));
         $this->line(sprintf('  di-skip                : %d', $stats['skipped']));
         $this->line(sprintf('  gagal                  : %d', $stats['failed']));
-        $this->line(sprintf('  pelanggan tanpa instalasi A (orphan) : %d', $orphanCustomers));
+        $this->line(sprintf('  pelanggan tanpa instalasi (orphan)   : %d', $orphanCustomers));
         $this->line(sprintf('  durasi                 : %.1f s', $elapsed));
 
         if (! empty($skipped)) {
@@ -291,6 +293,9 @@ class ImportLegacyCustomersCommand extends Command
     }
 
     /**
+     * Semua status ikut: tiket non-A bisa saja belum punya legacy id dan hanya
+     * bisa dikenali lewat kodenya.
+     *
      * @return array<string,int> kode_instalasi (unik) => legacy installation.id
      */
     private function legacyInstIdByKode(): array
@@ -298,7 +303,6 @@ class ImportLegacyCustomersCommand extends Command
         $out = [];
         $dupe = [];
         foreach (DB::connection('legacy')->table('installations')
-            ->where('status', 'A')
             ->orderBy('id')
             ->get(['id', 'kode_instalasi']) as $inst) {
             $kode = trim((string) $inst->kode_instalasi);
@@ -320,13 +324,13 @@ class ImportLegacyCustomersCommand extends Command
     }
 
     /**
-     * Jumlah pelanggan legacy (business filter) yang tidak punya instalasi aktif.
+     * Jumlah pelanggan legacy (business filter) yang tidak punya instalasi sama sekali.
      */
     private function countOrphanCustomers(?string $bizFilter): int
     {
         $q = DB::connection('legacy')->table('customers AS c')
             ->leftJoin('installations AS i', function ($join) {
-                $join->on('i.customer_id', '=', 'c.id')->where('i.status', '=', 'A');
+                $join->on('i.customer_id', '=', 'c.id');
             })
             ->whereNull('i.id');
         if ($bizFilter) {
