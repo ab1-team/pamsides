@@ -430,6 +430,106 @@ class LegacyImportIdentityTest extends TestCase
     }
 
     // =========================================================
+    // REGRESI: pelanggan legacy NON-A (R/C/I/B) tidak pernah dibuat
+    // =========================================================
+
+    /**
+     * Akar "data hilang": import:tickets membuat tiket untuk SEMUA status,
+     * tapi import:customers dulu hanya '$i.status === A'. Akibatnya 32
+     * instalasi non-A punya tiket TANPA baris customers, sehingga
+     * import:monthly-bills (legacy_inst -> ticket -> customer) tidak pernah
+     * membuatkan tagihan.
+     *
+     * Di sini: satu instalasi R (non-A) wajib menghasilkan baris customers
+     * yang terhubung ke tiketnya, dengan akun user role pelanggan.
+     */
+    #[Test]
+    public function instalasi_legacy_non_a_status_r_tetap_mendapat_customers_dan_user(): void
+    {
+        $this->seedAppTargets();
+        $this->seedLegacyFixture();
+
+        // Instalasi pertama diubah menjadi NON-A (R = pending di tiket baru).
+        DB::connection('legacy')->table('installations')
+            ->where('id', self::SUNARTO_A['inst'])
+            ->update(['status' => 'R']);
+
+        Artisan::call('import:tickets', ['--force' => true, '--business' => 5]);
+        Artisan::call('import:customers', ['--force' => true, '--business' => 5]);
+
+        $ticket = InstallationTicket::where('legacy_installation_id', self::SUNARTO_A['inst'])->first();
+        $this->assertNotNull($ticket, 'tiket untuk instalasi R harus ada');
+        $this->assertSame('pending', $ticket->status, 'R dipetakan ke tiket pending');
+
+        $customer = Customer::where('ticket_id', $ticket->id)->first();
+        $this->assertNotNull($customer, 'instalasi R WAJIB punya baris customers (dulu hilang)');
+        $this->assertSame(self::SUNARTO_A['kode'], $customer->customer_code);
+
+        $user = User::find($customer->user_id);
+        $this->assertNotNull($user, 'customers R harus terhubung ke akun user');
+        $this->assertSame('pelanggan', $user->role);
+        $this->assertSame(
+            LegacyIdentity::customerEmail('Sunarto', self::SUNARTO_A['cust']),
+            $user->email,
+            'email user mengikuti pola LegacyIdentity::customerEmail'
+        );
+
+        // Instalasi A kedua tetap dibuat seperti biasa (perilaku A tidak berubah).
+        $ticketA = InstallationTicket::where('legacy_installation_id', self::SUNARTO_B['inst'])->first();
+        $this->assertNotNull($ticketA);
+        $this->assertNotNull(Customer::where('ticket_id', $ticketA->id)->first(), 'instalasi A tetap dibuat');
+    }
+
+    /**
+     * Penjaga anti-regresi cakupan: dengan SEMUA status non-A (R/C/I/B) di
+     * fixture, importer dua tahap tidak boleh menyisakan tiket legacy tanpa
+     * baris customers (produksi: 32 -> 0).
+     */
+    #[Test]
+    public function tidak_ada_tiket_legacy_tanpa_customers_untuk_status_non_a(): void
+    {
+        $this->seedAppTargets();
+        $this->seedLegacyFixture();
+
+        $L = DB::connection('legacy');
+        // Tambah satu instalasi untuk tiap status non-A.
+        $localId = 0;
+        foreach (['R', 'C', 'I', 'B'] as $idx => $status) {
+            $instId = 510 + $idx;
+            $custId = 9100 + $idx;
+            $localId++;
+            $L->table('customers')->insert([
+                'id' => $custId, 'nama' => 'Pelanggan '.$status, 'nik' => '32010101010101'.str_pad((string) $idx, 2, '0', STR_PAD_LEFT),
+                'jk' => 'L', 'tgl_lahir' => '1990-01-01', 'tempat_lahir' => 'Bandung', 'hp' => '0812000001'.str_pad((string) $idx, 2, '0', STR_PAD_LEFT),
+                'alamat' => 'Kp. '.$status, 'business_id' => 5,
+            ]);
+            $L->table('installations')->insert([
+                'id' => $instId, 'kode_instalasi' => 'INS-'.$instId,
+                'customer_id' => $custId, 'business_id' => 5, 'package_id' => 11,
+                'desa' => 101, 'cater_id' => 7001, 'status' => $status, 'alamat' => 'Kp. '.$status,
+                'rt' => '02', 'rw' => '01', 'order' => '2025-01-10', 'aktif' => '2025-02-01',
+            ]);
+        }
+
+        Artisan::call('import:tickets', ['--force' => true, '--business' => 5]);
+        Artisan::call('import:customers', ['--force' => true, '--business' => 5]);
+
+        $orphans = DB::table('installation_tickets AS t')
+            ->leftJoin('customers AS c', 'c.ticket_id', '=', 't.id')
+            ->whereNotNull('t.legacy_installation_id')
+            ->whereNull('c.id')
+            ->pluck('t.legacy_installation_id')
+            ->all();
+
+        $this->assertSame([], $orphans, 'tidak boleh ada tiket legacy tanpa baris customers');
+
+        // Idempoten: jalur kedua tidak menggandakan.
+        Artisan::call('import:customers', ['--force' => true, '--business' => 5]);
+        $this->assertSame(6, Customer::count(), 'customers = 2 instalasi A + 4 non-A, tanpa duplikat');
+        $this->assertSame(6, User::where('role', 'pelanggan')->count(), 'tiap customers punya 1 akun pelanggan');
+    }
+
+    // =========================================================
     // Fixture helpers
     // =========================================================
 
