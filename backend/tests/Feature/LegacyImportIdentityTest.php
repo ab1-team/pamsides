@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Console\Commands\ImportLegacyCustomersCommand;
 use App\Console\Commands\LegacyMigrateFastCommand;
 use App\Models\Customer;
 use App\Models\InstallationPackage;
@@ -527,6 +528,166 @@ class LegacyImportIdentityTest extends TestCase
         Artisan::call('import:customers', ['--force' => true, '--business' => 5]);
         $this->assertSame(6, Customer::count(), 'customers = 2 instalasi A + 4 non-A, tanpa duplikat');
         $this->assertSame(6, User::where('role', 'pelanggan')->count(), 'tiap customers punya 1 akun pelanggan');
+    }
+
+    // =========================================================
+    // REGRESI: user_id pelanggan existing TIDAK boleh diganti
+    // =========================================================
+
+    /**
+     * Produksi: 1.388 user pelanggan masih memakai pola LAMA
+     * `<nama>@gmail.com` (dibuat importer versi sebelumnya), sedangkan
+     * `LegacyIdentity::customerEmail()` sekarang menghasilkan
+     * `<nama><id>@gmail.com`. Lookup berbasis email gagal cocok ->
+     * user BARU dibuat -> `customers.user_id` pelanggan existing dipindah ke
+     * akun baru -> akun lama (email yang dikenal pelanggan) yatim.
+     *
+     * Baris `customers` (kunci ticket_id) adalah sumber kebenaran: kalau sudah
+     * punya user_id, pakai apa adanya, jangan buat user, jangan ubah user_id.
+     */
+    #[Test]
+    public function pelanggan_existing_dengan_email_pola_lama_tidak_dipindah_ke_user_baru(): void
+    {
+        $this->seedAppTargets();
+        $this->seedLegacyFixture();
+
+        Artisan::call('import:tickets', ['--force' => true, '--business' => 5]);
+
+        // Tiru kondisi produksi: pelanggan lama sudah punya akun pola LAMA.
+        $legacyEmailUser = User::create([
+            'name' => 'Sunarto',
+            'email' => 'sunarto@gmail.com',
+            'password' => bcrypt('rahasia123'),
+            'role' => 'pelanggan',
+        ]);
+        $ticket = InstallationTicket::where('legacy_installation_id', self::SUNARTO_A['inst'])->firstOrFail();
+        $customerId = DB::table('customers')->insertGetId([
+            'ticket_id' => $ticket->id,
+            'user_id' => $legacyEmailUser->id,
+            'customer_code' => self::SUNARTO_A['kode'],
+            'initial_meter_reading' => 0,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $usersBefore = User::where('role', 'pelanggan')->count();
+        Artisan::call('import:customers', ['--force' => true, '--business' => 5]);
+
+        $this->assertSame(
+            $legacyEmailUser->id,
+            (int) DB::table('customers')->where('id', $customerId)->value('user_id'),
+            'user_id pelanggan existing TIDAK boleh dipindah ke akun baru'
+        );
+        $this->assertSame(
+            'sunarto@gmail.com',
+            User::find($legacyEmailUser->id)?->email,
+            'email akun lama tidak boleh diubah'
+        );
+        // Hanya pelanggan BARU (SUNARTO_B) yang boleh membuat user.
+        $this->assertSame(
+            $usersBefore + 1,
+            User::where('role', 'pelanggan')->count(),
+            'existing tidak boleh memicu user baru; hanya pelanggan baru'
+        );
+
+        $out = Artisan::output();
+        $this->assertStringContainsString('users baru             : 1', $out);
+        $this->assertStringContainsString('users sudah ada (pakai): 1', $out);
+    }
+
+    /**
+     * Idempoten: jalur kedua `--force` tidak menambah user dan tidak mengubah
+     * user_id siapa pun (termasuk pelanggan existing berpola email lama).
+     */
+    #[Test]
+    public function impor_kedua_tidak_menambah_user_dan_tidak_mengubah_user_id(): void
+    {
+        $this->seedAppTargets();
+        $this->seedLegacyFixture();
+
+        Artisan::call('import:tickets', ['--force' => true, '--business' => 5]);
+
+        $legacyEmailUser = User::create([
+            'name' => 'Sunarto',
+            'email' => 'sunarto@gmail.com',
+            'password' => bcrypt('rahasia123'),
+            'role' => 'pelanggan',
+        ]);
+        $ticket = InstallationTicket::where('legacy_installation_id', self::SUNARTO_A['inst'])->firstOrFail();
+        DB::table('customers')->insert([
+            'ticket_id' => $ticket->id,
+            'user_id' => $legacyEmailUser->id,
+            'customer_code' => self::SUNARTO_A['kode'],
+            'initial_meter_reading' => 0,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        Artisan::call('import:customers', ['--force' => true, '--business' => 5]);
+        $usersAfterFirst = User::where('role', 'pelanggan')->count();
+        $userIdByCustomer = Customer::pluck('user_id', 'id')->all();
+
+        Artisan::call('import:customers', ['--force' => true, '--business' => 5]);
+
+        $this->assertSame(
+            $usersAfterFirst,
+            User::where('role', 'pelanggan')->count(),
+            'jalur kedua tidak boleh menambah user pelanggan'
+        );
+        $this->assertSame(
+            $userIdByCustomer,
+            Customer::pluck('user_id', 'id')->all(),
+            'jalur kedua tidak boleh mengubah user_id siapa pun'
+        );
+        $this->assertStringContainsString('users baru             : 0', Artisan::output());
+    }
+
+    /**
+     * Kasus jarang: baris `customers` ada tapi user_id NULL. Skema sekarang
+     * NOT NULL, jadi jalur ini hanya bisa diuji di level keputusan resolver:
+     * hanya baris existing ber-user_id NULL yang boleh memicu pembuatan user,
+     * dan jumlahnya dilaporkan terpisah ('existing_without_user').
+     */
+    #[Test]
+    public function baris_customers_existing_dengan_user_id_null_dibuatkan_user_dan_dilaporkan(): void
+    {
+        $this->seedAppTargets();
+        $this->seedLegacyFixture();
+
+        Artisan::call('import:tickets', ['--force' => true, '--business' => 5]);
+        $ticket = InstallationTicket::where('legacy_installation_id', self::SUNARTO_A['inst'])->firstOrFail();
+
+        // Simulasikan baris existing tanpa user (data legacy rusak): observasi
+        // resolver via refleksi -- hasilnya harus "butuh user baru".
+        $cmd = new ImportLegacyCustomersCommand;
+        $resolve = new \ReflectionMethod($cmd, 'resolveCustomerUserId');
+        $resolve->setAccessible(true);
+
+        [$userId, $fromExisting] = $resolve->invoke(
+            $cmd,
+            (object) ['id' => 1, 'ticket_id' => $ticket->id, 'user_id' => null]
+        );
+        $this->assertNull($userId, 'baris existing user_id NULL -> user harus dibuat');
+        $this->assertFalse($fromExisting);
+
+        // Baris existing ber-user -> user_id dipakai apa adanya, tanpa cek email.
+        [$userId2, $fromExisting2] = $resolve->invoke(
+            $cmd,
+            (object) ['id' => 2, 'ticket_id' => $ticket->id, 'user_id' => 777]
+        );
+        $this->assertSame(777, $userId2, 'baris existing yang punya user selalu dipakai apa adanya');
+        $this->assertTrue($fromExisting2);
+
+        // Tanpa baris existing -> null (pelanggan baru, patokan email).
+        $this->assertSame([null, false], $resolve->invoke($cmd, null));
+
+        // Laporan selalu memuat baris statistik existing tanpa user_id.
+        Artisan::call('import:customers', ['--force' => true, '--business' => 5]);
+        $this->assertMatchesRegularExpression(
+            '/existing tanpa user_id \(dibuatkan user\): \d+/',
+            Artisan::output(),
+            'jumlah pelanggan existing tanpa user_id harus dilaporkan'
+        );
     }
 
     // =========================================================
