@@ -10,6 +10,7 @@ on:
         required: true
         default: all
         options:
+          - customers
           - monthly-bills
           - bill-payments
           - flags
@@ -38,10 +39,13 @@ jobs:
         run: |
           set -euo pipefail
           case "$INPUT_STEPS" in
-            monthly-bills|bill-payments|flags|all) ;;
+            customers|monthly-bills|bill-payments|flags|all) ;;
             *) echo "::error::steps tidak valid: $INPUT_STEPS"; exit 1 ;;
           esac
-          run_bills=false; run_payments=false; run_flags=false
+          run_bills=false; run_payments=false; run_flags=false; run_customers=false
+          case "$INPUT_STEPS" in
+            customers|all) run_customers=true ;;
+          esac
           case "$INPUT_STEPS" in
             monthly-bills|all) run_bills=true ;;
           esac
@@ -56,11 +60,12 @@ jobs:
             echo "::notice::dry_run=true -> langkah flags DILEWATI (flags tidak punya mode dry-run; tidak ada perubahan data)."
           fi
           {
+            echo "run_customers=$run_customers"
             echo "run_bills=$run_bills"
             echo "run_payments=$run_payments"
             echo "run_flags=$run_flags"
           } >> "$GITHUB_OUTPUT"
-          echo "steps=$INPUT_STEPS dry_run=$INPUT_DRY_RUN bills=$run_bills payments=$run_payments flags=$run_flags"
+          echo "steps=$INPUT_STEPS dry_run=$INPUT_DRY_RUN customers=$run_customers bills=$run_bills payments=$run_payments flags=$run_flags"
 
       - name: Setup SSH key
         run: |
@@ -77,6 +82,19 @@ jobs:
         env:
           SSH_HOST: ${{ secrets.SSH_HOST }}
           SSH_USER: ${{ secrets.SSH_USER }}
+
+      # Pelanggan legacy harus diimpor lebih dulu: impor tagihan/pembayaran
+      # bergantung pada baris `customers` yang dibuat di sini.
+      - name: Import customers
+        if: steps.plan.outputs.run_customers == 'true'
+        env:
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_USER: ${{ secrets.SSH_USER }}
+          DRY_RUN: ${{ inputs.dry_run }}
+        run: |
+          if [ "$DRY_RUN" = "true" ]; then FLAGS="--dry-run"; else FLAGS="--force"; fi
+          echo "run: import:customers $FLAGS --business=5"
+          ssh -p ${{ secrets.SSH_PORT }} -o IdentitiesOnly=yes "$SSH_USER@$SSH_HOST" "set -e; docker exec pamsides-app php artisan import:customers $FLAGS --business=5 --no-interaction" | tee -a import-customers.log
 
       - name: Import monthly bills
         if: steps.plan.outputs.run_bills == 'true'
