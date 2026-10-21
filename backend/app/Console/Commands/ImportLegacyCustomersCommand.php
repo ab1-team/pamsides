@@ -66,6 +66,12 @@ class ImportLegacyCustomersCommand extends Command
 
         // Pre-load existing users & customers (sekali, tanpa query per-baris).
         $existingUsersByEmail = User::where('role', 'pelanggan')->pluck('id', 'email')->all();
+        // Sumber kebenaran identitas pelanggan existing = baris `customers`
+        // (kunci ticket_id), BUKAN email. Lihat komentar di resolveUserId().
+        $existingCustomerRows = Customer::query()
+            ->get(['id', 'ticket_id', 'user_id'])
+            ->keyBy('ticket_id')
+            ->all();
         $existingCustomersByTicket = Customer::pluck('id', 'ticket_id')->all();
         $existingCustomerCodes = array_flip(Customer::pluck('customer_code')->all());
         $this->info(sprintf(
@@ -100,6 +106,7 @@ class ImportLegacyCustomersCommand extends Command
             'customers_updated' => 0,
             'skipped' => 0,
             'failed' => 0,
+            'existing_without_user' => 0,
         ];
         $skipped = [];
         $failed = [];
@@ -127,15 +134,40 @@ class ImportLegacyCustomersCommand extends Command
                 }
 
                 if ($isDryRun) {
-                    // Tetap hitung jumlah "akan dibuat/update" tanpa menulis.
-                    if (isset($existingUsersByEmail[$mapped['email']])) {
+                    // Tetap hitung jumlah "akan dibuat/update" tanpa menulis,
+                    // memakai ATURAN YANG SAMA dengan jalur --force (baris
+                    // customers existing = sumber kebenaran user_id), supaya
+                    // estimasi dry-run tidak melebih-lebihkan users baru.
+                    $ticketId = $mapped['ticket_id'];
+                    $existingRow = $existingCustomerRows[$ticketId] ?? null;
+                    [$existingUserId, $isExistingIdentity] = $this->resolveCustomerUserId($existingRow);
+
+                    if ($isExistingIdentity) {
                         $stats['users_reused']++;
                     } else {
-                        $stats['users_created']++;
+                        if ($existingRow !== null) {
+                            $stats['existing_without_user']++;
+                        }
+                        // Pelanggan baru: email pola LegacyIdentity (unik), simulasi
+                        // tambahkan ke map supaya tiket/instalasi berikutnya reuse.
+                        if (isset($existingUsersByEmail[$mapped['email']])) {
+                            $stats['users_reused']++;
+                        } else {
+                            $existingUsersByEmail[$mapped['email']] = -1;
+                            $stats['users_created']++;
+                        }
                     }
-                    if (isset($existingCustomersByTicket[$mapped['ticket_id']])) {
+
+                    if ($existingRow !== null) {
                         $stats['customers_updated']++;
                     } else {
+                        // Catat simulasi baris -> sisa instalasi pada tiket yang
+                        // sama dihitung "update", bukan "create" ganda.
+                        $existingCustomerRows[$ticketId] = (object) [
+                            'id' => -1,
+                            'ticket_id' => $ticketId,
+                            'user_id' => $existingUserId ?? -1,
+                        ];
                         $stats['customers_created']++;
                     }
                     $this->maybeLog($i + 1, $chunkSize, $totalRows, $stats);
@@ -143,28 +175,59 @@ class ImportLegacyCustomersCommand extends Command
                     continue;
                 }
 
-                // 1. User: email unik per pelanggan legacy (wajib unik).
-                $email = $mapped['email'];
-                if (isset($existingUsersByEmail[$email])) {
-                    $userId = $existingUsersByEmail[$email];
+                // 1. User: TIDAK boleh mengganti identitas pelanggan existing.
+                //
+                //    Pelanggan yang sudah punya baris `customers` (kunci
+                //    ticket_id) memakai user_id dari baris itu apa adanya.
+                //    Dulu lookup SELALU lewat email pola baru
+                //    (slug(nama)+id), sehingga 1.388 user lama berpola
+                //    <nama>@gmail.com tidak ketemu -> dibuat user BARU dan
+                //    user_id pelanggan dipindah ke akun baru (akun lama
+                //    yatim, email yang dikenal pelanggan tak bisa login).
+                //    User baru HANYA dibuat untuk pelanggan baru, atau untuk
+                //    baris customers existing yang user_id-nya NULL (jarang).
+                $ticketId = $mapped['ticket_id'];
+                $existingRow = $existingCustomerRows[$ticketId] ?? null;
+                [$existingCustomerUserId, $isExistingIdentity] = $this->resolveCustomerUserId($existingRow);
+
+                if ($isExistingIdentity) {
+                    // Existing + sudah punya user: pakai, jangan sentuh.
+                    $userId = $existingCustomerUserId;
                     $stats['users_reused']++;
+
+                    $userEmail = DB::table('users')->where('id', $userId)->value('email');
+                    if (is_string($userEmail) && $userEmail !== '') {
+                        $existingUsersByEmail[$userEmail] = $userId;
+                    }
                 } else {
-                    $now = now();
-                    $userId = DB::table('users')->insertGetId([
-                        'name' => $mapped['applicant_name'],
-                        'email' => $email,
-                        'password' => $defaultPasswordHash,
-                        'must_change_password' => true,
-                        'role' => 'pelanggan',
-                        'created_at' => $now,
-                        'updated_at' => $now,
-                    ]);
-                    $existingUsersByEmail[$email] = $userId;
-                    $stats['users_created']++;
+                    if ($existingRow !== null) {
+                        // Existing tapi user_id NULL: satu-satunya kasus existing
+                        // yang boleh memicu pembuatan user.
+                        $stats['existing_without_user']++;
+                    }
+
+                    // Email unik per pelanggan legacy (pola baru, jaminan unik).
+                    $email = $mapped['email'];
+                    if (isset($existingUsersByEmail[$email])) {
+                        $userId = $existingUsersByEmail[$email];
+                        $stats['users_reused']++;
+                    } else {
+                        $now = now();
+                        $userId = DB::table('users')->insertGetId([
+                            'name' => $mapped['applicant_name'],
+                            'email' => $email,
+                            'password' => $defaultPasswordHash,
+                            'must_change_password' => true,
+                            'role' => 'pelanggan',
+                            'created_at' => $now,
+                            'updated_at' => $now,
+                        ]);
+                        $existingUsersByEmail[$email] = $userId;
+                        $stats['users_created']++;
+                    }
                 }
 
                 // 2. customers row (kunci: satu tiket = satu baris pelanggan).
-                $ticketId = $mapped['ticket_id'];
                 $code = $mapped['customer_code'];
 
                 // Baris customers target (kalau ada) = baris yang SEDANG di-update.
@@ -192,11 +255,30 @@ class ImportLegacyCustomersCommand extends Command
                 ];
 
                 if (isset($existingCustomersByTicket[$ticketId])) {
-                    DB::table('customers')->where('id', $existingCustomersByTicket[$ticketId])->update($customerData);
+                    $customerId = $existingCustomersByTicket[$ticketId];
+                    // Jangan pernah memindahkan user_id pelanggan existing
+                    // (kecuali memang NULL -- lihat resolve di atas).
+                    if ($existingCustomerUserId !== null) {
+                        unset($customerData['user_id']);
+                    }
+                    DB::table('customers')->where('id', $customerId)->update($customerData);
+                    $existingCustomerRows[$ticketId] = (object) [
+                        'id' => $customerId,
+                        'ticket_id' => $ticketId,
+                        'user_id' => $existingCustomerUserId ?? $userId,
+                    ];
                     $stats['customers_updated']++;
                 } else {
                     $id = DB::table('customers')->insertGetId($customerData);
                     $existingCustomersByTicket[$ticketId] = $id;
+                    // Catat di map in-memory supaya pasangan tiket yang SAMA
+                    // (mis. >1 instalasi legacy -> 1 tiket) tidak membuat user
+                    // kedua -- dan estimasi dry-run tetap jujur.
+                    $existingCustomerRows[$ticketId] = (object) [
+                        'id' => $id,
+                        'ticket_id' => $ticketId,
+                        'user_id' => $userId,
+                    ];
                     $stats['customers_created']++;
                 }
                 if ($code !== '') {
@@ -223,6 +305,7 @@ class ImportLegacyCustomersCommand extends Command
         $this->line(sprintf('  customers akan update  : %d', $stats['customers_updated']));
         $this->line(sprintf('  users baru             : %d', $stats['users_created']));
         $this->line(sprintf('  users sudah ada (pakai): %d', $stats['users_reused']));
+        $this->line(sprintf('  existing tanpa user_id (dibuatkan user): %d', $stats['existing_without_user']));
         $this->line(sprintf('  di-skip                : %d', $stats['skipped']));
         $this->line(sprintf('  gagal                  : %d', $stats['failed']));
         $this->line(sprintf('  pelanggan tanpa instalasi (orphan)   : %d', $orphanCustomers));
@@ -369,6 +452,27 @@ class ImportLegacyCustomersCommand extends Command
             'customer_code' => trim((string) ($inst->kode_instalasi ?? '')),
             'activated_at' => $this->parseDateTime($inst->aktif ?? null),
         ];
+    }
+
+    /**
+     * Tentukan user_id untuk satu baris customers.
+     *
+     * Aturan: baris `customers` existing (kunci ticket_id) yang SUDAH punya
+     * user_id adalah sumber kebenaran -- user_id itu dipakai APA ADANYA
+     * (tanpa cek email), sehingga email pola lama `<nama>@gmail.com` tidak
+     * memicu user baru dan user_id pelanggan tak pernah dipindah.
+     *
+     * @return array{0:?int,1:bool} [user_id, true bila dari baris existing yang ber-user]
+     */
+    private function resolveCustomerUserId(?object $existingRow): array
+    {
+        if ($existingRow !== null && $existingRow->user_id !== null) {
+            return [(int) $existingRow->user_id, true];
+        }
+
+        // Baris existing tanpa user (jarang) atau pelanggan baru -> pembuatan
+        // user lewat email pola LegacyIdentity (dihitung pemanggil).
+        return [null, false];
     }
 
     /**
