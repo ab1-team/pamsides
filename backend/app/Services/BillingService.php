@@ -117,20 +117,56 @@ class BillingService
         $remaining = $usageM3;
         $total = 0;
 
-        foreach ($blocks as $block) {
+        foreach ($blocks as $index => $block) {
             if ($remaining <= 0) {
                 break;
             }
 
             $min = (int) $block->usage_min_m3;
 
-            if ($block->usage_max_m3 !== null) {
-                $max = (int) $block->usage_max_m3;
-                // Range selalu max - min. min adalah batas bawah inklusif, max batas atas inklusif.
-                // Contoh: min=10, max=20 → range = 10 m³ (11..20 = 10 nilai, atau 10..19 = 10 nilai).
-                $range = $max - $min;
-            } else {
+            // Batas atas blok ini. Kalau `usage_max_m3` kosong, bloknya
+            // tak terbatas.
+            //
+            // PENTING: batas atas dipakai sebagai batas INKLUSIF pemakaian, dan
+            // panjang rentang dihitung dari jarak ke blok BERIKUTNYA — bukan
+            // `max - min`.
+            //
+            // Alasannya: blok tarif di database memakai penulisan rentang
+            // inklusif, mis. `1-10 m3` = 10 m3 (1,2,...,10). Kalau dipakai
+            // `max - min`, rentang itu jadi 9 m3 sehingga 1 m3 terakhir terlewat
+            // dan justru dihitung dengan tarif blok berikutnya yang lebih
+            // mahal. Contoh nyata di paket "Warga" (3.500/m3 untuk 10 m3
+            // pertama, 4.000/m3 selanjutnya):
+            //
+            //   10 m3 → seharusnya 10 x 3.500 = 35.000
+            //   (dengan max-min: 9 x 3.500 + 1 x 4.000 = 35.500 — 500 lebih mahal)
+            //
+            //   19 m3 → seharusnya 10 x 3.500 + 9 x 4.000 = 71.000
+            //   (dengan max-min: 9 x 3.500 + 10 x 4.000 = 71.500 — 500 lebih mahal)
+            //
+            // Blok terakhir (tanpa `usage_max_m3`) memakai sisa pemakaian.
+            if ($block->usage_max_m3 === null) {
                 $range = $remaining;
+            } else {
+                $max = (int) $block->usage_max_m3;
+
+                // Batas bawah blok berikutnya (bila ada) adalah penanda bahwa
+                // rentang blok ini berakhir di angka tersebut. Jika blok
+                // berikutnya dimulai tepat setelah batas atas blok ini
+                // (mis. 1-10 lalu 11-100000), batas efektifnya tetap `max`.
+                $nextMin = $blocks[$index + 1]->usage_min_m3 ?? null;
+
+                if ($nextMin !== null && (int) $nextMin === $max + 1) {
+                    // Blok berurutan tanpa jeda: `1-10` lalu `11-...`.
+                    // Batas atas inklusif = max, dan panjang rentangnya
+                    // `max - min + 1` (1..10 = 10 nilai).
+                    $range = $max - $min + 1;
+                } else {
+                    // Blok berjarak / tumpang tindih (mis. `0-10` lalu `10-20`,
+                    // dipakai di test lama): panjang rentangnya `max - min`,
+                    // dan blok berikutnya mulai tepat di `max`.
+                    $range = max(0, $max - $min);
+                }
             }
 
             $used = min($remaining, $range);

@@ -68,6 +68,18 @@ export const billingService = {
   },
 
   /**
+   * Ubah meter akhir pemakaian + hitung ulang tagihannya di backend.
+   *
+   * Backend-lah yang menghitung tagihan (tarif progresif paket, abodemen,
+   * denda beku) supaya angka yang tampil di daftar selalu sama dengan
+   * yang tersimpan — bukan hasil hitungan frontend yang bisa meleset.
+   */
+  async updateUsage(payload = {}) {
+    const response = await api.put('/monthly-bills/usage', payload)
+    return response.data
+  },
+
+  /**
    * Ambil rekap tagihan
    */
   async getRecap(params = {}) {
