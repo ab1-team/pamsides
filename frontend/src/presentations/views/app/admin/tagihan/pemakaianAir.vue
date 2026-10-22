@@ -178,8 +178,9 @@
             variant="ghost"
             size="sm"
             @click="handleEdit(row)"
-            class="w-8! h-8! p-0! rounded-lg! border! border-slate-100! hover:border-blue-200! hover:bg-blue-50! text-slate-600! hover:text-blue-600! shadow-sm!"
-            title="Ubah"
+            class="w-8! h-8! p-0! rounded-lg! border! border-slate-100! hover:border-blue-200! hover:bg-blue-50! text-slate-600! hover:text-blue-600! shadow-sm! disabled:opacity-40! disabled:hover:border-slate-100! disabled:hover:bg-transparent! disabled:hover:text-slate-600!"
+            :title="row.status === 'PAID' ? 'Sudah lunas, tidak bisa diedit' : 'Ubah'"
+            :disabled="row.status === 'PAID'"
             icon="edit"
           />
           <BaseButton
@@ -204,8 +205,8 @@
     <EditPemakaianModal
       :show="showEditModal"
       :data="selectedRow"
+      :on-save="handleSaveEdit"
       @close="showEditModal = false"
-      @save="handleSaveEdit"
     />
   </div>
 </template>

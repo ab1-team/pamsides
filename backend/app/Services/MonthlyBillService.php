@@ -162,17 +162,39 @@ class MonthlyBillService
         $remaining = $usage;
         $total = 0;
 
-        foreach ($blocks as $block) {
+        foreach ($blocks as $index => $block) {
             if ($remaining <= 0) {
                 break;
             }
 
             $min = (int) $block->usage_min_m3;
-            $max = $block->usage_max_m3 !== null ? (int) $block->usage_max_m3 : PHP_INT_MAX;
 
-            $range = max(0, $max - $min);
+            // Panjang rentang blok, dengan aturan yang SAMA dengan
+            // `BillingService::calculateProgressiveCharge()`:
+            //
+            //   - Blok tak terbatas (`usage_max_m3` null) → pakai sisa.
+            //   - Blok berurutan tanpa jeda (mis. `1-10` lalu `11-...`) →
+            //     batas atas inklusif, panjang = `max - min + 1`
+            //     (1..10 = 10 m3).
+            //   - Blok berjarak / tumpang tindih (mis. `0-10` lalu `10-20`) →
+            //     panjang = `max - min`.
+            //
+            // Kenapa dibedakan: blok tarif di database ditulis sebagai rentang
+            // inklusif (`1-10 m3` = 10 m3). Kalau selalu pakai `max - min`,
+            // 1 m3 terakhir terlewat dan masuk blok berikutnya yang lebih
+            // mahal — tagihan jadi 500 lebih mahal per pelanggan.
+            if ($block->usage_max_m3 === null) {
+                $range = $remaining;
+            } else {
+                $max = (int) $block->usage_max_m3;
+                $nextMin = $blocks[$index + 1]->usage_min_m3 ?? null;
+
+                $range = ($nextMin !== null && (int) $nextMin === $max + 1)
+                    ? $max - $min + 1
+                    : max(0, $max - $min);
+            }
+
             $used = min($remaining, $range);
-
             $total += $used * (float) $block->price_per_m3;
             $remaining -= $used;
         }

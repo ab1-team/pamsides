@@ -172,10 +172,20 @@ export function usePemakaianAir() {
             denda_bulan: item.denda_bulan || null,
             abodemen: Number(item.abodemen ?? 0),
             jatuhTempo: item.due_date || null,
+            // Tanggal akhir pemakaian (batas akhir input meter untuk periode
+            // ini). Dipakai di modal edit sebagai nilai awal date picker
+            // "TANGGAL AKHIR". Kalau backend tidak mengirimnya, fallback ke
+            // jatuh tempo tagihan.
+            tanggalAkhir: item.reading_recorded_at || item.due_date || null,
             status: statusLabel,
             paid_amount: Number(item.paid_amount ?? 0),
             is_paid: item.is_paid ?? statusLabel === 'PAID',
             package_name: item.package_name || '-',
+            // Periode tagihan dari backend. Dipakai saat edit supaya
+            // perubahan terkirim ke periode yang benar, bukan ke periode
+            // dari filter halaman yang kebetulan sedang aktif.
+            periodeBulan: Number(item.billing_period_month ?? 0) || null,
+            periodeTahun: Number(item.billing_period_year ?? 0) || null,
             reading_photo: item.reading_photo || null,
             technician_id: item.technician_id || null,
             technician_name: item.technician_name || null,
@@ -254,20 +264,80 @@ export function usePemakaianAir() {
     currentPage.value = 1
     return loadTableData()
   }
-  const handleCetakFormInput = () => { /* debug log removed */ }
-  const handleHasilInput = () => { /* debug log removed */ }
-  const handleInputPemakaian = () => { /* debug log removed */ }
+  const handleCetakFormInput = () => {
+    /* debug log removed */
+  }
+  const handleHasilInput = () => {
+    /* debug log removed */
+  }
+  const handleInputPemakaian = () => {
+    /* debug log removed */
+  }
   const handleEdit = (row) => {
     selectedRow.value = { ...row }
     showEditModal.value = true
   }
 
-  const handleSaveEdit = (updatedRow) => {
-    const index = tableData.value.findIndex((item) => item.id === updatedRow.id)
-    if (index !== -1) {
-      tableData.value[index] = { ...tableData.value[index], ...updatedRow }
+  /**
+   * Simpan perubahan pemakaian.
+   *
+   * Tagihan dihitung ulang di BACKEND (tarif progresif paket + abodemen +
+   * denda beku), lalu tabel dimuat ulang dari server. Sengaja TIDAK
+   * menebak tagihannya di frontend: kalau frontend yang menghitung,
+   * nomor yang tampil bisa berbeda dari yang tersimpan di database.
+   */
+  const handleSaveEdit = async (updatedRow) => {
+    const row = selectedRow.value
+    if (!row) return
+
+    isLoading.value = true
+
+    try {
+      const res = await billingService.updateUsage({
+        customer_id: row.id,
+        // Pakai periode tagihan dari server. Kalau baris ini belum punya
+        // tagihan (mis. PENDING), jatuh ke periode filter halaman.
+        month: row.periodeBulan || parseMonth(filter.value.bulan),
+        year: row.periodeTahun || parseYear(filter.value.tahun),
+        meter_value: Number(updatedRow.meterAkhir),
+      })
+
+      if (!res?.success) {
+        throw new Error(res?.message || 'Gagal menyimpan perubahan pemakaian.')
+      }
+
+      showEditModal.value = false
+
+      // Muat ulang dari server supaya angka pemakaian, tagihan, dan
+      // status yang tampil pasti sama dengan yang tersimpan.
+      await loadTableData()
+
+      MySwal.fire({
+        icon: 'success',
+        title: 'Berhasil diperbarui',
+        text: res?.message || 'Pemakaian dan tagihan berhasil diperbarui.',
+        toast: true,
+        position: 'top-end',
+        showConfirmButton: false,
+        timer: 2500,
+        timerProgressBar: true,
+        customClass: {
+          popup: 'swal-toast-custom',
+        },
+      })
+    } catch (err) {
+      const message =
+        err?.response?.data?.message || err?.message || 'Tidak dapat menyimpan perubahan pemakaian.'
+
+      MySwal.fire({
+        icon: 'error',
+        title: 'Gagal Menyimpan',
+        text: message,
+        confirmButtonColor: '#ef4444',
+      })
+    } finally {
+      isLoading.value = false
     }
-    showEditModal.value = false
   }
 
   const handleDelete = async (row) => {

@@ -152,6 +152,11 @@ Route::middleware(['auth:sanctum', 'role:admin,teknisi'])->group(function () {
     Route::get('monthly-bills', [MonthlyBillController::class, 'index']);
     Route::get('monthly-bills/usage', [MonthlyBillController::class, 'usage']);
 
+    // Ubah pemakaian (meter akhir) + hitung ulang tagihan. Teknisi boleh
+    // untuk pelanggan yang ia tangani; admin bebas. Tagihan yang sudah
+    // lunas ditolak di dalam controller (409).
+    Route::put('monthly-bills/usage', [MonthlyBillController::class, 'updateUsage']);
+
     // Teknisi: lihat daftar pelanggan suspended + konfirmasi restore (setelah bayar oleh admin)
     Route::get('monthly-bills/suspended', [MonthlyBillController::class, 'suspended']);
     Route::post('customers/{id}/restore', [MonthlyBillController::class, 'restoreCustomer']);
