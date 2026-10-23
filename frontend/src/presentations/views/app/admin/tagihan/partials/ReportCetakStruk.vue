@@ -170,7 +170,14 @@ const bilang = (val) => {
 </script>
 
 <style scoped>
-.struk-page { display: flex; flex-direction: column; gap: 24px; }
+/* Tampilan struk: gaya awal (gap 24px, logo 48px, .sp 35px, dll).
+   Yang dikecilkan hanya nilai yang membuat 4 struk TIDAK muat satu
+   halaman A4 -- dengan nilai awal, tinggi halaman jadi 299,6mm (> 297mm)
+   sehingga Chrome memecah 4 struk jadi 2 halaman dan menyisakan
+   halaman kosong.
+
+   KNOB: kalau struk masih terpotong, kecilkan `gap` dan `.sp` lagi. */
+.struk-page { display: flex; flex-direction: column; gap: 10px; }
 .struk { font: 11px Arial; padding: 3px; border: 0.75px solid #6d6969; background: #fff; color: #575757; width: 100%; box-sizing: border-box; }
 
 /* Garis pemisah dibuat tipis dan pas melebar */
@@ -183,8 +190,8 @@ const bilang = (val) => {
 .lbl-meta { font-weight: normal !important; width: 65px; }
 
 .header-center { display: flex; align-items: center; gap: 12px; flex: 1; justify-content: flex-start; padding-left: 90px; }
-.logo-l { width: 48px; height: 48px; background-image: url('/logo2.png'); background-size: contain; background-repeat: no-repeat; background-position: center; flex-shrink: 0; }
-.logo-r { width: 48px; height: 48px; background-image: url('/logo1.png'); background-size: contain; background-repeat: no-repeat; background-position: center; flex-shrink: 0; }
+.logo-l { width: 44px; height: 44px; background-image: url('/logo2.png'); background-size: contain; background-repeat: no-repeat; background-position: center; flex-shrink: 0; }
+.logo-r { width: 44px; height: 44px; background-image: url('/logo1.png'); background-size: contain; background-repeat: no-repeat; background-position: center; flex-shrink: 0; }
 
 .t { text-align: center; font-size: 9.5px; font-weight: 700; text-transform: uppercase; }
 .tm { 
@@ -227,7 +234,7 @@ const bilang = (val) => {
 .i { font-style: italic; text-transform: capitalize; }
 
 .ttd { width: 180px; text-align: center; font-size: 11px; margin-left: auto; padding-top: 15px; }
-.sp { margin-bottom: 35px; }
+.sp { margin-bottom: 20px; }
 .nb { font-weight: 700; }
 
 /* Bottom Section (Transfer & Catatan) */
@@ -265,12 +272,40 @@ const bilang = (val) => {
 }
 
 .cat { font-size: 8.5px; line-height: 1.3; flex: 1; text-align: center; align-self: flex-end; margin-bottom: 2px; }
-</style>
 
-<style>
-/* Override padding BaseReportLayout untuk struk (global agar menembus scoped parent) */
+/* Override padding BaseReportLayout untuk struk.
+   Selector dipindah ke scoped block (bukan global) supaya TIDAK bocor ke
+   laporan lain (daftar tagihan / form input) yang punya kebutuhan margin
+   berbeda. Nilai padding tetap sama seperti sebelumnya: 17px 30px.
+
+   Catatan: `.report-page` adalah elemen milik BaseReportLayout (parent).
+   Komponen child (file ini) tidak bisa menambah class ke sana, dan
+   `:deep()` juga tidak cocok karena elemen itu ROOT (bukan descendant).
+   Yang bekerja: selector `.report-page.surat-page` di scoped block ini,
+   karena root child mewarisi scope-id parent. */
 .report-page.surat-page {
   padding: 17px 30px !important;
 }
+</style>
+
+<style>
 .struk { break-inside: avoid; page-break-inside: avoid; }
+
+/* Aturan cetak struk.
+   1) `@page margin` WAJIB 0. BaseReportLayout meng-imposed `margin: 15mm`
+      pada @page, yang BERTAHAP dengan padding di dalam elemen. Hasilnya
+      area cetak jadi sempit dan muncul ruang kosong di kiri/kanan.
+   2) `break-after` TIDAK dipasang di .report-page: pemenggalan halaman
+      dilakukan oleh .report-page-wrap di cetakStruk.vue. Kalau dua-duanya
+      dipasang, Chrome menyisipkan halaman kosong di antar halaman. */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 0;
+  }
+  .struk {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+}
 </style>

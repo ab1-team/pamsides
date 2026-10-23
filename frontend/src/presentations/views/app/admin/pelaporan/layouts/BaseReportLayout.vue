@@ -223,13 +223,17 @@ const logoUrl = computed(() => {
     @media print {
     /* ... kode lainnya ... */
 
-    /* Sesuaikan nilai margin (misal: 15mm atau 20mm agar lebih masuk ke dalam) */
-    .size-a4.portrait { @page { size: A4 portrait; margin: 15mm; } }
-    .size-a4.landscape { @page { size: A4 landscape; margin: 15mm; } }
+    /* PENTING: aturan `@page` TIDAK boleh dibungkus selector kelas
+       (mis. `.size-a4.portrait { @page { ... } }`). Standar CSS hanya
+       mengizinkan `@page` di level atas (atau di dalam @media), sehingga
+       aturan itu di-DROP oleh browser. Akibatnya `size: A4 portrait` dan
+       `margin` TIDAK pernah berlaku -> saat Ctrl+P Chrome memakai ukuran
+       kertas default (mis. Letter) dan area cetak terlihat menyempit
+       dengan ruang kosong di kiri & kanan.
 
-    .size-f4.portrait { @page { size: 215mm 330mm portrait; margin: 15mm; } }
-    .size-f4.landscape { @page { size: 215mm 330mm landscape; margin: 15mm; } }
-  }
+       Karena itu `@page` ditulis di level atas, di dalam blok <style>
+       global (bukan scoped) di bawah file ini. */
+    }
 
     /* ================= Gaya CSS Kop Surat ================= */
     .surat-kop {
@@ -419,4 +423,14 @@ const logoUrl = computed(() => {
 .report-page.no-meta-header .data-table-tight {
   margin-top: 0 !important;
 }
+
+/* CATATAN: aturan `@page` TIDAK diletakkan di file ini.
+   `@page` bersifat global untuk seluruh dokumen, jadi satu aturan A4
+   portrait di sini akan menimpa laporan lain di menu Pelaporan yang
+   punya opsi Landscape atau F4 (mis. Buku Besar, Jurnal Umum, Neraca) --
+   tabel lebarnya jadi terpotong saat diprint.
+
+   Aturan `@page` untuk laporan ini dibuat di file view masing-masing
+   (cetakForm.vue, cetakDaftarTagihan.vue, cetakStruk.vue) yang memang
+   selalu A4 portrait. */
 </style>
