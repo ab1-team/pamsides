@@ -223,13 +223,17 @@ const logoUrl = computed(() => {
     @media print {
     /* ... kode lainnya ... */
 
-    /* Sesuaikan nilai margin (misal: 15mm atau 20mm agar lebih masuk ke dalam) */
-    .size-a4.portrait { @page { size: A4 portrait; margin: 15mm; } }
-    .size-a4.landscape { @page { size: A4 landscape; margin: 15mm; } }
+    /* PENTING: aturan `@page` TIDAK boleh dibungkus selector kelas
+       (mis. `.size-a4.portrait { @page { ... } }`). Standar CSS hanya
+       mengizinkan `@page` di level atas (atau di dalam @media), sehingga
+       aturan itu di-DROP oleh browser. Akibatnya `size: A4 portrait` dan
+       `margin` TIDAK pernah berlaku -> saat Ctrl+P Chrome memakai ukuran
+       kertas default (mis. Letter) dan area cetak terlihat menyempit
+       dengan ruang kosong di kiri & kanan.
 
-    .size-f4.portrait { @page { size: 215mm 330mm portrait; margin: 15mm; } }
-    .size-f4.landscape { @page { size: 215mm 330mm landscape; margin: 15mm; } }
-  }
+       Karena itu `@page` ditulis di level atas, di dalam blok <style>
+       global (bukan scoped) di bawah file ini. */
+    }
 
     /* ================= Gaya CSS Kop Surat ================= */
     .surat-kop {
@@ -418,5 +422,27 @@ const logoUrl = computed(() => {
 .report-page.no-meta-header .data-table,
 .report-page.no-meta-header .data-table-tight {
   margin-top: 0 !important;
+}
+
+/* =========================================================================
+   Ukuran kertas saat print (Ctrl+P).
+   -------------------------------------------------------------------------
+   Aturan `@page` WAJIB berada di level atas (tidak boleh dibungkus selector
+   kelas). Kalau dibungkus -- mis. `.size-a4.portrait { @page { ... } }` --
+   browser DROPP aturan itu, sehingga Chrome memakai ukuran kertas default
+   (Letter) dan area cetak terlihat menyempit dengan ruang kosong di kiri &
+   kanan.
+
+   `margin: 0` karena margin kertas digabung dengan padding di dalam
+   elemen `.report-page`. Kalau keduanya aktif, margin terhitung dua kali.
+
+   CATATAN: aturan ini memakai `size: A4 portrait`. Laporan ber-F4 atau
+   landscape di handled oleh view-nya masing-masing.
+   ========================================================================= */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 0;
+  }
 }
 </style>

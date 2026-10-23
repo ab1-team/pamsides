@@ -611,9 +611,18 @@ onMounted(async () => {
   transform: scale(var(--page-scale, 1));
 }
 
+/* Penting: jangan kunci `height` halaman di mode layar.
+   Kalau tinggi halaman dikunci 297mm sementara isi tabel (jumlah baris
+   variabel) lebih panjang, sisa baris terakhir TERPOTONG di preview --
+   dan karena `overflow: hidden` tidak ada tanda-tandanya, user mengira
+   datanya hilang. Tinggi di sini hanya `min-height`, jadi halaman tetap
+   seukuran A4 tapi isinya tidak pernah terpotong.
+
+   Pemotongan saat print dicegah oleh `break-after: page` + `@page` A4,
+   bukan dengan memotong elemen. */
 .report-page-wrap :deep(.report-page.surat-page.size-a4.portrait) {
-  min-height: 0;
-  height: 297mm;
+  min-height: 297mm;
+  height: auto;
 }
 
 .alert-error {
@@ -629,32 +638,108 @@ onMounted(async () => {
   .no-print {
     display: none !important;
   }
+
+  /* PENTING: .preview-shell di layar web memakai `height: 100vh` +
+     `overflow: hidden`. Kalau itu ikut terbawa ke media print, Chrome
+     mem-view dokumen sebagai satu "layar" dan tidak mem-fragmentasi
+     isinya, sehingga semua halaman laporan keluar sebagai 1 halaman PDF
+     dan sisanya terpotong. */
   .preview-shell {
     background: #ffffff;
     padding: 0;
+    height: auto !important;
+    overflow: visible !important;
   }
   .workspace-container {
-    height: auto;
-    overflow: visible;
+    height: auto !important;
+    overflow: visible !important;
   }
   .preview-stage {
     padding: 0;
-    overflow: visible;
+    height: auto !important;
+    overflow: visible !important;
   }
+
+  /* Flex container tidak bisa dipaginasi dengan rapi oleh Chrome saat
+     print, jadi diubah jadi block agar tiap .report-page-wrap menjadi
+     satu halaman PDF. */
   .report-root {
+    display: block !important;
     gap: 0 !important;
     padding: 0 !important;
+    width: auto !important;
+    min-width: 0 !important;
+    margin: 0 !important;
   }
+
+  /* .report-page-wrap memakai style inline width/height dalam PX hasil
+     zoom preview. Nilai itu harus ditimpa supaya ukuran cetaknya tepat
+     A4 (210mm x 297mm). */
+  .report-page-wrap {
+    width: 210mm !important;
+    height: auto !important;
+    margin: 0 !important;
+    overflow: visible !important;
+    page-break-after: always;
+    break-after: page;
+  }
+  .report-page-wrap:last-child {
+    margin-bottom: 0;
+    page-break-after: auto;
+    break-after: auto;
+  }
+
+  /* Tinggi halaman TIDAK dikunci saat print.
+     Kalau `height: 297mm` + `overflow: hidden`, baris tabel yang sedikit
+     melebihi area cetak akan TERPOTONG dan hilang dari PDF. Dengan
+     `height: auto` + `min-height`, isi tetap utuh; pemenggalan halaman
+     tetap dijamin oleh `break-after: page` di .report-page-wrap dan
+     `@page { size: A4 }`. */
   .report-page-wrap :deep(.report-page.surat-page.size-a4.portrait) {
     transform: none !important;
     margin: 0 !important;
     width: 210mm !important;
     min-height: 297mm !important;
-    height: 297mm !important;
+    height: auto !important;
+    overflow: visible !important;
   }
   @page {
     size: A4 portrait;
     margin: 0;
+  }
+}
+</style>
+
+<!--
+  Reset global khusus mode print.
+
+  Aturan global `html, body { height: 100%; overflow-x: hidden }` di App.vue
+  membuat <body> menjadi scroll-container. Akibatnya Chrome TIDAK
+  mem-fragmentasi isi saat dicetak: seluruh dokumen keluar sebagai 1 halaman
+  A4 dan halaman-halaman berikutnya terpotong (kata "1 page" di dialog print
+  padahal laporannya multi halaman).
+
+  Di bawah ini body/#app/#app-root dilepas dari tinggi tetap + overflow
+  hidden supaya `break-after: page` pada .report-page-wrap benar-benar
+  menghasilkan satu halaman PDF untuk setiap halaman laporan.
+
+  Blok ini HANYA aktif di media print, jadi tampilan di layar web tidak
+  berubah sama sekali.
+-->
+<style>
+@media print {
+  html,
+  body {
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+  }
+
+  #app,
+  #app-root {
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
   }
 }
 </style>
