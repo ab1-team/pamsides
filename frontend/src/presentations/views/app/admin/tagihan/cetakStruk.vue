@@ -144,8 +144,6 @@ const {
   zoomIn,
   zoomOut,
   resetZoom,
-  pageNaturalWidth,
-  pageNaturalHeight,
   pageScale,
   pageScaledWidth,
   pageScaledHeight,

@@ -268,12 +268,16 @@ const jamCetak = computed(() =>
 </style>
 
 <style>
-/* Ukuran halaman cetak. Padding TIDAK diatur di sini supaya tidak
-   bentrok dengan aturan scoped `padding: 12mm 15mm` di atas. */
+/* Ukuran halaman cetak.
+   `height: auto` (bukan 297mm) supaya baris tabel terakhir tidak
+   terpotong -- halaman tetap minimal setinggi A4 lewat `min-height`,
+   tapi isinya boleh lebih panjang dan tidak dipotong diam-diam.
+   Padding TIDAK diatur di sini supaya tidak bentrok dengan aturan
+   scoped `padding: 12mm 15mm` di atas. */
 @media print {
   .report-page.surat-page.size-a4.portrait {
     width: 210mm !important;
-    height: 297mm !important;
+    height: auto !important;
     min-height: 297mm !important;
     margin: 0 !important;
   }

@@ -1,5 +1,9 @@
 <template>
-  <div class="preview-shell" :class="[reportConfig?.orientation || 'portrait']">
+  <div
+    class="preview-shell"
+    :class="[reportConfig?.orientation || 'portrait']"
+    :style="{ '--page-size': pageSizeValue }"
+  >
     <div class="preview-toolbar no-print">
       <div class="toolbar-left">
         <button class="toolbar-menu-btn" @click="showSidebar = !showSidebar" title="Tampilkan / sembunyikan thumbnail">
@@ -298,6 +302,24 @@ const viewTarget = computed(() => response.value?.view_target || '')
 const resolvedView = computed(() => reportComponents[viewTarget.value] || CoverView)
 // config tetap
 const reportConfig = computed(() => response.value?.payload?.config || {})
+
+/**
+ * Ukuran kertas untuk aturan `@page` saat print.
+ *
+ * `@page` tidak bisa memakai selector kelas, jadi nilainya diteruskan
+ * lewat custom property yang di-set di elemen root. `pageSize` di
+ * `@page { size: var(--page-size) }` dibaca browser saat mencetak.
+ *
+ * Default A4 portrait. Laporan ber-F4 atau landscape memakai ukuran
+ * dan orientasinya masing-masing, supaya tabel lebarnya tidak terpotong.
+ */
+const pageSizeValue = computed(() => {
+  const cfg = reportConfig.value || {}
+  const isF4 = (cfg.paper_size || 'A4').toUpperCase() === 'F4'
+  const isLandscape = cfg.orientation === 'landscape'
+  if (isF4) return isLandscape ? '330mm 215mm landscape' : '215mm 330mm portrait'
+  return isLandscape ? 'A4 landscape' : 'A4 portrait'
+})
 
 /**
  * Object signature dari backend. Backend sudah menyisipkan blok tanda tangan
@@ -1570,4 +1592,32 @@ onUnmounted(() => {
 .calk-probe.size-f4.portrait { width: 215mm; }
 .calk-probe.size-a4.landscape { width: 297mm; }
 .calk-probe.size-f4.landscape { width: 330mm; }
+</style>
+
+<style>
+/* =========================================================================
+   Ukuran kertas saat print untuk laporan Pelaporan.
+   -------------------------------------------------------------------------
+   Ditaruh di blok <style> GLOBAL (bukan scoped) karena aturan `@page`
+   di dalam scoped CSS di-drop Vite -> aturan tidak akan pernah berlaku.
+
+   `@page` tidak bisa memakai selector kelas, jadi ukurannya diambil dari
+   custom property `--page-size` yang di-set inline oleh JS sesuai config
+   laporan (A4/F4 x portrait/landscape). Default-nya A4 portrait.
+
+   `margin: 0` karena margin kertas digabung dengan padding di dalam
+   elemen `.report-page`; kalau keduanya aktif, margin terhitung dua kali
+   dan area cetak menyempit (tabel lebar jadi terpotong).
+
+   CATATAN: aturan `@page` TIDAK diletakkan di BaseReportLayout.vue
+   karena `@page` bersifat global untuk seluruh dokumen -- satu aturan
+   A4 portrait di sana akan menimpa semua laporan pelaporan, termasuk
+   yang memakai Landscape atau F4 (Buku Besar, Jurnal Umum, Neraca).
+   ========================================================================= */
+@media print {
+  @page {
+    size: var(--page-size, A4 portrait);
+    margin: 0;
+  }
+}
 </style>

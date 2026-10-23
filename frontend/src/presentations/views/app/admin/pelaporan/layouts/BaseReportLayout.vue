@@ -424,25 +424,13 @@ const logoUrl = computed(() => {
   margin-top: 0 !important;
 }
 
-/* =========================================================================
-   Ukuran kertas saat print (Ctrl+P).
-   -------------------------------------------------------------------------
-   Aturan `@page` WAJIB berada di level atas (tidak boleh dibungkus selector
-   kelas). Kalau dibungkus -- mis. `.size-a4.portrait { @page { ... } }` --
-   browser DROPP aturan itu, sehingga Chrome memakai ukuran kertas default
-   (Letter) dan area cetak terlihat menyempit dengan ruang kosong di kiri &
-   kanan.
+/* CATATAN: aturan `@page` TIDAK diletakkan di file ini.
+   `@page` bersifat global untuk seluruh dokumen, jadi satu aturan A4
+   portrait di sini akan menimpa laporan lain di menu Pelaporan yang
+   punya opsi Landscape atau F4 (mis. Buku Besar, Jurnal Umum, Neraca) --
+   tabel lebarnya jadi terpotong saat diprint.
 
-   `margin: 0` karena margin kertas digabung dengan padding di dalam
-   elemen `.report-page`. Kalau keduanya aktif, margin terhitung dua kali.
-
-   CATATAN: aturan ini memakai `size: A4 portrait`. Laporan ber-F4 atau
-   landscape di handled oleh view-nya masing-masing.
-   ========================================================================= */
-@media print {
-  @page {
-    size: A4 portrait;
-    margin: 0;
-  }
-}
+   Aturan `@page` untuk laporan ini dibuat di file view masing-masing
+   (cetakForm.vue, cetakDaftarTagihan.vue, cetakStruk.vue) yang memang
+   selalu A4 portrait. */
 </style>
