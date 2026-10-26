@@ -101,12 +101,35 @@ import { useUiStore } from '@/stores/uiStore'
 
 const route = useRoute()
 const uiStore = useUiStore()
-const { tableData, filter, refreshData, groupedData, resolveTeknisiLabel, teknisiOptions, loadTeknisiOptions } = usePemakaianAir()
+const {
+  tableData,
+  filter,
+  refreshData,
+  groupedData,
+  resolveTeknisiLabel,
+  teknisiOptions,
+  loadTeknisiOptions,
+  isTechnician,
+  currentUserLabel,
+} = usePemakaianAir()
 
+/**
+ * Nama teknisi yang tampil di kop cetakan.
+ *
+ * - Admin   → teknisi yang dipilih di filter halaman (atau "Admin")
+ * - Teknisi → nama teknisi yang sedang login
+ *
+ * Halaman ini dipakai admin DAN teknisi, jadi keduanya harus menghasilkan
+ * kop yang sama persis — bedanya hanya isi nama teknisinya.
+ */
 const caterName = computed(() => {
+  if (isTechnician.value) {
+    return currentUserLabel.value
+  }
+
   const rawCater = route.query.cater
   if (rawCater && String(uiStore.userData?.id) === String(rawCater)) {
-    return uiStore.userData?.nama || 'Admin'
+    return uiStore.userData?.name || 'Admin'
   }
   if (rawCater) {
     return resolveTeknisiLabel(rawCater) || 'Admin'
@@ -116,7 +139,7 @@ const caterName = computed(() => {
     const match = teknisiOptions.value.find((t) => String(t.id) === String(teknisiId))
     if (match) return match.name
   }
-  return uiStore.userData?.nama || 'Admin'
+  return uiStore.userData?.name || 'Admin'
 })
 
 const PAGE_CONFIG = { paper_size: 'A4', orientation: 'portrait' }
@@ -245,9 +268,21 @@ onMounted(async () => {
     if (route.query.teknisi) filter.value.teknisi = route.query.teknisi
     if (route.query.cater) filter.value.cater = resolveTeknisiLabel(route.query.cater)
 
+    // Teknisi: kop & metadata harus mencantumkan namanya sendiri, bukan
+    // "Admin" (untuk admin, `filter.cater` berisi teknisi yang dipilihnya).
+    if (isTechnician.value) {
+      filter.value.cater = currentUserLabel.value
+    }
+
     document.title = `Cetak Form Input`
 
-    await Promise.all([refreshData(), loadTeknisiOptions()])
+    // Teknisi tidak boleh memanggil `/users?role=teknisi` (admin-only),
+    // dan tidak butuh daftar teknisi — namanya sudah diketahui dari sesi.
+    if (isTechnician.value) {
+      await refreshData()
+    } else {
+      await Promise.all([refreshData(), loadTeknisiOptions()])
+    }
     buildPages()
 
     if (pages.value.length === 0) {

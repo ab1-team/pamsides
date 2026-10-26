@@ -4,8 +4,20 @@ import { billingService } from '@/services/billing.service'
 import { confirmDelete } from '@/utils/deleteHandler'
 import { MySwal } from '@/utils/swal'
 import api from '@/utils/axios'
+import { useUiStore } from '@/stores/uiStore'
 
 export function usePemakaianAir() {
+  const uiStore = useUiStore()
+
+  // Role pemanggil.
+  //
+  // Admin memakai halaman "Data Pemakaian Air" yang punya filter teknisi
+  // (bisa lihat semua / pilih satu teknisi). Teknisi memakai halaman
+  // "Input Pemakaian Air" yang datanya otomatis dibatasi ke pelanggan
+  // miliknya sendiri — jadi dia TIDAK punya filter teknisi, dan nama
+  // teknisi yang tampil di kop/cetak adalah nama dia sendiri.
+  const isTechnician = computed(() => uiStore.userRole === 'teknisi')
+
   const bulanOptions = [
     'Januari',
     'Februari',
@@ -91,6 +103,24 @@ export function usePemakaianAir() {
 
   const selectedTeknisiName = computed(() => selectedTeknisi.value?.name || 'Admin')
 
+  /**
+   * Nama petugas yang harus tampil di kop / metadata cetakan.
+   *
+   * - Admin    → "Admin" (nama filter teknisi yang dipilih, atau default)
+   * - Teknisi  → nama dia sendiri, karena datanya sudah otomatis dibatasi
+   *              ke pelanggan miliknya oleh backend.
+   *
+   * Halaman cetak (cetakForm / cetakStruk / cetakDaftarTagihan) memakai
+   * nilai ini supaya hasil cetak teknisi mencantumkan namanya sendiri —
+   * sama seperti admin yang mencantumkan teknisi yang dipilihnya.
+   */
+  const currentUserLabel = computed(() => {
+    if (isTechnician.value) {
+      return uiStore.userData?.name || uiStore.userData?.nama || 'Teknisi'
+    }
+    return selectedTeknisiName.value
+  })
+
   const resolveTeknisiLabel = (rawValue) => {
     if (rawValue === '' || rawValue == null) return ''
     const asString = String(rawValue).trim()
@@ -101,8 +131,18 @@ export function usePemakaianAir() {
     return asString
   }
 
-  // Ambil daftar teknisi dari backend (admin-only endpoint)
+  /**
+   * Ambil daftar teknisi dari backend (admin-only endpoint).
+   *
+   * Teknisi TIDAK memanggil ini: endpoint `/users?role=teknisi` hanya
+   * dibuka untuk admin, dan teknisi memang tidak butuh memilih teknisi
+   * karena datanya sudah otomatis miliknya sendiri.
+   */
   const loadTeknisiOptions = async () => {
+    if (isTechnician.value) {
+      teknisiOptions.value = []
+      return
+    }
     teknisiError.value = ''
     try {
       const res = await api.get('/users', { params: { role: 'teknisi' } })
@@ -362,6 +402,10 @@ export function usePemakaianAir() {
     showEditModal,
     selectedRow,
     isLoading,
+
+    // Role
+    isTechnician,
+    currentUserLabel,
 
     // Pilihan opsi
     tahunOptions,

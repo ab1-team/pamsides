@@ -183,7 +183,7 @@
                         <div class="flex! items-center! justify-between! py-1!">
                           <span class="text-slate-500! font-semibold!">Stand Meter Bulan Ini</span>
                           <span class="font-bold! text-slate-800! text-right!">
-                            {{ bill?.meter_reading_start }} m³ â†’ {{ bill?.meter_reading_end }} m³
+                            {{ bill?.meter_reading_start }} m³ → {{ bill?.meter_reading_end }} m³
                           </span>
                         </div>
 
@@ -444,7 +444,7 @@ const handlePrint = () => {
   <div class="row"><span class="label">Pelanggan</span><span>${customer}</span></div>
   <div class="row"><span class="label">Kode Pelanggan</span><span>${props.bill.customer?.customer_code || '-'}</span></div>
   <div class="row"><span class="label">Periode</span><span>${month} ${year}</span></div>
-  <div class="row"><span class="label">Stand Meter</span><span>${props.bill.meter_reading_start || 0} â†’ ${props.bill.meter_reading_end || 0} m³</span></div>
+  <div class="row"><span class="label">Stand Meter</span><span>${props.bill.meter_reading_start || 0} → ${props.bill.meter_reading_end || 0} m³</span></div>
   <div class="row"><span class="label">Volume Pemakaian</span><span>${usage} m³</span></div>
   <div class="row"><span class="label">Jatuh Tempo</span><span>${formatDate(props.bill.due_date)}</span></div>
   <div class="row total"><span>Total Tagihan</span><span>Rp. ${total}</span></div>

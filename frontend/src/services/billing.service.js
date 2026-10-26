@@ -97,10 +97,15 @@ export const billingService = {
   },
 
   /**
-   * Detail tagihan
+   * Detail tagihan.
+   *
+   * Memakai `/monthly-bills/{id}` (shared admin+teknisi), BUKAN `/bills/{id}`.
+   * Route `/bills/{monthlyBill}` hanya dibuka untuk `role:admin`, jadi
+   * teknisi yang memanggilnya langsung kena 403 dan modal rincian tagihan
+   * tidak pernah terbuka.
    */
   async getBillDetail(id) {
-    const response = await api.get(`/bills/${id}`)
+    const response = await api.get(`/monthly-bills/${id}`)
     return response.data
   },
 

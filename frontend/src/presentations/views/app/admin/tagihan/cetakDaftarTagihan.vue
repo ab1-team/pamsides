@@ -100,7 +100,7 @@ import { usePdfPreview, THUMB_RENDER_BUFFER } from '@/composables/usePdfPreview'
 import { PER_PAGE_ROWS, FIRST_PAGE_ROWS } from '@/utils/reportConfig'
 
 const route = useRoute()
-const { tableData, filter, refreshData, groupedData, resolveTeknisiLabel } = usePemakaianAir()
+const { tableData, filter, refreshData, groupedData, resolveTeknisiLabel, isTechnician, currentUserLabel } = usePemakaianAir()
 
 const PAGE_CONFIG = { paper_size: 'A4', orientation: 'portrait' }
 
@@ -258,6 +258,13 @@ onMounted(async () => {
     if (route.query.bulan) filter.value.bulan = route.query.bulan
     if (route.query.teknisi) filter.value.teknisi = route.query.teknisi
     if (route.query.cater) filter.value.cater = resolveTeknisiLabel(route.query.cater)
+
+    // Teknisi: kop harus mencantumkan namanya sendiri. `filter.cater` untuk
+    // admin berisi teknisi yang dipilihnya; untuk teknisi tidak ada
+    // pemilihan — datanya sudah otomatis miliknya sendiri.
+    if (isTechnician.value) {
+      filter.value.cater = currentUserLabel.value
+    }
 
     document.title = `Cetak Daftar Tagihan`
 

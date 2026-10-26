@@ -58,7 +58,7 @@
 | GET | `/api/meter-readings/completed` | MeterReadingController | Daftar pembacaan selesai |
 | GET | `/api/dashboard/statistics` | DashboardController | Statistik dashboard |
 | GET | `/api/meter-readings/pending` | MeterReadingController | Pelanggan pending (belum dicatat) |
-| POST | `/api/meter-readings` | MeterReadingController | Buat pembacaan + generate tagihan otomatis |
+| POST | `/api/meter-readings` | MeterReadingController | Buat pembacaan + generate tagihan otomatis. Field `photo` OPSIONAL (bukti pendukung, boleh null) |
 | GET | `/api/meter-readings/{id}` | MeterReadingController | Detail satu pembacaan |
 | PUT | `/api/meter-readings/{id}` | MeterReadingController | Perbarui pembacaan |
 | DELETE | `/api/meter-readings/{id}` | MeterReadingController | Hapus pembacaan |
@@ -161,7 +161,7 @@
 | Method | Endpoint | Controller | Respons |
 |--------|----------|------------|---------|
 | GET | `/api/monthly-bills` | MonthlyBillController | Tagihan |
-| GET | `/api/monthly-bills/{id}` | MonthlyBillController | Detail tagihan |
+| GET | `/api/monthly-bills/{id}` | MonthlyBillController | Detail tagihan (admin + teknisi) |
 | GET | `/api/monthly-bills/usage` | MonthlyBillController | Penggunaan |
 | POST | `/api/monthly-bills/{id}/pay` | MonthlyBillController | Bayar tagihan |
 | DELETE | `/api/monthly-bills/{id}` | MonthlyBillController | Rollback tagihan yang sudah dibayar |
