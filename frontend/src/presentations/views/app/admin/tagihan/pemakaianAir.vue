@@ -6,7 +6,7 @@
           Data Pemakaian Air
         </h1>
         <p class="text-xs md:text-sm text-slate-500! leading-relaxed">
-          Manage and monitor regional water consumption cycles and billing.
+          Mengelola dan memantau siklus konsumsi air serta penagihan.
         </p>
       </div>
 

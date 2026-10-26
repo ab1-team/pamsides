@@ -5,7 +5,7 @@
         <h1 class="text-xl md:text-2xl font-bold text-cyan-600! tracking-tight mb-1!">
           Daftar Tagihan Tertunggak (Belum Lunas)
         </h1>
-        <p class="text-xs md:text-sm text-slate-500! leading-relaxed">
+        <p class="text-xs md:text-sm text-slate-500! leading-relaxed!">
           Menampilkan seluruh tagihan air pelanggan yang belum dilunasi. Anda dapat mencari
           pelanggan secara instan dan mengirim pengingat WhatsApp atau mencetak invoice.
         </p>
@@ -25,20 +25,30 @@
     </div>
 
     <ContentCard variant="elevated" padding="none" class="overflow-hidden!">
+      <div
+        v-if="loadError"
+        class="px-4! py-3! bg-rose-50! border-b! border-rose-200! text-rose-700! text-xs! font-semibold! flex! items-center! gap-2!"
+      >
+        <font-awesome-icon icon="exclamation-triangle" class="text-sm!" />
+        Gagal memuat data: {{ loadError }}
+      </div>
       <DataTable
-        :data="filteredBills"
+        :data="bills"
         :columns="tableColumns"
         v-model:current-page="currentPage"
         v-model:per-page="perPage"
-        :total-pages="totalPages"
+        :total-pages="lastPage"
         :visible-pages="visiblePages"
-        :total-entries="filteredBills.length"
+        :total-entries="totalEntries"
         v-model="searchQuery"
         search-placeholder="Cari nama pelanggan, ID, atau no. invoice..."
         empty-title="Tagihan Tertunggak Tidak Ditemukan"
         empty-message="Semua tagihan lunas atau mohon lakukan pencarian kembali."
+        empty-icon="file-invoice-dollar"
         no-card
         row-clickable
+        :loading="isLoading"
+        server-side
         @row-click="handleOpenDetail"
       >
         <template #column-customer="{ row }">
@@ -71,11 +81,11 @@
         <template #column-meter="{ row }">
           <div class="flex items-center gap-2! font-semibold! text-xs!">
             <span class="text-slate-400! font-normal!">
-              {{ row.meter_reading_start?.toLocaleString('id-ID') || 0 }}
+              {{ formatNumber(row.meter_reading_start) }}
             </span>
-            <span class="text-slate-300!">â†’</span>
+            <span class="text-slate-300!">→</span>
             <span class="text-cyan-600! font-bold!">
-              {{ row.meter_reading_end?.toLocaleString('id-ID') || 0 }}
+              {{ formatNumber(row.meter_reading_end) }}
             </span>
           </div>
         </template>
@@ -90,25 +100,13 @@
         <template #column-total="{ row }">
           <div class="flex flex-col!">
             <span class="text-sm! font-extrabold! text-slate-800!">
-              Rp.
-              {{
-                Number(row.total_amount || 0).toLocaleString('id-ID', {
-                  minimumFractionDigits: 0,
-                  maximumFractionDigits: 0,
-                })
-              }}
+              Rp. {{ formatCurrency(row.total_amount) }}
             </span>
             <span
               v-if="Number(row.penalty_amount || 0) > 0"
               class="text-[9px]! text-rose-500! font-bold!"
             >
-              Termasuk Denda Rp.
-              {{
-                Number(row.penalty_amount || 0).toLocaleString('id-ID', {
-                  minimumFractionDigits: 0,
-                  maximumFractionDigits: 0,
-                })
-              }}
+              Termasuk Denda Rp. {{ formatCurrency(row.penalty_amount) }}
             </span>
           </div>
         </template>
@@ -140,7 +138,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
 import { billingService } from '@/services/billing.service.js'
 import BaseButton from '@/presentations/components/ui/BaseButton.vue'
 import ContentCard from '@/presentations/components/ui/ContentCard.vue'
@@ -149,12 +147,35 @@ import detaiDaftarTagihan from '@/presentations/views/app/admin/tagihan/partials
 
 const bills = ref([])
 const isLoading = ref(false)
+const loadError = ref(null)
+
 const searchQuery = ref('')
 const currentPage = ref(1)
 const perPage = ref(10)
 
+const lastPage = ref(1)
+const totalEntries = ref(0)
+
 const selectedBill = ref(null)
 const showDetailModal = ref(false)
+
+let searchDebounce = null
+let inFlightToken = 0
+
+const bulanOptions = [
+  'Januari',
+  'Februari',
+  'Maret',
+  'April',
+  'Mei',
+  'Juni',
+  'Juli',
+  'Agustus',
+  'September',
+  'Oktober',
+  'November',
+  'Desember',
+]
 
 const tableColumns = [
   { key: 'customer', title: 'PELANGGAN / ID' },
@@ -165,26 +186,135 @@ const tableColumns = [
   { key: 'due_date', title: 'JATUH TEMPO' },
 ]
 
+/**
+ * Ambil daftar tagihan dari server (server-side pagination + search).
+ *
+ * PENTING — jangan pakai `billingService.getAllBills()` di halaman ini.
+ * Versi lama melakukan loop paging di frontend: dengan 3.578 tagihan
+ * `unpaid` dan `per_page=200`, itu berarti 18 request HTTP berurutan
+ * sebelum tabelnya tampil — makanya halaman terasa "macet" dan lama
+ * sekali loading. Halaman admin sudah sejak awal memakai server-side
+ * pagination (satu request per halaman), dan halaman ini sekarang
+ * memakai pola yang sama persis.
+ *
+ * Filter `status=unpaid` tetap dikirim supaya backend hanya menghitung
+ * dan mengembalikan tagihan yang belum lunas.
+ */
 const fetchBills = async () => {
+  const token = ++inFlightToken
   isLoading.value = true
+  loadError.value = null
   try {
     const params = {
+      page: currentPage.value,
+      per_page: perPage.value,
       status: 'unpaid',
     }
-    const res = await billingService.getAllBills(params)
-    if (res.success && res.data) {
-      bills.value = res.data.bills || []
+    if (searchQuery.value && searchQuery.value.trim() !== '') {
+      params.q = searchQuery.value.trim()
+    }
+
+    const res = await billingService.getBills(params)
+    if (token !== inFlightToken) return
+
+    if (res?.success && res.data) {
+      bills.value = Array.isArray(res.data.bills) ? res.data.bills : []
+    } else if (res?.data) {
+      bills.value = Array.isArray(res.data) ? res.data : []
+    } else {
+      bills.value = []
+    }
+
+    const meta = res?.meta
+    if (meta && meta.mode === 'paginate') {
+      lastPage.value = Math.max(1, Number(meta.last_page) || 1)
+      totalEntries.value = Number(meta.total) || bills.value.length
+    } else {
+      lastPage.value = 1
+      totalEntries.value = bills.value.length
+    }
+
+    if (currentPage.value > lastPage.value) {
+      currentPage.value = lastPage.value
+      return
     }
   } catch (err) {
+    if (token !== inFlightToken) return
+    loadError.value = err.response?.data?.message || err.message || 'Gagal memuat data'
+    bills.value = []
+    totalEntries.value = 0
+    lastPage.value = 1
   } finally {
-    isLoading.value = false
+    if (token === inFlightToken) {
+      isLoading.value = false
+    }
   }
 }
+
+const visiblePages = computed(() => {
+  const pages = []
+  const total = lastPage.value
+  const current = currentPage.value
+  const maxPages = 5
+
+  if (total <= maxPages) {
+    for (let i = 1; i <= total; i++) pages.push(i)
+    return pages
+  }
+
+  let start = Math.max(1, current - 2)
+  let end = Math.min(total, start + maxPages - 1)
+  if (end - start < maxPages - 1) {
+    start = Math.max(1, end - maxPages + 1)
+  }
+
+  for (let i = start; i <= end; i++) pages.push(i)
+  if (start > 1) pages.unshift('...')
+  if (end < total) pages.push(total)
+  return pages
+})
+
+// Kembali ke halaman 1 lalu muat ulang.
+//
+// `watch(currentPage)` di bawah yang mem-fetch saat nomor halaman berubah.
+// Kalau halaman sudah 1, setter tidak menghasilkan perubahan, jadi watcher
+// tidak berjalan — maka `fetchBills()` dipanggil langsung di sini.
+const backToFirstPage = () => {
+  if (currentPage.value === 1) {
+    fetchBills()
+  } else {
+    currentPage.value = 1
+  }
+}
+
+// Pencarian memakai input bawaan `DataTable` (slot `toolbar`), jadi
+// perubahan keyword datang lewat `v-model="searchQuery"`, bukan lewat event
+// `@input` milik halaman ini.
+//
+// Debounce tetap dijaga di sini: tanpa itu, tiap ketikan huruf langsung
+// menembak request ke server dan tabel berkedip karena `loading` aktif
+// pada tiap ketikan.
+watch(searchQuery, () => {
+  if (searchDebounce) clearTimeout(searchDebounce)
+  searchDebounce = setTimeout(backToFirstPage, 350)
+})
+
+watch(currentPage, () => {
+  fetchBills()
+})
+
+// `perPage` ditangani oleh `v-model:per-page` milik `DataTable`. Nomor
+// halaman dikembalikan ke 1 karena mengganti ukuran halaman membuat posisi
+// halaman lama bisa menunjuk ke luar jangkauan.
+watch(perPage, () => {
+  backToFirstPage()
+})
 
 const getInitials = (row) => {
   const name = row.customer?.user?.name || row.customer?.ticket?.applicant_name || 'PL'
   return name
     .split(' ')
+    .filter(Boolean)
     .map((word) => word[0])
     .join('')
     .slice(0, 2)
@@ -196,27 +326,27 @@ const getCustomerName = (row) => {
 }
 
 const getMonthName = (monthNum) => {
-  const months = [
-    'Januari',
-    'Februari',
-    'Maret',
-    'April',
-    'Mei',
-    'Juni',
-    'Juli',
-    'Agustus',
-    'September',
-    'Oktober',
-    'November',
-    'Desember',
-  ]
-  return months[monthNum - 1] || '-'
+  if (!monthNum) return '-'
+  return bulanOptions[monthNum - 1] || '-'
+}
+
+const formatNumber = (val) => {
+  const n = Number(val || 0)
+  return n.toLocaleString('id-ID')
+}
+
+const formatCurrency = (val) => {
+  return Number(val || 0).toLocaleString('id-ID', {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  })
 }
 
 const formatDueDate = (dateStr) => {
   if (!dateStr) return '-'
   try {
     const d = new Date(dateStr)
+    if (Number.isNaN(d.getTime())) return dateStr
     const months = [
       'Jan',
       'Feb',
@@ -232,7 +362,7 @@ const formatDueDate = (dateStr) => {
       'Des',
     ]
     return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`
-  } catch (err) {
+  } catch {
     return dateStr
   }
 }
@@ -241,6 +371,7 @@ const getOverdueDays = (dateStr) => {
   if (!dateStr) return ''
   try {
     const due = new Date(dateStr)
+    if (Number.isNaN(due.getTime())) return ''
     const today = new Date()
     today.setHours(0, 0, 0, 0)
     due.setHours(0, 0, 0, 0)
@@ -248,56 +379,39 @@ const getOverdueDays = (dateStr) => {
     const diffTime = today - due
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
 
-    if (diffDays > 0) {
-      return `Terlambat ${diffDays} hari`
-    } else if (diffDays === 0) {
-      return 'Jatuh tempo hari ini'
-    } else {
-      return `Tersisa ${Math.abs(diffDays)} hari`
-    }
-  } catch (err) {
+    if (diffDays > 0) return `Terlambat ${diffDays} hari`
+    if (diffDays === 0) return 'Jatuh tempo hari ini'
+    return `Tersisa ${Math.abs(diffDays)} hari`
+  } catch {
     return ''
   }
 }
 
-const filteredBills = computed(() => {
-  if (!searchQuery.value) return bills.value
-  const query = searchQuery.value.toLowerCase()
-  return bills.value.filter((b) => {
-    const name = getCustomerName(b).toLowerCase()
-    const code = (b.customer?.customer_code || '').toLowerCase()
-    const invId = `inv-${b.id}`.toLowerCase()
-    const monthName = getMonthName(b.billing_period_month).toLowerCase()
-    const year = String(b.billing_period_year)
-    return (
-      name.includes(query) ||
-      code.includes(query) ||
-      invId.includes(query) ||
-      monthName.includes(query) ||
-      year.includes(query)
-    )
-  })
-})
+const handleOpenDetail = async (row) => {
+  if (!row?.id) return
 
-const totalPages = computed(() => {
-  return Math.max(1, Math.ceil(filteredBills.value.length / perPage.value))
-})
-
-const visiblePages = computed(() => {
-  const pages = []
-  for (let i = 1; i <= Math.min(3, totalPages.value); i++) {
-    pages.push(i)
-  }
-  return pages
-})
-
-const handleOpenDetail = (row) => {
   selectedBill.value = row
   showDetailModal.value = true
+
+  try {
+    const res = await billingService.getBillDetail(row.id)
+    if (res?.success && res.data) {
+      selectedBill.value = res.data
+    } else if (res?.data) {
+      selectedBill.value = res.data
+    }
+  } catch {
+    // Detail gagal dimuat — modal tetap menampilkan data ringkas dari list
+    // supaya user tidak melihat layar kosong tanpa penjelasan.
+  }
 }
 
 onMounted(() => {
   fetchBills()
+})
+
+onBeforeUnmount(() => {
+  if (searchDebounce) clearTimeout(searchDebounce)
 })
 </script>
 

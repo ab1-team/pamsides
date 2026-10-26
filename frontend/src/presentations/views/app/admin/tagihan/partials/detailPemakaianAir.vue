@@ -358,7 +358,11 @@ const handleSaveMeter = async (payload) => {
     const formData = new FormData()
     formData.append('customer_id', selectedCustomer.value.id)
     formData.append('meter_value', payload.meterValue)
-    formData.append('photo', payload.photo)
+    // Foto meteran hanya bukti pendukung dan boleh tidak ada. Backend
+    // menerima `photo` kosong, jadi field ini hanya dikirim kalau ada.
+    if (payload.photo) {
+      formData.append('photo', payload.photo)
+    }
     formData.append('reading_month', monthVal)
     formData.append('reading_year', yearVal)
 
@@ -387,6 +391,14 @@ const handleSaveMeter = async (payload) => {
     }
 
     isModalOpen.value = false
+
+    // Teknisi yang login diarahkan balik ke halaman "Input Pemakaian Air"
+    // miliknya, supaya daftar tagihan di sana langsung ter-update dengan
+    // pelanggan yang barusan dicatat. Admin tetap di halaman ini (form
+    // input) karena dia butuh lanjut mencatat pelanggan berikutnya.
+    if (uiStore.userRole === 'teknisi') {
+      router.push('/app/instalasi/teknisiPemakaianAir')
+    }
   } catch (error) {
     uiStore.error(error.response?.data?.message || 'Gagal menyimpan data')
   } finally {

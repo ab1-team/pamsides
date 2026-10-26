@@ -179,9 +179,11 @@ photo                 : [file gambar]
 
 **Request POST `/meter-readings` (form-data):**
 ```
-customer_id : 1
-meter_value : 25
-photo       : [file gambar]
+customer_id   : 1
+meter_value   : 25
+reading_month : 3
+reading_year  : 2026
+photo         : [file gambar]  (OPSIONAL — bukti pendukung, boleh tidak dikirim)
 ```
 
 **Response POST `/meter-readings`:**
@@ -193,6 +195,10 @@ photo       : [file gambar]
 ```
 
 > Validasi: angka meter baru tidak boleh lebih kecil dari bulan sebelumnya.
+>
+> `photo` bersifat opsional — foto meteran hanya bukti pendukung, jadi
+> pencatatan tetap berhasil tanpa foto (`meter_readings.photo_url` = null).
+> Field `meter_value`, `reading_month`, dan `reading_year` tetap wajib.
 
 ---
 

@@ -101,14 +101,34 @@ import { usePdfPreview, THUMB_RENDER_BUFFER } from '@/composables/usePdfPreview'
 
 const route = useRoute()
 const uiStore = useUiStore()
-const { tableData, filter, refreshData, teknisiOptions, resolveTeknisiLabel } = usePemakaianAir()
+const {
+  tableData,
+  filter,
+  refreshData,
+  teknisiOptions,
+  resolveTeknisiLabel,
+  isTechnician,
+  currentUserLabel,
+} = usePemakaianAir()
 
 const PAGE_CONFIG = { paper_size: 'A4', orientation: 'portrait' }
 
+/**
+ * Nama teknisi di kop cetakan.
+ *
+ * - Admin   → teknisi yang dipilih di filter halaman (atau "Admin")
+ * - Teknisi → nama teknisi yang sedang login
+ *
+ * Halaman ini dipakai admin DAN teknisi, jadi kopnya harus sama persis —
+ * bedanya hanya nama teknisinya.
+ */
 const caterName = computed(() => {
+  if (isTechnician.value) {
+    return currentUserLabel.value
+  }
   const raw = route.query.cater
-  if (!raw) return uiStore.userData?.nama || 'Admin'
-  if (String(uiStore.userData?.id) === String(raw)) return uiStore.userData?.nama || 'Admin'
+  if (!raw) return uiStore.userData?.name || 'Admin'
+  if (String(uiStore.userData?.id) === String(raw)) return uiStore.userData?.name || 'Admin'
   return resolveTeknisiLabel(raw) || 'Admin'
 })
 
@@ -259,6 +279,12 @@ onMounted(async () => {
     if (route.query.bulan) filter.value.bulan = route.query.bulan
     if (route.query.teknisi) filter.value.teknisi = route.query.teknisi
     if (route.query.cater) filter.value.cater = resolveTeknisiLabel(route.query.cater)
+
+    // Teknisi: kop & metadata harus mencantumkan namanya sendiri, bukan
+    // "Admin" (untuk admin, `filter.cater` berisi teknisi yang dipilihnya).
+    if (isTechnician.value) {
+      filter.value.cater = currentUserLabel.value
+    }
 
     document.title = `Cetak Struk`
 
