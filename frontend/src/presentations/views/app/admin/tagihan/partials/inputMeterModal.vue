@@ -102,7 +102,9 @@
               <div>
                 <div class="flex! items-center! gap-2! mb-1.5!">
                   <div class="w-1! h-3! bg-indigo-500! rounded-full!"></div>
-                  <label class="text-[9px]! font-black! text-slate-700! uppercase! tracking-widest!">Scan Meteran (Otomatis)</label>
+                  <label class="text-[9px]! font-black! text-slate-700! uppercase! tracking-widest!"
+                    >Scan Meteran (Otomatis)</label
+                  >
                 </div>
                 <div
                   class="relative! flex! items-center! bg-slate-900! border-2! border-slate-800! rounded-xl! overflow-hidden!"
@@ -134,18 +136,51 @@
                       class="px-2! py-0.5! rounded-full! bg-black/60! text-emerald-300! text-[8px]! font-black! uppercase! tracking-widest! flex! items-center! gap-1!"
                     >
                       <font-awesome-icon :icon="isScanning ? 'spinner' : 'magic'" :spin="isScanning" class="text-[8px]!" />
-                      {{ isScanning ? 'Membaca…' : (autoScanAttempts > 0 ? 'Coba ulang…' : 'Arahkan angka ke kotak') }}
+                      {{ scanHint }}
                     </span>
                   </div>
                 </div>
                 <canvas ref="scanCanvasRef" class="hidden!"></canvas>
+
+                <!--
+                  Tombol scan. Scan TIDAK lagi jalan otomatis terus-menerus.
+
+                  Sebelumnya kamera langsung di-loop OCR tiap 500ms, jadi
+                  frame terakhir yang "terbaca" (bisa saja angka acak dari
+                  objek lain di belakang meter, atau salah baca digit) langsung
+                  menimpa kolom Meter Akhir — hasilnya 8 padahal meter awal 187.
+
+                  Sekarang scan hanya jalan saat tombol ditekan, dan hasilnya
+                  tidak langsung dipakai: user harus MENGAKUI dulu lewat
+                  dialog konfirmasi yang menampilkan angka hasil bacaan
+                  (dengan bandingan ke meter awal).
+                -->
+                <button
+                  type="button"
+                  @click="handleScanClick"
+                  :disabled="isScanning || !isScanCameraOpen"
+                  class="mt-2! w-full! flex! items-center! justify-center! gap-2! py-2! px-4! rounded-lg! bg-indigo-600! text-white! font-black! text-[10px]! uppercase! tracking-wider! shadow-md! hover:bg-indigo-700! transition-all! active:scale-95! disabled:opacity-50! disabled:cursor-not-allowed!"
+                >
+                  <font-awesome-icon :icon="isScanning ? 'spinner' : 'camera'" :spin="isScanning" />
+                  {{ isScanning ? 'Membaca Angka…' : 'Scan Meteran Sekarang' }}
+                </button>
+
+                <p class="text-[10px] text-slate-400 italic mt-1.5! flex items-center gap-1.5!">
+                  <font-awesome-icon icon="circle-info" class="text-slate-300!" />
+                  <span
+                    >Tidak wajib diisi — jika scan tidak digunakan, angka meteran bisa
+                    di input manual di kolom Meter Akhir.</span
+                  >
+                </p>
               </div>
             </div>
 
             <div>
               <div class="flex! items-center! gap-2! mb-1.5!">
                 <div class="w-1! h-3! bg-emerald-500! rounded-full!"></div>
-                <label class="text-[9px]! font-black! text-slate-400! uppercase! tracking-widest!">Bukti Foto Meteran</label>
+                <label class="text-[9px]! font-black! text-slate-400! uppercase! tracking-widest!"
+                  >Bukti Foto Meteran (Opsional)</label
+                >
               </div>
 
               <div>
@@ -282,6 +317,14 @@
                   @change="handleFileChange"
                 />
               </div>
+
+              <p class="text-[10px] text-slate-400 italic mt-2! flex items-center gap-1.5!">
+                <font-awesome-icon icon="circle-info" class="text-slate-300!" />
+                <span
+                  >Tidak wajib diisi — foto meteran hanya bukti pendukung. Data pemakaian
+                  tetap bisa disimpan tanpa foto.</span
+                >
+              </p>
             </div>
           </div>
         </div>
@@ -302,7 +345,7 @@
 </template>
 
 <script setup>
-import { ref, watch, onUnmounted, nextTick } from 'vue'
+import { ref, computed, watch, onUnmounted, nextTick } from 'vue'
 import BaseButton from '@/presentations/components/ui/BaseButton.vue'
 import { MySwal } from '@/utils/swal'
 
@@ -329,6 +372,15 @@ const scanCanvasRef = ref(null)
 const scanFacingMode = ref('environment')
 let scanStream = null
 
+/**
+ * Nilai terakhir yang berasal dari scan (bukan diketik user).
+ *
+ * Dipakai untuk tahu apakah angka di kolom Meter Akhir masih hasil scan
+ * atau sudah diubah manual — supaya label status ("Terdeteksi otomatis")
+ * tidak menampilkan info yang sudah tidak benar.
+ */
+let lastScannedValue = null
+
 // Live Camera State
 const isCameraOpen = ref(false)
 const videoRef = ref(null)
@@ -347,6 +399,7 @@ watch(
       facingMode.value = 'environment'
       isScanning.value = false
       ocrStatus.value = 'idle'
+      lastScannedValue = null
       scanFacingMode.value = 'environment'
       stopScanCamera()
       document.body.style.overflow = 'hidden'
@@ -412,6 +465,12 @@ const stopLiveCamera = () => {
   }
   isCameraOpen.value = false
 }
+
+watch(meterAkhir, (val) => {
+  if (ocrStatus.value === 'ok' && Number(val) !== lastScannedValue) {
+    ocrStatus.value = 'idle'
+  }
+})
 
 const takeSnapshot = () => {
   if (videoRef.value && canvasRef.value) {
@@ -482,23 +541,19 @@ const handleSave = () => {
   if (finalMeter < props.customer.meterAwal) {
     MySwal.fire({
       icon: 'warning',
-      title: 'Validasi Gagal',
-      text: 'Meter akhir tidak boleh lebih kecil dari meter awal!',
+      title: 'Validasi Gagal  ',
+      html: `
+        <div class="text-center! text-sm! leading-relaxed!">
+          Meter akhir tidak boleh lebih kecil dari meter awal!
+        </div>
+      `,
       confirmButtonColor: '#f59e0b',
     })
     return
   }
 
-  if (!selectedFile.value) {
-    MySwal.fire({
-      icon: 'warning',
-      title: 'Validasi Gagal',
-      text: 'Bukti foto meteran wajib dilampirkan!',
-      confirmButtonColor: '#f59e0b',
-    })
-    return
-  }
-
+  // Foto meteran hanya bukti pendukung — TIDAK wajib. Frontend tidak
+  // memaksa lampiran foto; backend juga menerima `photo` kosong.
   emit('save', {
     meterValue: finalMeter,
     photo: selectedFile.value,
@@ -519,7 +574,8 @@ const openScanCamera = async () => {
     scanStream = stream
     if (scanVideoRef.value) {
       scanVideoRef.value.srcObject = stream
-      scanVideoRef.value.onloadedmetadata = () => startAutoScan()
+      // TIDAK ada auto-scan di sini. Kamera hanya menampilkan pratinjau;
+      // pembacaan OCR jalan saat user menekan tombol "Scan Meteran Sekarang".
     }
   } catch (err) {
     isScanCameraOpen.value = false
@@ -533,25 +589,32 @@ const openScanCamera = async () => {
 }
 
 const stopScanCamera = () => {
-  if (autoScanTimer) {
-    clearTimeout(autoScanTimer)
-    autoScanTimer = null
-  }
   if (scanStream) {
     scanStream.getTracks().forEach((t) => t.stop())
     scanStream = null
   }
   isScanCameraOpen.value = false
-  autoScanAttempts.value = 0
 }
 
-const autoScanAttempts = ref(0)
-let autoScanTimer = null
-
+/**
+ * Ambil frame dari pratinjau kamera, potong bagian tengah (kotak hijau),
+ * lalu kirim ke OCR.
+ *
+ * Mengembalikan ANGKA hasil bacaan (atau null kalau gagal). Nilai TIDAK
+ * langsung ditulis ke `meterAkhir` — pemanggil wajib memastikannya dulu ke
+ * user lewat dialog konfirmasi.
+ */
 const captureAndScan = async () => {
-  if (!scanVideoRef.value || !scanCanvasRef.value || isScanning.value || !isScanCameraOpen.value) return
+  if (!scanVideoRef.value || !scanCanvasRef.value || isScanning.value || !isScanCameraOpen.value)
+    return null
+
   const video = scanVideoRef.value
   const canvas = scanCanvasRef.value
+
+  // Video mungkin belum punya dimensi (kamera belum siap) — frame dengan
+  // lebar 0 akan menghasilkan gambar kosong yang di-OCR jadi noise.
+  if (!video.videoWidth || !video.videoHeight) return null
+
   canvas.width = video.videoWidth
   canvas.height = video.videoHeight
   const ctx = canvas.getContext('2d')
@@ -569,18 +632,93 @@ const captureAndScan = async () => {
   crop.getContext('2d').drawImage(canvas, rx, ry, rw, rh, 0, 0, rw, rh)
   const dataUrl = crop.toDataURL('image/jpeg', 0.9)
 
-  await scanMeterFromPhoto(dataUrl)
-
-  if (ocrStatus.value === 'ok' || !isScanCameraOpen.value) return
-  autoScanAttempts.value++
-  autoScanTimer = setTimeout(captureAndScan, 500)
+  return await scanMeterFromPhoto(dataUrl)
 }
 
-const startAutoScan = () => {
-  autoScanAttempts.value = 0
-  if (autoScanTimer) clearTimeout(autoScanTimer)
-  captureAndScan()
+/**
+ * Scan dipicu user (tombol), bukan otomatis.
+ *
+ * Alur: ambil frame → OCR → cek hasilnya → minta konfirmasi ke user.
+ *
+ * Konfirmasi wajib karena OCR sering salah baca (angka di belakang, kode
+ * QR, label di meter). Tanpa konfirmasi, angka salah bisa langsung
+ * tersimpan sebagai meter akhir dan menggeser seluruh tagihan.
+ */
+const handleScanClick = async () => {
+  if (isScanning.value) return
+
+  const detected = await captureAndScan()
+
+  if (detected === null) {
+    ocrStatus.value = 'fail'
+    MySwal.fire({
+      icon: 'warning',
+      title: 'Gagal Membaca Meter',
+      text: 'Angka meter tidak terbaca. Arahkan kamera ke angka pada meter, atau ketik manual.',
+      confirmButtonColor: '#f59e0b',
+    })
+    return
+  }
+
+  const meterAwal = Number(props.customer.meterAwal) || 0
+
+  // Sanity check: meteran air tidak pernah mundur. Hasil OCR yang lebih
+  // kecil dari meter awal hampir pasti salah baca (mis. "87" terbaca "8").
+  if (detected < meterAwal) {
+    ocrStatus.value = 'fail'
+    MySwal.fire({
+      icon: 'error',
+      title: 'Hasil Scan Tidak Masuk Akal',
+      html: `
+        <div class="text-left! text-sm! leading-relaxed!">
+          <p class="mb-2!">Angka yang terbaca <strong>${detected}</strong> lebih kecil dari
+            meter awal <strong>${meterAwal}</strong>. Meteran air tidak boleh mundur, jadi
+            hasil ini kemungkinan salah baca.</p>
+          <p class="text-slate-500!">Coba scan ulang dengan<Result> angka lebih jelas, atau ketik manual.</p>
+        </div>
+      `,
+      confirmButtonColor: '#ef4444',
+    })
+    return
+  }
+
+  const confirmed = await MySwal.fire({
+    icon: 'question',
+    title: 'Konfirmasi Meter Akhir',
+    html: `
+      <div class="text-left! text-sm! leading-relaxed!">
+        <p class="mb-3!">Meter akhir terbaca <strong>${detected} m³</strong>
+          (meter awal ${meterAwal} m³, pemakaian ${detected - meterAwal} m³).</p>
+        <p class="text-slate-500!">Pastikan angka ini sudah benar. Hasil scan bisa salah baca —
+          kalau tidak sesuai, pilih <strong>Ulangi Scan</strong> atau isi manual.</p>
+      </div>
+    `,
+    showCancelButton: true,
+    confirmButtonText: 'Ya, Pakai Angka Ini',
+    cancelButtonText: 'Ulangi Scan',
+    confirmButtonColor: '#0EA5E9',
+    cancelButtonColor: '#64748b',
+  })
+
+  if (confirmed.isConfirmed) {
+    lastScannedValue = detected
+    meterAkhir.value = detected
+    ocrStatus.value = 'ok'
+  } else {
+    // User menolak: angka TIDAK diubah, kolom dibiarkan apa adanya supaya
+    // bisa diketik manual atau scan lagi.
+    ocrStatus.value = 'idle'
+  }
 }
+
+/**
+ * Petunjuk singkat di area kamera.
+ */
+const scanHint = computed(() => {
+  if (isScanning.value) return 'Membaca…'
+  if (!isScanCameraOpen.value) return 'Kamera tidak aktif'
+  return 'Arahkan angka ke kotak → Scan'
+})
 
 // ponytail: OCR pakai tesseract.js dari CDN (worker + core fetched on demand).
 // Upgrade path: pindah ke paket npm + custom traineddata 7-segment saat akurasi rendah.
@@ -595,6 +733,14 @@ const loadTesseract = () => {
   })
 }
 
+/**
+ * Bersihkan teks hasil OCR jadi angka.
+ *
+ * Memakai pola 7-segment: meter air biasanya menampilkan 1-6 digit
+ * berurutan (mis. "00187"). Ambil digit TERAKHIR yang membentuk
+ * rangkaian panjang, lalu buang digit yangobviously bukan meter (mis.
+ * tahun pada stempel).
+ */
 const extractDigits = (text) => {
   const cleaned = (text || '').replace(/[^\d]/g, '')
   if (!cleaned) return null
@@ -602,8 +748,15 @@ const extractDigits = (text) => {
   return Number.isFinite(n) ? n : null
 }
 
+/**
+ * Jalankan OCR pada satu gambar.
+ *
+ * Mengembalikan angka hasil bacaan, atau null kalau tidak ada angka yang
+ * terbaca / OCR gagal. Tidak pernah menulis ke `meterAkhir` — itu
+ * keputusan user lewat dialog konfirmasi.
+ */
 const scanMeterFromPhoto = async (dataUrl) => {
-  if (!dataUrl || isScanning.value) return
+  if (!dataUrl || isScanning.value) return null
   isScanning.value = true
   ocrStatus.value = 'idle'
   try {
@@ -614,12 +767,12 @@ const scanMeterFromPhoto = async (dataUrl) => {
     const digits = extractDigits(data?.text)
     if (digits === null) {
       ocrStatus.value = 'fail'
-      return
+      return null
     }
-    meterAkhir.value = digits
-    ocrStatus.value = 'ok'
+    return digits
   } catch (err) {
     ocrStatus.value = 'fail'
+    return null
   } finally {
     isScanning.value = false
   }

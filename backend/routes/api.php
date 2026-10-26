@@ -160,6 +160,20 @@ Route::middleware(['auth:sanctum', 'role:admin,teknisi'])->group(function () {
     // Teknisi: lihat daftar pelanggan suspended + konfirmasi restore (setelah bayar oleh admin)
     Route::get('monthly-bills/suspended', [MonthlyBillController::class, 'suspended']);
     Route::post('customers/{id}/restore', [MonthlyBillController::class, 'restoreCustomer']);
+
+    // Detail satu tagihan — shared admin & teknisi.
+    //
+    // Sebelumnya route ini hanya ada di blok `role:admin`, padahal frontend
+    // HANYA memanggil `/bills/{id}` (BillingController::show) yang juga
+    // admin-only. Akibatnya halaman Daftar Tagihan milik teknisi (dan admin)
+    // memanggil `getBillDetail()` dan langsung kena 403 — modal detail
+    // gagal dibuka.
+    //
+    // PENTING: route ini harus didaftarkan SETELAH `monthly-bills/usage` dan
+    // `monthly-bills/suspended`. Laravel mencocokkan route sesuai urutan
+    // pendaftaran, dan `{id}` tanpa batasan angka akan menelan path teks
+    // seperti "usage" atau "suspended" (jadi 404, bukan 403).
+    Route::get('monthly-bills/{id}', [MonthlyBillController::class, 'show'])->whereNumber('id');
 });
 
 /*
@@ -237,8 +251,12 @@ Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
     Route::post('bills/generate', [BillingController::class, 'generate']);
     Route::get('bills/{monthlyBill}', [BillingController::class, 'show']);
 
-    // Tagihan bulanan — tulis hanya admin (baca sudah di grup admin+teknisi)
-    Route::get('monthly-bills/{id}', [MonthlyBillController::class, 'show']);
+    // Tagihan bulanan — tulis hanya admin.
+    // Route BACA `monthly-bills/{id}` sudah ada di grup shared admin+teknisi
+    // (lihat blok "Shared Routes (Admin & Teknisi)") supaya teknisi juga
+    // bisa membuka modal rincian tagihan. Mendaftarkannya lagi di sini
+    // hanya membuat route duplikat — dan yang menang adalah yang PERTAMA
+    // terdaftar, jadi cukup satu saja.
     Route::delete('monthly-bills/{id}', [MonthlyBillController::class, 'destroy']);
     Route::post('monthly-bills/generate', [MonthlyBillController::class, 'generate']);
     Route::post('monthly-bills/{id}/pay', [MonthlyBillController::class, 'pay']);

@@ -26,7 +26,21 @@
         <env name="DB_CONNECTION" value="mysql"/>
         <env name="DB_HOST" value="127.0.0.1"/>
         <env name="DB_PORT" value="3306"/>
-        <env name="DB_DATABASE" value="pamsides"/>
+        <!--
+            WAJIB: test memakai database TERPISAH, bukan `pamsides`.
+
+            Dulu nilai di sini sama dengan database lokal pengembangan
+            (`pamsides`). Karena Feature test memakai `RefreshDatabase`,
+            menjalankan `php artisan test` akan MENGOSONGKAN seluruh data
+            lokal: users, customers, monthly_bills, transactions, semuanya
+            hilang. Ini sudah terjadi sekali dan hanya bisa dipulihkan dari
+            dump di storage/app/backup.
+
+            `RefreshDatabase`/Mechanisme migrate butuh hak akses ke server
+            MySQL, jadi akun `root` tanpa password (sama seperti .env)
+            tetap dipakai — yang dibedakan hanya NAMA database-nya.
+        -->
+        <env name="DB_DATABASE" value="pamsides_test"/>
         <env name="DB_USERNAME" value="root"/>
         <env name="DB_PASSWORD" value=""/>
         <env name="DB_URL" value=""/>

@@ -533,8 +533,15 @@ const fetchDashboardData = async () => {
 
     dashboardData.value.total_customers = totalActive
     pendingReadingsCount.value = belumDicatat
-    unpaidBillsCount.value =
-      unpaidRes?.data?.total ?? unpaidRes?.data?.bills?.length ?? unpaidRes?.total ?? 0
+
+    // Jumlah total tagihan menunggak diambil dari `meta.total` — backend
+    // menaruh data halaman di `data.bills` dan jumlah keseluruhan di
+    // `meta.total` (lihat MonthlyBillController::index).
+    //
+    // Sebelumnya kode ini membaca `data.total` (selalu undefined) lalu
+    // jatuh ke `data.bills.length`. Karena request memakai `per_page: 1`,
+    // hasilnya selalu "1 Tunggakan" berapa pun jumlah sebenarnya.
+    unpaidBillsCount.value = Number(unpaidRes?.meta?.total ?? 0)
 
     await fetchSuspended()
   } catch (error) {

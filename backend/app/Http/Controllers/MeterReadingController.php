@@ -42,8 +42,22 @@ class MeterReadingController extends Controller
             ->where('reading_month', $request->month)
             ->where('reading_year', $request->year);
 
-        // Least-privilege: teknisi hanya melihat catatannya sendiri
-        $readings = $this->scopeMeterReadingsToOwner($query, $request)->latest()->get();
+        // Least-privilege: teknisi melihat catatan meter yang ia catat sendiri
+        // ATAU catatan meter pelanggan di wilayahnya (tiket yang ia tangani).
+        // Sama seperti filter di `index()` — supaya daftar "sudah dicatat"
+        // konsisten dengan daftar "menunggu dicatat".
+        if (! $this->isPrivileged($request)) {
+            $userId = $request->user()?->id;
+
+            $query->where(function ($q) use ($userId) {
+                $q->where('recorded_by', $userId)
+                    ->orWhereHas('customer.ticket', function ($t) use ($userId) {
+                        $t->where('user_id', $userId);
+                    });
+            });
+        }
+
+        $readings = $query->latest()->get();
 
         return response()->json([
             'success' => true,
@@ -89,13 +103,23 @@ class MeterReadingController extends Controller
                     ->where('reading_year', $tahun);
             });
 
-        // Least-privilege: teknisi hanya ditagih pelanggan yang sudah pernah
-        // ia tangani. Tanpa ini teknisi bisa mencatat meter untuk pelanggan
-        // teknisi lain, lalu store() ikut menagih dan menyuspend tiketnya.
+        // Least-privilege: teknisi hanya ditagih pelanggan di WILAYAHNYA —
+        // pelanggan yang tiketnya ia tangani (`installation_tickets.user_id`).
+        // Sama seperti `MonthlyBillController` (index/unpaidSummary/show),
+        // supaya satu pelanggan tidak terlihat milik teknisi A di halaman
+        // pencatatan tapi milik teknisi B di halaman tagihan.
+        //
+        // Fallback: pelanggan yang pernah ia catat meter-nya (data legacy
+        // tanpa `ticket.user_id`) tetap boleh, supaya pencatatan bulan
+        // berikutnya tidak terkunci.
         if (! $this->isPrivileged($request)) {
             $userId = $request->user()?->id;
-            $customers->whereHas('meterReadings', function ($query) use ($userId) {
-                $query->where('recorded_by', $userId);
+            $customers->where(function ($query) use ($userId) {
+                $query->whereHas('ticket', function ($t) use ($userId) {
+                    $t->where('user_id', $userId);
+                })->orWhereHas('meterReadings', function ($q) use ($userId) {
+                    $q->where('recorded_by', $userId);
+                });
             });
         }
 
@@ -117,7 +141,12 @@ class MeterReadingController extends Controller
         $request->validate([
             'customer_id' => 'required|exists:customers,id',
             'meter_value' => 'required|integer|min:0|max:99999999',
-            'photo' => 'required|image|max:2048',
+            // Foto meteran hanya BUKTI pendukung, bukan data wajib. Techno-
+            // logi lapangan sering tidak bisa memotret meteran (lampu mati,
+            // meter di bawah tanah, pelanggan tidak ada di tempat), jadi
+            // kolom `photo_url` nullable dipakai: pencatatan TIDAK boleh
+            // ditolak hanya karena foto tidak ada.
+            'photo' => 'nullable|image|max:2048',
             'reading_month' => 'required|integer|between:1,12',
             'reading_year' => 'required|integer|min:2000',
         ]);
@@ -137,16 +166,23 @@ class MeterReadingController extends Controller
             ], 422);
         }
 
-        // Least-privilege: teknisi hanya boleh mencatat untuk pelanggan yang
-        // sudah pernah ia tangani.store() ikut membuat MonthlyBill dan bisa
-        // menyuspend tiket, jadi tanpa cek ini teknisi bisa menagih & mengubah
-        // status pelanggan milik teknisi lain.
+        // Least-privilege: teknisi boleh mencatat untuk pelanggan di
+        // WILAYAHNYA — yaitu pelanggan yang tiketnya dia tangani
+        // (`installation_tickets.user_id` = dia), sama seperti admin yang
+        // bebas untuk semua pelanggan. store() ikut membuat MonthlyBill dan
+        // bisa menyuspend tiket, jadi tanpa cek ini teknisi bisa menagih &
+        // mengubah status pelanggan milik teknisi lain.
+        //
+        // Fallback: kalau tiket tidak punya user_id (data legacy), teknisi
+        // tetap boleh untuk pelanggan yang pernah ia catat meter-nya.
         if (! $this->isPrivileged($request)) {
+            $isOwnArea = $this->isWithinTechnicianArea($customer, $request);
+
             $isOwnCustomer = MeterReading::where('customer_id', $customer->id)
                 ->where('recorded_by', $request->user()?->id)
                 ->exists();
 
-            if (! $isOwnCustomer) {
+            if (! $isOwnArea && ! $isOwnCustomer) {
                 abort(403, 'Akses ditolak. Pelanggan ini bukan dalam wilayah pencatatan Anda.');
             }
         }
@@ -175,7 +211,10 @@ class MeterReadingController extends Controller
             ], 400);
         }
 
-        $fileName = $this->storeUploadedImage($request->file('photo'), 'meter-readings');
+        // Foto meteran opsional: kalau tidak ada, `photo_url` disimpan null.
+        $fileName = $request->hasFile('photo')
+            ? $this->storeUploadedImage($request->file('photo'), 'meter-readings')
+            : null;
 
         $settings = Setting::first();
         $batasTagihan = (int) ($settings?->batas_tagihan ?? 27);
@@ -251,7 +290,9 @@ class MeterReadingController extends Controller
 
     public function update(Request $request, string $id)
     {
-        $reading = MeterReading::find($id);
+        // Relasi customer.ticket dimuat karena pengecekan wilayah teknisi
+        // (see AuthorizesMeterReadings::isWithinTechnicianArea) membacanya.
+        $reading = MeterReading::with(['customer.ticket'])->find($id);
 
         if (! $reading) {
             return response()->json([
@@ -321,7 +362,9 @@ class MeterReadingController extends Controller
 
     public function destroy(Request $request, string $id)
     {
-        $reading = MeterReading::find($id);
+        // Relasi customer.ticket dimuat karena pengecekan wilayah teknisi
+        // (see AuthorizesMeterReadings::isWithinTechnicianArea) membacanya.
+        $reading = MeterReading::with(['customer.ticket'])->find($id);
 
         if (! $reading) {
             return response()->json([

@@ -39,6 +39,37 @@ class MonthlyBillController extends Controller
             ])->orderBy('billing_period_year', 'desc')
                 ->orderBy('billing_period_month', 'desc');
 
+            // ── Least-privilege: TEKNISI hanya boleh melihat tagihan
+            //    pelanggan yang ia tangani. Admin (dan role lain yang punya
+            //    akses ke route ini) tetap melihat SEMUA tagihan.
+            //
+            // Kenapa ini perlu:
+            //    Tanpa filter ini, halaman "Daftar Tagihan" milik teknisi
+            //    menampilkan seluruh tagihan menunggak SEMUA pelanggan —
+            //    3.578 baris, bukan ~254 baris milik teknisi itu sendiri.
+            //    Teknisi hanya relevan dengan pelanggan di wilayahnya; data
+            //    pelanggan teknisi lain bukan haknya.
+            //
+            // Sumber kebenaran: `installation_tickets.user_id` = teknisi
+            // yang menangani instalasi pelanggan tersebut. Relasi:
+            //    monthly_bills.customer_id → customers.ticket_id
+            //                                → installation_tickets.user_id
+            //
+            // Filter dipakai di level QUERY (bukan di PHP setelah fetch)
+            // supaya `meta.total` dan paginasi ikut benar — kalau tidak,
+            // teknisi melihat "254 tagihan" tapi halamannya berisi baris
+            // milik teknisi lain.
+            //
+            // Admin TIDAK diberi filter: halamannya sudah benar dan
+            // tidak boleh berubah karena perubahan di sini.
+            $isTechnician = $request->user()?->role === 'teknisi';
+
+            if ($isTechnician) {
+                $query->whereHas('customer.ticket', function ($t) use ($request) {
+                    $t->where('user_id', $request->user()->id);
+                });
+            }
+
             if ($request->customer_id) {
                 $query->where('customer_id', $request->customer_id);
             }
@@ -937,8 +968,22 @@ class MonthlyBillController extends Controller
         // Admin & teknisi: pelanggan mana saja yang menunggak. Satu query
         // agregat per pelanggan; total di `summary` diambil dari hasil
         // query yang sama, jadi tidak butuh COUNT kedua.
-        $rows = MonthlyBill::where('status', 'unpaid')
-            ->whereNotNull('customer_id')
+        //
+        // Least-privilege: TEKNISI hanya melihat pelanggan yang ia tangani,
+        // supaya badge lonceng di navbar konsisten dengan halaman "Daftar
+        // Tagihan" (yang juga sudah difilter per teknisi). Tanpa ini,
+        // notifikasi menhacurkan data pelanggan teknisi lain — dan angkanya
+        // (customer_count) jadi tidak cocok dengan isi halamannya.
+        //
+        // Admin tetap melihat semua.
+        $query = MonthlyBill::where('status', 'unpaid')
+            ->whereNotNull('customer_id');
+
+        if ($user->role === 'teknisi') {
+            $query->whereHas('customer.ticket', fn ($t) => $t->where('user_id', $user->id));
+        }
+
+        $rows = $query
             ->groupBy('customer_id')
             ->selectRaw(
                 'customer_id,'
@@ -992,14 +1037,25 @@ class MonthlyBillController extends Controller
     // Daftar pelanggan suspended + tagihan unpaid-nya (untuk teknisi)
     public function suspended(Request $request)
     {
-        $customers = Customer::with([
+        $query = Customer::with([
             'user',
             'ticket.package',
             'ticket.village',
             'monthlyBills' => fn ($q) => $q->orderBy('billing_period_year')->orderBy('billing_period_month'),
         ])
-            ->whereHas('ticket', fn ($q) => $q->where('status', 'suspended'))
-            ->get();
+            ->whereHas('ticket', fn ($q) => $q->where('status', 'suspended'));
+
+        // Least-privilege: TEKNISI hanya melihat pelanggan suspended yang
+        // ia tangani. Daftar ini menampilkan nama, alamat, dan rincian
+        // tagihan — jadi tecniknya harus konsisten dengan halaman "Daftar
+        // Tagihan" dan badge lonceng.
+        //
+        // Admin tetap melihat semua.
+        if ($request->user()?->role === 'teknisi') {
+            $query->whereHas('ticket', fn ($q) => $q->where('user_id', $request->user()->id));
+        }
+
+        $customers = $query->get();
 
         $items = $customers->map(function ($c) {
             $unpaid = $c->monthlyBills->where('status', 'unpaid');
@@ -1159,14 +1215,24 @@ class MonthlyBillController extends Controller
             ->where('billing_period_month', $month)
             ->first();
 
-        // ── 0. Least-privilege: teknisi hanya boleh mengedit pelanggan
-        //       yang pernah ia tangani. Admin bebas semua. ──
+        // ── 0. Least-privilege: teknisi hanya boleh mengedit pelanggan di
+        //       WILAYAHNYA — pelanggan yang tiketnya ia tangani
+        //       (`installation_tickets.user_id`). Admin bebas semua.
+        //
+        //       Sama seperti filter di `index`/`unpaidSummary`/`suspended`/
+        //       `show`, supaya satu pelanggan tidak bisa diedit teknisi A
+        //       di satu halaman tapi terkunci untuk teknisi B di halaman lain.
+        //
+        //       Fallback: pelanggan yang pernah ia catat meter-nya (data
+        //       legacy tanpa `ticket.user_id`) tetap boleh. ──
         if (! $this->isPrivileged($request)) {
+            $isOwnArea = $this->isWithinTechnicianArea($customer, $request);
+
             $isOwnCustomer = MeterReading::where('customer_id', $customer->id)
                 ->where('recorded_by', $request->user()?->id)
                 ->exists();
 
-            if (! $isOwnCustomer) {
+            if (! $isOwnArea && ! $isOwnCustomer) {
                 abort(403, 'Akses ditolak. Pelanggan ini bukan dalam wilayah pencatatan Anda.');
             }
         }
@@ -1312,14 +1378,44 @@ class MonthlyBillController extends Controller
         ]);
     }
 
-    public function show($id)
+    public function show(Request $request, $id)
     {
-        $bill = MonthlyBill::with([
+        // Least-privilege: teknisi hanya boleh membuka rincian tagihan
+        // pelanggan yang ia tangani — sama seperti filter list di `index`.
+        //
+        // Tanpa cek ini, frontend sudah benar (hanya menampilkan tagihan
+        // miliknya), tapi teknisi tetap bisa memanggil endpoint ini dengan
+        // ID tagihan milik teknisi lain secara manual. Filter list + filter
+        // detail harus konsisten, kalau tidak Least-privilege hanya berlaku
+        // di tampilan, bukan di data.
+        //
+        // Admin bebas akses semua tagihan.
+        if ($request->user()?->role === 'teknisi') {
+            $bill = MonthlyBill::whereHas(
+                'customer.ticket',
+                fn ($t) => $t->where('user_id', $request->user()->id)
+            )->find($id);
+
+            if (! $bill) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Akses ditolak. Tagihan ini bukan milik pelanggan dalam wilayah Anda.',
+                ], 403);
+            }
+        } else {
+            $bill = MonthlyBill::find($id);
+        }
+
+        if (! $bill) {
+            abort(404);
+        }
+
+        $bill->load([
             'customer.user',
             'customer.ticket.package',
             'customer.ticket.village',
             'billPayments',
-        ])->findOrFail($id);
+        ]);
 
         return response()->json([
             'success' => true,
