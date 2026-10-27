@@ -24,7 +24,19 @@ class InstallationTicketController extends Controller
             // akan membebani memory DB & response payload. Cukup field minimum.
             $wantsAll = $request->boolean('all');
 
-            $relations = $wantsAll
+            // `?lite=1`: relasi ringkas + pagination server-side (bukan `all=1`).
+            // Dipakai halaman "Data Instalasi" yang memuat >1600 tiket aktif.
+            //
+            // Kenapa perlu: halaman tsb sebelumnya memakai `per_page=200` dengan
+            // relasi BERAT. Server membalas 200 baris pertama saja, padahal
+            // totalnya 1627 — jadi pelanggan yang posisinya di baris ke-201
+            // ke bawah TIDAK PERNAH terkirim ke browser dan tidak bisa dicari
+            // (mis. "Ngatiyo" ada di urutan ke-911). Karena `per_page` dibatasi
+            // maks 200, memangkas `per_page` saja TIDAK bisa menyelesaikan
+            // masalah — harus pagination beneran di server.
+            $wantsLite = $request->boolean('lite');
+
+            $relations = ($wantsAll || $wantsLite)
                 ? [
                     'package:id,name',
                     'village:id,village_name',
@@ -135,6 +147,21 @@ class InstallationTicketController extends Controller
             } else {
                 if ($wantsAll) {
                     $tickets = $query->get();
+                } elseif ($wantsLite) {
+                    // Pagination server-side untuk halaman "Data Instalasi".
+                    //
+                    // `per_page` boleh lebih besar dari 200 (batas default
+                    // `index()`) karena pada mode `lite` relasi sudah ringan
+                    // dan TIDAK ada eager-load meterReadings/monthlyBills.
+                    // Batas tetap dibatasi 500 supaya response tidak membengkak.
+                    //
+                    // `orderBy('id','desc')` ditambahkan sebagai tie-breaker:
+                    // banyak tiket hasil impor punya `created_at` yang SAMA
+                    // persis, sehingga tanpa penentu urutan kedua pagination
+                    // bisa mengulang / melompati baris antar halaman.
+                    $perPage = (int) $request->get('per_page', 10);
+                    $perPage = max(1, min($perPage, 500));
+                    $tickets = $query->orderBy('id', 'desc')->paginate($perPage);
                 } else {
                     $perPage = (int) $request->get('per_page', 10);
                     $perPage = max(1, min($perPage, 200));
