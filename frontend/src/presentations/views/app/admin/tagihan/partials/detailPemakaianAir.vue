@@ -438,15 +438,23 @@ const formatMeter = (val) => {
 }
 
 const filteredData = computed(() => {
-  if (!searchQuery.value) return customers.value
-  const q = searchQuery.value.toLowerCase()
-  return customers.value.filter((item) => {
-    return (
-      item.nama.toLowerCase().includes(q) ||
-      item.noInduk.toLowerCase().includes(q) ||
-      item.dusun.toLowerCase().includes(q)
-    )
-  })
+  const q = searchQuery.value.trim().toLowerCase()
+
+  const list = q
+    ? customers.value.filter((item) => {
+        return (
+          item.nama.toLowerCase().includes(q) ||
+          item.noInduk.toLowerCase().includes(q) ||
+          item.dusun.toLowerCase().includes(q)
+        )
+      })
+    : customers.value
+
+  // Urutkan nama pelanggan A -> Z (locale id-ID supaya huruf &
+  // ejaan Indonesia disortir dengan benar).
+  return [...list].sort((a, b) =>
+    a.nama.localeCompare(b.nama, 'id', { sensitivity: 'base', numeric: true }),
+  )
 })
 
 const paginatedData = computed(() => {
