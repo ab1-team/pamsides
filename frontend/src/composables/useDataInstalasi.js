@@ -1,4 +1,4 @@
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import ticketService from '@/services/ticket.service'
 import ticketHistoryService from '@/services/ticketHistory.service'
 import packageService from '@/services/package.service'
@@ -64,6 +64,10 @@ export function useDataInstalasi() {
   const tableData = ref([])
   const isLoading = ref(false)
 
+  // Total & jumlah halaman dihitung di SERVER (mode server-side).
+  const serverTotal = ref(0)
+  const serverLastPage = ref(1)
+
   // --- State untuk fitur perubahan paket ---
   const packages = ref([])
   const isPackagesLoading = ref(false)
@@ -77,30 +81,70 @@ export function useDataInstalasi() {
     reason: '',
   })
 
-  const fetchData = async () => {
+  /**
+   * Map 1 tiket -> 1 baris tabel.
+   *
+   * `kodeInstalasi` memakai customer_code milik pelanggan yang PALING BARU
+   * (relasi `customer` bisa berisi >1 baris untuk tiket yang sama, lihat
+   * filter di atas). Tanpa itu, kode yang tampil bisa milik pelanggan lama.
+   */
+  const mapTicket = (t) => {
+    const customers = Array.isArray(t.customer) ? t.customer : t.customer ? [t.customer] : []
+    const latestCustomer = customers.length
+      ? [...customers].sort((a, b) => (b.id || 0) - (a.id || 0))[0]
+      : null
+
+    return {
+      id: t.id,
+      ticketId: t.id,
+      kodeInstalasi: latestCustomer?.customer_code || `#INS-${String(t.id).padStart(4, '0')}`,
+      nama: t.applicant_name || '-',
+      alamat: t.address || '-',
+      paket: t.package?.name || t.package_name || '-',
+      currentPackageId: t.package_id ?? null,
+      rawStatus: t.status,
+      status: STATUS_LABELS[t.status] || t.status || '-',
+    }
+  }
+
+  /**
+   * Ambil data instalasi dari server (server-side pagination + search).
+   *
+   * PENTING: jangan pakai `per_page: 200` tanpa pagination sungguhan.
+   * Ada 1627 tiket berstatus aktif, dan `per_page` dibatasi 200 di server,
+   * sehingga pelanggan di luar 200 baris pertama (mis. "Ngatiyo" ada di
+   * urutan ke-911) TIDAK PERNAH dikirim ke browser dan tidak bisa dicari.
+   * Sekarang filter status + pencarian + paginasi semuanya di server.
+   */
+  const fetchData = async (options = {}) => {
+    const page = options.page ?? currentPage.value
+    const size = options.perPage ?? perPage.value
+    const search = options.search ?? searchQuery.value
+
     try {
       isLoading.value = true
       const res = await ticketService.getTickets({
-        per_page: 200,
+        lite: 1,
         // Filter di server (backend mendukung daftar status dipisah koma)
         status: ACTIVE_CONNECTION_STATUSES.join(','),
+        page,
+        per_page: size,
+        ...(search ? { search } : {}),
       })
-      if (res?.success && Array.isArray(res?.data?.data)) {
+
+      const rows = res?.data?.data
+
+      if (res?.success && Array.isArray(rows)) {
         // Pengaman tambahan di sisi client: pastikan hanya 3 status aktif.
-        tableData.value = res.data.data
+        tableData.value = rows
           .filter((t) => ACTIVE_CONNECTION_STATUSES.includes(t.status))
-          .map((t) => ({
-            ticketId: t.id,
-            kodeInstalasi: t.customer?.[0]?.customer_code || `#INS-${String(t.id).padStart(4, '0')}`,
-            nama: t.applicant_name || '-',
-            alamat: t.address || '-',
-            paket: t.package?.name || t.package_name || '-',
-            currentPackageId: t.package_id ?? null,
-            rawStatus: t.status,
-            status: STATUS_LABELS[t.status] || t.status || '-',
-          }))
+          .map(mapTicket)
+        serverTotal.value = Number(res?.data?.total ?? tableData.value.length)
+        serverLastPage.value = Math.max(1, Number(res?.data?.last_page ?? 1))
       } else {
         tableData.value = []
+        serverTotal.value = 0
+        serverLastPage.value = 1
       }
     } catch (err) {
       Swal.fire({
@@ -113,19 +157,92 @@ export function useDataInstalasi() {
     }
   }
 
-  onMounted(fetchData)
-
-  const filteredData = computed(() => {
-    if (!searchQuery.value) return tableData.value
-    const q = searchQuery.value.toLowerCase()
-    return tableData.value.filter((r) => r.nama.toLowerCase().includes(q))
+  onMounted(() => {
+    fetchData()
   })
 
-  const totalPages = computed(() =>
-    Math.max(1, Math.ceil(filteredData.value.length / perPage.value)),
-  )
+  /**
+   * Muat ulang data dengan parameter saat ini (dipakai tombol "Muat Ulang").
+   */
+  const reload = () => fetchData()
 
-  const handleCetakDataInstalasi = () => {
+  /**
+   * Perubahan halaman / jumlah baris / kata kunci pencarian → fetch ke server.
+   *
+   * Pencarian di-DEBOUNCE 300ms supaya tidak memanggil API tiap ketikan
+   * huruf. Reset ke halaman 1 saat keyword berubah supaya hasil pencarian
+   * tidak "kosong" karena pengguna sedang berada di halaman 5.
+   *
+   * PERHATIKAN: trigger memakai pola "kalau sedang bukan di halaman 1,
+   * cukup set currentPage = 1 dan biarkan watcher currentPage yang
+   * memanggil fetch". Kalau `currentPage` sudah 1, assignment tidak
+   * mengubah nilai sehingga watcher TIDAK berjalan — itu sebabnya ada
+   * fetch manual di cabang else. Tanpa pola ini, satu perubahan bisa
+   * memicu 2 request.
+   */
+  let searchTimer = null
+
+  watch(searchQuery, () => {
+    clearTimeout(searchTimer)
+    searchTimer = setTimeout(() => {
+      if (currentPage.value !== 1) {
+        currentPage.value = 1
+      } else {
+        fetchData()
+      }
+    }, 300)
+  })
+
+  watch(currentPage, () => {
+    fetchData()
+  })
+
+  watch(perPage, () => {
+    if (currentPage.value !== 1) {
+      currentPage.value = 1
+    } else {
+      fetchData()
+    }
+  })
+
+  /**
+   * Filter & pagination sudah dijalankan di server, jadi `filteredData`
+   * cukup mengembalikan isi halaman yang sedang aktif.
+   */
+  const filteredData = computed(() => tableData.value)
+
+  const totalPages = computed(() => serverLastPage.value)
+
+  /**
+   * Ambil SEMUA data instalasi yang cocok filter + pencarian (tanpa paginasi),
+   * dipakai untuk tombol "Cetak Data Instalasi".
+   *
+   * Memakai `all=1` (bukan `lite=1`) supaya backend mengembalikan seluruh
+   * baris aktif, bukan cuma satu halaman. Response-nya ringan (~950 KB)
+   * karena relasi yang di-eager-load hanya field minimum.
+   */
+  const fetchAllForPrint = async () => {
+    try {
+      const res = await ticketService.getTickets({
+        all: 1,
+        status: ACTIVE_CONNECTION_STATUSES.join(','),
+        ...(searchQuery.value ? { search: searchQuery.value } : {}),
+      })
+      const rows = Array.isArray(res?.data) ? res.data : []
+      return rows
+        .filter((t) => ACTIVE_CONNECTION_STATUSES.includes(t.status))
+        .map(mapTicket)
+    } catch (err) {
+      Swal.fire({
+        title: 'Gagal!',
+        text: 'Tidak dapat mengambil data instalasi untuk dicetak.',
+        icon: 'error',
+      })
+      return []
+    }
+  }
+
+  const handleCetakDataInstalasi = async () => {
     const printWindow = window.open('', '_blank', 'width=900,height=700')
     if (!printWindow) {
       Swal.fire({
@@ -136,8 +253,13 @@ export function useDataInstalasi() {
       return
     }
 
-    const rowsHtml = filteredData.value.length
-      ? filteredData.value
+    // Ambil seluruh data yang cocok (bukan cuma halaman yang tampil).
+    isLoading.value = true
+    const printRows = await fetchAllForPrint()
+    isLoading.value = false
+
+    const rowsHtml = printRows.length
+      ? printRows
           .map(
             (row, idx) => `
       <tr>
@@ -190,7 +312,7 @@ export function useDataInstalasi() {
   </div>
 
   <div class="meta">
-    <span>Total Data: <strong>${filteredData.value.length}</strong> instalasi</span>
+    <span>Total Data: <strong>${printRows.length}</strong> instalasi</span>
     <span>Tanggal Cetak: <strong>${tanggalCetak}</strong></span>
   </div>
 
@@ -511,8 +633,10 @@ export function useDataInstalasi() {
     filteredData,
     isLoading,
     totalPages,
+    serverTotal,
     STATUS_COLORS,
     fetchData,
+    reload,
 
     // Fitur perubahan paket & detail
     packages,
