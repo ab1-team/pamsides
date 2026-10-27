@@ -155,13 +155,28 @@ class InstallationTicketController extends Controller
                     // dan TIDAK ada eager-load meterReadings/monthlyBills.
                     // Batas tetap dibatasi 500 supaya response tidak membengkak.
                     //
-                    // `orderBy('id','desc')` ditambahkan sebagai tie-breaker:
-                    // banyak tiket hasil impor punya `created_at` yang SAMA
-                    // persis, sehingga tanpa penentu urutan kedua pagination
-                    // bisa mengulang / melompati baris antar halaman.
+                    // URUTAN: nama pelanggan A -> Z (bukan urutan tanggal
+                    // impor). Kolom `applicant_name` collation
+                    // `utf8mb4_unicode_ci` sehingga pengurutan alfabetis
+                    // dilakukan di level database.
+                    //
+                    // PENTING: pakai `reorder()`, bukan `orderBy()`.
+                    // Query dasar sudah punya `orderBy('created_at','desc')`,
+                    // dan `orderBy()` hanya MENAMBAH urutan di belakang —
+                    // jadi created_at tetap jadi sort utama dan nama tidak
+                    // ikut terurut. `reorder()` menghapus semua order
+                    // sebelumnya lalu pasang yang baru.
+                    //
+                    // `id` jadi tie-breaker: banyak tiket hasil impor punya
+                    // `applicant_name` yang sama (mis. "Subiyati" beberapa
+                    // kali) DAN `created_at` yang identik, sehingga tanpa
+                    // penentu urutan kedua pagination bisa mengulang /
+                    // melompati baris antar halaman.
                     $perPage = (int) $request->get('per_page', 10);
                     $perPage = max(1, min($perPage, 500));
-                    $tickets = $query->orderBy('id', 'desc')->paginate($perPage);
+                    $tickets = $query->reorder('applicant_name', 'asc')
+                        ->orderBy('id', 'asc')
+                        ->paginate($perPage);
                 } else {
                     $perPage = (int) $request->get('per_page', 10);
                     $perPage = max(1, min($perPage, 200));
