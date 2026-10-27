@@ -29,7 +29,8 @@
       title=""
       v-model:current-page="currentPage"
       v-model:per-page="perPage"
-      :total-entries="filteredData.length"
+      :total-entries="serverTotal"
+      :total-pages="totalPages"
       v-model="searchQuery"
       class="mt-6!"
       search-placeholder="Cari pelanggan..."
@@ -37,13 +38,15 @@
       empty-message="Belum ada instalasi yang tercatat atau kata kunci pencarian tidak cocok."
       empty-icon="tools"
       :row-clickable="true"
+      :loading="isLoading"
+      server-side
       @row-click="handleShowDetail"
     >
       <template #search-actions>
         <BaseButton
           variant="ghost"
           size="sm"
-          @click="fetchData"
+          @click="reload"
           :loading="isLoading"
           class="w-9! h-9! p-0! rounded-lg! border! border-slate-200! hover:border-blue-200! hover:bg-blue-50! text-slate-500! hover:text-blue-600! transition-all!"
           title="Muat Ulang Data"
@@ -141,8 +144,10 @@ const {
   perPage,
   filteredData,
   isLoading,
+  totalPages,
+  serverTotal,
   STATUS_COLORS,
-  fetchData,
+  reload,
   handleCetakDataInstalasi,
 
   // state paket

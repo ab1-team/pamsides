@@ -11,13 +11,13 @@
           </div>
 
           <div class="header-center">
-            <div class="logo-l"></div>
+            <img class="logo-l" src="/logo2.png" alt="Logo Unit Pengelolaan Air" />
             <div class="t">
               <div class="tm">STRUK TAGIHAN PEMAKAIAN AIR</div>
               <div class="tm">BADAN USAHA MILIK DESA (BUMDes)</div>
               <div class="tm">UNIT AIR</div>
             </div>
-            <div class="logo-r"></div>
+            <img class="logo-r" src="/logo1.png" alt="Logo BUMDes Bangun Kencana" />
           </div>
         </div>
 
@@ -190,8 +190,11 @@ const bilang = (val) => {
 .lbl-meta { font-weight: normal !important; width: 65px; }
 
 .header-center { display: flex; align-items: center; gap: 12px; flex: 1; justify-content: flex-start; padding-left: 90px; }
-.logo-l { width: 44px; height: 44px; background-image: url('/logo2.png'); background-size: contain; background-repeat: no-repeat; background-position: center; flex-shrink: 0; }
-.logo-r { width: 44px; height: 44px; background-image: url('/logo1.png'); background-size: contain; background-repeat: no-repeat; background-position: center; flex-shrink: 0; }
+/* Logo pakai elemen <img>, bukan background-image.
+   Chrome TIDAK mencetak background image kecuali user mencentang
+   "Background graphics" di dialog print -> logo hilang saat Ctrl+P.
+   Dengan <img>, logo ikut tercetak tanpa-settingan tambahan. */
+.logo-l, .logo-r { width: 44px; height: 44px; object-fit: contain; flex-shrink: 0; display: block; }
 
 .t { text-align: center; font-size: 9.5px; font-weight: 700; text-transform: uppercase; }
 .tm { 
