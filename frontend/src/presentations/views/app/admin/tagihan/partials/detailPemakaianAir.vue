@@ -342,6 +342,25 @@ watch(perPage, () => {
   currentPage.value = 1
 })
 
+// Kembalikan ke halaman 1 saat kata kunci pencarian berubah.
+//
+// Tanpa ini, hasil pencarian bisa lebih pendek dari jangkauan halaman
+// yang sedang aktif — misalnya pengguna sudah di halaman 20 lalu mengetik
+// "ngati" (14 hasil): filter memotong daftar jadi 14 baris, tapi halaman 20
+// tidak punya baris ke-191..200 -> tabel tampil KOSONG padahal ada yang
+// cocok. "Showing 191 to 14 of 14" juga tampil kacau.
+//
+// Reset ke halaman 1 membuat hasil pencarian selalu terlihat dari awal.
+//
+// Tidak perlu debounce: filter ini client-side atas ~1600 baris, murah.
+// (Berbeda dengan `daftarTagihan.vue` yang perlu debounce karena di sana
+// pencarian memicu request ke server.)
+watch(searchQuery, () => {
+  if (currentPage.value !== 1) {
+    currentPage.value = 1
+  }
+})
+
 const handleRowClick = (row) => {
   selectedCustomer.value = { ...row }
   isModalOpen.value = true
@@ -467,11 +486,42 @@ const totalPages = computed(() => {
   return Math.max(1, Math.ceil(filteredData.value.length / perPage.value))
 })
 
+// Setelah simpan meter, satu baris dihapus dari `customers` sehingga
+// `totalPages` menyusut. Kalau `currentPage` sudah melewati jangkauan
+// baru, layar jadi kosong -> turunkan ke halaman terakhir yang valid.
+//
+// Watcher ini harus DI SESUDAH deklarasi `totalPages` di atas; kalau
+// ditulis lebih awal, variabelnya belum terdefinisi saat setup script
+// dijalankan (Temporal Dead Zone) dan halaman gagal dirender.
+watch(totalPages, (max) => {
+  if (currentPage.value > max) {
+    currentPage.value = max
+  }
+})
+
 const visiblePages = computed(() => {
   const pages = []
-  for (let i = 1; i <= Math.min(3, totalPages.value); i++) {
-    pages.push(i)
+  const total = totalPages.value
+  const current = currentPage.value
+  const maxPages = 5
+
+  if (total <= maxPages) {
+    for (let i = 1; i <= total; i++) pages.push(i)
+    return pages
   }
+
+  // Jendela 5 halaman di sekitar halaman aktif. Sebelumnya hanya
+  // menampilkan 3 halaman PERTAMA (1..3) padahal daftarnya bisa 161
+  // halaman, sehingga halaman 4+ tidak pernah bisa dibuka di desktop.
+  let start = Math.max(1, current - 2)
+  let end = Math.min(total, start + maxPages - 1)
+  if (end - start < maxPages - 1) {
+    start = Math.max(1, end - maxPages + 1)
+  }
+
+  for (let i = start; i <= end; i++) pages.push(i)
+  if (start > 1) pages.unshift('...')
+  if (end < total) pages.push(total)
   return pages
 })
 </script>
