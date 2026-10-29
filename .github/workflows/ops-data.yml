@@ -14,6 +14,7 @@ on:
           - monthly-bills
           - bill-payments
           - flags
+          - meter-readings
           - all
       dry_run:
         description: 'Dry run (impor tidak mengubah data; langkah flags dilewati)'
@@ -39,10 +40,10 @@ jobs:
         run: |
           set -euo pipefail
           case "$INPUT_STEPS" in
-            customers|monthly-bills|bill-payments|flags|all) ;;
+            customers|monthly-bills|bill-payments|flags|meter-readings|all) ;;
             *) echo "::error::steps tidak valid: $INPUT_STEPS"; exit 1 ;;
           esac
-          run_bills=false; run_payments=false; run_flags=false; run_customers=false
+          run_bills=false; run_payments=false; run_flags=false; run_customers=false; run_meter_readings=false
           case "$INPUT_STEPS" in
             customers|all) run_customers=true ;;
           esac
@@ -55,6 +56,9 @@ jobs:
           case "$INPUT_STEPS" in
             flags|all) run_flags=true ;;
           esac
+          case "$INPUT_STEPS" in
+            meter-readings|all) run_meter_readings=true ;;
+          esac
           if [ "$INPUT_DRY_RUN" = "true" ]; then
             run_flags=false
             echo "::notice::dry_run=true -> langkah flags DILEWATI (flags tidak punya mode dry-run; tidak ada perubahan data)."
@@ -64,8 +68,9 @@ jobs:
             echo "run_bills=$run_bills"
             echo "run_payments=$run_payments"
             echo "run_flags=$run_flags"
+            echo "run_meter_readings=$run_meter_readings"
           } >> "$GITHUB_OUTPUT"
-          echo "steps=$INPUT_STEPS dry_run=$INPUT_DRY_RUN customers=$run_customers bills=$run_bills payments=$run_payments flags=$run_flags"
+          echo "steps=$INPUT_STEPS dry_run=$INPUT_DRY_RUN customers=$run_customers meter_readings=$run_meter_readings bills=$run_bills payments=$run_payments flags=$run_flags"
 
       - name: Setup SSH key
         run: |
@@ -78,7 +83,7 @@ jobs:
       # customer_id + billing_period_year + billing_period_month (unique per pelanggan per bulan).
       - name: Counts before
         run: |
-          ssh -p ${{ secrets.SSH_PORT }} -o IdentitiesOnly=yes "$SSH_USER@$SSH_HOST" 'set -e; docker exec pamsides-app php artisan tinker --execute="\$b = DB::table(\"monthly_bills\")->selectRaw(\"COUNT(*) AS bill_rows, COUNT(DISTINCT customer_id, billing_period_year, billing_period_month) AS bill_keys\")->first(); echo \"BEFORE monthly_bills_rows=\" . \$b->bill_rows . \" monthly_bills_keys=\" . \$b->bill_keys . \" bill_payments=\" . DB::table(\"bill_payments\")->count() . PHP_EOL;"' | tee -a counts-before.log
+          ssh -p ${{ secrets.SSH_PORT }} -o IdentitiesOnly=yes "$SSH_USER@$SSH_HOST" 'set -e; docker exec pamsides-app php artisan tinker --execute="\$b = DB::table(\"monthly_bills\")->selectRaw(\"COUNT(*) AS bill_rows, COUNT(DISTINCT customer_id, billing_period_year, billing_period_month) AS bill_keys\")->first(); echo \"BEFORE monthly_bills_rows=\" . \$b->bill_rows . \" monthly_bills_keys=\" . \$b->bill_keys . \" bill_payments=\" . DB::table(\"bill_payments\")->count() . \" meter_readings=\" . DB::table(\"meter_readings\")->count() . PHP_EOL;"' | tee -a counts-before.log
         env:
           SSH_HOST: ${{ secrets.SSH_HOST }}
           SSH_USER: ${{ secrets.SSH_USER }}
@@ -95,6 +100,21 @@ jobs:
           if [ "$DRY_RUN" = "true" ]; then FLAGS="--dry-run"; else FLAGS="--force"; fi
           echo "run: import:customers $FLAGS --business=5"
           ssh -p ${{ secrets.SSH_PORT }} -o IdentitiesOnly=yes "$SSH_USER@$SSH_HOST" "set -e; docker exec pamsides-app php artisan import:customers $FLAGS --business=5 --no-interaction" | tee -a import-customers.log
+
+      # Pemakaian legacy harus diimpor sebelum tagihan: importer memasang
+      # meter_readings (kunci customer_id|year|month, idempoten) yang dipakai
+      # frontend sebagai METER AWAL. Butuh tiket (legacy_installation_id) dan
+      # pelanggan dari impor di atas; baris yang sudah ada di-UPDATE.
+      - name: Import meter readings
+        if: steps.plan.outputs.run_meter_readings == 'true'
+        env:
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_USER: ${{ secrets.SSH_USER }}
+          DRY_RUN: ${{ inputs.dry_run }}
+        run: |
+          if [ "$DRY_RUN" = "true" ]; then FLAGS="--dry-run"; else FLAGS="--force"; fi
+          echo "run: import:meter-readings $FLAGS --business=5"
+          ssh -p ${{ secrets.SSH_PORT }} -o IdentitiesOnly=yes "$SSH_USER@$SSH_HOST" "set -e; docker exec pamsides-app php artisan import:meter-readings $FLAGS --business=5 --no-interaction" | tee -a import-meter-readings.log
 
       - name: Import monthly bills
         if: steps.plan.outputs.run_bills == 'true'
@@ -154,7 +174,7 @@ jobs:
       # Counter akhir: sama persis dengan "Counts before" untuk pembanding.
       - name: Counts after
         run: |
-          ssh -p ${{ secrets.SSH_PORT }} -o IdentitiesOnly=yes "$SSH_USER@$SSH_HOST" 'set -e; docker exec pamsides-app php artisan tinker --execute="\$b = DB::table(\"monthly_bills\")->selectRaw(\"COUNT(*) AS bill_rows, COUNT(DISTINCT customer_id, billing_period_year, billing_period_month) AS bill_keys\")->first(); echo \"AFTER monthly_bills_rows=\" . \$b->bill_rows . \" monthly_bills_keys=\" . \$b->bill_keys . \" bill_payments=\" . DB::table(\"bill_payments\")->count() . PHP_EOL;"' | tee -a counts-after.log
+          ssh -p ${{ secrets.SSH_PORT }} -o IdentitiesOnly=yes "$SSH_USER@$SSH_HOST" 'set -e; docker exec pamsides-app php artisan tinker --execute="\$b = DB::table(\"monthly_bills\")->selectRaw(\"COUNT(*) AS bill_rows, COUNT(DISTINCT customer_id, billing_period_year, billing_period_month) AS bill_keys\")->first(); echo \"AFTER monthly_bills_rows=\" . \$b->bill_rows . \" monthly_bills_keys=\" . \$b->bill_keys . \" bill_payments=\" . DB::table(\"bill_payments\")->count() . \" meter_readings=\" . DB::table(\"meter_readings\")->count() . PHP_EOL;"' | tee -a counts-after.log
         env:
           SSH_HOST: ${{ secrets.SSH_HOST }}
           SSH_USER: ${{ secrets.SSH_USER }}
