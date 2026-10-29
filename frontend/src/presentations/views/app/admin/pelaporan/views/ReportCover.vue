@@ -29,6 +29,7 @@
 
 <script setup>
 import { computed } from 'vue'
+import { logoUrl as resolveLogoUrl } from '@/utils/storage'
 
 const props = defineProps({
   payload: { type: Object, required: true },
@@ -54,11 +55,7 @@ const initials = computed(() => {
 })
 
 const logoUrl = computed(() => {
-  const logo = lembaga.value?.logo
-  if (!logo) return ''
-  if (logo.startsWith('http')) return logo
-  const base = import.meta.env.VITE_API_STORAGE_URL || 'http://localhost:8000/storage'
-  return `${base}/sop/logo/${logo}`
+  return resolveLogoUrl(lembaga.value)
 })
 </script>
 
@@ -110,8 +107,8 @@ width: 100%;  text-align: center;
 }
 
 .cover-logo {
-  max-width: 110px;
-  max-height: 110px;
+  max-width: 180px;
+  max-height: 180px;
   object-fit: contain;
 }
 

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Calk;
 use App\Models\Setting;
+use App\Services\LogoService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
@@ -33,6 +34,10 @@ class SopController extends Controller
             ],
             'logo' => [
                 'logo' => $s?->logo ?? null,
+                // Path siap pakai (relatif terhadap origin API). Kalau file
+                // logo tidak ada di disk, null dikirim supaya frontend bisa
+                // pakai fallback (inisial) alih-alih menampilkan broken image.
+                'logo_url' => app(LogoService::class)->url($s?->logo),
             ],
             'whatsapp' => [
                 'templateTagihan' => $s?->pesan_tagihan ?? '',
@@ -71,6 +76,7 @@ class SopController extends Controller
             'data' => [
                 'nama' => $s?->nama ?? '',
                 'logo' => $s?->logo ?? null,
+                'logo_url' => app(LogoService::class)->url($s?->logo),
                 'telepon' => $s?->telepon ?? '',
             ],
         ]);
@@ -148,16 +154,27 @@ $data = $request->validate([
             $s = Setting::firstOrNew([]);
             $s->key = $s->key ?: 'sop';
 
-            if ($s->logo) {
-                $oldPath = 'sop/logo/'.$s->logo;
-                if (Storage::disk('public')->exists($oldPath)) {
-                    Storage::disk('public')->delete($oldPath);
+            $file = $request->file('logo');
+
+            // Nama file dibuat dari timestamp + nama asli, tapi karakter
+            // berbahaya dibuang supaya tidak ada path traversal lewat nama file.
+            $original = basename(str_replace('\\', '/', (string) $file->getClientOriginalName()));
+            $extension = strtolower($file->getClientOriginalExtension() ?: 'png');
+            $base = preg_replace('/[^A-Za-z0-9._-]/', '_', pathinfo($original, PATHINFO_FILENAME));
+            $base = trim((string) $base, '._-') ?: 'logo';
+
+            $fileName = time().'_'.$base.'.'.$extension;
+
+            $file->storeAs(LogoService::DIR, $fileName, LogoService::DISK);
+
+            // Hapus logo lama SETELAH file baru berhasil disimpan, supaya
+            // kalau upload gagal logo lama tidak ikut hilang.
+            if ($s->logo && $s->logo !== $fileName) {
+                $oldPath = LogoService::DIR.'/'.basename($s->logo);
+                if (Storage::disk(LogoService::DISK)->exists($oldPath)) {
+                    Storage::disk(LogoService::DISK)->delete($oldPath);
                 }
             }
-
-            $file = $request->file('logo');
-            $fileName = time().'_'.$file->getClientOriginalName();
-            $file->storeAs('sop/logo', $fileName, 'public');
 
             $s->logo = $fileName;
             $s->save();
@@ -167,11 +184,34 @@ $data = $request->validate([
                 'message' => 'Logo berhasil disimpan',
                 'data' => [
                     'logo' => $fileName,
+                    'logo_url' => app(LogoService::class)->url($fileName),
                 ],
             ]);
         } catch (\Throwable $e) {
             return $this->error($e);
         }
+    }
+
+    /**
+     * GET /api/settings/sop/logo/{file}
+     *
+     * Menyajikan file logo sebagai gambar.
+     *
+     * Route ini publik (tanpa auth) karena logo dimuat lewat tag `<img>`
+     * yang tidak bisa mengirim header Authorization.
+     */
+    public function showLogo(string $file)
+    {
+        $response = app(LogoService::class)->response($file);
+
+        if ($response === null) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Logo tidak ditemukan.',
+            ], 404);
+        }
+
+        return $response;
     }
 
     public function updateWhatsapp(Request $request)

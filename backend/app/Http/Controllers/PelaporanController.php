@@ -16,6 +16,7 @@ use App\Models\SubLaporan;
 use App\Models\Transaction;
 use App\Models\User;
 use App\Services\InventoryService;
+use App\Services\LogoService;
 use App\Services\PelaporanService;
 use App\Services\SignatureService;
 use Carbon\Carbon;
@@ -35,6 +36,36 @@ class PelaporanController extends Controller
     ) {
         $this->pelaporanService = $pelaporanService;
         $this->signatureService = $signatureService;
+    }
+
+    /**
+     * Helper: bangun payload identitas lembaga untuk semua laporan.
+     *
+     * Dipakai oleh `preview()`, `injectLembaga()`, `cover()`, dan
+     * `surat_pengantar()` supaya field yang sama tidak berbeda antar laporan.
+     *
+     * `logo` berisi nama file (dipakai sebagai penanda "logo tersedia"),
+     * sedangkan `logo_url` berisi path siap pakai menuju endpoint gambar.
+     * Frontend memakai `logo_url` supaya tidak perlu menyusun URL sendiri —
+     * ini yang mencegah logo tidak tampil di kop laporan.
+     */
+    private function lembagaPayload(?Setting $lembaga): ?array
+    {
+        if (! $lembaga) {
+            return null;
+        }
+
+        return [
+            'nama' => $lembaga->nama,
+            'nama_lembaga' => $lembaga->nama_lembaga ?: ($lembaga->nama ?: null),
+            'alamat' => $lembaga->alamat,
+            'telepon' => $lembaga->telepon,
+            'email' => $lembaga->email,
+            'logo' => $lembaga->logo,
+            'logo_url' => app(LogoService::class)->url($lembaga->logo),
+            'peraturan_desa' => $lembaga->peraturan_desa,
+            'sk_kemenkumham' => $lembaga->sk_kemenkumham,
+        ];
     }
 
     /**
@@ -259,15 +290,7 @@ class PelaporanController extends Controller
             'payload' => [
                 'meta' => $meta,
                 'config' => $this->paperConfig($file ?: 'cover'),
-                'lembaga' => $lembaga ? [
-                    'nama' => $lembaga->nama,
-                    'alamat' => $lembaga->alamat,
-                    'telepon' => $lembaga->telepon,
-                    'email' => $lembaga->email,
-                    'logo' => $lembaga->logo,
-                    'peraturan_desa' => $lembaga->peraturan_desa,
-                    'sk_kemenkumham' => $lembaga->sk_kemenkumham,
-                ] : null,
+                'lembaga' => $this->lembagaPayload($lembaga),
                 'items' => [],
             ],
         ]);
@@ -292,15 +315,7 @@ class PelaporanController extends Controller
 
         if (empty($body['payload']['lembaga'])) {
             $lembaga = Setting::first();
-            $body['payload']['lembaga'] = $lembaga ? [
-                'nama' => $lembaga->nama,
-                'alamat' => $lembaga->alamat,
-                'telepon' => $lembaga->telepon,
-                'email' => $lembaga->email,
-                'logo' => $lembaga->logo,
-                'peraturan_desa' => $lembaga->peraturan_desa,
-                'sk_kemenkumham' => $lembaga->sk_kemenkumham,
-            ] : null;
+            $body['payload']['lembaga'] = $this->lembagaPayload($lembaga);
 
             $response->setData($body);
         }
@@ -540,15 +555,7 @@ class PelaporanController extends Controller
             'meta' => $data,
             'payload' => $this->withSignature([
                 'config' => $this->paperConfig('cover'),
-                'lembaga' => $lembaga ? [
-                    'nama' => $lembaga->nama,
-                    'alamat' => $lembaga->alamat,
-                    'telepon' => $lembaga->telepon,
-                    'email' => $lembaga->email,
-                    'logo' => $lembaga->logo,
-                    'peraturan_desa' => $lembaga->peraturan_desa,
-                    'sk_kemenkumham' => $lembaga->sk_kemenkumham,
-                ] : null,
+                'lembaga' => $this->lembagaPayload($lembaga),
                 'periode' => [
                     'tahun' => $data['tahun'],
                     'bulan' => $data['bulan'],
@@ -577,7 +584,7 @@ class PelaporanController extends Controller
 
         // Nama lembaga resmi (BUMDes). Kalau settings.nama_lembaga kosong,
         // fallback dinamis ke settings.nama supaya laporan tidak blank.
-        $namaLembagaResmi = $lembaga?->nama_lembaga ?: ($lembaga?->nama ?: null);
+        // Disalin ke payload lewat `lembagaPayload()` sebagai `nama_lembaga`.
 
         return response()->json([
             'success' => true,
@@ -586,16 +593,7 @@ class PelaporanController extends Controller
             'meta' => $data,
             'payload' => $this->withSignature([
                 'config' => $this->paperConfig('surat_pengantar'),
-                'lembaga' => $lembaga ? [
-                    'nama' => $lembaga->nama,
-                    'nama_lembaga' => $namaLembagaResmi,
-                    'alamat' => $lembaga->alamat,
-                    'telepon' => $lembaga->telepon,
-                    'email' => $lembaga->email,
-                    'logo' => $lembaga->logo,
-                    'peraturan_desa' => $lembaga->peraturan_desa,
-                    'sk_kemenkumham' => $lembaga->sk_kemenkumham,
-                ] : null,
+                'lembaga' => $this->lembagaPayload($lembaga),
                 'periode' => [
                     'tahun' => $data['tahun'],
                     'bulan' => $data['bulan'],

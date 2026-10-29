@@ -140,10 +140,16 @@ const loadStorage = () => {
 const loadLembaga = async () => {
   try {
     const res = await sopService.getAll()
-    const data = res?.data ?? res?.payload ?? res
+    const data = res?.data?.data ?? res?.data ?? res?.payload ?? res
     const lembaga = { ...data?.lembaga }
+    // Backend mengembalikan `logo` (nama file) dan `logo_url` (URL absolut).
+    // Keduanya diteruskan agar ReportCetakBuktiCell bisa membangun URL yang
+    // benar tanpa harus tahu asal-usul path-nya.
     const logo = data?.logo?.logo
-    if (logo) lembaga.logo = logo
+    if (logo) {
+      lembaga.logo = logo
+      if (data?.logo?.logo_url) lembaga.logo_url = data.logo.logo_url
+    }
     return lembaga
   } catch { return {} }
 }

@@ -98,6 +98,7 @@
 
 <script setup>
 import { computed } from 'vue'
+import { logoUrl as resolveLogoUrl } from '@/utils/storage'
 
 const props = defineProps({
     row: {
@@ -184,32 +185,7 @@ const initials = computed(() => {
 })
 
 const logoUrl = computed(() => {
-    const logo = props.lembaga?.logo
-    if (!logo) return ''
-    
-    // Jika logo sudah berupa URL lengkap (http:// atau https://) atau base64
-    if (logo.startsWith('http://') || logo.startsWith('https://') || logo.startsWith('data:image')) {
-        return logo
-    }
-
-    // Jika path logo sudah mencakup direktori storage/ publik
-    if (logo.startsWith('/storage/') || logo.startsWith('storage/')) {
-        const cleanPath = logo.startsWith('/') ? logo : '/' + logo
-        const baseUrl = (import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000/api').replace(/\/api\/?$/, '')
-        return `${baseUrl}${cleanPath}`
-    }
-
-    // Penanganan path standar dari backend storage API
-    const base =
-        import.meta.env.VITE_API_STORAGE_URL ||
-        (import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000/api').replace(/\/api\/?$/, '') +
-        '/storage'
-    
-    const formattedLogo = logo.startsWith('/') ? logo : `/${logo}`
-    if (formattedLogo.includes('/sop/logo/')) {
-        return `${base}${formattedLogo}`
-    }
-    return `${base}/sop/logo${formattedLogo}`
+    return resolveLogoUrl(props.lembaga)
 })
 </script>
 
