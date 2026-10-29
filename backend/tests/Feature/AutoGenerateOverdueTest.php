@@ -7,6 +7,7 @@ use App\Models\Setting;
 use App\Models\Transaction;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Hash;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
@@ -14,6 +15,46 @@ use Tests\TestCase;
 class AutoGenerateOverdueTest extends TestCase
 {
     use RefreshDatabase;
+
+    /**
+     * Tanggal acuan yang dipakai seluruh test di kelas ini.
+     *
+     * Dipilih tanggal 15 supaya:
+     *   - nilainya berada di rentang SAH `toleransi_tunggakan` (1-28),
+     *   - tanggalnya selalu ada di setiap bulan (tidak 29/30/31),
+     *   - ambang tunggakan command (today - toleransi HARI) jatuh di bulan
+     *     sebelumnya, jadi tagihan `due_date` di awal bulan lalu terdeteksi.
+     */
+    private const TANGGAL_ACUAN = '2026-06-15 09:00:00';
+
+    /**
+     * Bekukan waktu SEBELUM test berjalan.
+     *
+     * Kenapa perlu
+     * -----------
+     * `settings.toleransi_tunggakan` punya dua makna sekaligus:
+     *   1. TANGGAL generate (1-28) — dipakai `DashboardController` untuk
+     *      menentukan boleh/tidaknya auto-generate dijalankan.
+     *   2. JUMLAH HARI toleransi — dipakai command
+     *      `billing:generate-overdue-transactions` untuk ambang tunggakan.
+     *
+     * Test menyetel nilainya ke tanggal hari ini (`now()->format('d')`)
+     * supaya generate PASTI jalan. Tanpa pembekuan waktu, test HANYA lulus
+     * kalau dijalankan pada tanggal 1-28. Kalau dijalankan tanggal 29/30/31,
+     * nilai itu di luar rentang sah sehingga `DashboardController` menolaknya
+     * dengan "Toleransi menunggak belum dikonfigurasi." — test gagal bukan
+     * karena ada bug, tapi karena tanggal eksekusinya kebetulan di luar
+     * rentang. Membekukan waktu membuat hasil test sama di tanggal berapa pun.
+     *
+     * `travelTo` dipanggil SESUDAH `parent::setUp()` supaya migrasi
+     * `RefreshDatabase` tetap jalan dengan waktu nyata.
+     */
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->travelTo(Carbon::parse(self::TANGGAL_ACUAN));
+    }
 
     private function createUser(string $role = 'admin'): User
     {
