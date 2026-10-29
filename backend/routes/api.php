@@ -51,6 +51,25 @@ Route::get('/health', function () {
     return response()->json(['status' => 'OK']);
 });
 
+/*
+ * Logo lembaga — route PUBLIK (tanpa auth).
+ *
+ * Logo dimuat lewat tag `<img src="...">` pada kop surat/laporan. Tag `<img>`
+ * TIDAK bisa mengirim header `Authorization: Bearer ...`, jadi kalau route ini
+ * berada di dalam middleware `auth:sanctum`, browser akan mendapat 401 dan
+ * logo tampil sebagai broken image.
+ *
+ * File logo sendiri bersifat non-sensitif (gambar kop surat) dan sudah
+ * terekspos publik lewat laporan PDF yang dibagikan ke pihak lain.
+ *
+ * Route ini juga menggantikan andalan lama ke `/storage/sop/logo/{file}`:
+ * symlink `public/storage` tidak ikut ter-deploy ke server produksi sehingga
+ * request ke `/storage/...` jatuh ke fallback SPA dan mengembalikan HTML
+ * alih-alih gambar.
+ */
+Route::get('settings/sop/logo/{file}', [SopController::class, 'showLogo'])
+    ->name('settings.sop.logo');
+
 
 // Authenticated Routes (Semua Role)
 Route::middleware('auth:sanctum')->group(function () {

@@ -72,6 +72,13 @@ jobs:
       - name: Pull source, migrate, clear caches
         run: ssh -p ${{ secrets.SSH_PORT }} -o IdentitiesOnly=yes ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} 'set -e; cd /home/enpii/pamsides; git pull --ff-only origin main; docker exec pamsides-app php artisan migrate --force --no-interaction; docker exec pamsides-app php artisan config:clear; docker exec pamsides-app php artisan route:clear'
 
+      - name: Ensure storage symlink exists
+        # `backend/.gitignore` mengabaikan `/public/storage`, jadi symlink
+        # tidak ikut ter-deploy. Tanpa ini, file di storage/app/public
+        # (foto meter, foto survey, tanda tangan) tidak bisa diakses lewat
+        # /storage/... dan request jatuh ke fallback SPA (HTML, bukan file).
+        run: ssh -p ${{ secrets.SSH_PORT }} -o IdentitiesOnly=yes ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} 'docker exec pamsides-app php artisan storage:link || true'
+
       - name: Smoke test production
         run: |
           site=$(curl -s -o /dev/null -w '%{http_code}' https://tirtomulo-pamsides.astamart.net/)

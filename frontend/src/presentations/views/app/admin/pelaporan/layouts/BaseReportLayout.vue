@@ -63,6 +63,7 @@
 
 <script setup>
 import { computed, inject, useAttrs } from 'vue'
+import { logoUrl as resolveLogoUrl } from '@/utils/storage'
 
 const props = defineProps({
   lembaga: { type: Object, default: () => ({}) },
@@ -158,13 +159,7 @@ const initials = computed(() => {
 })
 
 const logoUrl = computed(() => {
-  const logo = props.lembaga?.logo
-  if (!logo) return ''
-  if (logo.startsWith('http')) return logo
-  const base =
-    import.meta.env.VITE_API_STORAGE_URL ||
-    (import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000/api').replace(/\/api\/?$/, '') + '/storage'
-  return `${base}/sop/logo/${logo}`
+  return resolveLogoUrl(props.lembaga)
 })
 </script>
 

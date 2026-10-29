@@ -1,6 +1,6 @@
 import { ref, computed, onMounted } from 'vue'
 import { showSuccessToast, showErrorToast } from '@/utils/swal'
-import { storageUrl } from '@/utils/storage'
+import { logoUrl } from '@/utils/storage'
 import sopService from '@/services/sop.service'
 import { refreshKontak } from '@/composables/useKontakLembaga'
 import { useUiStore } from '@/stores/uiStore'
@@ -101,14 +101,6 @@ export function useSop() {
         }
       }
 
-      if (data.logo) {
-        logoForm.value.previews = {
-          mainLogo: data.logo.mainLogo_url || data.logo.mainLogo || '',
-          dashboardLogo: data.logo.dashboardLogo_url || data.logo.dashboardLogo || '',
-          favicon: data.logo.favicon_url || data.logo.favicon || '',
-        }
-      }
-
       if (data.sistemTagihan) {
         sistemTagihanForm.value = {
           batasTagihan: Number(data.sistemTagihan.batasTagihan ?? 10),
@@ -125,7 +117,7 @@ export function useSop() {
 
       if (data.logo) {
         const fileName = data.logo.logo || ''
-        logoForm.value.preview = fileName ? storageUrl(`storage/sop/logo/${fileName}`) : ''
+        logoForm.value.preview = logoUrl(data.logo)
         logoForm.value.previewName = fileName
       }
     } catch (error) {
@@ -209,7 +201,9 @@ export function useSop() {
       const res = await sopService.saveLogo(logoForm.value.file)
       const data = res?.data?.data ?? res?.data ?? res
       if (data?.logo) {
-        logoForm.value.preview = storageUrl(`storage/sop/logo/${data.logo}`)
+        // Backend mengembalikan `logo` (nama file) dan `logo_url` (path siap
+        // pakai). Kalau `logo_url` kosong, `logoUrl()` fallback ke nama file.
+        logoForm.value.preview = logoUrl(data)
         logoForm.value.previewName = data.logo
       }
       logoForm.value.file = null
