@@ -4,10 +4,11 @@
         <div v-if="!noKop" class="surat-kop">
             <table class="kop-table">
                 <tr>
-                    <td width="70" class="logo-cell">
+                    <td class="logo-cell" :style="logoCellStyle">
                         <img
                             v-if="lembaga?.logo"
-                            :src="logoUrl"
+                            :src="displayLogoUrl"
+                            :style="logoStyle"
                             alt="logo"
                             crossorigin="anonymous"
                         />
@@ -99,6 +100,7 @@
 <script setup>
 import { computed } from 'vue'
 import { logoUrl as resolveLogoUrl } from '@/utils/storage'
+import { useLogoTrim } from '@/composables/useLogoTrim'
 
 const props = defineProps({
     row: {
@@ -187,6 +189,52 @@ const initials = computed(() => {
 const logoUrl = computed(() => {
     return resolveLogoUrl(props.lembaga)
 })
+
+// Logo dipotong dari ruang kosongnya supaya kotak render-nya terisi penuh
+// logo. Tanpa ini logo terlihat melayang (tidak sejajar baris judul) dan
+// ada celah putih lebar ke arah teks.
+const { trimmedUrl, trimmedSize } = useLogoTrim(logoUrl)
+
+const displayLogoUrl = computed(() => trimmedUrl.value || logoUrl.value)
+
+// Tinggi logo (px) dan lebarnya diturunkan dari rasio gambar hasil
+// pemotongan, supaya logo terisi penuh kotaknya tanpa ruang kosong sisa.
+const LOGO_HEIGHT = 52
+
+// Rasio cadangan dipakai saat gambar belum sempat dipotong (mis. baru
+// di-render) atau trimming gagal. Logo PAMSIDES ~1:1.
+const FALLBACK_LOGO_WIDTH = 50
+
+const logoStyle = computed(() => {
+    const size = trimmedSize.value
+
+    if (!size || !size.width || !size.height) {
+        // Belum sempat dipotong (atau trimming gagal) -> pakai rasio default.
+        return { height: LOGO_HEIGHT + 'px', width: FALLBACK_LOGO_WIDTH + 'px' }
+    }
+
+    const ratio = size.width / size.height
+
+    return {
+        height: LOGO_HEIGHT + 'px',
+        width: Math.round(LOGO_HEIGHT * ratio) + 'px',
+    }
+})
+
+// Lebar kolom logo dikunci mengikuti lebar gambar hasil pemotongan.
+// Tanpa ini, sel tabel ikut melebar mengikuti lebar teks di sel sebelah
+// sehingga jarak logo ke teks jadi jauh.
+const logoCellStyle = computed(() => {
+    const size = trimmedSize.value
+
+    if (!size || !size.width || !size.height) {
+        return { width: FALLBACK_LOGO_WIDTH + 'px' }
+    }
+
+    const ratio = size.width / size.height
+
+    return { width: Math.round(LOGO_HEIGHT * ratio) + 'px' }
+})
 </script>
 
 <style scoped>
@@ -217,13 +265,23 @@ const logoUrl = computed(() => {
 
 .logo-cell {
     vertical-align: top;
-    width: 55px;
-    padding-right: 12px;
+    /* Jarak logo ke teks dibuat tipis supaya logo "nempel" pada
+       blok nama usaha. */
+    padding-right: 4px;
 }
 
 .logo-cell img {
-    height: 55px;
+    /* Tinggi & lebar diatur lewat inline style (lihat `logoStyle`)
+       supaya mengikuti rasio gambar hasil pemotongan. */
+    height: 52px;
+    width: auto;
+    /* Preload Tailwind memberi `max-width: 100%` pada semua img, yang
+       membuat logo tertekan saat lebarnya mengikuti rasio gambar. */
+    max-width: none;
     object-fit: contain;
+    /* Kotak logo disejajarkan dengan baris paling atas teks. */
+    vertical-align: top;
+    display: block;
 }
 
 .kop-logo-fallback {
