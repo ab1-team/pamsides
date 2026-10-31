@@ -51,25 +51,27 @@ class BillingServiceTest extends TestCase
     #[Test]
     public function kalkulasi_tagihan_blok_kedua(): void
     {
+        // 15 m3 -> blok 10-20 @ 2.000 -> 15 x 2.000 = 30.000
         $package = $this->createPackageWithBlocks();
         $result  = $this->service->calculateChargeForTesting($package, 15);
 
-        $this->assertEquals(25_000, $result);
+        $this->assertEquals(30_000, $result);
     }
 
     #[Test]
     public function kalkulasi_tagihan_blok_ketiga(): void
     {
+        // 25 m3 -> blok 20+ @ 2.500 -> 25 x 2.500 = 62.500
         $package = $this->createPackageWithBlocks();
         $result  = $this->service->calculateChargeForTesting($package, 25);
 
-        $this->assertEquals(47_500, $result);
+        $this->assertEquals(62_500, $result);
     }
 
     #[Test]
     public function kalkulasi_tagihan_tepat_di_batas_blok(): void
     {
-        // 10 m³ → masuk blok 0-10 → 10 × 1.500 = 15.000
+        // 10 m³ -> masih di blok 0-10 -> 10 × 1.500 = 15.000
         $package = $this->createPackageWithBlocks();
         $result  = $this->service->calculateChargeForTesting($package, 10);
 
@@ -79,19 +81,20 @@ class BillingServiceTest extends TestCase
     #[Test]
     public function kalkulasi_tagihan_desimal(): void
     {
+        // 10,5 m³ -> blok 10-20 -> 10,5 × 2.000 = 21.000
         $package = $this->createPackageWithBlocks();
         $result  = $this->service->calculateChargeForTesting($package, 10.5);
 
-        $this->assertEquals(16_000, $result);
+        $this->assertEquals(21_000, $result);
     }
 
     /**
      * Paket dengan penulisan rentang INKLUSIF — format yang dipakai data
      * produksi (paket "Warga": `1-10 m3` @ 3.500 lalu `11-100000 m3` @ 4.000).
      *
-     * Ini yang menyebabkan tagihan Rp 500 terlalu mahal di versi lama:
-     * `1-10` dihitung jadi 9 m3 (10-1), sehingga 1 m3 terakhir terlewat dan
-     * masuk blok 4.000 yang lebih mahal.
+     * Seluruh pemakaian dibebankan dengan harga blok TEMPAT pemakaian itu
+     * berada (bukan dijumlahkan per blok). Ini aturan yang dipakai aplikasi
+     * lama dan seluruh tagihan yang sudah tercatat di `monthly_bills`.
      */
     private function createPackageWithInclusiveBlocks(): InstallationPackage
     {
@@ -133,31 +136,35 @@ class BillingServiceTest extends TestCase
     #[Test]
     public function rentang_inklusif_satu_m3_di_atas_batas_blok_pertama(): void
     {
-        // 11 m3 → 10 x 3.500 + 1 x 4.000 = 39.000
+        // 11 m3 -> blok 11-100000 @ 4.000 -> 11 x 4.000 = 44.000
+        //
+        // BUKAN 39.000 (10 x 3.500 + 1 x 4.000). Rumus progresif tidak pernah
+        // dipakai di produksi, dan memakainya bikin tagihan bulan berjalan
+        // berbeda dari tagihan bulan-bulan sebelumnya untuk pemakaian yang sama.
         $package = $this->createPackageWithInclusiveBlocks();
         $result  = $this->service->calculateChargeForTesting($package, 11);
 
-        $this->assertEquals(39_000, $result);
+        $this->assertEquals(44_000, $result);
     }
 
     #[Test]
     public function rentang_inklusif_pemakaian_19_m3(): void
     {
-        // Kasus nyata Arjo Suwito September: 19 m3 → 10 x 3.500 + 9 x 4.000 = 71.000
+        // 19 m3 -> blok 11-100000 @ 4.000 -> 19 x 4.000 = 76.000
         $package = $this->createPackageWithInclusiveBlocks();
         $result  = $this->service->calculateChargeForTesting($package, 19);
 
-        $this->assertEquals(71_000, $result);
+        $this->assertEquals(76_000, $result);
     }
 
     #[Test]
     public function rentang_inklusif_pemakaian_20_m3(): void
     {
-        // 20 m3 → 10 x 3.500 + 10 x 4.000 = 75.000
+        // 20 m3 -> blok 11-100000 @ 4.000 -> 20 x 4.000 = 80.000
         $package = $this->createPackageWithInclusiveBlocks();
         $result  = $this->service->calculateChargeForTesting($package, 20);
 
-        $this->assertEquals(75_000, $result);
+        $this->assertEquals(80_000, $result);
     }
 
     #[Test]
@@ -171,5 +178,21 @@ class BillingServiceTest extends TestCase
         $sesudah = $this->service->calculateChargeForTesting($package, 19);
 
         $this->assertGreaterThan($sebelum, $sesudah);
+    }
+
+    /**
+     * Batas antar blok harus INKLUSIF di kedua sisi: pemakaian tepat di
+     * `usage_max_m3` masih milik blok itu, bukan lompat ke blok berikutnya.
+     *
+     * Ini yang membuat tagihan naik monotonik di batas blok (10 -> 11 m3:
+     * 35.000 -> 44.000, tidak turun).
+     */
+    #[Test]
+    public function batas_blok_inklusif_di_kedua_sisi(): void
+    {
+        $package = $this->createPackageWithInclusiveBlocks();
+
+        $this->assertEquals(35_000, $this->service->calculateChargeForTesting($package, 10));
+        $this->assertEquals(44_000, $this->service->calculateChargeForTesting($package, 11));
     }
 }
