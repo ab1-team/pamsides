@@ -201,7 +201,7 @@ import DataTable from '@/presentations/components/ui/DataTable.vue'
 import ContentCard from '@/presentations/components/ui/ContentCard.vue'
 import BaseButton from '@/presentations/components/ui/BaseButton.vue'
 import HasilInputModal from '@/presentations/views/app/admin/tagihan/partials/hasilInputModal.vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { ref, watch, onMounted, onUnmounted } from 'vue'
 import { useUiStore } from '@/stores/uiStore'
 
@@ -222,9 +222,11 @@ const {
   STATUS_COLORS,
   isLoading,
   handleApplyFilter,
+  applyFilterFromQuery,
 } = usePemakaianAir()
 
 const router = useRouter()
+const route = useRoute()
 
 const showHasilModal = ref(false)
 
@@ -248,6 +250,11 @@ onUnmounted(() => {
 })
 
 onMounted(() => {
+  // Halaman ini juga dibuka kembali setelah "Input Pemakaian" menyimpan
+  // meter. Query `tahun`/`bulan` dibawa ke sini supaya periode yang
+  // ditampilkan sama dengan yang baru saja dicatat — baris yang baru
+  // disimpan langsung terlihat di tabel.
+  applyFilterFromQuery(route.query)
   handleApplyFilter()
 })
 
@@ -257,6 +264,10 @@ const handleInputPemakaian = () => {
     query: {
       tahun: filter.value.tahun,
       bulan: filter.value.bulan,
+      // ID teknisi yang login. Backend `meter-readings/pending` memakai
+      // filter ini untuk menampilkan HANYA pelanggan miliknya sendiri — tanpa
+      // itu daftar pencatatan menampilkan pelanggan teknisi lain.
+      teknisi: uiStore.userData?.id,
     },
   })
 }

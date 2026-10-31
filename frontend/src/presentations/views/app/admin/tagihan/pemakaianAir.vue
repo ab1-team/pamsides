@@ -219,7 +219,7 @@ import ContentCard from '@/presentations/components/ui/ContentCard.vue'
 import BaseButton from '@/presentations/components/ui/BaseButton.vue'
 import HasilInputModal from './partials/hasilInputModal.vue'
 import EditPemakaianModal from './editPemakaianAir.vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 
 const {
@@ -240,6 +240,7 @@ const {
   isLoading,
   selectedRow,
   handleApplyFilter,
+  applyFilterFromQuery,
   handleEdit,
   handleSaveEdit,
   handleDelete,
@@ -264,8 +265,73 @@ onUnmounted(() => {
   if (teknisiDebounceTimer) clearTimeout(teknisiDebounceTimer)
 })
 
-onMounted(() => {
-  loadTeknisiOptions()
+const router = useRouter()
+const route = useRoute()
+
+/**
+ * Muat data sesuai filter di URL.
+ *
+ * Halaman ini dibuka dari "Input Pemakaian Air" setelah meter disimpan.
+ * Query `tahun`/`bulan`/`teknisi` dibawa ke sini supaya tabel langsung
+ * menampilkan periode dan teknisi yang sama — baris yang baru disimpan
+ * jadi terlihat tanpa perlu memilih filter manual.
+ *
+ * Filter teknisi wajib dipilih dulu oleh admin (lihat `requireTeknisi`),
+ * jadi `handleApplyFilter` baru dipanggil kalau teknisi-nya ada.
+ */
+const loadFromRoute = async () => {
+  applyFilterFromQuery(route.query)
+
+  if (filter.value.teknisi) {
+    await handleApplyFilter()
+  }
+}
+
+/**
+ * Sinkronkan filter ke URL.
+ *
+ * Tanpa ini, filter yang tampil di kotak bisa berbeda dari `teknisi` di
+ * address bar. Contoh: halaman dibuka dengan `?teknisi=101`, lalu admin
+ * memilih "Mardi" di kotak filter — tabelnya berganti ke data Mardi, tapi
+ * URL masih `teknisi=101`. Setelah itu "Input Pemakaian" membawa URL
+ * lama, dan halaman daftar kembali ke Wanto padahal yang dicatat milik
+ * Mardi.
+ *
+ * `router.replace` dipakai (bukan `push`) supaya riwayat browser tidak
+ * menumpuk satu entri per perubahan filter.
+ */
+const syncFilterToUrl = () => {
+  const query = {
+    tahun: String(filter.value.tahun),
+    bulan: String(filter.value.bulan),
+  }
+
+  if (filter.value.teknisi) {
+    query.teknisi = String(filter.value.teknisi)
+  }
+
+  const current = route.query
+  const same =
+    String(current.tahun ?? '') === query.tahun &&
+    String(current.bulan ?? '') === query.bulan &&
+    String(current.teknisi ?? '') === (query.teknisi ?? '')
+
+  if (!same) {
+    router.replace({ name: 'Pemakaian Air', query })
+  }
+}
+
+// Perubahan filter → muat ulang data + perbarui URL.
+watch(
+  () => [filter.value.bulan, filter.value.tahun, filter.value.teknisi],
+  () => {
+    syncFilterToUrl()
+  },
+)
+
+onMounted(async () => {
+  await loadTeknisiOptions()
+  await loadFromRoute()
 })
 
 const showHasilModal = ref(false)
@@ -274,14 +340,17 @@ const handleHasilInput = () => {
   showHasilModal.value = true
 }
 
-const router = useRouter()
-
 const handleInputPemakaian = () => {
   router.push({
     name: 'Input Pemakaian Air',
     query: {
       tahun: filter.value.tahun,
       bulan: filter.value.bulan,
+      // Filter teknisi DIBAWA ke halaman pencatatan. Backend
+      // `meter-readings/pending` memfilter pelanggan berdasarkan parameter
+      // ini, jadi tanpa filter admin bisa salah memilih pelanggan milik
+      // teknisi lain — dan setelah disimpan, halaman daftar berganti ke
+      // teknisi yang salah.
       teknisi: filter.value.teknisi,
     },
   })
