@@ -332,9 +332,14 @@ class AutoGenerateOverdueTest extends TestCase
             // ambang jatuh di bulan sebelumnya sehingga `subDays(5)` justru
             // LEBIH baru dari ambang, sehingga tagihan tidak terdeteksi
             // menunggak dan jurnal tidak pernah terbentuk.
-            // `subMonths(1)->day(1)` menaruh due_date di awal bulan lalu,
+            // `startOfMonth()->subMonth()` menaruh due_date di awal bulan lalu,
             // yang pasti lebih kecil dari ambang berapa pun tanggal test jalan.
-            'due_date' => now()->subMonths(1)->day(1)->toDateString(),
+            //
+            // JANGAN pakai `subMonths(1)` di sini: Carbon melakukan overflow
+            // tanggal, jadi 31 Okt - 1 bulan = "31 Sep" -> digeser ke 1 Okt.
+            // Tagihan itu jatuh di bulan BERJALAN dan tidak pernah terdeteksi
+            // menunggak — test gagal hanya pada tanggal 31, bukan karena bug.
+            'due_date' => now()->startOfMonth()->subMonth()->toDateString(),
         ]);
 
         $response = $this->withHeaders($this->authHeaders($adminUser))
@@ -454,9 +459,14 @@ class AutoGenerateOverdueTest extends TestCase
             // ambang jatuh di bulan sebelumnya sehingga `subDays(5)` justru
             // LEBIH baru dari ambang, sehingga tagihan tidak terdeteksi
             // menunggak dan jurnal tidak pernah terbentuk.
-            // `subMonths(1)->day(1)` menaruh due_date di awal bulan lalu,
+            // `startOfMonth()->subMonth()` menaruh due_date di awal bulan lalu,
             // yang pasti lebih kecil dari ambang berapa pun tanggal test jalan.
-            'due_date' => now()->subMonths(1)->day(1)->toDateString(),
+            //
+            // JANGAN pakai `subMonths(1)` di sini: Carbon melakukan overflow
+            // tanggal, jadi 31 Okt - 1 bulan = "31 Sep" -> digeser ke 1 Okt.
+            // Tagihan itu jatuh di bulan BERJALAN dan tidak pernah terdeteksi
+            // menunggak — test gagal hanya pada tanggal 31, bukan karena bug.
+            'due_date' => now()->startOfMonth()->subMonth()->toDateString(),
         ]);
 
         $this->withHeaders($this->authHeaders($adminUser))

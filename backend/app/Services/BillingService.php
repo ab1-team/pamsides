@@ -5,13 +5,19 @@ namespace App\Services;
 use App\Models\Customer;
 use App\Models\MonthlyBill;
 use App\Models\Setting;
-use App\Models\WaterTariffBlock;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
 
 class BillingService
 {
-    public function generateForCustomer(Customer $customer, int $year, int $month, ?int $batasTagihan = null): MonthlyBill
+    private TariffCalculator $tariffCalculator;
+
+    public function __construct(?TariffCalculator $tariffCalculator = null)
+    {
+        $this->tariffCalculator = $tariffCalculator ?? new TariffCalculator;
+    }
+
+    public function generateForCustomer(Customer $customer, int $year, int $month, ?int $toleransiTunggakan = null): MonthlyBill
     {
         $currentReading = $customer->meterReadings()
             ->where('reading_year', $year)
@@ -47,9 +53,9 @@ class BillingService
 
         $totalAmount = round($usageCharge + $abodemen + $penaltyAmount);
 
-        if ($batasTagihan === null) {
+        if ($toleransiTunggakan === null) {
             $settings = Setting::first();
-            $batasTagihan = $settings?->batas_tagihan ?? 27;
+            $toleransiTunggakan = $settings?->toleransi_tunggakan ?? 27;
         }
 
         // Tagihan Rp 0 bisa langsung berstatus `paid` — TAPI hanya kalau nolnya
@@ -100,81 +106,24 @@ class BillingService
             'penalty_amount' => $penaltyAmount,
             'total_amount' => $totalAmount,
             'status' => $status,
-            'due_date' => $this->computeDueDate($year, $month, $batasTagihan),
+            'due_date' => $this->computeDueDate($year, $month, $toleransiTunggakan),
         ]);
     }
 
+    /**
+     * Biaya pemakaian untuk satu pelanggan.
+     *
+     * Seluruh pemakaian dibebankan dengan harga SATU blok tarif — blok
+     * tempat pemakaian itu berada. Lihat `TariffCalculator` untuk aturan
+     * lengkap dan alasannya.
+     *
+     * Nama method lama (`calculateProgressiveCharge`) dipertahankan supaya
+     * pemanggilnya tidak perlu berubah; perhitungannya sekarang memakai
+     * kalkulator tunggal yang sama dengan jalur generate tagihan massal.
+     */
     public function calculateProgressiveCharge($package, float $usageM3): float
     {
-        $blocks = WaterTariffBlock::where('package_id', $package->id)
-            ->orderBy('usage_min_m3')
-            ->get();
-
-        if ($blocks->isEmpty()) {
-            return 0;
-        }
-
-        $remaining = $usageM3;
-        $total = 0;
-
-        foreach ($blocks as $index => $block) {
-            if ($remaining <= 0) {
-                break;
-            }
-
-            $min = (int) $block->usage_min_m3;
-
-            // Batas atas blok ini. Kalau `usage_max_m3` kosong, bloknya
-            // tak terbatas.
-            //
-            // PENTING: batas atas dipakai sebagai batas INKLUSIF pemakaian, dan
-            // panjang rentang dihitung dari jarak ke blok BERIKUTNYA — bukan
-            // `max - min`.
-            //
-            // Alasannya: blok tarif di database memakai penulisan rentang
-            // inklusif, mis. `1-10 m3` = 10 m3 (1,2,...,10). Kalau dipakai
-            // `max - min`, rentang itu jadi 9 m3 sehingga 1 m3 terakhir terlewat
-            // dan justru dihitung dengan tarif blok berikutnya yang lebih
-            // mahal. Contoh nyata di paket "Warga" (3.500/m3 untuk 10 m3
-            // pertama, 4.000/m3 selanjutnya):
-            //
-            //   10 m3 → seharusnya 10 x 3.500 = 35.000
-            //   (dengan max-min: 9 x 3.500 + 1 x 4.000 = 35.500 — 500 lebih mahal)
-            //
-            //   19 m3 → seharusnya 10 x 3.500 + 9 x 4.000 = 71.000
-            //   (dengan max-min: 9 x 3.500 + 10 x 4.000 = 71.500 — 500 lebih mahal)
-            //
-            // Blok terakhir (tanpa `usage_max_m3`) memakai sisa pemakaian.
-            if ($block->usage_max_m3 === null) {
-                $range = $remaining;
-            } else {
-                $max = (int) $block->usage_max_m3;
-
-                // Batas bawah blok berikutnya (bila ada) adalah penanda bahwa
-                // rentang blok ini berakhir di angka tersebut. Jika blok
-                // berikutnya dimulai tepat setelah batas atas blok ini
-                // (mis. 1-10 lalu 11-100000), batas efektifnya tetap `max`.
-                $nextMin = $blocks[$index + 1]->usage_min_m3 ?? null;
-
-                if ($nextMin !== null && (int) $nextMin === $max + 1) {
-                    // Blok berurutan tanpa jeda: `1-10` lalu `11-...`.
-                    // Batas atas inklusif = max, dan panjang rentangnya
-                    // `max - min + 1` (1..10 = 10 nilai).
-                    $range = $max - $min + 1;
-                } else {
-                    // Blok berjarak / tumpang tindih (mis. `0-10` lalu `10-20`,
-                    // dipakai di test lama): panjang rentangnya `max - min`,
-                    // dan blok berikutnya mulai tepat di `max`.
-                    $range = max(0, $max - $min);
-                }
-            }
-
-            $used = min($remaining, $range);
-            $total += round($used * (float) $block->price_per_m3);
-            $remaining -= $used;
-        }
-
-        return round($total);
+        return $this->tariffCalculator->charge($package, $usageM3);
     }
 
     public function calculatePenalty(Customer $customer, int $year, int $month): float
@@ -195,13 +144,61 @@ class BillingService
         return round($customer->ticket->package->late_penalty);
     }
 
+    /**
+     * Jatuh tempo tagihan.
+     *
+     * Aturan: tanggal `toleransi_tunggakan` pada BULAN BERIKUTNYA periode
+     * pemakaian.
+     *
+     *   pemakaian Oktober -> due_date 27 November
+     *
+     * PENTING: `due_date` ini adalah TANGGAL GENERATE PIUTANG, bukan batas
+     * akhir bayar. Batas akhir bayar = `due_date` - 1 hari (26 November),
+     * dan itulah yang ditampilkan frontend pada kolom "TGL AKHIR BAYAR"
+     * (dikurangi 1 hari di `admin/tagihan/pemakaianAir.vue`).
+     *
+     * Jadi dipakai untuk dua hal yangBEDA:
+     *   - `GenerateOverdueTransactions` memilih tagihan dengan
+     *     `due_date < threshold` untuk dicatat sebagai piutang tunggakan.
+     *   - Frontend menampilkan `due_date - 1` sebagai batas akhir bayar.
+     *
+     * Kenapa bulan berikutnya, bukan bulan yang sama
+     * ---------------------------------------------
+     * Konvensi ini sama dengan APK lama (`docs/perbedaan-apk-lama-baru.md`):
+     *
+     *   ```php
+     *   // UsageController.php:303-320 (APK lama)
+     *   $tglAkhir = date('Y-m', strtotime('+1 month', $tglPakai))
+     *            . '-' . str_pad($data['toleransi'], 2, '0');
+     * ```
+     *
+     * Pemakaian dibebankan ke bulan berikutnya. Data hasil impor legacy juga
+     * memakai aturan ini, sehingga 30.786 dari 30.823 tagihan punya `due_date`
+     * di bulan setelah periodenya.
+     *
+     * Dulu method ini memakai `batas_tagihan` (nilai 3 di Setting) di bulan
+     * YANG SAMA dengan periode pemakaian. Akibatnya:
+     *
+     *   - tagihan pemakaian Oktober jatuh tempo 3 Oktober, yaitu LEBIH
+     *     AWAL dari tanggal tagihan dibuat (26/31 Oktober). Tagihan langsung
+     *     berstatus menunggak, memicu lonceng notifikasi, dan langsung
+     *     dicatat sebagai piutang tunggakan.
+     *   - salah sumber nilai: yang dipakai untuk batas akhir bayar adalah
+     *     `toleransi_tunggakan` (1-28), bukan `batas_tagihan`.     *
+     * Catatan overflow: pakai `addMonthNoOverflow()` dari tanggal 1, jadi
+     * tidak pernah melompat ke bulan berikutnya (tidak seperti `addMonth()`
+     * yang pada 31 Jan jadi 3 Mar).
+     */
     public function computeDueDate(int $year, int $month, int $day = 27): string
     {
         $carbon = Carbon::create($year, $month, 1);
-        $maxDay = $carbon->daysInMonth;
-        $day = min($day, $maxDay);
 
-        return $carbon->setDay($day)->toDateString();
+        $next = $carbon->copy()->addMonthNoOverflow();
+
+        $maxDay = $next->daysInMonth;
+        $day = min(max(1, $day), $maxDay);
+
+        return $next->setDay($day)->toDateString();
     }
 
     public function calculateChargeForTesting($package, float $usageM3): float

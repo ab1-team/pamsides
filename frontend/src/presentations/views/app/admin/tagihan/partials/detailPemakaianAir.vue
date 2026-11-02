@@ -270,12 +270,24 @@ const getMonthNumber = (m) => {
 const fetchData = async () => {
   try {
     isLoading.value = true
-    const { month, year, bulan, tahun } = router.currentRoute.value.query
+    const { month, year, bulan, tahun, teknisi } = router.currentRoute.value.query
 
     const monthVal = getMonthNumber(month || bulan)
     const yearVal = parseInt(year || tahun) || new Date().getFullYear()
 
-    const res = await meterService.getPendingReadings({ month: monthVal, year: yearVal })
+    // Filter teknisi ikut dikirim ke backend.
+    //
+    // Tanpa ini, backend mengembalikan SEMUA pelanggan yang belum dicatat
+    // meter — termasuk milik teknisi lain. Admin yang memilih "Mardi" pun
+    // bisa salah memilih pelanggan milik "Wanto", dan setelah disimpan
+    // redirect ke halaman daftar memakai `ticket.user_id` pelanggan itu,
+    // sehingga filter berubah ke teknisi yang lain dari yang dipilih.
+    const params = { month: monthVal, year: yearVal }
+    if (teknisi) {
+      params.user_id = teknisi
+    }
+
+    const res = await meterService.getPendingReadings(params)
     if (res.data) {
       // Map data backend ke format tabel jika perlu
       customers.value = res.data.map((item) => {
@@ -310,10 +322,18 @@ const fetchData = async () => {
           meterAkhir: awal || 0,
           usageLalu: usageLalu,
           id: item.id,
+          // Teknisi yang menangani pelanggan ini (`installation_tickets.user_id`).
+          // Dipakai untuk mengarahkan admin ke daftar pemakaian dengan filter
+          // teknisi yang benar, supaya baris yang baru disimpan langsung
+          // terlihat di tabel.
+          teknisiId: item.ticket?.user_id ?? null,
         }
       })
     }
   } catch (error) {
+    uiStore.error(
+      error.response?.data?.message || 'Gagal memuat daftar pelanggan yang belum dicatat.',
+    )
   } finally {
     isLoading.value = false
   }
@@ -392,13 +412,52 @@ const handleSaveMeter = async (payload) => {
 
     isModalOpen.value = false
 
-    // Teknisi yang login diarahkan balik ke halaman "Input Pemakaian Air"
-    // miliknya, supaya daftar tagihan di sana langsung ter-update dengan
-    // pelanggan yang barusan dicatat. Admin tetap di halaman ini (form
-    // input) karena dia butuh lanjut mencatat pelanggan berikutnya.
-    if (uiStore.userRole === 'teknisi') {
-      router.push('/app/instalasi/teknisiPemakaianAir')
+    // Setelah simpan, kembali ke daftar pemakaian air — sesuai role yang
+    // login:
+    //   - Teknisi -> halaman miliknya (`/app/instalasi/teknisiPemakaianAir`).
+    //     Backend membatasi datanya ke pelanggan di wilayah teknisi itu, jadi
+    //     baris yang baru disimpan langsung terlihat di sana.
+    //   - Admin   -> halaman "Data Pemakaian Air" (`/app/instalasi/pemakaian-air`).
+    //     Admin WAJIB memilih teknisi dulu untuk memuat data (lihat
+    //     `requireTeknisi` di pemakaianAir.vue), jadi query-nya harus membawa
+    //     filter teknisi. Tanpa itu, tabel kembali kosong dan baris yang baru
+    //     disimpan seolah hilang.
+    //
+    // Filter teknisi yang dibawa adalah filter yang DIPILIH admin saat
+    // membuka halaman ini — bukan `ticket.user_id` pelanggan yang dicatat.
+    //
+    // Kenapa bukan dari pelanggan? Admin memilih teknisi di kotak filter
+    // ("Data Pemakaian Air" -> "Input Pemakaian"), dan daftar pencatatan
+    // sudah difilter backend ke pelanggan milik teknisi itu. Kalau filter
+    // diambil dari pelanggan, hasilnya bisa berbeda dari filter yang
+    // dipilih — mis. admin memilih "Mardi" tapi pelanggan yang tersimpan
+    // punya tiket milik "Wanto", sehingga halaman daftar tiba-tiba
+    // berganti ke "Wanto".
+    //
+    // Kalau filter tidak ada di URL (halaman dibuka langsung), teknisi
+    // diambil dari pelanggan agar daftar tetap menampilkan barisnya.
+    //
+    // Periode (tahun + bulan) ikut dikirim supaya daftar yang dibuka
+    // langsung periode yang sama dengan yang baru saja dicatat.
+    const isTechnisi = uiStore.userRole === 'teknisi'
+
+    const query = {
+      tahun: String(yearVal),
+      bulan: String(monthVal),
     }
+
+    if (!isTechnisi) {
+      const filterTeknisi = router.currentRoute.value.query.teknisi
+      const teknisiId = filterTeknisi || selectedCustomer.value.teknisiId
+      if (teknisiId) {
+        query.teknisi = String(teknisiId)
+      }
+    }
+
+    router.push({
+      name: isTechnisi ? 'Input Pemakaian Air Teknisi' : 'Pemakaian Air',
+      query,
+    })
   } catch (error) {
     uiStore.error(error.response?.data?.message || 'Gagal menyimpan data')
   } finally {

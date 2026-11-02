@@ -8,6 +8,7 @@ use App\Models\Transaction;
 use App\Models\User;
 use App\Services\SuspendTransactionsTrigger;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -25,6 +26,48 @@ use Tests\TestCase;
 class GenerateOverduePerformanceTest extends TestCase
 {
     use RefreshDatabase;
+
+    /**
+     * Tanggal acuan yang dipakai seluruh test di kelas ini.
+     *
+     * Kenapa dibekukan
+     * ---------------
+     * Test ini membangun tagihan yang HARUS terdeteksi menunggak oleh
+     * command `billing:generate-overdue-transactions`. Ambang tunggakan
+     * dihitung dari `today - toleransi_tunggakan` HARI, jadi tagihan harus
+     * punya `due_date` di awal bulan sebelumnya.
+     *
+     * Tanpa pembekuan waktu, tanggal eksekusi ikut menentukan lulus/tidaknya
+     * test — dan ada tanggal yang secara aritmetika SELALU gagal, bukan
+     * karena ada bug di produk:
+     *
+     *   - `Carbon::subMonths(1)` melakukan overflow tanggal. 31 Okt - 1 bulan
+     *     = "31 Sep" yang tidak ada -> digeser ke 1 Okt. Tagihan dengan
+     *     `due_date` 1 Okt berada di bulan BERJALAN, sedangkan ambang
+     *     tunggakan pada tanggal 31 adalah akhir September. Jadi tagihan
+     *     tidak pernah terdeteksi dan command tidak menghasilkan jurnal.
+     *   - Tanggal 1 punya masalah lain: `toleransi_tunggakan` = 1 membuat
+     *     ambang = 31 bulan sebelumnya, sedangkan tagihan Due 1 bulan
+     *     sebelumnya belum pasti lebih tua dari ambang itu.
+     *
+     * Memakai tanggal 15 menghilang dari kedua masalah: tanggal selalu ada
+     * di setiap bulan, dan tagihan due 1 bulan sebelumnya selalu lebih tua
+     * dari ambang. Test jadi deterministik di tanggal berapa pun.
+     */
+    private const TANGGAL_ACUAN = '2026-06-15 09:00:00';
+
+    /**
+     * Bekukan waktu SEBELUM test berjalan.
+     *
+     * `travelTo` dipanggil SESUDAH `parent::setUp()` supaya migrasi
+     * `RefreshDatabase` tetap jalan dengan waktu nyata.
+     */
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->travelTo(Carbon::parse(self::TANGGAL_ACUAN));
+    }
 
     private function admin(): User
     {
@@ -80,12 +123,26 @@ class GenerateOverduePerformanceTest extends TestCase
             'updated_at' => now(),
         ]);
 
-        $period = now()->subMonths(1);
+        // Awal bulan sebelumnya.
+        //
+        // JANGAN pakai `now()->subMonths(1)` di sini: Carbon melakukan
+        // overflow tanggal, jadi 31 Okt - 1 bulan = "31 Sep" -> digeser ke
+        // 1 Okt. Akibatnya `billing_period` ikut bergeser ke bulan BERJALAN
+        // dan `due_date` jatuh di awal bulan ini.
+        //
+        // Tagihan seperti itu tidak pernah melewati ambang tunggakan
+        // (`today - toleransi_tunggakan` = akhir bulan sebelumnya), sehingga
+        // command tidak menghasilkan jurnal sama sekali — test gagal hanya
+        // pada tanggal 29/30/31, bukan pada bug apa pun.
+        //
+        // `startOfMonth()->subMonth()` selalu aman: mulai dari tanggal 1,
+        // jadi tidak ada tanggal yang "melewati" akhir bulan.
+        $period = now()->startOfMonth()->subMonth();
 
         return MonthlyBill::create([
             'customer_id' => $customerId,
-            'billing_period_year' => (int) $period->format('Y'),
-            'billing_period_month' => (int) $period->format('n'),
+            'billing_period_year' => (int) $period->year,
+            'billing_period_month' => (int) $period->month,
             'meter_reading_start' => 0,
             'meter_reading_end' => 10,
             'usage_m3' => 10,
@@ -94,7 +151,7 @@ class GenerateOverduePerformanceTest extends TestCase
             'penalty_amount' => 0,
             'total_amount' => $abodemen + $usage,
             'status' => 'unpaid',
-            'due_date' => $period->copy()->day(1)->toDateString(),
+            'due_date' => $period->toDateString(),
         ]);
     }
 

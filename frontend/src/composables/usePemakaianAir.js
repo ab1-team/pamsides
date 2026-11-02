@@ -92,8 +92,65 @@ export function usePemakaianAir() {
     if (typeof val === 'number') {
       return val
     }
+    // Angka 1-12 (string dari query URL) — selalu dipakai sebagai nomor
+    // bulan, bukan sebagai nama bulan.
+    if (/^\d{1,2}$/.test(String(val).trim())) {
+      const n = parseInt(String(val).trim(), 10)
+      if (n >= 1 && n <= 12) return n
+    }
     const idx = bulanOptions.indexOf(String(val))
     return idx >= 0 ? idx + 1 : new Date().getMonth() + 1
+  }
+
+  /**
+   * Pulihkan filter dari query URL.
+   *
+   * Dipakai setelah halaman "Input Pemakaian" menyimpan meter lalu
+   * mengarahkan kembali ke halaman daftar. Tanpa ini, daftar yang dibuka
+   * kembali memakai periode default (tahun/bulan hari ini) — padahal baris
+   * yang baru disimpan ada di periode yang tadi dicatat, sehingga tabelnya
+   * terlihat kosong padahal datanya sudah tersimpan.
+   *
+   * Query yang dibaca: `tahun`, `bulan` (nama bulan Indonesia ATAU angka
+   * 1-12), `teknisi` (id teknisi).
+   *
+   * Mengembalikan `true` kalau ada filter yang berubah — pemanggil pakai
+   * ini untuk tahu apakah data perlu dimuat ulang.
+   */
+  const applyFilterFromQuery = (query = {}) => {
+    if (!query) return false
+
+    let changed = false
+
+    const tahun = parseYear(query.tahun)
+    if (filter.value.tahun !== tahun) {
+      filter.value.tahun = tahun
+      changed = true
+    }
+
+    const bulan = parseMonth(query.bulan)
+    const bulanLabel = bulanOptions[bulan - 1] ?? filter.value.bulan
+    if (filter.value.bulan !== bulanLabel) {
+      filter.value.bulan = bulanLabel
+      changed = true
+    }
+
+    if (query.teknisi) {
+      // Disimpan sebagai NUMBER, sama seperti nilai yang keluar dari
+      // `SelectSearch` (`teknisiOptions` berisi `id` berupa angka). Kalau
+      // disimpan sebagai string, perbandingan `getValue(opt) ===
+      // getValue(modelValue)` di SelectSearch tidak cocok dan nama teknisinya
+      // tidak tampil di kotak filter.
+      const id = Number(query.teknisi)
+      const next = Number.isFinite(id) && id > 0 ? id : query.teknisi
+
+      if (String(filter.value.teknisi) !== String(next)) {
+        filter.value.teknisi = next
+        changed = true
+      }
+    }
+
+    return changed
   }
 
   const selectedTeknisi = computed(() => {
@@ -430,6 +487,7 @@ export function usePemakaianAir() {
     // Penanganan Aksi
     refreshData,
     handleApplyFilter,
+    applyFilterFromQuery,
     handleCetakFormInput,
     handleHasilInput,
     handleInputPemakaian,

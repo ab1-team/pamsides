@@ -196,12 +196,13 @@
 
 <script setup>
 import { usePemakaianAir } from '@/composables/usePemakaianAir'
+import { parseLocalDate } from '@/utils/date'
 import SelectSearch from '@/presentations/components/SelectSearch.vue'
 import DataTable from '@/presentations/components/ui/DataTable.vue'
 import ContentCard from '@/presentations/components/ui/ContentCard.vue'
 import BaseButton from '@/presentations/components/ui/BaseButton.vue'
 import HasilInputModal from '@/presentations/views/app/admin/tagihan/partials/hasilInputModal.vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { ref, watch, onMounted, onUnmounted } from 'vue'
 import { useUiStore } from '@/stores/uiStore'
 
@@ -222,9 +223,11 @@ const {
   STATUS_COLORS,
   isLoading,
   handleApplyFilter,
+  applyFilterFromQuery,
 } = usePemakaianAir()
 
 const router = useRouter()
+const route = useRoute()
 
 const showHasilModal = ref(false)
 
@@ -248,6 +251,11 @@ onUnmounted(() => {
 })
 
 onMounted(() => {
+  // Halaman ini juga dibuka kembali setelah "Input Pemakaian" menyimpan
+  // meter. Query `tahun`/`bulan` dibawa ke sini supaya periode yang
+  // ditampilkan sama dengan yang baru saja dicatat — baris yang baru
+  // disimpan langsung terlihat di tabel.
+  applyFilterFromQuery(route.query)
   handleApplyFilter()
 })
 
@@ -257,6 +265,10 @@ const handleInputPemakaian = () => {
     query: {
       tahun: filter.value.tahun,
       bulan: filter.value.bulan,
+      // ID teknisi yang login. Backend `meter-readings/pending` memakai
+      // filter ini untuk menampilkan HANYA pelanggan miliknya sendiri — tanpa
+      // itu daftar pencatatan menampilkan pelanggan teknisi lain.
+      teknisi: uiStore.userData?.id,
     },
   })
 }
@@ -295,10 +307,19 @@ const tableColumns = [
   { key: 'status', title: 'STATUS' },
 ]
 
+/**
+ * Format "TGL AKHIR BAYAR".
+ *
+ * `monthly_bills.due_date` = tanggal GENERATE PIUTANG (hari
+ * `toleransi_tunggakan`, mis. 27). Batas akhir bayar justru SEBELUM
+ * tanggal itu — jadi ditampilkan dikurangi 1 hari (26 Nov).
+ *
+ * Lihat catatan lengkapnya di `admin/tagihan/pemakaianAir.vue`.
+ */
 const formatDate = (val) => {
   if (!val) return '-'
-  const d = new Date(val)
-  if (Number.isNaN(d.getTime())) return val
+  const d = parseLocalDate(val)
+  if (!d) return val
   d.setDate(d.getDate() - 1)
   return d.toLocaleDateString('id-ID', {
     day: '2-digit',

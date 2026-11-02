@@ -71,6 +71,7 @@ class MeterReadingController extends Controller
         $request->validate([
             'month' => 'required|integer|between:1,12',
             'year' => 'required|integer|min:2000',
+            'user_id' => 'nullable|integer|exists:users,id',
         ]);
 
         $bulan = $request->month;
@@ -103,9 +104,31 @@ class MeterReadingController extends Controller
                     ->where('reading_year', $tahun);
             });
 
+// Filter TEKNISI dari halaman "Data Pemakaian Air" (admin memilih
+        // teknisi di kotak filter, lalu menekan "Input Pemakaian").
+        //
+        // Tanpa filter ini, daftar pencatatan menampilkan SEMUA pelanggan yang
+        // belum dicatat meter — termasuk milik teknisi lain. Admin pun jadi
+        // bisa salah memilih pelanggan: kelihatannya milik teknisi yang
+        // dipilih, padahal tiketnya dipegang teknisi lain. Setelah disimpan,
+        // redirect membawa `ticket.user_id` pelanggan itu, sehingga filter
+        // di halaman daftar berubah ke teknisi yang berbeda dari yang
+        // dipilih — persis kasus "filter Mardi (100),保存 Adi Kamari milik
+        // Wanto (101), lalu halaman daftar切换 ke 101".
+        //
+        // Sumber kebenaran: `installation_tickets.user_id` = teknisi yang
+        // menangani pelanggan (sama dengan scoping di `MonthlyBillController`).
+        $requestedUserId = $request->get('user_id');
+
+        if ($requestedUserId) {
+            $customers->whereHas('ticket', function ($t) use ($requestedUserId) {
+                $t->where('user_id', $requestedUserId);
+            });
+        }
+
         // Least-privilege: teknisi hanya ditagih pelanggan di WILAYAHNYA —
         // pelanggan yang tiketnya ia tangani (`installation_tickets.user_id`).
-        // Sama seperti `MonthlyBillController` (index/unpaidSummary/show),
+        // Sama dengan `MonthlyBillController` (index/unpaidSummary/show),
         // supaya satu pelanggan tidak terlihat milik teknisi A di halaman
         // pencatatan tapi milik teknisi B di halaman tagihan.
         //
@@ -220,11 +243,16 @@ class MeterReadingController extends Controller
         $batasTagihan = (int) ($settings?->batas_tagihan ?? 27);
         $toleransi = (int) ($settings?->toleransi_tunggakan ?? 0);
 
+        // Jatuh tempo tagihan memakai `toleransi_tunggakan` (tanggal bayar
+        // 1-28) di bulan SETELAH periode pemakaian. `batas_tagihan` bukan
+        // untuk itu — lihat `BillingService::computeDueDate()`.
+        $toleransiTagihan = $toleransi > 0 ? $toleransi : 27;
+
         $recordedAt = Carbon::create($tahun, $bulan, 1)
             ->setDay(min($batasTagihan, Carbon::create($tahun, $bulan, 1)->daysInMonth))
             ->setTimeFrom(now());
 
-        $result = DB::transaction(function () use ($request, $customer, $bulan, $tahun, $fileName, $recordedAt, $batasTagihan) {
+        $result = DB::transaction(function () use ($request, $customer, $bulan, $tahun, $fileName, $recordedAt, $toleransiTagihan) {
             $reading = MeterReading::create([
                 'customer_id' => $customer->id,
                 'recorded_by' => Auth::id(),
@@ -236,7 +264,7 @@ class MeterReadingController extends Controller
             ]);
 
             $bill = app(BillingService::class)
-                ->generateForCustomer($customer, $tahun, $bulan, $batasTagihan);
+                ->generateForCustomer($customer, $tahun, $bulan, $toleransiTagihan);
 
             return ['reading' => $reading, 'bill' => $bill, 'customer' => $customer];
         });
