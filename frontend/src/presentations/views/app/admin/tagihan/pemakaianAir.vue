@@ -219,6 +219,7 @@ import ContentCard from '@/presentations/components/ui/ContentCard.vue'
 import BaseButton from '@/presentations/components/ui/BaseButton.vue'
 import HasilInputModal from './partials/hasilInputModal.vue'
 import EditPemakaianModal from './editPemakaianAir.vue'
+import { parseLocalDate } from '@/utils/date'
 import { useRouter, useRoute } from 'vue-router'
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 
@@ -383,11 +384,31 @@ const tableColumns = [
   { key: 'aksi', title: 'AKSI' },
 ]
 
+/**
+ * Format "TGL AKHIR BAYAR".
+ *
+ * `monthly_bills.due_date` = tanggal GENERATE PIUTANG (hari
+ * `toleransi_tunggakan`, mis. 27). Batas akhir bayar justru SEBELUM
+ * tanggal itu — jadi ditampilkan dikurangi 1 hari (26 Nov).
+ *
+ * Ini sesuai data legacy: 30.449 tagihan punya `due_date` hari 27, dan
+ * kolom ini menampilkannya sebagai 26.
+ *
+ * Jangan samakan dengan `due_date` mentah: kolom "Jatuh Tempo" di halaman
+ * lain (Arsip Tagihan, Daftar Tagihan) memakai tanggal penuh.
+ */
 const formatDate = (val) => {
   if (!val) return '-'
-  const d = new Date(val)
-  if (Number.isNaN(d.getTime())) return val
+
+  // `due_date` dikirim sebagai UTC midnight ("2026-11-27T00:00:00.000000Z").
+  // `new Date(...)` mengartikannya sebagai instant UTC, sehingga di zona
+  // waktu negatif `getDate()` bisa jadi 26 — lalu dikurangi 1 hari lagi
+  // jadi 25. Parse eksplisit sebagai LOCAL supaya tanggalnya pasti utuh.
+  const d = parseLocalDate(val)
+  if (!d) return val
+
   d.setDate(d.getDate() - 1)
+
   return d.toLocaleDateString('id-ID', {
     day: '2-digit',
     month: '2-digit',

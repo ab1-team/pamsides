@@ -196,6 +196,7 @@
 
 <script setup>
 import { usePemakaianAir } from '@/composables/usePemakaianAir'
+import { parseLocalDate } from '@/utils/date'
 import SelectSearch from '@/presentations/components/SelectSearch.vue'
 import DataTable from '@/presentations/components/ui/DataTable.vue'
 import ContentCard from '@/presentations/components/ui/ContentCard.vue'
@@ -306,10 +307,19 @@ const tableColumns = [
   { key: 'status', title: 'STATUS' },
 ]
 
+/**
+ * Format "TGL AKHIR BAYAR".
+ *
+ * `monthly_bills.due_date` = tanggal GENERATE PIUTANG (hari
+ * `toleransi_tunggakan`, mis. 27). Batas akhir bayar justru SEBELUM
+ * tanggal itu — jadi ditampilkan dikurangi 1 hari (26 Nov).
+ *
+ * Lihat catatan lengkapnya di `admin/tagihan/pemakaianAir.vue`.
+ */
 const formatDate = (val) => {
   if (!val) return '-'
-  const d = new Date(val)
-  if (Number.isNaN(d.getTime())) return val
+  const d = parseLocalDate(val)
+  if (!d) return val
   d.setDate(d.getDate() - 1)
   return d.toLocaleDateString('id-ID', {
     day: '2-digit',

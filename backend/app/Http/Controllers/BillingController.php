@@ -112,7 +112,14 @@ class BillingController extends Controller
 
         // Generate tagihan untuk semua pelanggan
         $settings = Setting::first();
-        $batasTagihan = $settings?->batas_tagihan ?? 27;
+
+        // Jatuh tempo tagihan memakai `toleransi_tunggakan` (tanggal bayar
+        // 1-28) di bulan SETELAH periode pemakaian. Lihat
+        // `BillingService::computeDueDate()`.
+        $toleransiTunggakan = (int) ($settings?->toleransi_tunggakan ?? 27);
+        if ($toleransiTunggakan < 1) {
+            $toleransiTunggakan = 27;
+        }
 
         $customers = Customer::with([
             'meterReadings',
@@ -121,7 +128,7 @@ class BillingController extends Controller
 
         $bills = [];
         foreach ($customers as $customer) {
-            $bills[] = $this->billingService->generateForCustomer($customer, $year, $month, $batasTagihan);
+            $bills[] = $this->billingService->generateForCustomer($customer, $year, $month, $toleransiTunggakan);
         }
 
         return response()->json([

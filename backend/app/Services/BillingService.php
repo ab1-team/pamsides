@@ -17,7 +17,7 @@ class BillingService
         $this->tariffCalculator = $tariffCalculator ?? new TariffCalculator;
     }
 
-    public function generateForCustomer(Customer $customer, int $year, int $month, ?int $batasTagihan = null): MonthlyBill
+    public function generateForCustomer(Customer $customer, int $year, int $month, ?int $toleransiTunggakan = null): MonthlyBill
     {
         $currentReading = $customer->meterReadings()
             ->where('reading_year', $year)
@@ -53,9 +53,9 @@ class BillingService
 
         $totalAmount = round($usageCharge + $abodemen + $penaltyAmount);
 
-        if ($batasTagihan === null) {
+        if ($toleransiTunggakan === null) {
             $settings = Setting::first();
-            $batasTagihan = $settings?->batas_tagihan ?? 27;
+            $toleransiTunggakan = $settings?->toleransi_tunggakan ?? 27;
         }
 
         // Tagihan Rp 0 bisa langsung berstatus `paid` — TAPI hanya kalau nolnya
@@ -106,7 +106,7 @@ class BillingService
             'penalty_amount' => $penaltyAmount,
             'total_amount' => $totalAmount,
             'status' => $status,
-            'due_date' => $this->computeDueDate($year, $month, $batasTagihan),
+            'due_date' => $this->computeDueDate($year, $month, $toleransiTunggakan),
         ]);
     }
 
@@ -144,13 +144,61 @@ class BillingService
         return round($customer->ticket->package->late_penalty);
     }
 
+    /**
+     * Jatuh tempo tagihan.
+     *
+     * Aturan: tanggal `toleransi_tunggakan` pada BULAN BERIKUTNYA periode
+     * pemakaian.
+     *
+     *   pemakaian Oktober -> due_date 27 November
+     *
+     * PENTING: `due_date` ini adalah TANGGAL GENERATE PIUTANG, bukan batas
+     * akhir bayar. Batas akhir bayar = `due_date` - 1 hari (26 November),
+     * dan itulah yang ditampilkan frontend pada kolom "TGL AKHIR BAYAR"
+     * (dikurangi 1 hari di `admin/tagihan/pemakaianAir.vue`).
+     *
+     * Jadi dipakai untuk dua hal yangBEDA:
+     *   - `GenerateOverdueTransactions` memilih tagihan dengan
+     *     `due_date < threshold` untuk dicatat sebagai piutang tunggakan.
+     *   - Frontend menampilkan `due_date - 1` sebagai batas akhir bayar.
+     *
+     * Kenapa bulan berikutnya, bukan bulan yang sama
+     * ---------------------------------------------
+     * Konvensi ini sama dengan APK lama (`docs/perbedaan-apk-lama-baru.md`):
+     *
+     *   ```php
+     *   // UsageController.php:303-320 (APK lama)
+     *   $tglAkhir = date('Y-m', strtotime('+1 month', $tglPakai))
+     *            . '-' . str_pad($data['toleransi'], 2, '0');
+     * ```
+     *
+     * Pemakaian dibebankan ke bulan berikutnya. Data hasil impor legacy juga
+     * memakai aturan ini, sehingga 30.786 dari 30.823 tagihan punya `due_date`
+     * di bulan setelah periodenya.
+     *
+     * Dulu method ini memakai `batas_tagihan` (nilai 3 di Setting) di bulan
+     * YANG SAMA dengan periode pemakaian. Akibatnya:
+     *
+     *   - tagihan pemakaian Oktober jatuh tempo 3 Oktober, yaitu LEBIH
+     *     AWAL dari tanggal tagihan dibuat (26/31 Oktober). Tagihan langsung
+     *     berstatus menunggak, memicu lonceng notifikasi, dan langsung
+     *     dicatat sebagai piutang tunggakan.
+     *   - salah sumber nilai: yang dipakai untuk batas akhir bayar adalah
+     *     `toleransi_tunggakan` (1-28), bukan `batas_tagihan`.     *
+     * Catatan overflow: pakai `addMonthNoOverflow()` dari tanggal 1, jadi
+     * tidak pernah melompat ke bulan berikutnya (tidak seperti `addMonth()`
+     * yang pada 31 Jan jadi 3 Mar).
+     */
     public function computeDueDate(int $year, int $month, int $day = 27): string
     {
         $carbon = Carbon::create($year, $month, 1);
-        $maxDay = $carbon->daysInMonth;
-        $day = min($day, $maxDay);
 
-        return $carbon->setDay($day)->toDateString();
+        $next = $carbon->copy()->addMonthNoOverflow();
+
+        $maxDay = $next->daysInMonth;
+        $day = min(max(1, $day), $maxDay);
+
+        return $next->setDay($day)->toDateString();
     }
 
     public function calculateChargeForTesting($package, float $usageM3): float

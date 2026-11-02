@@ -195,4 +195,83 @@ class BillingServiceTest extends TestCase
         $this->assertEquals(35_000, $this->service->calculateChargeForTesting($package, 10));
         $this->assertEquals(44_000, $this->service->calculateChargeForTesting($package, 11));
     }
+
+    /**
+     * `due_date` = tanggal GENERATE PIUTANG: hari `toleransi_tunggakan` di
+     * BULAN BERIKUTNYA periode pemakaian.
+     *
+     *   pemakaian Oktober -> due_date 27 November
+     *
+     * Batas akhir bayar yang ditampilkan frontend = `due_date` - 1 hari
+     * (26 November). Pengurangan itu di frontend saja, jadi DI SINI
+     * `due_date` harus tetap 27.
+     *
+     * Ini aturan yang bikin "TGL AKHIR BAYAR" di halaman Data Pemakaian Air
+     * benar. Dulu aturan ini memakai `batas_tagihan` di bulan yang sama
+     * dengan periode pemakaian, sehingga:
+     *
+     *   - tagihan pemakaian Oktober (dibuat 31 Oktober) due_date 3 Oktober
+     *     — LEBIH AWAL dari tanggal dibuat, jadi langsung dianggap menunggak
+     *     dan langsung dicatat sebagai piutang.
+     */
+    #[Test]
+    public function jatuh_tempo_di_bulan_berikutnya_dengan_hari_toleransi(): void
+    {
+        // Pemakaian Oktober -> due_date 27 November.
+        $this->assertSame('2026-11-27', $this->service->computeDueDate(2026, 10, 27));
+
+        // November -> Desember.
+        $this->assertSame('2026-12-27', $this->service->computeDueDate(2026, 11, 27));
+
+        // Desember -> Januari tahun berikutnya.
+        $this->assertSame('2027-01-27', $this->service->computeDueDate(2026, 12, 27));
+
+        // Januari -> Februari (tahun berikutnya ikut).
+        $this->assertSame('2027-02-27', $this->service->computeDueDate(2027, 1, 27));
+    }
+
+    /**
+     * Hari toleransi yang melebihi jumlah hari bulan tujuan harus DIKECILKAN,
+     * bukan membuat tanggal di bulan berikutnya.
+     *
+     * Contoh: toleransi 31, periode Februari (28 hari) -> 28 Februari, bukan
+     * 3 Maret. Ini juga yang membuat `addMonth()` (yang melompat 31 Jan ->
+     * 3 Mar) tidak boleh dipakai di sini.
+     */
+    #[Test]
+    public function jatuh_tempo_dibatasi_jumlah_hari_bulan_tujuan(): void
+    {
+        // Februari 2026 = 28 hari.
+        $this->assertSame('2026-02-28', $this->service->computeDueDate(2026, 1, 31));
+
+        // Februari 2027 = 28 hari juga.
+        $this->assertSame('2027-02-28', $this->service->computeDueDate(2027, 1, 31));
+
+        // Tanggal minimum 1 (bukan 0 atau negative).
+        $this->assertSame('2026-11-01', $this->service->computeDueDate(2026, 10, 0));
+    }
+
+    /**
+     * Guardrail: jatuh tempo TIDAK BOLEH jatuh di bulan yang sama dengan
+     * periode pemakaian.
+     *
+     * Kalau ini bocor, tagihan langsung berstatus menunggak begitu dibuat —
+     * memicu lonceng notifikasi, ikut terhitung menunggak di dashboard, dan
+     * langsung dicatat sebagai piutang tunggakan.
+     */
+    #[Test]
+    public function jatuh_tempo_selalu_di_bulan_setelah_periode(): void
+    {
+        for ($bulan = 1; $bulan <= 12; $bulan++) {
+            foreach ([1, 3, 15, 27, 28, 31] as $toleransi) {
+                $due = \Carbon\Carbon::parse($this->service->computeDueDate(2026, $bulan, $toleransi));
+
+                $this->assertNotSame(
+                    $bulan,
+                    (int) $due->month,
+                    "Jatuh tempo periode {$bulan}/2026 (toleransi {$toleransi}) tidak boleh di bulan yang sama."
+                );
+            }
+        }
+    }
 }

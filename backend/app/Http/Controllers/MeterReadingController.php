@@ -243,11 +243,16 @@ class MeterReadingController extends Controller
         $batasTagihan = (int) ($settings?->batas_tagihan ?? 27);
         $toleransi = (int) ($settings?->toleransi_tunggakan ?? 0);
 
+        // Jatuh tempo tagihan memakai `toleransi_tunggakan` (tanggal bayar
+        // 1-28) di bulan SETELAH periode pemakaian. `batas_tagihan` bukan
+        // untuk itu — lihat `BillingService::computeDueDate()`.
+        $toleransiTagihan = $toleransi > 0 ? $toleransi : 27;
+
         $recordedAt = Carbon::create($tahun, $bulan, 1)
             ->setDay(min($batasTagihan, Carbon::create($tahun, $bulan, 1)->daysInMonth))
             ->setTimeFrom(now());
 
-        $result = DB::transaction(function () use ($request, $customer, $bulan, $tahun, $fileName, $recordedAt, $batasTagihan) {
+        $result = DB::transaction(function () use ($request, $customer, $bulan, $tahun, $fileName, $recordedAt, $toleransiTagihan) {
             $reading = MeterReading::create([
                 'customer_id' => $customer->id,
                 'recorded_by' => Auth::id(),
@@ -259,7 +264,7 @@ class MeterReadingController extends Controller
             ]);
 
             $bill = app(BillingService::class)
-                ->generateForCustomer($customer, $tahun, $bulan, $batasTagihan);
+                ->generateForCustomer($customer, $tahun, $bulan, $toleransiTagihan);
 
             return ['reading' => $reading, 'bill' => $bill, 'customer' => $customer];
         });

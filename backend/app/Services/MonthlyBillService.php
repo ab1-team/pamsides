@@ -25,7 +25,10 @@ class MonthlyBillService
         $tahun = $now->year;
 
         $settings = Setting::first();
-        $batasTagihan = $settings?->batas_tagihan ?? 27;
+
+        // Jatuh tempo tagihan memakai `toleransi_tunggakan` (tanggal bayar
+        // 1-28), bukan `batas_tagihan`. Lihat `BillingService::computeDueDate()`.
+        $toleransiTunggakan = $settings?->toleransi_tunggakan ?? 27;
 
         // CEGAH GENERATE DOBEL
         $exists = MonthlyBill::where('billing_period_month', $bulan)
@@ -142,7 +145,7 @@ class MonthlyBillService
                 'penalty_amount' => $penalty,
                 'total_amount' => $total,
                 'status' => $status,
-                'due_date' => $this->computeDueDate($tahun, $bulan, $batasTagihan),
+                'due_date' => $this->computeDueDate($tahun, $bulan, $toleransiTunggakan),
             ]);
 
             $count++;
@@ -181,12 +184,18 @@ class MonthlyBillService
         return 0;
     }
 
+    /**
+     * Jatuh tempo tagihan.
+     *
+     * DIHEMAT ke `BillingService::computeDueDate()` supaya tidak ada dua
+     * salinan aturan yang bisa berbeda — dulu keduanya ada dan hanya satu
+     * yang diperbaiki, sehingga jatuh tempo tagihan yang dibuat lewat
+     * generator massal berbeda dari yang dibuat per pelanggan.
+     *
+     * Lihat `BillingService::computeDueDate()` untuk aturan lengkapnya.
+     */
     public function computeDueDate(int $year, int $month, int $day = 27): string
     {
-        $carbon = Carbon::create($year, $month, 1);
-        $maxDay = $carbon->daysInMonth;
-        $day = min($day, $maxDay);
-
-        return $carbon->setDay($day)->toDateString();
+        return app(BillingService::class)->computeDueDate($year, $month, $day);
     }
 }
