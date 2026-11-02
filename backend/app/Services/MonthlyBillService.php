@@ -6,12 +6,18 @@ use App\Models\Customer;
 use App\Models\MeterReading;
 use App\Models\MonthlyBill;
 use App\Models\Setting;
-use App\Models\WaterTariffBlock;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
 
 class MonthlyBillService
 {
+    private TariffCalculator $tariffCalculator;
+
+    public function __construct(?TariffCalculator $tariffCalculator = null)
+    {
+        $this->tariffCalculator = $tariffCalculator ?? new TariffCalculator;
+    }
+
     public function generate()
     {
         $now = now();
@@ -19,7 +25,10 @@ class MonthlyBillService
         $tahun = $now->year;
 
         $settings = Setting::first();
-        $batasTagihan = $settings?->batas_tagihan ?? 27;
+
+        // Jatuh tempo tagihan memakai `toleransi_tunggakan` (tanggal bayar
+        // 1-28), bukan `batas_tagihan`. Lihat `BillingService::computeDueDate()`.
+        $toleransiTunggakan = $settings?->toleransi_tunggakan ?? 27;
 
         // CEGAH GENERATE DOBEL
         $exists = MonthlyBill::where('billing_period_month', $bulan)
@@ -136,7 +145,7 @@ class MonthlyBillService
                 'penalty_amount' => $penalty,
                 'total_amount' => $total,
                 'status' => $status,
-                'due_date' => $this->computeDueDate($tahun, $bulan, $batasTagihan),
+                'due_date' => $this->computeDueDate($tahun, $bulan, $toleransiTunggakan),
             ]);
 
             $count++;
@@ -149,57 +158,14 @@ class MonthlyBillService
         ];
     }
 
+    /**
+     * Biaya pemakaian. Memakai `TariffCalculator` yang sama dengan jalur
+     * generate per pelanggan, supaya tidak ada lagi dua rumus tarif yang
+     * bisa berbeda hasilnya.
+     */
     private function calculateTariff($usage, $package_id)
     {
-        $blocks = WaterTariffBlock::where('package_id', $package_id)
-            ->orderBy('usage_min_m3')
-            ->get();
-
-        if ($blocks->isEmpty()) {
-            return 0;
-        }
-
-        $remaining = $usage;
-        $total = 0;
-
-        foreach ($blocks as $index => $block) {
-            if ($remaining <= 0) {
-                break;
-            }
-
-            $min = (int) $block->usage_min_m3;
-
-            // Panjang rentang blok, dengan aturan yang SAMA dengan
-            // `BillingService::calculateProgressiveCharge()`:
-            //
-            //   - Blok tak terbatas (`usage_max_m3` null) → pakai sisa.
-            //   - Blok berurutan tanpa jeda (mis. `1-10` lalu `11-...`) →
-            //     batas atas inklusif, panjang = `max - min + 1`
-            //     (1..10 = 10 m3).
-            //   - Blok berjarak / tumpang tindih (mis. `0-10` lalu `10-20`) →
-            //     panjang = `max - min`.
-            //
-            // Kenapa dibedakan: blok tarif di database ditulis sebagai rentang
-            // inklusif (`1-10 m3` = 10 m3). Kalau selalu pakai `max - min`,
-            // 1 m3 terakhir terlewat dan masuk blok berikutnya yang lebih
-            // mahal — tagihan jadi 500 lebih mahal per pelanggan.
-            if ($block->usage_max_m3 === null) {
-                $range = $remaining;
-            } else {
-                $max = (int) $block->usage_max_m3;
-                $nextMin = $blocks[$index + 1]->usage_min_m3 ?? null;
-
-                $range = ($nextMin !== null && (int) $nextMin === $max + 1)
-                    ? $max - $min + 1
-                    : max(0, $max - $min);
-            }
-
-            $used = min($remaining, $range);
-            $total += $used * (float) $block->price_per_m3;
-            $remaining -= $used;
-        }
-
-        return $total;
+        return $this->tariffCalculator->charge($package_id, (float) $usage);
     }
 
     private function calculatePenalty($customer_id, $bulan, $tahun, $package)
@@ -218,12 +184,18 @@ class MonthlyBillService
         return 0;
     }
 
+    /**
+     * Jatuh tempo tagihan.
+     *
+     * DIHEMAT ke `BillingService::computeDueDate()` supaya tidak ada dua
+     * salinan aturan yang bisa berbeda — dulu keduanya ada dan hanya satu
+     * yang diperbaiki, sehingga jatuh tempo tagihan yang dibuat lewat
+     * generator massal berbeda dari yang dibuat per pelanggan.
+     *
+     * Lihat `BillingService::computeDueDate()` untuk aturan lengkapnya.
+     */
     public function computeDueDate(int $year, int $month, int $day = 27): string
     {
-        $carbon = Carbon::create($year, $month, 1);
-        $maxDay = $carbon->daysInMonth;
-        $day = min($day, $maxDay);
-
-        return $carbon->setDay($day)->toDateString();
+        return app(BillingService::class)->computeDueDate($year, $month, $day);
     }
 }

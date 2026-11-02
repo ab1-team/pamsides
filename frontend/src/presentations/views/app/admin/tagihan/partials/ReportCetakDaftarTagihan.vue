@@ -126,6 +126,7 @@
 <script setup>
 import { computed } from 'vue'
 import BaseReportLayout from '@/presentations/views/app/admin/pelaporan/layouts/BaseReportLayout.vue'
+import { parseLocalDate } from '@/utils/date'
 
 const props = defineProps({
   payload: { type: Object, default: () => ({}) },
@@ -180,19 +181,44 @@ const jamCetak = computed(() =>
   })
 )
 
+/**
+ * Tgl Akhir Pembayaran = batas akhir bayar.
+ *
+ * `monthly_bills.due_date` = tanggal GENERATE PIUTANG (hari
+ * `toleransi_tunggakan`, mis. 27). Batas akhir bayar justru SEBELUM tanggal
+ * itu — jadi dikurangi 1 hari (26 Nov). Sama seperti kolom "TGL AKHIR
+ * BAYAR" di halaman Data Pemakaian Air.
+ *
+ * Fallback (kalau daftar belum punya tagihan): hitung dari periode pemakaian
+ * pakai aturan yang sama dengan backend `BillingService::computeDueDate()`
+ * — hari `toleransi_tunggakan` di bulan SETELAH pemakaian, lalu dikurangi 1
+ * hari. Nilai `toleransi_tunggakan` dikirim lewat payload; kalau tidak ada,
+ * fallback ke 27 (nilai bawaan aplikasi).
+ */
 const tanggalAkhir = computed(() => {
   const withDue = items.value.find((it) => it.jatuhTempo)
+
   if (!withDue) {
     const f = filter.value
     const m = bulanIndex(f.bulan)
     const y = parseInt(f.tahun, 10)
     if (!m || !Number.isFinite(y)) return '-'
+
     const next = m === 12 ? { m: 1, y: y + 1 } : { m: m + 1, y }
-    return `26 ${bulans[next.m - 1]} ${next.y}`
+
+    const toleransi = Number(props.payload?.toleransiTunggakan || 27)
+    const maxDay = new Date(next.y, next.m, 0).getDate()
+    // Batas akhir bayar = hari toleransi - 1 hari.
+    const day = Math.min(Math.max(1, toleransi - 1), maxDay)
+
+    return `${day} ${bulans[next.m - 1]} ${next.y}`
   }
-  const d = new Date(withDue.jatuhTempo)
-  if (Number.isNaN(d.getTime())) return '-'
+
+  const d = parseLocalDate(withDue.jatuhTempo)
+  if (!d) return '-'
+
   d.setDate(d.getDate() - 1)
+
   return d.toLocaleDateString('id-ID', {
     day: '2-digit',
     month: 'long',

@@ -190,15 +190,15 @@ class ImportLegacyMonthlyBillsCommand extends Command
                     try {
                         $dueDate = Carbon::parse($tglAkhir)->toDateString();
                     } catch (\Throwable) {
-                        $dueDate = $date->copy()->addMonth()->day(20)->toDateString();
+                        $dueDate = $this->fallbackDueDate($date);
                     }
                 } else {
-                    $dueDate = $date->copy()->addMonth()->day(20)->toDateString();
+                    $dueDate = $this->fallbackDueDate($date);
                 }
 
                 // Penalty: cek tagihan 1 bulan sebelum (Bulan N-1) → kalau unpaid, pakai late_penalty dari paket
                 $penalty = 0;
-                $checkDate = $date->copy()->subMonths(1);
+                $checkDate = $date->copy()->subMonthNoOverflow();
                 $checkKey = "{$customerId}|{$checkDate->year}|{$checkDate->month}";
                 if (isset($existingMB[$checkKey])) {
                     $checkBillId = $existingMB[$checkKey];
@@ -311,6 +311,20 @@ class ImportLegacyMonthlyBillsCommand extends Command
         }
 
         return self::SUCCESS;
+    }
+
+    /**
+     * Jatuh tempo cadangan: tanggal 20 pada bulan setelah periode pemakaian.
+     *
+     * Pakai `addMonthNoOverflow()` + `startOfMonth()`, bukan
+     * `addMonth()->day(20)`. Carbon melakukan overflow tanggal pada
+     * `addMonth()`: 31 Jan + 1 bulan = 3 Mar, lalu `day(20)` menjadikannya
+     * 20 Mar — satu bulan terlalu jauh. Tagihan periode Januari pun lalu
+     * punya jatuh tempo di Maret, bukan Februari.
+     */
+    private function fallbackDueDate(\Carbon\Carbon $date): string
+    {
+        return $date->copy()->startOfMonth()->addMonthNoOverflow()->day(20)->toDateString();
     }
 
     private function maybeLog(int $current, int $chunkSize, int $total, array $stats): void

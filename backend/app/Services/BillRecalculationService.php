@@ -103,14 +103,17 @@ class BillRecalculationService
             }
 
             $settings = \App\Models\Setting::first();
-            $batasTagihan = (int) ($settings?->batas_tagihan ?? 27);
+
+            // Jatuh tempo memakai `toleransi_tunggakan` (tanggal bayar 1-28),
+            // bukan `batas_tagihan`. Lihat `BillingService::computeDueDate()`.
+            $toleransiTunggakan = (int) ($settings?->toleransi_tunggakan ?? 27);
 
             $bill = MonthlyBill::create(array_merge($after, [
                 'customer_id' => $customer->id,
                 'billing_period_year' => $year,
                 'billing_period_month' => $month,
                 'status' => $status,
-                'due_date' => $this->billingService->computeDueDate($year, $month, $batasTagihan),
+                'due_date' => $this->billingService->computeDueDate($year, $month, $toleransiTunggakan),
             ]));
 
             return [

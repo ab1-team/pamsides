@@ -97,10 +97,12 @@ import { useRoute } from 'vue-router'
 import ReportView from '@/presentations/views/app/admin/tagihan/partials/ReportCetakDaftarTagihan.vue'
 import { usePemakaianAir } from '@/composables/usePemakaianAir'
 import { usePdfPreview, THUMB_RENDER_BUFFER } from '@/composables/usePdfPreview'
+import { useSettingsStore } from '@/stores/settingsStore'
 import { PER_PAGE_ROWS, FIRST_PAGE_ROWS } from '@/utils/reportConfig'
 
 const route = useRoute()
 const { tableData, filter, refreshData, groupedData, resolveTeknisiLabel, isTechnician, currentUserLabel } = usePemakaianAir()
+const settingsStore = useSettingsStore()
 
 const PAGE_CONFIG = { paper_size: 'A4', orientation: 'portrait' }
 
@@ -199,6 +201,9 @@ const buildPages = () => {
       dusun: chunk.dusun,
       items: chunk.items,
       filter: { ...filter.value },
+      // Tanggal bayar (toleransi_tunggakan) dipakai untuk menghitung
+      // "Tgl Akhir Pembayaran" saat daftar belum punya tagihan.
+      toleransiTunggakan: Number(settingsStore.toleransiTunggakan || 27),
       lembaga: defaultLembaga(),
       startIndex: chunk.startIndex,
       showMeta: chunk.startIndex === 0,
@@ -267,6 +272,10 @@ onMounted(async () => {
     }
 
     document.title = `Cetak Daftar Tagihan`
+
+    // Settings dipakai untuk "Tgl Akhir Pembayaran" saat fallback hitung
+    // tanggal bayar dari periode pemakaian.
+    await settingsStore.loadSettings()
 
     await refreshData()
     buildPages()
