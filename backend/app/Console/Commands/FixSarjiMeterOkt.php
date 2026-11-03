@@ -2,8 +2,6 @@
 
 namespace App\Console\Commands;
 
-use App\Models\Customer;
-use App\Models\InstallationTicket;
 use App\Models\MeterReading;
 use App\Models\MonthlyBill;
 use App\Models\WaterTariffBlock;
@@ -406,7 +404,7 @@ class FixSarjiMeterOkt extends Command
      */
     private function bacaXlsx(string $path): array
     {
-        $zip = new \ZipArchive();
+        $zip = new \ZipArchive;
 
         if ($zip->open($path) !== true) {
             return [];
