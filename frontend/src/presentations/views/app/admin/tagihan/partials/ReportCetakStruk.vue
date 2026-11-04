@@ -177,7 +177,7 @@ const bilang = (val) => {
    halaman kosong.
 
    KNOB: kalau struk masih terpotong, kecilkan `gap` dan `.sp` lagi. */
-.struk-page { display: flex; flex-direction: column; gap: 10px; }
+.struk-page { display: flex; flex-direction: column; gap: 20px; }
 .struk { font: 11px Arial; padding: 3px; border: 0.75px solid #6d6969; background: #fff; color: #575757; width: 100%; box-sizing: border-box; }
 
 /* Garis pemisah dibuat tipis dan pas melebar */
@@ -287,7 +287,7 @@ const bilang = (val) => {
    Yang bekerja: selector `.report-page.surat-page` di scoped block ini,
    karena root child mewarisi scope-id parent. */
 .report-page.surat-page {
-  padding: 17px 30px !important;
+  padding: 20px 20px !important;
 }
 </style>
 

@@ -98,7 +98,7 @@ import ReportView from '@/presentations/views/app/admin/tagihan/partials/ReportC
 import { usePemakaianAir } from '@/composables/usePemakaianAir'
 import { usePdfPreview, THUMB_RENDER_BUFFER } from '@/composables/usePdfPreview'
 import { useSettingsStore } from '@/stores/settingsStore'
-import { PER_PAGE_ROWS, FIRST_PAGE_ROWS } from '@/utils/reportConfig'
+import { PER_PAGE_ROWS, FIRST_PAGE_ROWS } from '@/utils/reportConfigDaftarTagihan'
 
 const route = useRoute()
 const { tableData, filter, refreshData, groupedData, resolveTeknisiLabel, isTechnician, currentUserLabel } = usePemakaianAir()

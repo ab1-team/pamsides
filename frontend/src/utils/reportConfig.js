@@ -1,2 +1,2 @@
-export const PER_PAGE_ROWS = 53
-export const FIRST_PAGE_ROWS = 43
+export const PER_PAGE_ROWS = 55
+export const FIRST_PAGE_ROWS = 46
