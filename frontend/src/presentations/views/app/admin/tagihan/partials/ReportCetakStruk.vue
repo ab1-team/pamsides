@@ -53,6 +53,17 @@
           <div class="ttd">
             <div>{{ tempat }}, {{ tanggalCetak }}</div>
             <div class="sp">{{ payload?.bendahara?.nama_jabatan || 'Bendahara' }}</div>
+            <!--
+              Gambar tanda tangan bendahara.
+
+              File: frontend/public/ttdbendahara.png
+              Sumber: backend/storage/app/public/sop/logo/ttdbendahara.png
+
+              Pakai <img>, bukan background-image, supaya Chrome tetap
+              mencetaknya saat Ctrl+P tanpa perlu centang "Background graphics"
+              (pola yang sama dipakai logo kop struk, lihat .logo-l/.logo-r).
+            -->
+            <img class="ttd-img" src="/ttdbendahara.png" alt="Tanda tangan Bendahara" />
             <div class="nb">{{ payload?.bendahara?.name || '_________________' }}</div>
           </div>
         </div>
@@ -170,14 +181,7 @@ const bilang = (val) => {
 </script>
 
 <style scoped>
-/* Tampilan struk: gaya awal (gap 24px, logo 48px, .sp 35px, dll).
-   Yang dikecilkan hanya nilai yang membuat 4 struk TIDAK muat satu
-   halaman A4 -- dengan nilai awal, tinggi halaman jadi 299,6mm (> 297mm)
-   sehingga Chrome memecah 4 struk jadi 2 halaman dan menyisakan
-   halaman kosong.
-
-   KNOB: kalau struk masih terpotong, kecilkan `gap` dan `.sp` lagi. */
-.struk-page { display: flex; flex-direction: column; gap: 20px; }
+.struk-page { display: flex; flex-direction: column; gap: 22px; }
 .struk { font: 11px Arial; padding: 3px; border: 0.75px solid #6d6969; background: #fff; color: #575757; width: 100%; box-sizing: border-box; }
 
 /* Garis pemisah dibuat tipis dan pas melebar */
@@ -236,8 +240,20 @@ const bilang = (val) => {
 .terbilang-row { border-top: none !important; }
 .i { font-style: italic; text-transform: capitalize; }
 
-.ttd { width: 180px; text-align: center; font-size: 11px; margin-left: auto; padding-top: 15px; }
-.sp { margin-bottom: 20px; }
+/* Blok TTD (Bendahara).
+   `padding-top` 4px: blok TTD turun, ruang TTD dikecilkan.
+   PENTING: tinggi blok ini harus DIBAWAH atau SAMA dengan tinggi blok
+   RINCIAN BIAYA (~101px). Kalau lebih tinggi, tiap struk ikut tumbuh dan
+   4 struk tidak muat satu halaman A4. */
+.ttd { width: 180px; text-align: center; font-size: 11px; margin-left: auto; padding-top: 2px; }
+/* Ruang kosong antara jabatan & nama. Dikecilkan dari 20px -> 4px karena
+   gambar tanda tangan sekarang mengisi ruang itu sendiri. */
+.sp { margin-bottom: 4px; }
+/* Gambar tanda tangan bendahara.
+   `width` + `height: auto` menjaga rasio (400x407 di file sumber).
+   51px -> tinggi 52px. `display: block` supaya tidak ada space baseline
+   yang menambah tinggi baris. `background: #fff` menyatu dengan kertas. */
+.ttd-img { display: block; width: 51px; height: auto; margin: 0 auto 2px; object-fit: contain; background: #fff; }
 .nb { font-weight: 700; }
 
 /* Bottom Section (Transfer & Catatan) */
