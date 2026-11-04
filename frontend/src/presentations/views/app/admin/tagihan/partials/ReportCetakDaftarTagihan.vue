@@ -47,13 +47,13 @@
     <table class="data-table data-table-fixed">
       <colgroup>
         <col style="width: 6%">
-        <col style="width: 23%">
+        <col style="width: 26%">
         <col style="width: 14%">
         <col style="width: 5%">
         <col style="width: 7%">
         <col style="width: 7%">
         <col style="width: 12%">
-        <col style="width: 14%">
+        <col style="width: 12%">
         <col style="width: 14%">
       </colgroup>
       <thead>
