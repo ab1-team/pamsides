@@ -99,9 +99,10 @@ import { usePemakaianAir } from '@/composables/usePemakaianAir'
 import { usePdfPreview, THUMB_RENDER_BUFFER } from '@/composables/usePdfPreview'
 import { useSettingsStore } from '@/stores/settingsStore'
 import { PER_PAGE_ROWS, FIRST_PAGE_ROWS } from '@/utils/reportConfigDaftarTagihan'
+import { applyUsageSegment } from '@/utils/usageSegment'
 
 const route = useRoute()
-const { tableData, filter, refreshData, groupedData, resolveTeknisiLabel, isTechnician, currentUserLabel } = usePemakaianAir()
+const { tableData, filter, refreshData, resolveTeknisiLabel, isTechnician, currentUserLabel } = usePemakaianAir()
 const settingsStore = useSettingsStore()
 
 const PAGE_CONFIG = { paper_size: 'A4', orientation: 'portrait' }
@@ -140,10 +141,28 @@ const selectedIdSet = computed(() => {
   return ids.length > 0 ? new Set(ids) : null
 })
 
+const selectedSegment = (() => {
+  const fromStorage = sessionStorage.getItem('cetak_print_segment_daftar')
+  const raw = fromStorage || route.query.segment
+  if (fromStorage) sessionStorage.removeItem('cetak_print_segment_daftar')
+  return raw ? String(raw) : ''
+})()
+
+const segmentGroups = computed(() => {
+  const rows = applyUsageSegment(Array.isArray(tableData.value) ? tableData.value : [], selectedSegment)
+  const groups = {}
+  rows.forEach((item) => {
+    const dusun = item.dusun || 'Lainnya'
+    if (!groups[dusun]) groups[dusun] = []
+    groups[dusun].push(item)
+  })
+  return groups
+})
+
 const orientationClass = computed(() => PAGE_CONFIG.orientation)
 
 const buildPages = () => {
-  const groups = groupedData.value || {}
+  const groups = segmentGroups.value || {}
   const ids = selectedIdSet.value
   const entries = Object.entries(groups)
     .map(([dusun, members]) => {

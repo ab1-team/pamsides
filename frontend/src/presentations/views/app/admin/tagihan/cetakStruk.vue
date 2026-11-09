@@ -98,6 +98,7 @@ import axios from '@/utils/axios'
 import ReportView from '@/presentations/views/app/admin/tagihan/partials/ReportCetakStruk.vue'
 import { usePemakaianAir } from '@/composables/usePemakaianAir'
 import { usePdfPreview, THUMB_RENDER_BUFFER } from '@/composables/usePdfPreview'
+import { applyUsageSegment } from '@/utils/usageSegment'
 
 const route = useRoute()
 const uiStore = useUiStore()
@@ -171,9 +172,16 @@ const {
 
 const orientationClass = computed(() => PAGE_CONFIG.orientation)
 
+const selectedSegment = (() => {
+  const fromStorage = sessionStorage.getItem('cetak_print_segment_struk')
+  const raw = fromStorage || route.query.segment
+  if (fromStorage) sessionStorage.removeItem('cetak_print_segment_struk')
+  return raw ? String(raw) : ''
+})()
+
 const flatCustomers = computed(() => {
   if (!Array.isArray(tableData.value)) return []
-  return tableData.value
+  return applyUsageSegment(tableData.value, selectedSegment)
 })
 
 const selectedIdsParam = computed(() => {

@@ -210,6 +210,16 @@
               </p>
               <div class="flex! gap-3! w-full! md:w-auto!">
                 <BaseButton
+                  v-if="!isPaid"
+                  variant="danger"
+                  icon="sync-alt"
+                  class="flex-1! md:flex-none! px-6! md:px-8! py-3! rounded-xl! font-black! text-white! shadow-lg! shadow-red-200/60! text-sm! md:text-base!"
+                  :disabled="isSaving"
+                  @click="handleReset"
+                >
+                  Reset Meter
+                </BaseButton>
+                <BaseButton
                   variant="secondary-gradient"
                   class="flex-1! px-8! md:px-10! py-3! rounded-xl! font-black! text-slate-800! shadow-lg! shadow-slate-200/50! text-sm! md:text-base!"
                   :disabled="isPaid || isSaving"
@@ -246,8 +256,13 @@ const props = defineProps({
    * Kalau tidak diisi, modal emit event 'save' seperti biasa.
    */
   onSave: { type: Function, default: null },
+  /**
+   * Callback async reset meter (admin). Menerima payload:
+   * { old_meter_final, new_meter_start, reason }.
+   */
+  onReset: { type: Function, default: null },
 })
-const emit = defineEmits(['close', 'save'])
+const emit = defineEmits(['close', 'save', 'reset'])
 const localData = ref({
   nama: '',
   id: '',
@@ -317,6 +332,133 @@ const handleSave = async () => {
       await props.onSave(payload)
     } else {
       emit('save', payload)
+    }
+  } finally {
+    isSaving.value = false
+  }
+}
+
+/**
+ * Alur Reset Meter (ganti meteran).
+ *
+ *  1. Popup info: jelaskan konsekuensinya (bukan sekadar peringatan).
+ *  2. Popup detail: alasan wajib + meter awal meter baru (default 0).
+ *  3. Popup konfirmasi terakhir: ringkasan meter lama ditutup & meter baru.
+ *  4. Panggil onReset / emit('reset') — backend yang menyimpan.
+ *
+ * Meter akhir meter lama memakai angka pada kolom "Akhir Pemakaian".
+ */
+const handleReset = async () => {
+  if (isSaving.value) return
+
+  if (isPaid.value) {
+    return MySwal.fire({
+      icon: 'info',
+      title: 'Tidak Bisa Reset',
+      text: 'Tagihan periode ini sudah lunas. Reset dapat dilakukan pada periode berikutnya.',
+      confirmButtonColor: '#0ea5e9',
+    })
+  }
+
+  const info = await MySwal.fire({
+    icon: 'warning',
+    title: 'konfirmasi Reset Meter',
+    html: `<div style="font-size:15px;line-height:1.45;text-align:left;padding:0 14px">
+      <p style="margin:0 0 4px">Reset meter akan menghentikan meter lama dan memakai meter baru.</p>
+      <div style="display:flex;justify-content:center">
+        <ul style="text-align:left;margin:0 0 6px 0;padding-left:0;list-style:disc;list-style-position:inside">
+          <li style="margin-bottom:2px">Angka terakhir meter lama ditutup sekarang</li>
+          <li style="margin-bottom:2px">Meter baru mulai dari 0</li>
+          <li style="margin-bottom:0">Riwayat meter lama tetap tersimpan</li>
+        </ul>
+      </div>
+      <p style="margin:0">Lanjutkan jika Anda ingin mengganti meteran pelanggan ini.</p>
+    </div>`,
+    showCancelButton: true,
+    confirmButtonText: 'Ya, Reset Meter',
+    cancelButtonText: 'Batal',
+    confirmButtonColor: '#ef4444',
+    cancelButtonColor: '#94a3b8',
+  })
+  if (!info.isConfirmed) return
+
+ const detail = await MySwal.fire({
+  title: 'Konfirmasi Reset Meter',
+  html: `<div style="text-align:left;font-size:13px">
+      <label style="display:block;font-size:12px;font-weight:600;margin-bottom:6px">KETERANGAN</label>
+      <textarea id="swal-reset-reason" class="swal2-textarea" style="margin:0 0 16px;width:100%;height:76px;font-size:14px" placeholder="Contoh Meter : Rusak / Hilang / Baru"></textarea>
+      
+      <label style="display:block;font-size:12px;font-weight:600;margin-bottom:6px">METER AWAL METER BARU (m³)</label>
+      <input id="swal-new-start" type="number" min="0" value="0" class="swal2-input" style="margin:0;width:100%;font-size:15px;height:44px" />
+      
+      <p style="font-size:13px; color: #3d3c3c; margin-top:25px; text-align:center">
+        Meter lama tercatat sampai ${Number(localData.value.meterAkhir || 0)} m³.
+      </p>
+    </div>`,
+    focusConfirm: false,
+    showCancelButton: true,
+    confirmButtonText: 'Lanjut',
+    cancelButtonText: 'Batal',
+    confirmButtonColor: '#ef4444',
+    cancelButtonColor: '#94a3b8',
+    preConfirm: () => {
+      const reason = document.getElementById('swal-reset-reason')?.value?.trim() || ''
+      const newStartRaw = document.getElementById('swal-new-start')?.value
+      const newStart = Number(newStartRaw)
+
+      if (!reason) {
+        MySwal.showValidationMessage('Keterangan tidak boleh kosong!')
+        return false
+      }
+      if (!Number.isFinite(newStart) || newStart < 0) {
+        MySwal.showValidationMessage('Meter awal meter baru harus angka ≥ 0.')
+        return false
+      }
+      return { reason, newStart }
+    },
+  })
+  if (!detail.isConfirmed) return
+
+  const final = await MySwal.fire({
+    icon: 'warning',
+    title: 'Simpan Reset Meter?',
+    html: `<div style="text-align:left;font-size:14px;line-height:1.5">
+      <div style="border:1px solid #e5e7eb;border-radius:8px;padding:8px 14px;margin:0 auto 12px;max-width:320px">
+        <div style="display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:10px;padding:5px 0">
+          <span style="color:#64748b">Meter Lama</span>
+          <span style="color:#94a3b8">→</span>
+          <span style="font-weight:600;text-align:right">${Number(localData.value.meterAkhir || 0)} m³</span>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:10px;padding:5px 0;border-top:1px solid #f1f5f9">
+          <span style="color:#64748b">Meter Baru</span>
+          <span style="color:#94a3b8">→</span>
+          <span style="font-weight:600;text-align:right">${detail.value.newStart} m³</span>
+        </div>
+      </div>
+      <p style="margin:0;font-size:13px;color:#64748b;text-align:center">
+        Tagihan akan tampil sebagai Meter Lama dan Meter Baru.
+      </p>
+    </div>`,
+    showCancelButton: true,
+    confirmButtonText: 'Simpan',
+    cancelButtonText: 'Batal',
+    confirmButtonColor: '#ef4444',
+    cancelButtonColor: '#94a3b8',
+  })
+  if (!final.isConfirmed) return
+
+  const payload = {
+    old_meter_final: Number(localData.value.meterAkhir || 0),
+    new_meter_start: detail.value.newStart,
+    reason: detail.value.reason,
+  }
+
+  isSaving.value = true
+  try {
+    if (props.onReset) {
+      await props.onReset(payload)
+    } else {
+      emit('reset', payload)
     }
   } finally {
     isSaving.value = false

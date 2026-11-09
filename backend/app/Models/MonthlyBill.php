@@ -24,6 +24,8 @@ class MonthlyBill extends Model
 
     protected $fillable = [
         'customer_id',
+        'meter_reset_id',
+        'meter_segment',
         'billing_period_year',
         'billing_period_month',
         'meter_reading_start',
@@ -83,6 +85,11 @@ class MonthlyBill extends Model
     public function customer()
     {
         return $this->belongsTo(Customer::class, 'customer_id');
+    }
+
+    public function meterReset()
+    {
+        return $this->belongsTo(MeterReset::class, 'meter_reset_id');
     }
 
     public function billPayments()

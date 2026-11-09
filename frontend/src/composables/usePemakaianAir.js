@@ -6,6 +6,24 @@ import { MySwal } from '@/utils/swal'
 import api from '@/utils/axios'
 import { useUiStore } from '@/stores/uiStore'
 
+const mapBillSummary = (bill) => {
+  if (!bill) return null
+  return {
+    id: bill.id,
+    segment: bill.meter_segment || 'normal',
+    meterAwal: Number(bill.meter_awal ?? 0),
+    meterAkhir: bill.meter_akhir != null ? Number(bill.meter_akhir) : null,
+    pemakaian: Number(bill.pemakaian ?? 0),
+    tagihan: Number(bill.tagihan ?? 0),
+    pemakaianCharge: Number(bill.usage_charge ?? 0),
+    abodemen: Number(bill.abodemen ?? 0),
+    denda: Number(bill.denda ?? 0),
+    status: String(bill.status || '').toUpperCase(),
+    paidAmount: Number(bill.paid_amount ?? 0),
+    dueDate: bill.due_date || null,
+  }
+}
+
 export function usePemakaianAir() {
   const uiStore = useUiStore()
 
@@ -286,6 +304,17 @@ export function usePemakaianAir() {
             reading_photo: item.reading_photo || null,
             technician_id: item.technician_id || null,
             technician_name: item.technician_name || null,
+            // Riwayat reset meter (meter lama & meter baru) untuk catatan cetak.
+            meter_segment: item.meter_segment || 'normal',
+            isReset: !!item.is_reset,
+            resetLamaStart: item.reset_lama_start != null ? Number(item.reset_lama_start) : null,
+            resetLamaEnd: item.reset_lama_end != null ? Number(item.reset_lama_end) : null,
+            resetBaruStart: item.reset_baru_start != null ? Number(item.reset_baru_start) : null,
+            resetBaruEnd: item.reset_baru_end != null ? Number(item.reset_baru_end) : null,
+            resetReason: item.reset_reason || '',
+            // Ringkasan tagihan per segmen (meter lama & meter baru).
+            lamaBill: mapBillSummary(item.lama_bill),
+            baruBill: mapBillSummary(item.baru_bill),
           }
         })
       }

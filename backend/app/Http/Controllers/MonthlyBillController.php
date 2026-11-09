@@ -6,9 +6,11 @@ use App\Http\Controllers\Concerns\AuthorizesMeterReadings;
 use App\Models\BillPayment;
 use App\Models\Customer;
 use App\Models\MeterReading;
+use App\Models\MeterReset;
 use App\Models\MonthlyBill;
 use App\Models\Transaction;
 use App\Services\BillRecalculationService;
+use App\Services\MeterResetService;
 use App\Services\MonthlyBillService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -150,6 +152,8 @@ class MonthlyBillController extends Controller
                     'customer_id' => $b->customer_id,
                     'billing_period_month' => $b->billing_period_month,
                     'billing_period_year' => $b->billing_period_year,
+                    'meter_reset_id' => $b->meter_reset_id,
+                    'meter_segment' => $b->meter_segment ?? 'normal',
                     'meter_reading_start' => $b->meter_reading_start,
                     'meter_reading_end' => $b->meter_reading_end,
                     'usage_m3' => $b->usage_m3,
@@ -252,9 +256,25 @@ class MonthlyBillController extends Controller
 
         // Batch-load bills periode ini + bill_payments + transactions (reverence bill_payment)
         // untuk menentukan status "Dibayar" dari tabel transactions (bukan dari monthly_bills.status).
-        $currentBills = MonthlyBill::whereIn('customer_id', $customers->pluck('id'))
+        // Kalau ada reset, satu pelanggan bisa punya DUA tagihan pada periode
+        // yang sama (`lama` + `baru`). Halaman "Data Pemakaian Air" tetap
+        // satu baris per pelanggan, jadi pilih tagihan yang sedang berjalan:
+        // `baru` > `normal` > `lama`. Urutan FIELD menaik membuat `baru`
+        // berada paling akhir sehingga `keyBy()` menyimpannya.
+        $periodBills = MonthlyBill::whereIn('customer_id', $customers->pluck('id'))
             ->where('billing_period_month', $month)
             ->where('billing_period_year', $year)
+            ->orderByRaw("FIELD(meter_segment, 'lama', 'normal', 'baru')")
+            ->get();
+
+        $currentBills = $periodBills->keyBy('customer_id');
+        $lamaBills = $periodBills->where('meter_segment', 'lama')->keyBy('customer_id');
+        $baruBills = $periodBills->where('meter_segment', 'baru')->keyBy('customer_id');
+
+        // Data reset periode ini (untuk catatan "Meter Lama / Meter Baru").
+        $periodResets = MeterReset::whereIn('customer_id', $customers->pluck('id'))
+            ->where('period_year', $year)
+            ->where('period_month', $month)
             ->get()
             ->keyBy('customer_id');
 
@@ -350,7 +370,11 @@ class MonthlyBillController extends Controller
             ->get()
             ->keyBy('customer_id');
 
-        $billPayments = BillPayment::whereIn('bill_id', $currentBills->pluck('id'))
+        // Pembayaran dimuat untuk SEMUA tagihan periode ini (termasuk `lama`
+        // dan `baru`) supaya status bayar masing-masing segmen bisa dihitung.
+        // Sebelumnya hanya tagihan aktif, sehingga tagihan meter lama selalu
+        // tampil UNPAID walau sudah dibayar.
+        $billPayments = BillPayment::whereIn('bill_id', $periodBills->pluck('id'))
             ->get();
 
         // Map: bill_payment.id → bill_id (transactions.reverence_id = bill_payment.id)
@@ -380,10 +404,56 @@ class MonthlyBillController extends Controller
             }
         }
 
-        $items = $customers->map(function ($customer) use ($month, $year, $currentBills, $currentReadings, $latestBillRows, $latestReadingRows, $prevMonthIndex, $prevYearIndex, $paidAmountByBillId, $amountPaidFallbackByBillId) {
+        // Ringkasan satu tagihan (dipakai untuk segmen `lama` & `baru`).
+        // Dikirim terpisah supaya frontend bisa menampilkan/mencetak tagihan
+        // meter lama dan meter baru secara terpisah pada periode yang sama.
+        $summarizeBill = function ($b) use ($paidAmountByBillId, $amountPaidFallbackByBillId) {
+            if (! $b) {
+                return null;
+            }
+
+            $txPaid = (float) ($paidAmountByBillId[$b->id] ?? 0);
+            $bpPaid = (float) ($amountPaidFallbackByBillId[$b->id] ?? 0);
+            $isPaid = strtolower((string) $b->status) === 'paid';
+            $paid = $txPaid > 0 ? $txPaid : ($isPaid && $bpPaid > 0 ? $bpPaid : 0);
+            $total = (float) ($b->total_amount ?? 0);
+            $isNihil = $total <= 0 && $isPaid;
+
+            return [
+                'id' => $b->id,
+                'meter_segment' => $b->meter_segment ?? 'normal',
+                'meter_awal' => $b->meter_reading_start,
+                'meter_akhir' => $b->meter_reading_end,
+                'pemakaian' => $b->usage_m3,
+                'usage_charge' => $b->usage_charge,
+                'tagihan' => $total,
+                'abodemen' => $b->abodemen,
+                'denda' => $b->penalty_amount,
+                'status' => ($paid > 0 || $isNihil) ? 'PAID' : 'UNPAID',
+                'paid_amount' => $paid,
+                'due_date' => $b->due_date,
+            ];
+        };
+
+        $items = $customers->map(function ($customer) use ($month, $year, $currentBills, $currentReadings, $latestBillRows, $latestReadingRows, $prevMonthIndex, $prevYearIndex, $paidAmountByBillId, $amountPaidFallbackByBillId, $lamaBills, $baruBills, $periodResets, $summarizeBill) {
             $reading = $currentReadings->get($customer->id);
 
             $bill = $currentBills->get($customer->id);
+
+            // Data reset (kalau ada): nilai meter lama & meter baru periode ini.
+            $reset = $periodResets->get($customer->id);
+            $lamaBill = $lamaBills->get($customer->id);
+            $baruBill = $baruBills->get($customer->id);
+
+            $isReset = (bool) $reset;
+            $resetLamaStart = $lamaBill?->meter_reading_start ?? $reset?->previous_meter_value;
+            $resetLamaEnd = $lamaBill?->meter_reading_end ?? $reset?->old_meter_final;
+            $resetBaruStart = $baruBill?->meter_reading_start ?? $reset?->new_meter_start;
+            $resetBaruEnd = $baruBill?->meter_reading_end;
+            if ($resetBaruEnd === null && $reset && $reading
+                && (float) $reading->meter_value !== (float) $reset->old_meter_final) {
+                $resetBaruEnd = $reading->meter_value;
+            }
 
             // Nominal Dibayar: prioritas dari transactions.saldo; fallback ke bill_payments.amount_paid
             // untuk data legacy yang monthly_bills.status='paid' tapi jurnal transaksi belum ada / 0.
@@ -512,6 +582,18 @@ class MonthlyBillController extends Controller
                 'reading_recorded_at' => $reading?->recorded_at,
                 'technician_id' => $customer->ticket?->user_id,
                 'technician_name' => $customer->ticket?->user?->name,
+                // Segmen tagihan aktif + riwayat reset (meter lama / meter baru).
+                'meter_segment' => $bill?->meter_segment ?? 'normal',
+                'is_reset' => $isReset,
+                'reset_lama_start' => $isReset ? $resetLamaStart : null,
+                'reset_lama_end' => $isReset ? $resetLamaEnd : null,
+                'reset_baru_start' => $isReset ? $resetBaruStart : null,
+                'reset_baru_end' => $isReset ? $resetBaruEnd : null,
+                'reset_reason' => $reset?->reason,
+                // Ringkasan tagihan per segmen (untuk pilihan Meter Lama /
+                // Meter Baru / Meter {reason} di Hasil Input & cetak).
+                'lama_bill' => $summarizeBill($lamaBill),
+                'baru_bill' => $summarizeBill($baruBill),
             ];
         });
 
@@ -1210,10 +1292,23 @@ class MonthlyBillController extends Controller
             ], 422);
         }
 
+        // Tagihan aktif = bukan segmen `lama` (kalau ada reset, yang diedit
+        // adalah tagihan meter baru / normal, bukan penutup meter lama).
         $bill = MonthlyBill::where('customer_id', $customer->id)
             ->where('billing_period_year', $year)
             ->where('billing_period_month', $month)
+            ->where('meter_segment', '!=', 'lama')
             ->first();
+
+        if (! $bill) {
+            $bill = MonthlyBill::where('customer_id', $customer->id)
+                ->where('billing_period_year', $year)
+                ->where('billing_period_month', $month)
+                ->first();
+        }
+
+        $resetService = app(MeterResetService::class);
+        $reset = $resetService->resetForPeriod($customer->id, $year, $month);
 
         // ── 0. Least-privilege: teknisi hanya boleh mengedit pelanggan di
         //       WILAYAHNYA — pelanggan yang tiketnya ia tangani
@@ -1246,22 +1341,17 @@ class MonthlyBillController extends Controller
         }
 
         // ── 2. Meter tidak boleh mundur ──
-        $previousReading = MeterReading::where('customer_id', $customer->id)
-            ->where(function ($query) use ($year, $month) {
-                $query->where('reading_year', '<', $year)
-                    ->orWhere(function ($q) use ($year, $month) {
-                        $q->where('reading_year', $year)
-                            ->where('reading_month', '<', $month);
-                    });
-            })
-            ->orderByDesc('reading_year')
-            ->orderByDesc('reading_month')
-            ->first();
+        //
+        // Baseline diambil dari `startMeterForPeriod()`:
+        //   - alur normal  -> meter akhir bulan sebelumnya,
+        //   - periode reset / bacaan pertama setelah reset -> `new_meter_start`.
+        // Jadi bacaan meter baru (mis. 5 setelah meter lama 401) tetap diterima.
+        $startMeter = $resetService->startMeterForPeriod($customer, $year, $month);
 
-        if ($previousReading && $meterValue < (int) $previousReading->meter_value) {
+        if ($meterValue < $startMeter) {
             return response()->json([
                 'success' => false,
-                'message' => 'Meter tidak boleh lebih kecil dari bulan sebelumnya ('.$previousReading->meter_value.' m³).',
+                'message' => 'Meter tidak boleh lebih kecil dari meter awal periode ini ('.$startMeter.' m3).',
             ], 400);
         }
 

@@ -1597,23 +1597,24 @@ input[type='text'] {
 }
 
 /* ---- SweetAlert2 always above modal package ----
-   Modal package pakai z-[3000], Swal default z-index = 1060,
-   jadi kita override container Swal supaya konfirmasi tampil di depan.
+   Modal package pakai z-[3000], modal Edit Pemakaian pakai z-[9999],
+   Swal default z-index = 1060. Override container Swal supaya konfirmasi
+   selalu tampil di depan — termasuk saat dipicu dari dalam modal edit.
    Pakai selector langsung + !important supaya menang dari
    `div:where(.swal2-container)` bawaan SweetAlert2. */
 div.swal2-container,
 .swal2-container.swal-container-front,
 .swal-container-front {
-  z-index: 4000 !important;
+  z-index: 100000 !important;
 }
 
 div.swal2-container.swal2-fade {
-  z-index: 4000 !important;
+  z-index: 100000 !important;
 }
 
 /* Backdrop juga harus di atas modal */
 .swal2-backdrop-show {
-  z-index: 3999 !important;
+  z-index: 99999 !important;
 }
 
 /* ============================================================

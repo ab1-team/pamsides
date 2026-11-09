@@ -270,6 +270,9 @@ Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
     Route::post('bills/generate', [BillingController::class, 'generate']);
     Route::get('bills/{monthlyBill}', [BillingController::class, 'show']);
 
+    // Reset / ganti meteran — hanya admin.
+    Route::post('meter-readings/reset', [MeterReadingController::class, 'reset']);
+
     // Tagihan bulanan — tulis hanya admin.
     // Route BACA `monthly-bills/{id}` sudah ada di grup shared admin+teknisi
     // (lihat blok "Shared Routes (Admin & Teknisi)") supaya teknisi juga

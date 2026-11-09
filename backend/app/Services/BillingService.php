@@ -12,9 +12,14 @@ class BillingService
 {
     private TariffCalculator $tariffCalculator;
 
-    public function __construct(?TariffCalculator $tariffCalculator = null)
-    {
+    private MeterResetService $meterResetService;
+
+    public function __construct(
+        ?TariffCalculator $tariffCalculator = null,
+        ?MeterResetService $meterResetService = null,
+    ) {
         $this->tariffCalculator = $tariffCalculator ?? new TariffCalculator;
+        $this->meterResetService = $meterResetService ?? new MeterResetService($this->tariffCalculator);
     }
 
     public function generateForCustomer(Customer $customer, int $year, int $month, ?int $toleransiTunggakan = null): MonthlyBill
@@ -28,17 +33,13 @@ class BillingService
             throw new \RuntimeException('Belum ada pencatatan meter untuk periode ini.');
         }
 
-        $lastMonth = $month === 1 ? 12 : $month - 1;
-        $lastMonthYear = $month === 1 ? $year - 1 : $year;
+        // Meter awal periode. Kalau periode ini punya reset, baseline-nya
+        // adalah `new_meter_start` (meter baru), bukan meter akhir bulan lalu.
+        $startMeter = $this->meterResetService->startMeterForPeriod($customer, $year, $month);
 
-        $previousReading = $customer->meterReadings()
-            ->where('reading_year', $lastMonthYear)
-            ->where('reading_month', $lastMonth)
-            ->first();
-
-        $startMeter = $previousReading
-            ? $previousReading->meter_value
-            : $customer->initial_meter_reading;
+        // Segmen tagihan: `baru` kalau periode ini ada reset, selain itu `normal`.
+        $reset = $this->meterResetService->resetForPeriod($customer->id, $year, $month);
+        $segment = $reset ? 'baru' : 'normal';
 
         $endMeter = $currentReading->meter_value;
         $usageM3 = max(0, $endMeter - $startMeter);
@@ -94,10 +95,9 @@ class BillingService
 
         $status = $isNihilLegitimate ? 'paid' : 'unpaid';
 
-        return MonthlyBill::create([
-            'customer_id' => $customer->id,
-            'billing_period_year' => $year,
-            'billing_period_month' => $month,
+        $payload = [
+            'meter_reset_id' => $reset?->id,
+            'meter_segment' => $segment,
             'meter_reading_start' => $startMeter,
             'meter_reading_end' => $endMeter,
             'usage_m3' => $usageM3,
@@ -107,7 +107,27 @@ class BillingService
             'total_amount' => $totalAmount,
             'status' => $status,
             'due_date' => $this->computeDueDate($year, $month, $toleransiTunggakan),
-        ]);
+        ];
+
+        // Idempoten per segmen: periode yang sama boleh punya satu tagihan
+        // `lama` dan satu tagihan `baru`, tetapi tidak boleh dobel per segmen.
+        $existing = MonthlyBill::where('customer_id', $customer->id)
+            ->where('billing_period_year', $year)
+            ->where('billing_period_month', $month)
+            ->where('meter_segment', $segment)
+            ->first();
+
+        if ($existing) {
+            $existing->update($payload);
+
+            return $existing;
+        }
+
+        return MonthlyBill::create(array_merge($payload, [
+            'customer_id' => $customer->id,
+            'billing_period_year' => $year,
+            'billing_period_month' => $month,
+        ]));
     }
 
     /**
@@ -131,13 +151,13 @@ class BillingService
         $prevMonth = $month === 1 ? 12 : $month - 1;
         $prevMonthYear = $month === 1 ? $year - 1 : $year;
 
-        $oldBill = MonthlyBill::where('customer_id', $customer->id)
+        $hasUnpaid = MonthlyBill::where('customer_id', $customer->id)
             ->where('billing_period_year', $prevMonthYear)
             ->where('billing_period_month', $prevMonth)
             ->where('status', 'unpaid')
-            ->first();
+            ->exists();
 
-        if (! $oldBill) {
+        if (! $hasUnpaid) {
             return 0;
         }
 

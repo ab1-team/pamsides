@@ -10,6 +10,7 @@ use App\Models\MeterReading;
 use App\Models\MonthlyBill;
 use App\Models\Setting;
 use App\Services\BillingService;
+use App\Services\MeterResetService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -91,6 +92,9 @@ class MeterReadingController extends Controller
                 $query->where('billing_period_month', $prevMonth)
                     ->where('billing_period_year', $prevYear);
             },
+            // Dipakai frontend untuk tahu baseline meter baru saat periode ini
+            // sudah direset (meter baru mulai dari `new_meter_start`).
+            'meterResets',
         ])
             // Hanya pelanggan dengan tiket aktif yang bisa ditagih. Tanpa
             // filter ini pelanggan terminated/blokir ikut muncul di daftar
@@ -99,9 +103,25 @@ class MeterReadingController extends Controller
             ->whereHas('ticket', function ($query) {
                 $query->whereIn('status', ['surveyed', 'unpaid', 'processing', 'completed', 'suspended']);
             })
-            ->whereDoesntHave('meterReadings', function ($query) use ($bulan, $tahun) {
-                $query->where('reading_month', $bulan)
-                    ->where('reading_year', $tahun);
+            ->where(function ($query) use ($bulan, $tahun) {
+                // Belum ada bacaan meter periode ini.
+                $query->whereDoesntHave('meterReadings', function ($q) use ($bulan, $tahun) {
+                    $q->where('reading_month', $bulan)
+                        ->where('reading_year', $tahun);
+                })
+                    // ATAU periode ini sudah direset tetapi tagihan meter baru
+                    // belum dibuat — pelanggan tetap muncul supaya angka meter
+                    // baru bisa diinput (membuat tagihan `baru`).
+                    ->orWhere(function ($q) use ($bulan, $tahun) {
+                        $q->whereHas('meterResets', function ($r) use ($bulan, $tahun) {
+                            $r->where('period_month', $bulan)
+                                ->where('period_year', $tahun);
+                        })->whereDoesntHave('monthlyBills', function ($b) use ($bulan, $tahun) {
+                            $b->where('billing_period_month', $bulan)
+                                ->where('billing_period_year', $tahun)
+                                ->where('meter_segment', 'baru');
+                        });
+                    });
             });
 
 // Filter TEKNISI dari halaman "Data Pemakaian Air" (admin memilih
@@ -147,6 +167,20 @@ class MeterReadingController extends Controller
         }
 
         $customers = $customers->get();
+
+        // Untuk pelanggan yang pernah direset, hitung baseline meter periode
+        // ini (meter baru bisa mulai dari 0 walau meter lama lebih besar).
+        // Hanya dihitung bila memang punya reset, supaya tidak menambah
+        // query untuk pelanggan normal.
+        $resetService = app(MeterResetService::class);
+        $customers->each(function ($customer) use ($resetService, $bulan, $tahun) {
+            if ($customer->meterResets->isNotEmpty()) {
+                $customer->setAttribute(
+                    'meter_start_value',
+                    $resetService->startMeterForPeriod($customer, $tahun, $bulan)
+                );
+            }
+        });
 
         return response()->json([
             'success' => true,
@@ -210,29 +244,46 @@ class MeterReadingController extends Controller
             }
         }
 
-        $exists = MeterReading::where('customer_id', $request->customer_id)
+        $resetService = app(MeterResetService::class);
+
+        // Reset meter pada periode ini: baris `meter_readings` yang ada
+        // adalah ANGKA AKHIR METER LAMA (penutup periode). Baris itu boleh
+        // diperbarui menjadi angka meter BARU. Duplikat baru terjadi kalau
+        // sudah ada bacaan meter baru (angkanya beda dari akhir meter lama).
+        $reset = $resetService->resetForPeriod($customer->id, $tahun, $bulan);
+
+        $existing = MeterReading::where('customer_id', $request->customer_id)
             ->where('reading_month', $bulan)
             ->where('reading_year', $tahun)
-            ->exists();
-
-        if ($exists) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Meter pelanggan untuk periode bulan dan tahun ini sudah dicatat.',
-            ], 400);
-        }
-
-        $last = MeterReading::where('customer_id', $request->customer_id)
-            ->orderByDesc('reading_year')
-            ->orderByDesc('reading_month')
             ->first();
 
-        if ($last && $request->meter_value < $last->meter_value) {
+        if ($existing) {
+            $isOldClosing = $reset
+                && (float) $existing->meter_value === (float) $reset->old_meter_final;
+
+            if (! $isOldClosing) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Meter pelanggan untuk periode bulan dan tahun ini sudah dicatat.',
+                ], 400);
+            }
+        }
+
+        // Meter awal periode. Untuk pelanggan yang baru reset, baseline-nya
+        // adalah `new_meter_start` (meter baru), bukan meter akhir bulan lalu.
+        $startMeter = $resetService->startMeterForPeriod($customer, $tahun, $bulan);
+
+        if ((float) $request->meter_value < $startMeter) {
             return response()->json([
                 'success' => false,
-                'message' => 'Angka meter tidak boleh lebih kecil dari bulan sebelumnya (Catatan terakhir: '.$last->meter_value.' m┬│)',
+                'message' => 'Angka meter tidak boleh lebih kecil dari meter awal periode ini ('.$startMeter.' m3).',
             ], 400);
         }
+
+        // Catatan: validasi "meter mundur" sudah ditangani oleh
+        // `startMeterForPeriod()` di atas. Untuk pelanggan yang baru reset,
+        // baseline-nya `new_meter_start` (mis. 0), sehingga meter baru yang
+        // lebih kecil dari angka akhir meter lama tetap diterima.
 
         // Foto meteran opsional: kalau tidak ada, `photo_url` disimpan null.
         $fileName = $request->hasFile('photo')
@@ -252,16 +303,29 @@ class MeterReadingController extends Controller
             ->setDay(min($batasTagihan, Carbon::create($tahun, $bulan, 1)->daysInMonth))
             ->setTimeFrom(now());
 
-        $result = DB::transaction(function () use ($request, $customer, $bulan, $tahun, $fileName, $recordedAt, $toleransiTagihan) {
-            $reading = MeterReading::create([
-                'customer_id' => $customer->id,
-                'recorded_by' => Auth::id(),
-                'reading_month' => $bulan,
-                'reading_year' => $tahun,
-                'meter_value' => $request->meter_value,
-                'photo_url' => $fileName,
-                'recorded_at' => $recordedAt,
-            ]);
+        $result = DB::transaction(function () use ($request, $customer, $bulan, $tahun, $fileName, $recordedAt, $toleransiTagihan, $reset, $existing) {
+            if ($reset && $existing) {
+                // Baris yang ada adalah angka akhir meter lama (penutup).
+                // Sekarang diisi angka meter BARU untuk periode yang sama.
+                $existing->update([
+                    'recorded_by' => Auth::id(),
+                    'meter_value' => $request->meter_value,
+                    'photo_url' => $fileName ?: $existing->photo_url,
+                    'recorded_at' => $recordedAt,
+                ]);
+
+                $reading = $existing->fresh();
+            } else {
+                $reading = MeterReading::create([
+                    'customer_id' => $customer->id,
+                    'recorded_by' => Auth::id(),
+                    'reading_month' => $bulan,
+                    'reading_year' => $tahun,
+                    'meter_value' => $request->meter_value,
+                    'photo_url' => $fileName,
+                    'recorded_at' => $recordedAt,
+                ]);
+            }
 
             $bill = app(BillingService::class)
                 ->generateForCustomer($customer, $tahun, $bulan, $toleransiTagihan);
@@ -292,6 +356,104 @@ class MeterReadingController extends Controller
                 'reading' => $result['reading'],
                 'bill' => $result['bill'],
                 'suspended' => $suspended,
+            ],
+        ]);
+    }
+
+    /**
+     * Reset / ganti meteran (admin saja).
+     *
+     * Menutup meter lama pada periode ini dan menandai awal meter baru.
+     * Tagihan meter lama hanya biaya pemakaian (tanpa abodemen/denda),
+     * tagihan meter baru dibuat saat angka meter baru diinput.
+     */
+    public function reset(Request $request)
+    {
+        $request->validate([
+            'customer_id' => 'required|integer|exists:customers,id',
+            'month' => 'required|integer|between:1,12',
+            'year' => 'required|integer|min:2000',
+            'old_meter_final' => 'nullable|integer|min:0|max:99999999',
+            'new_meter_start' => 'nullable|integer|min:0|max:99999999',
+            'reason' => 'required|string|max:1000',
+        ], [
+            'customer_id.required' => 'Pelanggan wajib diisi.',
+            'customer_id.exists' => 'Pelanggan tidak ditemukan.',
+            'month.required' => 'Periode bulan wajib diisi.',
+            'year.required' => 'Periode tahun wajib diisi.',
+            'reason.required' => 'Alasan reset wajib diisi.',
+        ]);
+
+        if ($request->user()?->role !== 'admin') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Reset meter hanya dapat dilakukan oleh admin.',
+            ], 403);
+        }
+
+        $month = (int) $request->month;
+        $year = (int) $request->year;
+
+        $customer = Customer::with(['ticket.package', 'ticket.user', 'user'])
+            ->findOrFail($request->customer_id);
+
+        if (! $customer->ticket || ! $customer->ticket->package) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Pelanggan ini belum memiliki paket aktif sehingga tidak bisa direset.',
+            ], 422);
+        }
+
+        $service = app(MeterResetService::class);
+
+        if ($service->resetForPeriod($customer->id, $year, $month)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Meter pelanggan ini sudah pernah direset pada periode tersebut.',
+            ], 409);
+        }
+
+        // Tagihan periode ini tidak boleh sudah lunas.
+        $bill = MonthlyBill::where('customer_id', $customer->id)
+            ->where('billing_period_year', $year)
+            ->where('billing_period_month', $month)
+            ->where('meter_segment', '!=', 'lama')
+            ->first();
+
+        if ($bill) {
+            $recalc = app(\App\Services\BillRecalculationService::class);
+
+            if ($recalc->isBillPaid($bill)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Tagihan periode ini sudah lunas sehingga tidak bisa direset. Reset dapat dilakukan pada periode berikutnya.',
+                ], 409);
+            }
+        }
+
+        try {
+            $result = $service->performReset(
+                $customer,
+                $year,
+                $month,
+                $request->filled('old_meter_final') ? (float) $request->old_meter_final : null,
+                (float) ($request->new_meter_start ?? 0),
+                (string) $request->reason,
+                $request->user()?->id,
+            );
+        } catch (\RuntimeException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 422);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Meter berhasil direset. Meter lama ditutup, meter baru mulai dari '.$result['reset']->new_meter_start.' m3.',
+            'data' => [
+                'reset' => $result['reset'],
+                'bill' => $result['bill'],
             ],
         ]);
     }

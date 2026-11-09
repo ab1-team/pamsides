@@ -144,6 +144,10 @@ const caterName = computed(() => {
 
 const PAGE_CONFIG = { paper_size: 'A4', orientation: 'portrait' }
 
+// Pelanggan yang pernah reset meter pada periode ini. Dipakai untuk blok
+// "Catatan: Meter Lama / Meter Baru" di bagian bawah laporan.
+const resetItems = computed(() => (tableData.value || []).filter((r) => r.isReset))
+
 const isLoading = ref(true)
 const errorMsg = ref('')
 const pages = ref([])
@@ -212,11 +216,25 @@ const buildPages = () => {
 
   const flatChunks = groupedChunks.flatMap((g) => g.chunks)
 
+  // Halaman utama (normal) tetap menampilkan meter lama terakhir untuk
+  // pelanggan yang reset — bukan meter baru. Jadi barisnya tidak lompat
+  // mundur dan terlihat berhenti di meter sebelum reset. Meter baru hanya
+  // tampil di halaman "Catatan : Meter Baru".
+  const toNormalRows = (rows) =>
+    rows.map((row) => {
+      if (!row.isReset) return row
+      return {
+        ...row,
+        meterAwal: row.resetLamaStart != null ? row.resetLamaStart : row.meterAwal,
+        meterAkhir: row.resetLamaEnd != null ? row.resetLamaEnd : row.meterAkhir,
+      }
+    })
+
   pages.value = flatChunks.map((chunk, i) => ({
     payload: {
       config: PAGE_CONFIG,
       dusun: chunk.dusun,
-      items: chunk.items,
+      items: toNormalRows(chunk.items),
       filter: { ...filter.value, cater: caterName.value },
       lembaga: defaultLembaga(),
       startIndex: chunk.startIndex,
@@ -228,6 +246,68 @@ const buildPages = () => {
       total: flatChunks.length,
     },
   }))
+
+  // Hasil reset meter dicetak di HALAMAN TERPISAH (bukan menempel di
+  // halaman terakhir). Halaman meter lama diberi judul sesuai alasan reset
+  // (mis. "Catatan : Meter Rusak"), dan halaman meter baru tetap
+  // "Catatan : Meter Baru". Kolom Keterangan pada kedua halaman dikosongkan.
+  if (resetItems.value.length > 0) {
+    const resetByDusun = {}
+    resetItems.value.forEach((row) => {
+      const dusun = row.dusun || 'Lainnya'
+      if (!resetByDusun[dusun]) resetByDusun[dusun] = []
+      resetByDusun[dusun].push(row)
+    })
+
+    const resetPages = []
+
+    const pushSegPages = (dusun, label, segItems, segmentMeta) => {
+      let cursor = 0
+      let pageNo = 0
+      while (cursor < segItems.length) {
+        const size = pageNo === 0 ? FIRST_PAGE_ROWS : PER_PAGE_ROWS
+        const end = Math.min(cursor + size, segItems.length)
+        resetPages.push({
+          payload: {
+            config: PAGE_CONFIG,
+            dusun,
+            items: segItems.slice(cursor, end),
+            filter: { ...filter.value, cater: caterName.value },
+            lembaga: defaultLembaga(),
+            startIndex: 0,
+            showMeta: true,
+            catatan: label,
+          },
+          meta: { dusun, segment: segmentMeta },
+        })
+        cursor = end
+        pageNo += 1
+      }
+    }
+
+    Object.entries(resetByDusun).forEach(([dusun, rows]) => {
+      // Satu halaman "Meter Rusak" untuk SEMUA pelanggan reset (apa pun
+      // keterangannya: rusak, hilang, dll), memakai nilai meter lama.
+      const rusakItems = rows.map((row) => ({
+        ...row,
+        meterAwal: row.resetLamaStart,
+        meterAkhir: row.resetLamaEnd,
+        keterangan: '',
+      }))
+      pushSegPages(dusun, 'Meter Rusak', rusakItems, 'rusak')
+
+      // Halaman meter baru untuk semua pelanggan reset.
+      const baruItems = rows.map((row) => ({
+        ...row,
+        meterAwal: row.resetBaruStart,
+        meterAkhir: row.resetBaruEnd,
+        keterangan: '',
+      }))
+      pushSegPages(dusun, 'Meter Baru', baruItems, 'baru')
+    })
+
+    pages.value = [...pages.value, ...resetPages]
+  }
 }
 
 const scrollToPage = (idx) => {

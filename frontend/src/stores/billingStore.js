@@ -35,7 +35,13 @@ export const useBillingStore = defineStore('billing', () => {
       const mb = Number(b.billing_period_month)
       if (Number.isFinite(ya) && Number.isFinite(yb)) {
         if (ya !== yb) return ya - yb
-        if (Number.isFinite(ma) && Number.isFinite(mb)) return ma - mb
+        if (Number.isFinite(ma) && Number.isFinite(mb)) {
+          if (ma !== mb) return ma - mb
+          // Periode sama (reset): tampilkan Meter Lama dulu, lalu Meter Baru.
+          const rank = (p) =>
+            p.meter_segment === 'lama' ? 0 : p.meter_segment === 'baru' ? 2 : 1
+          return rank(a) - rank(b)
+        }
       }
       return 0
     })
@@ -135,9 +141,15 @@ export const useBillingStore = defineStore('billing', () => {
             type = 'paid'
           }
 
+          const segment = bill.meter_segment || 'normal'
+          const segmentLabel =
+            segment === 'lama' ? ' · Meter Lama' : segment === 'baru' ? ' · Meter Baru' : ''
+
           return {
             id: bill.id,
-            period: `${monthNames[bill.billing_period_month - 1]} ${bill.billing_period_year}`,
+            meter_segment: segment,
+            meter_reset_id: bill.meter_reset_id ?? null,
+            period: `${monthNames[bill.billing_period_month - 1]} ${bill.billing_period_year}${segmentLabel}`,
             status:
               bill.status === 'paid'
                 ? 'LUNAS'
