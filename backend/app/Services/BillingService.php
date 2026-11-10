@@ -5,109 +5,138 @@ namespace App\Services;
 use App\Models\Customer;
 use App\Models\MonthlyBill;
 use App\Models\Setting;
-use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class BillingService
 {
     private TariffCalculator $tariffCalculator;
 
-    public function __construct(?TariffCalculator $tariffCalculator = null)
-    {
+    private MeterResetService $meterResetService;
+
+    public function __construct(
+        ?TariffCalculator $tariffCalculator = null,
+        ?MeterResetService $meterResetService = null,
+    ) {
         $this->tariffCalculator = $tariffCalculator ?? new TariffCalculator;
+        $this->meterResetService = $meterResetService ?? new MeterResetService($this->tariffCalculator);
     }
 
     public function generateForCustomer(Customer $customer, int $year, int $month, ?int $toleransiTunggakan = null): MonthlyBill
     {
-        $currentReading = $customer->meterReadings()
-            ->where('reading_year', $year)
-            ->where('reading_month', $month)
-            ->first();
+        return DB::transaction(function () use ($customer, $year, $month, $toleransiTunggakan) {
+            // Kunci baris pelanggan selama generate. Dua request bersamaan
+            // untuk pelanggan yang sama akan berjalan berurutan sehingga
+            // cek-lalu-insert di bawah tidak bisa menghasilkan tagihan dobel
+            // per segmen (skema sengaja mengizinkan `lama` + `baru`).
+            Customer::whereKey($customer->id)->lockForUpdate()->first();
 
-        if (! $currentReading) {
-            throw new \RuntimeException('Belum ada pencatatan meter untuk periode ini.');
-        }
+            $currentReading = $customer->meterReadings()
+                ->where('reading_year', $year)
+                ->where('reading_month', $month)
+                ->first();
 
-        $lastMonth = $month === 1 ? 12 : $month - 1;
-        $lastMonthYear = $month === 1 ? $year - 1 : $year;
+            if (! $currentReading) {
+                throw new \RuntimeException('Belum ada pencatatan meter untuk periode ini.');
+            }
 
-        $previousReading = $customer->meterReadings()
-            ->where('reading_year', $lastMonthYear)
-            ->where('reading_month', $lastMonth)
-            ->first();
+            // Meter awal periode. Kalau periode ini punya reset, baseline-nya
+            // adalah `new_meter_start` (meter baru), bukan meter akhir bulan lalu.
+            $startMeter = $this->meterResetService->startMeterForPeriod($customer, $year, $month);
 
-        $startMeter = $previousReading
-            ? $previousReading->meter_value
-            : $customer->initial_meter_reading;
+            // Segmen tagihan: `baru` kalau periode ini ada reset, selain itu `normal`.
+            $reset = $this->meterResetService->resetForPeriod($customer->id, $year, $month);
+            $segment = $reset ? 'baru' : 'normal';
 
-        $endMeter = $currentReading->meter_value;
-        $usageM3 = max(0, $endMeter - $startMeter);
+            $endMeter = $currentReading->meter_value;
+            $usageM3 = max(0, $endMeter - $startMeter);
 
-        $usageCharge = $this->calculateProgressiveCharge(
-            $customer->ticket->package,
-            $usageM3
-        );
+            $usageCharge = $this->calculateProgressiveCharge(
+                $customer->ticket->package,
+                $usageM3
+            );
 
-        $abodemen = round($customer->ticket->package->monthly_abodemen);
-        $penaltyAmount = $this->calculatePenalty($customer, $year, $month);
+            $abodemen = round($customer->ticket->package->monthly_abodemen);
+            $penaltyAmount = $this->calculatePenalty($customer, $year, $month);
 
-        $totalAmount = round($usageCharge + $abodemen + $penaltyAmount);
+            $totalAmount = round($usageCharge + $abodemen + $penaltyAmount);
 
-        if ($toleransiTunggakan === null) {
-            $settings = Setting::first();
-            $toleransiTunggakan = $settings?->toleransi_tunggakan ?? 27;
-        }
+            if ($toleransiTunggakan === null) {
+                $settings = Setting::first();
+                $toleransiTunggakan = $settings?->toleransi_tunggakan ?? 27;
+            }
 
-        // Tagihan Rp 0 bisa langsung berstatus `paid` — TAPI hanya kalau nolnya
-        // benar-benar bisa dibenarkan, yaitu pelanggan tidak mengonsumsi air.
-        //
-        // Dua penyebab total_amount == 0 sama sekali berbeda sifatnya:
-        //
-        // 1. usage_m3 == 0 → pelanggan memang tidak pakai air, jadi tidak ada
-        //    apa pun untuk dibayar. Nol ini sah. Kalau dibiarkan `unpaid`, dia
-        //    akan memenuhi lonceng navbar sebagai "tagihan belum bayar", ikut
-        //    dihitung menunggak di dashboard, dan menjatuhkan tiket jadi
-        //    `suspended` — semuanya untuk sesuatu yang tidak ada uangnya.
-        //
-        // 2. usage_m3 > 0 tapi total tetap 0 → berarti `calculateProgressiveCharge`
-        //    mengembalikan 0 padahal air mengalir. Penyebabnya hampir selalu
-        //    paket belum punya blok tarif (`water_tariff_blocks` kosong) atau
-        //    semua `price_per_m3`-nya 0. Paket dan blok tarif memang dibuat
-        //    terpisah lewat endpoint berbeda, jadi kondisi ini bisa tersimpan.
-        //    Auto-paid di sini berarti pelanggan yang benar-benar pakai air
-        //    dapat air gratis, dan paket rusak ikut tersembunyi selamanya.
-        //
-        // Jadi cases (2) sengaja dibiarkan `unpaid`: tagihannya Rp 0 tapi
-        // statusnya menggantung di daftar tagihan supaya terlihat dan bisa
-        // dibetulkan admin, bukan hilang diam-diam.
-        $isNihilLegitimate = $usageM3 <= 0 && $totalAmount <= 0;
+            // Tagihan Rp 0 bisa langsung berstatus `paid` — TAPI hanya kalau nolnya
+            // benar-benar bisa dibenarkan, yaitu pelanggan tidak mengonsumsi air.
+            //
+            // Dua penyebab total_amount == 0 sama sekali berbeda sifatnya:
+            //
+            // 1. usage_m3 == 0 → pelanggan memang tidak pakai air, jadi tidak ada
+            //    apa pun untuk dibayar. Nol ini sah. Kalau dibiarkan `unpaid`, dia
+            //    akan memenuhi lonceng navbar sebagai "tagihan belum bayar", ikut
+            //    dihitung menunggak di dashboard, dan menjatuhkan tiket jadi
+            //    `suspended` — semuanya untuk sesuatu yang tidak ada uangnya.
+            //
+            // 2. usage_m3 > 0 tapi total tetap 0 → berarti `calculateProgressiveCharge`
+            //    mengembalikan 0 padahal air mengalir. Penyebabnya hampir selalu
+            //    paket belum punya blok tarif (`water_tariff_blocks` kosong) atau
+            //    semua `price_per_m3`-nya 0. Paket dan blok tarif memang dibuat
+            //    terpisah lewat endpoint berbeda, jadi kondisi ini bisa tersimpan.
+            //    Auto-paid di sini berarti pelanggan yang benar-benar pakai air
+            //    dapat air gratis, dan paket rusak ikut tersembunyi selamanya.
+            //
+            // Jadi cases (2) sengaja dibiarkan `unpaid`: tagihannya Rp 0 tapi
+            // statusnya menggantung di daftar tagihan supaya terlihat dan bisa
+            // dibetulkan admin, bukan hilang diam-diam.
+            $isNihilLegitimate = $usageM3 <= 0 && $totalAmount <= 0;
 
-        if ($usageM3 > 0 && $totalAmount <= 0) {
-            Log::warning('Tagihan Rp 0 padahal pelanggan memakai air — konfigurasi paket kemungkinan bermasalah', [
-                'customer_id' => $customer->id,
-                'package_id' => $customer->ticket->package->id ?? null,
+            if ($usageM3 > 0 && $totalAmount <= 0) {
+                Log::warning('Tagihan Rp 0 padahal pelanggan memakai air — konfigurasi paket kemungkinan bermasalah', [
+                    'customer_id' => $customer->id,
+                    'package_id' => $customer->ticket->package->id ?? null,
+                    'usage_m3' => $usageM3,
+                    'total_amount' => $totalAmount,
+                    'period' => $year.'-'.$month,
+                ]);
+            }
+
+            $status = $isNihilLegitimate ? 'paid' : 'unpaid';
+
+            $payload = [
+                'meter_reset_id' => $reset?->id,
+                'meter_segment' => $segment,
+                'meter_reading_start' => $startMeter,
+                'meter_reading_end' => $endMeter,
                 'usage_m3' => $usageM3,
+                'usage_charge' => $usageCharge,
+                'abodemen' => $abodemen,
+                'penalty_amount' => $penaltyAmount,
                 'total_amount' => $totalAmount,
-                'period' => $year.'-'.$month,
-            ]);
-        }
+                'status' => $status,
+                'due_date' => $this->computeDueDate($year, $month, $toleransiTunggakan),
+            ];
 
-        $status = $isNihilLegitimate ? 'paid' : 'unpaid';
+            // Idempoten per segmen: periode yang sama boleh punya satu tagihan
+            // `lama` dan satu tagihan `baru`, tetapi tidak boleh dobel per segmen.
+            $existing = MonthlyBill::where('customer_id', $customer->id)
+                ->where('billing_period_year', $year)
+                ->where('billing_period_month', $month)
+                ->where('meter_segment', $segment)
+                ->lockForUpdate()
+                ->first();
 
-        return MonthlyBill::create([
-            'customer_id' => $customer->id,
-            'billing_period_year' => $year,
-            'billing_period_month' => $month,
-            'meter_reading_start' => $startMeter,
-            'meter_reading_end' => $endMeter,
-            'usage_m3' => $usageM3,
-            'usage_charge' => $usageCharge,
-            'abodemen' => $abodemen,
-            'penalty_amount' => $penaltyAmount,
-            'total_amount' => $totalAmount,
-            'status' => $status,
-            'due_date' => $this->computeDueDate($year, $month, $toleransiTunggakan),
-        ]);
+            if ($existing) {
+                $existing->update($payload);
+
+                return $existing;
+            }
+
+            return MonthlyBill::create(array_merge($payload, [
+                'customer_id' => $customer->id,
+                'billing_period_year' => $year,
+                'billing_period_month' => $month,
+            ]));
+        });
     }
 
     /**
@@ -131,13 +160,13 @@ class BillingService
         $prevMonth = $month === 1 ? 12 : $month - 1;
         $prevMonthYear = $month === 1 ? $year - 1 : $year;
 
-        $oldBill = MonthlyBill::where('customer_id', $customer->id)
+        $hasUnpaid = MonthlyBill::where('customer_id', $customer->id)
             ->where('billing_period_year', $prevMonthYear)
             ->where('billing_period_month', $prevMonth)
             ->where('status', 'unpaid')
-            ->first();
+            ->exists();
 
-        if (! $oldBill) {
+        if (! $hasUnpaid) {
             return 0;
         }
 
@@ -191,14 +220,7 @@ class BillingService
      */
     public function computeDueDate(int $year, int $month, int $day = 27): string
     {
-        $carbon = Carbon::create($year, $month, 1);
-
-        $next = $carbon->copy()->addMonthNoOverflow();
-
-        $maxDay = $next->daysInMonth;
-        $day = min(max(1, $day), $maxDay);
-
-        return $next->setDay($day)->toDateString();
+        return (new DueDateCalculator)->compute($year, $month, $day);
     }
 
     public function calculateChargeForTesting($package, float $usageM3): float

@@ -28,17 +28,32 @@ class CustomerController extends Controller
      */
     private function findTicketByIdentifier($id): ?InstallationTicket
     {
+        $identifier = trim((string) $id);
+
+        if ($identifier === '') {
+            return null;
+        }
+
+        // 1) No. Induk / customer_code — HARUS dicari sebagai string.
+        //    Jangan memakai find() lebih dulu untuk identifier non-angka:
+        //    MySQL mengonversi string seperti "1.00.121276" menjadi angka 1,
+        //    sehingga find() salah mengembalikan tiket id 1 (pelanggan lain).
         $ticket = InstallationTicket::with(['user', 'customer'])
-            ->find($id);
+            ->whereHas('customer', fn ($q) => $q->where('customer_code', $identifier))
+            ->first();
 
         if ($ticket) {
             return $ticket;
         }
 
-        // Bukan id tiket: bisa jadi customer_code.
-        return InstallationTicket::with(['user', 'customer'])
-            ->whereHas('customer', fn ($q) => $q->where('customer_code', (string) $id))
-            ->first();
+        // 2) Fallback: ID tiket berupa angka murni (pelanggan draft yang
+        //    belum punya customer_code).
+        if (ctype_digit($identifier)) {
+            return InstallationTicket::with(['user', 'customer'])
+                ->find((int) $identifier);
+        }
+
+        return null;
     }
 
     /**

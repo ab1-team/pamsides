@@ -23,6 +23,17 @@ export const meterService = {
     })
     return response.data
   },
+
+  /**
+   * Reset / ganti meteran (admin saja).
+   *
+   * Menutup meter lama pada periode ini lalu menandai awal meter baru.
+   * Payload: { customer_id, month, year, old_meter_final, new_meter_start, reason }
+   */
+  async resetMeter(payload = {}) {
+    const response = await api.post('/meter-readings/reset', payload)
+    return response.data
+  },
 }
 
 export default meterService
