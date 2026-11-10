@@ -372,7 +372,7 @@ const handleReset = async () => {
           <li style="margin-bottom:0">Riwayat meter lama tetap tersimpan</li>
         </ul>
       </div>
-      <p style="margin:0">Lanjutkan jika Anda ingin mengganti meteran pelanggan ini.</p>
+      <p style="margin:0">Lanjutkan jika Anda ingin merubah meteran pelanggan ini.</p>
     </div>`,
     showCancelButton: true,
     confirmButtonText: 'Ya, Reset Meter',
