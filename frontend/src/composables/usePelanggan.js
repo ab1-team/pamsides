@@ -24,15 +24,10 @@ export function usePelanggan(router = null) {
   let searchTimer = null
 
   const mapRow = (c) => ({
-    // `id` dipakai handleEdit untuk membuka /customers/{id}, jadi harus
-    // customer_code bila ada — itulah yang ditampilkan di kolom ID dan yang
-    // dibaca show()/update()/destroy() lewat findTicketByIdentifier().
-    //
-    // Kalau customer_code belum ada (pelanggan hasil form Tambah, yang belum
-    // diaktivasi), `id` berupa ANGKA. Karena itu nilainya dipaksa jadi string:
-    // `row.id.toLowerCase()` dulu melempar TypeError tepat ketika user
-    // mengetik di kotak search, dan tabel ikut kosong walau data hasil simpan
-    // memang ada.
+    // `id` dipakai untuk tampilan (kolom ID) dan pencarian: customer_code
+    // bila ada, kalau belum ada (pelanggan draft) pakai ID tiket.
+    // Aksi edit/hapus memakai `realId` (ID tiket angka) supaya tidak salah
+    // pelanggan akibat customer_code mengandung titik.
     id: c.customer_code || String(c.id),
     realId: c.id,
     nama: c.name || '-',
@@ -153,7 +148,12 @@ export function usePelanggan(router = null) {
   // Fungsi-fungsi penanganan aksi
   const handleEdit = (row) => {
     if (router) {
-      router.push(`/app/data-pelanggan/edit/${row.id}`)
+      // Pakai ID tiket asli (angka), bukan customer_code. customer_code
+      // mengandung titik (mis. "1.00.121276"); kalau dikirim ke endpoint
+      // /customers/{id}, MySQL bisa mengonversinya jadi angka 1 dan
+      // memuat pelanggan lain. ID tiket selalu tepat.
+      const id = row.realId ?? row.id
+      router.push(`/app/data-pelanggan/edit/${id}`)
     }
   }
 
@@ -164,10 +164,9 @@ export function usePelanggan(router = null) {
       successMessage: 'Data pelanggan berhasil dihapus',
       entity: 'pelanggan',
       onConfirm: async () => {
-        // Pakai id yang sama dengan handleEdit (customer_code || id) supaya
-        // backend menerima identifier yang konsisten. Keduanya sudah didukung
-        // findTicketByIdentifier(), jadi ini aman untuk kolom ID manapun.
-        await customerService.deleteCustomer(row.id)
+        // Sama seperti handleEdit: pakai ID tiket asli agar tidak salah
+        // pelanggan karena konversi numerik customer_code.
+        await customerService.deleteCustomer(row.realId ?? row.id)
         // fetchCustomers() membaca keyword & nomor halaman dari state, jadi
         // hasil pencarian yang sedang aktif tetap terjaga.
         await fetchCustomers()

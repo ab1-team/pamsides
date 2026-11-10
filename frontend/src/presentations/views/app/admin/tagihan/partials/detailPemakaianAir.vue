@@ -291,11 +291,24 @@ const fetchData = async () => {
     if (res.data) {
       // Map data backend ke format tabel jika perlu
       customers.value = res.data.map((item) => {
-        // Meter Awal diambil dari pencatatan bulan lalu
+        // Kalau periode ini sudah direset, meter awal memakai `new_meter_start`
+        // (meter baru), bukan angka akhir meter lama. Backend mengirim
+        // `meter_start_value` untuk pelanggan yang pernah reset — berlaku
+        // baik saat reset di periode ini maupun bacaan pertama setelah reset.
+        const reset = (item.meter_resets || []).find(
+          (r) => Number(r.period_year) === yearVal && Number(r.period_month) === monthVal,
+        )
+
+        // Meter Awal: prioritas baseline reset dari backend, lalu pencatatan
+        // bulan lalu, lalu meter awal pelanggan.
         const awal =
-          item.meter_readings && item.meter_readings.length > 0
-            ? item.meter_readings[0].meter_value
-            : item.initial_meter_reading
+          item.meter_start_value != null
+            ? Number(item.meter_start_value)
+            : reset
+              ? Number(reset.new_meter_start)
+              : item.meter_readings && item.meter_readings.length > 0
+                ? item.meter_readings[0].meter_value
+                : item.initial_meter_reading
 
         // Pemakaian bulan lalu: dari MonthlyBill > MeterReading > 0
         let usageLalu = 0

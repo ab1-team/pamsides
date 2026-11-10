@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Customer;
 use App\Models\MeterReading;
 use App\Models\MonthlyBill;
+use App\Models\Setting;
 use App\Models\Transaction;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -28,7 +29,14 @@ use Illuminate\Support\Facades\Log;
  */
 class BillRecalculationService
 {
-    public function __construct(private BillingService $billingService) {}
+    private MeterResetService $meterResetService;
+
+    public function __construct(
+        private BillingService $billingService,
+        ?MeterResetService $meterResetService = null,
+    ) {
+        $this->meterResetService = $meterResetService ?? new MeterResetService(new TariffCalculator);
+    }
 
     /**
      * Hitung ulang tagihan untuk satu pelanggan pada satu periode.
@@ -47,12 +55,26 @@ class BillRecalculationService
             throw new \RuntimeException('Pelanggan ini belum memiliki paket aktif sehingga tidak bisa ditagih.');
         }
 
+        // Pilih tagihan aktif. Kalau ada reset, periode ini punya tagihan
+        // `lama` (penutup) dan `baru` (meter baru) — yang dihitung ulang
+        // adalah yang BUKAN `lama`.
         $bill = MonthlyBill::where('customer_id', $customer->id)
             ->where('billing_period_year', $year)
             ->where('billing_period_month', $month)
+            ->where('meter_segment', '!=', 'lama')
             ->first();
 
-        $startMeter = $this->resolveStartMeter($customer, $year, $month);
+        if (! $bill) {
+            $bill = MonthlyBill::where('customer_id', $customer->id)
+                ->where('billing_period_year', $year)
+                ->where('billing_period_month', $month)
+                ->first();
+        }
+
+        $reset = $this->meterResetService->resetForPeriod($customer->id, $year, $month);
+
+        // Baseline meter: `new_meter_start` bila periode ini punya reset.
+        $startMeter = $this->meterResetService->startMeterForPeriod($customer, $year, $month);
 
         $currentReading = MeterReading::where('customer_id', $customer->id)
             ->where('reading_year', $year)
@@ -68,14 +90,19 @@ class BillRecalculationService
         $usageM3 = max(0, $endMeter - $startMeter);
         $usageCharge = $this->billingService->calculateProgressiveCharge($package, $usageM3);
 
-        $abodemen = round((float) $package->monthly_abodemen);
+        // Tagihan meter lama (penutup) tidak kena abodemen/denda.
+        $isOldSegment = $bill && $bill->meter_segment === 'lama';
+
+        $abodemen = $isOldSegment ? 0 : round((float) $package->monthly_abodemen);
 
         // Denda beku: kalau tagihan sudah ada, nilai lamanya yang dipakai.
         // Kalau tagihan baru, dendanya dihitung dari tagihan bulan
         // sebelumnya (sama seperti generator).
-        $penalty = $bill
-            ? round((float) $bill->penalty_amount)
-            : round($this->billingService->calculatePenalty($customer, $year, $month));
+        $penalty = $isOldSegment
+            ? 0
+            : ($bill
+                ? round((float) $bill->penalty_amount)
+                : round($this->billingService->calculatePenalty($customer, $year, $month)));
 
         $totalAmount = round($usageCharge + $abodemen + $penalty);
 
@@ -102,7 +129,7 @@ class BillRecalculationService
                 ]);
             }
 
-            $settings = \App\Models\Setting::first();
+            $settings = Setting::first();
 
             // Jatuh tempo memakai `toleransi_tunggakan` (tanggal bayar 1-28),
             // bukan `batas_tagihan`. Lihat `BillingService::computeDueDate()`.
@@ -110,6 +137,8 @@ class BillRecalculationService
 
             $bill = MonthlyBill::create(array_merge($after, [
                 'customer_id' => $customer->id,
+                'meter_reset_id' => $reset?->id,
+                'meter_segment' => $reset ? 'baru' : 'normal',
                 'billing_period_year' => $year,
                 'billing_period_month' => $month,
                 'status' => $status,
@@ -159,17 +188,7 @@ class BillRecalculationService
      */
     public function resolveStartMeter(Customer $customer, int $year, int $month): int
     {
-        $lastMonth = $month === 1 ? 12 : $month - 1;
-        $lastMonthYear = $month === 1 ? $year - 1 : $year;
-
-        $previousReading = MeterReading::where('customer_id', $customer->id)
-            ->where('reading_year', $lastMonthYear)
-            ->where('reading_month', $lastMonth)
-            ->first();
-
-        return $previousReading
-            ? (int) $previousReading->meter_value
-            : (int) $customer->initial_meter_reading;
+        return (int) round($this->meterResetService->startMeterForPeriod($customer, $year, $month));
     }
 
     /**
@@ -240,7 +259,7 @@ class BillRecalculationService
 
             $newAmount = $targets[$kredit];
 
-            if ((float) $row->saldo === (float) $newAmount) {
+            if (abs((float) $row->saldo - (float) $newAmount) < 0.01) {
                 continue;
             }
 

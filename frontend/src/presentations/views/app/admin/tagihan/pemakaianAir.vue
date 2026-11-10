@@ -206,6 +206,7 @@
       :show="showEditModal"
       :data="selectedRow"
       :on-save="handleSaveEdit"
+      :on-reset="handleResetMeter"
       @close="showEditModal = false"
     />
   </div>
@@ -219,6 +220,8 @@ import ContentCard from '@/presentations/components/ui/ContentCard.vue'
 import BaseButton from '@/presentations/components/ui/BaseButton.vue'
 import HasilInputModal from './partials/hasilInputModal.vue'
 import EditPemakaianModal from './editPemakaianAir.vue'
+import { meterService } from '@/services/meter.service'
+import { MySwal } from '@/utils/swal'
 import { parseLocalDate } from '@/utils/date'
 import { useRouter, useRoute } from 'vue-router'
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
@@ -246,9 +249,60 @@ const {
   handleSaveEdit,
   handleDelete,
   loadTeknisiOptions,
+  refreshData,
 } = usePemakaianAir()
 
 const requireTeknisi = computed(() => !!filter.value.teknisi)
+
+/**
+ * Proses reset / ganti meteran (admin).
+ *
+ * Periode diambil dari baris tagihan (`periodeBulan`/`periodeTahun`) supaya
+ * reset selalu masuk ke periode tagihan yang sedang diedit, bukan periode
+ * filter halaman yang kebetulan aktif.
+ */
+const handleResetMeter = async (payload) => {
+  const row = selectedRow.value
+  if (!row) return
+
+  try {
+    const res = await meterService.resetMeter({
+      customer_id: row.id,
+      month: row.periodeBulan || new Date().getMonth() + 1,
+      year: row.periodeTahun || new Date().getFullYear(),
+      old_meter_final: Number(payload.old_meter_final ?? row.meterAkhir ?? 0),
+      new_meter_start: Number(payload.new_meter_start ?? 0),
+      reason: payload.reason,
+    })
+
+    if (!res?.success) {
+      throw new Error(res?.message || 'Gagal reset meter.')
+    }
+
+    showEditModal.value = false
+    await refreshData()
+
+    MySwal.fire({
+      icon: 'success',
+      title: 'Meter berhasil direset',
+      text: res?.message || 'Meter lama ditutup dan meter baru dimulai.',
+      toast: true,
+      position: 'top-end',
+      showConfirmButton: false,
+      timer: 3000,
+      timerProgressBar: true,
+      customClass: { popup: 'swal-toast-custom' },
+    })
+  } catch (err) {
+    MySwal.fire({
+      icon: 'error',
+      title: 'Gagal Reset Meter',
+      text: err?.response?.data?.message || err?.message || 'Tidak dapat mereset meter.',
+      confirmButtonColor: '#ef4444',
+    })
+    throw err
+  }
+}
 
 let teknisiDebounceTimer = null
 watch(

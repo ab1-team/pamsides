@@ -58,18 +58,29 @@
             </div>
           </div>
 
-            <div class="relative! w-full! md:w-72! shrink-0!">
-              <div
-                class="absolute! inset-y-0! left-0! pl-3! flex! items-center pointer-events-none!"
-              >
-                <font-awesome-icon icon="search" class="text-slate-400! text-xs!" />
+            <div class="flex flex-col! sm:flex-row! items-stretch! sm:items-center! gap-2! w-full! md:w-auto! shrink-0!">
+              <div v-if="hasReset" class="w-full! sm:w-64! shrink-0!">
+                <SelectSearch
+                  v-model="selectedSegment"
+                  :options="segmentOptions"
+                  no-margin
+                  class="w-full!"
+                />
               </div>
-              <input
-                type="text"
-                v-model="searchQuery"
-                placeholder="Cari ..."
-                class="block w-full pl-9! pr-4! py-2! bg-white border border-slate-200 rounded-lg! text-sm! focus:outline-none focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 transition-all shadow-sm!"
-              />
+
+              <div class="relative! w-full! md:w-64! shrink-0!">
+                <div
+                  class="absolute! inset-y-0! left-0! pl-3! flex! items-center pointer-events-none!"
+                >
+                  <font-awesome-icon icon="search" class="text-slate-400! text-xs!" />
+                </div>
+                <input
+                  type="text"
+                  v-model="searchQuery"
+                  placeholder="Cari ..."
+                  class="block w-full pl-9! pr-4! py-2! bg-white border border-slate-200 rounded-lg! text-sm! focus:outline-none focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 transition-all shadow-sm!"
+                />
+              </div>
             </div>
           </div>
 
@@ -152,7 +163,7 @@
                     <td class="py-3! px-4! font-medium text-slate-900!">{{ item.nama }}</td>
                     <td class="py-3! px-4! text-slate-600!">{{ item.desa }}</td>
                     <td class="py-3! px-4! text-center! text-slate-600!">{{ item.rt || '-' }}</td>
-                    <td class="py-3! px-4! font-mono! text-slate-500! text-xs!">{{ item.id }}</td>
+                    <td class="py-3! px-4! font-mono! text-slate-500! text-xs!">{{ item.customer_code || item.id }}</td>
                     <td class="py-3! px-4! text-center! text-slate-600!">{{ item.meterAwal }}</td>
                     <td class="py-3! px-4! text-center! text-slate-600! font-semibold!">
                       {{ item.meterAkhir }}
@@ -232,6 +243,13 @@
 <script setup>
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
+import SelectSearch from '@/presentations/components/SelectSearch.vue'
+import {
+  SEGMENT_LAMA,
+  SEGMENT_BARU,
+  SEGMENT_RUSAK,
+  applyUsageSegment,
+} from '@/utils/usageSegment'
 
 const props = defineProps({
   show: {
@@ -254,6 +272,36 @@ const router = useRouter()
 
 const searchQuery = ref('')
 const selectedIds = ref([])
+const selectedSegment = ref(SEGMENT_LAMA)
+
+const allRows = computed(() => Object.values(props.groupedData || {}).flat())
+
+// Select segmen hanya muncul kalau ada pelanggan yang reset meter pada
+// periode ini (untuk teknisi yang dipilih). Kalau tidak ada reset, Hasil
+// Input tampil normal tanpa pilihan segmen.
+const hasReset = computed(() => allRows.value.some((row) => row.isReset))
+
+// Pilihan tetap: Meter Lama / Meter Baru / Meter Rusak.
+// "Meter Rusak" menampilkan SEMUA pelanggan reset apa pun keterangannya
+// (rusak, hilang, dll) memakai meter lama.
+const segmentOptions = [
+  { value: SEGMENT_LAMA, label: 'Meter Lama' },
+  { value: SEGMENT_BARU, label: 'Meter Baru' },
+  { value: SEGMENT_RUSAK, label: 'Meter Rusak' },
+]
+
+// Baris tabel mengikuti segmen yang dipilih di dropdown.
+const segmentRows = computed(() => applyUsageSegment(allRows.value, selectedSegment.value))
+
+const groupedRows = computed(() => {
+  const groups = {}
+  segmentRows.value.forEach((item) => {
+    const dusun = item.dusun || 'Lainnya'
+    if (!groups[dusun]) groups[dusun] = []
+    groups[dusun].push(item)
+  })
+  return groups
+})
 
 const bulanList = [
   'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
@@ -293,25 +341,21 @@ const isAllSelected = computed({
 
 const filteredGroups = computed(() => {
   const hidePending = (items) => items.filter((i) => (i.status || '').toUpperCase() !== 'PENDING')
-
-  if (!searchQuery.value) {
-    const result = {}
-    Object.entries(props.groupedData).forEach(([dusun, members]) => {
-      const filtered = hidePending(members)
-      if (filtered.length > 0) result[dusun] = filtered
-    })
-    return result
-  }
-
-  const query = searchQuery.value.toLowerCase()
+  const query = searchQuery.value.trim().toLowerCase()
   const result = {}
 
-  Object.entries(props.groupedData).forEach(([dusun, members]) => {
-    const matched = hidePending(members).filter(
-      (item) => item.nama.toLowerCase().includes(query) || item.id.toLowerCase().includes(query),
-    )
-    if (matched.length > 0) {
-      result[dusun] = matched
+  Object.entries(groupedRows.value).forEach(([dusun, members]) => {
+    let filtered = hidePending(members)
+    if (query) {
+      filtered = filtered.filter(
+        (item) =>
+          String(item.nama || '').toLowerCase().includes(query) ||
+          String(item.customer_code || '').toLowerCase().includes(query) ||
+          String(item.id || '').toLowerCase().includes(query),
+      )
+    }
+    if (filtered.length > 0) {
+      result[dusun] = filtered
     }
   })
 
@@ -322,6 +366,7 @@ const buildReportQuery = () => {
   const query = {
     tahun: props.filter?.tahun || '',
     bulan: props.filter?.bulan || '',
+    segment: selectedSegment.value,
   }
   const teknisiId = props.filter?.teknisi
   const teknisiName = props.filter?.cater
@@ -333,6 +378,7 @@ const buildReportQuery = () => {
 const handleCetakDaftarTagihan = () => {
   if (selectedIds.value.length === 0) return
   sessionStorage.setItem('cetak_print_ids_daftar', selectedIds.value.join(','))
+  sessionStorage.setItem('cetak_print_segment_daftar', selectedSegment.value)
   const url = router.resolve({
     name: 'Cetak Daftar Tagihan',
     query: buildReportQuery(),
@@ -343,6 +389,7 @@ const handleCetakDaftarTagihan = () => {
 const handleCetakStruk = () => {
   if (selectedIds.value.length === 0) return
   sessionStorage.setItem('cetak_print_ids_struk', selectedIds.value.join(','))
+  sessionStorage.setItem('cetak_print_segment_struk', selectedSegment.value)
   const url = router.resolve({
     name: 'Cetak Struk',
     query: buildReportQuery(),
@@ -361,12 +408,24 @@ watch(
   (val) => {
     if (val) {
       document.body.style.overflow = 'hidden'
+      selectedSegment.value = SEGMENT_LAMA
       selectedIds.value = [...allVisibleIds.value]
     } else {
       document.body.style.overflow = ''
     }
   },
 )
+
+// Saat segmen diganti, semua baris pada view baru otomatis tercentang.
+watch(selectedSegment, () => {
+  selectedIds.value = [...allVisibleIds.value]
+})
+
+// Kalau data berubah jadi tidak ada reset (mis. ganti teknisi), kembalikan
+// ke tampilan normal.
+watch(hasReset, (val) => {
+  if (!val) selectedSegment.value = SEGMENT_LAMA
+})
 
 onMounted(() => {
   window.addEventListener('keydown', handleKeydown)

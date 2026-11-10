@@ -22,6 +22,11 @@
             <span class="meta-sep">:</span>
             <span class="meta-value">{{ tanggalCetak }}, Pukul {{ jamCetak }}</span>
           </div>
+          <div v-if="catatan" class="meta-row">
+            <span class="meta-label">Catatan</span>
+            <span class="meta-sep">:</span>
+            <span class="meta-value">{{ catatan }}</span>
+          </div>
         </div>
         <div class="meta-col meta-col-right">
           <div class="meta-row">
@@ -89,6 +94,7 @@ const props = defineProps({
 })
 
 const items = computed(() => props.payload?.items || [])
+const catatan = computed(() => props.payload?.catatan || '')
 const dusun = computed(() => props.payload?.dusun || '-')
 const filter = computed(() => props.payload?.filter || {})
 const lembaga = computed(() => props.payload?.lembaga || {})
