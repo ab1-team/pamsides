@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Customer;
 use App\Models\MeterReading;
 use App\Models\MonthlyBill;
+use App\Models\Setting;
 use App\Models\Transaction;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -128,7 +129,7 @@ class BillRecalculationService
                 ]);
             }
 
-            $settings = \App\Models\Setting::first();
+            $settings = Setting::first();
 
             // Jatuh tempo memakai `toleransi_tunggakan` (tanggal bayar 1-28),
             // bukan `batas_tagihan`. Lihat `BillingService::computeDueDate()`.
@@ -258,7 +259,7 @@ class BillRecalculationService
 
             $newAmount = $targets[$kredit];
 
-            if ((float) $row->saldo === (float) $newAmount) {
+            if (abs((float) $row->saldo - (float) $newAmount) < 0.01) {
                 continue;
             }
 

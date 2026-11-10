@@ -187,15 +187,14 @@ class MonthlyBillService
     /**
      * Jatuh tempo tagihan.
      *
-     * DIHEMAT ke `BillingService::computeDueDate()` supaya tidak ada dua
-     * salinan aturan yang bisa berbeda — dulu keduanya ada dan hanya satu
-     * yang diperbaiki, sehingga jatuh tempo tagihan yang dibuat lewat
-     * generator massal berbeda dari yang dibuat per pelanggan.
+     * Delegasi ke `DueDateCalculator` supaya hanya ada SATU salinan aturan.
+     * Dulu BillingService & MeterResetService masing-masing punya rumus
+     * sendiri dan bisa berbeda saat salah satunya diubah.
      *
-     * Lihat `BillingService::computeDueDate()` untuk aturan lengkapnya.
+     * Lihat `DueDateCalculator::compute()` untuk aturan lengkapnya.
      */
     public function computeDueDate(int $year, int $month, int $day = 27): string
     {
-        return app(BillingService::class)->computeDueDate($year, $month, $day);
+        return (new DueDateCalculator)->compute($year, $month, $day);
     }
 }

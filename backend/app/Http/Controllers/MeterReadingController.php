@@ -5,11 +5,11 @@ namespace App\Http\Controllers;
 use App\Http\Controllers\Concerns\AuthorizesMeterReadings;
 use App\Http\Controllers\Concerns\GeneratesSafeUploadNames;
 use App\Models\Customer;
-use App\Models\InstallationTicket;
 use App\Models\MeterReading;
 use App\Models\MonthlyBill;
 use App\Models\Setting;
 use App\Services\BillingService;
+use App\Services\BillRecalculationService;
 use App\Services\MeterResetService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -124,7 +124,7 @@ class MeterReadingController extends Controller
                     });
             });
 
-// Filter TEKNISI dari halaman "Data Pemakaian Air" (admin memilih
+        // Filter TEKNISI dari halaman "Data Pemakaian Air" (admin memilih
         // teknisi di kotak filter, lalu menekan "Input Pemakaian").
         //
         // Tanpa filter ini, daftar pencatatan menampilkan SEMUA pelanggan yang
@@ -259,7 +259,7 @@ class MeterReadingController extends Controller
 
         if ($existing) {
             $isOldClosing = $reset
-                && (float) $existing->meter_value === (float) $reset->old_meter_final;
+                && abs((float) $existing->meter_value - (float) $reset->old_meter_final) < 0.0001;
 
             if (! $isOldClosing) {
                 return response()->json([
@@ -373,8 +373,8 @@ class MeterReadingController extends Controller
             'customer_id' => 'required|integer|exists:customers,id',
             'month' => 'required|integer|between:1,12',
             'year' => 'required|integer|min:2000',
-            'old_meter_final' => 'nullable|integer|min:0|max:99999999',
-            'new_meter_start' => 'nullable|integer|min:0|max:99999999',
+            'old_meter_final' => 'nullable|numeric|min:0|max:99999999',
+            'new_meter_start' => 'nullable|numeric|min:0|max:99999999',
             'reason' => 'required|string|max:1000',
         ], [
             'customer_id.required' => 'Pelanggan wajib diisi.',
@@ -421,7 +421,7 @@ class MeterReadingController extends Controller
             ->first();
 
         if ($bill) {
-            $recalc = app(\App\Services\BillRecalculationService::class);
+            $recalc = app(BillRecalculationService::class);
 
             if ($recalc->isBillPaid($bill)) {
                 return response()->json([

@@ -113,9 +113,13 @@ class MeterResetService
                 ->first();
 
             // Bacaan pada periode reset dianggap "meter baru" bila angkanya
-            // berbeda dari angka akhir meter lama.
+            // berbeda dari angka akhir meter lama. Bandingkan dengan toleransi
+            // kecil karena kolomnya decimal, bukan float eksak.
             $hasNewReading = $resetReading
-                && (float) $resetReading->meter_value !== (float) $prevReset->old_meter_final;
+                && ! $this->sameMeterValue(
+                    (float) $resetReading->meter_value,
+                    (float) $prevReset->old_meter_final
+                );
 
             if (! $hasNewReading) {
                 $period = $year * 100 + $month;
@@ -155,6 +159,10 @@ class MeterResetService
         ?int $userId,
     ): array {
         return DB::transaction(function () use ($customer, $year, $month, $oldMeterFinal, $newMeterStart, $reason, $userId) {
+            // Serialisasi reset per pelanggan: dua request bersamaan tidak
+            // boleh sama-sama lolos cek "sudah pernah reset".
+            Customer::whereKey($customer->id)->lockForUpdate()->first();
+
             $existingReset = $this->resetForPeriod($customer->id, $year, $month);
             if ($existingReset) {
                 throw new \RuntimeException('Meter pelanggan ini sudah pernah direset pada periode tersebut.');
@@ -212,7 +220,7 @@ class MeterResetService
             if ($toleransi < 1) {
                 $toleransi = 27;
             }
-            $dueDate = $this->computeDueDate($year, $month, $toleransi);
+            $dueDate = (new DueDateCalculator)->compute($year, $month, $toleransi);
 
             $bill = MonthlyBill::where('customer_id', $customer->id)
                 ->where('billing_period_year', $year)
@@ -267,14 +275,12 @@ class MeterResetService
         });
     }
 
-    private function computeDueDate(int $year, int $month, int $day = 27): string
+    /**
+     * Perbandingan nilai meter dengan toleransi kecil. Kolom meter memakai
+     * decimal(10,2), jadi jangan dibandingkan dengan `===` float.
+     */
+    private function sameMeterValue(float $a, float $b): bool
     {
-        $carbon = Carbon::create($year, $month, 1);
-        $next = $carbon->copy()->addMonthNoOverflow();
-
-        $maxDay = $next->daysInMonth;
-        $day = min(max(1, $day), $maxDay);
-
-        return $next->setDay($day)->toDateString();
+        return abs($a - $b) < 0.0001;
     }
 }

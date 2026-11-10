@@ -384,14 +384,14 @@ const handleReset = async () => {
 
  const detail = await MySwal.fire({
   title: 'Konfirmasi Reset Meter',
-  html: `<div style="text-align:left;font-size:13px">
-      <label style="display:block;font-size:12px;font-weight:600;margin-bottom:6px">KETERANGAN</label>
-      <textarea id="swal-reset-reason" class="swal2-textarea" style="margin:0 0 16px;width:100%;height:76px;font-size:14px" placeholder="Contoh Meter : Rusak / Hilang / Baru"></textarea>
-      
-      <label style="display:block;font-size:12px;font-weight:600;margin-bottom:6px">METER AWAL METER BARU (m³)</label>
-      <input id="swal-new-start" type="number" min="0" value="0" class="swal2-input" style="margin:0;width:100%;font-size:15px;height:44px" />
-      
-      <p style="font-size:13px; color: #3d3c3c; margin-top:25px; text-align:center">
+  html: `<div class="pam-reset-body">
+      <label class="pam-reset-field-label">KETERANGAN</label>
+      <textarea id="swal-reset-reason" class="swal2-textarea pam-reset-textarea" placeholder="Contoh Meter : Rusak / Hilang / Baru"></textarea>
+
+      <label class="pam-reset-field-label">METER AWAL METER BARU (m³)</label>
+      <input id="swal-new-start" type="number" min="0" value="0" class="swal2-input pam-reset-start-input" />
+
+      <p class="pam-reset-hint">
         Meter lama tercatat sampai ${Number(localData.value.meterAkhir || 0)} m³.
       </p>
     </div>`,
@@ -422,20 +422,20 @@ const handleReset = async () => {
   const final = await MySwal.fire({
     icon: 'warning',
     title: 'Simpan Reset Meter?',
-    html: `<div style="text-align:left;font-size:14px;line-height:1.5">
-      <div style="border:1px solid #e5e7eb;border-radius:8px;padding:8px 14px;margin:0 auto 12px;max-width:320px">
-        <div style="display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:10px;padding:5px 0">
-          <span style="color:#64748b">Meter Lama</span>
-          <span style="color:#94a3b8">→</span>
-          <span style="font-weight:600;text-align:right">${Number(localData.value.meterAkhir || 0)} m³</span>
+    html: `<div class="pam-reset-summary-body">
+      <div class="pam-reset-summary">
+        <div class="pam-reset-row">
+          <span class="pam-reset-row-label">Meter Lama</span>
+          <span class="pam-reset-row-arrow">→</span>
+          <span class="pam-reset-row-value">${Number(localData.value.meterAkhir || 0)} m³</span>
         </div>
-        <div style="display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:10px;padding:5px 0;border-top:1px solid #f1f5f9">
-          <span style="color:#64748b">Meter Baru</span>
-          <span style="color:#94a3b8">→</span>
-          <span style="font-weight:600;text-align:right">${detail.value.newStart} m³</span>
+        <div class="pam-reset-row">
+          <span class="pam-reset-row-label">Meter Baru</span>
+          <span class="pam-reset-row-arrow">→</span>
+          <span class="pam-reset-row-value">${detail.value.newStart} m³</span>
         </div>
       </div>
-      <p style="margin:0;font-size:13px;color:#64748b;text-align:center">
+      <p class="pam-reset-note">
         Tagihan akan tampil sebagai Meter Lama dan Meter Baru.
       </p>
     </div>`,
