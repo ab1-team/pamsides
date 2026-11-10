@@ -276,6 +276,15 @@ const localData = ref({
 })
 const isSaving = ref(false)
 
+// Warna tombol SweetAlert dipusatkan di sini supaya tidak ada hex literal
+// berulang di setiap pemanggilan MySwal.fire().
+const SWAL_COLORS = {
+  danger: '#ef4444',
+  warning: '#f59e0b',
+  info: '#0ea5e9',
+  cancel: '#94a3b8',
+}
+
 watch(
   () => props.data,
   (v) => {
@@ -308,7 +317,7 @@ const handleSave = async () => {
       icon: 'warning',
       title: 'Tidak Bisa Diubah',
       text: 'Tagihan periode ini sudah lunas sehingga pemakaiannya tidak bisa diubah.',
-      confirmButtonColor: '#f59e0b',
+      confirmButtonColor: SWAL_COLORS.warning,
     })
   }
 
@@ -317,7 +326,7 @@ const handleSave = async () => {
       icon: 'error',
       title: 'Gagal',
       text: 'Meter akhir tidak valid!',
-      confirmButtonColor: '#ef4444',
+      confirmButtonColor: SWAL_COLORS.danger,
     })
   }
 
@@ -356,7 +365,7 @@ const handleReset = async () => {
       icon: 'info',
       title: 'Tidak Bisa Reset',
       text: 'Tagihan periode ini sudah lunas. Reset dapat dilakukan pada periode berikutnya.',
-      confirmButtonColor: '#0ea5e9',
+      confirmButtonColor: SWAL_COLORS.info,
     })
   }
 
@@ -377,8 +386,8 @@ const handleReset = async () => {
     showCancelButton: true,
     confirmButtonText: 'Ya, Reset Meter',
     cancelButtonText: 'Batal',
-    confirmButtonColor: '#ef4444',
-    cancelButtonColor: '#94a3b8',
+    confirmButtonColor: SWAL_COLORS.danger,
+    cancelButtonColor: SWAL_COLORS.cancel,
   })
   if (!info.isConfirmed) return
 
@@ -399,8 +408,8 @@ const handleReset = async () => {
     showCancelButton: true,
     confirmButtonText: 'Lanjut',
     cancelButtonText: 'Batal',
-    confirmButtonColor: '#ef4444',
-    cancelButtonColor: '#94a3b8',
+    confirmButtonColor: SWAL_COLORS.danger,
+    cancelButtonColor: SWAL_COLORS.cancel,
     preConfirm: () => {
       const reason = document.getElementById('swal-reset-reason')?.value?.trim() || ''
       const newStartRaw = document.getElementById('swal-new-start')?.value
@@ -442,8 +451,8 @@ const handleReset = async () => {
     showCancelButton: true,
     confirmButtonText: 'Simpan',
     cancelButtonText: 'Batal',
-    confirmButtonColor: '#ef4444',
-    cancelButtonColor: '#94a3b8',
+    confirmButtonColor: SWAL_COLORS.danger,
+    cancelButtonColor: SWAL_COLORS.cancel,
   })
   if (!final.isConfirmed) return
 
