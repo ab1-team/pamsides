@@ -173,7 +173,7 @@ class CustomerController extends Controller
             'package',
             'package.waterTariffBlocks',
             'village',
-        ])->whereIn('status', ['completed', 'suspended', 'terminated']);
+        ])->whereIn('status', ['pending', 'surveyed', 'unpaid', 'processing', 'completed', 'suspended', 'terminated']);
 
         if ($hasBills) {
             $query->whereHas('customer.monthlyBills');
@@ -182,7 +182,10 @@ class CustomerController extends Controller
         if ($q) {
             $query->where(function ($sub) use ($q) {
                 $sub->where('applicant_name', 'like', "%{$q}%")
-                    ->orWhere('nik', 'like', "%{$q}%");
+                    ->orWhere('nik', 'like', "%{$q}%")
+                    ->orWhereHas('customer', function ($customerQuery) use ($q) {
+                        $customerQuery->where('customer_code', 'like', "%{$q}%");
+                    });
             });
         }
 
