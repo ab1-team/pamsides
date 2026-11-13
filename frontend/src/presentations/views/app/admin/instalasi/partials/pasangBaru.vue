@@ -128,7 +128,7 @@
         </div>
       </ContentCard>
 
-      <ContentCard variant="bordered" padding="normal" rounded="2xl">
+      <ContentCard variant="bordered" padding="normal" rounded="2xl" class="flex-1!">
         <div class="flex! items-center! gap-2! mb-4!">
           <div
             class="w-7! h-7! rounded-lg! flex! items-center! justify-center!"
@@ -144,7 +144,7 @@
         </div>
 
         <div v-if="customer.rawStatus === 'surveyed'">
-          <div v-if="customer.surveyInfo" class="space-y-3!">
+          <div class="space-y-3!">
             <div
               v-if="customer.paymentInfo"
               class="rounded-xl! border! border-slate-200! bg-slate-50! p-3! space-y-2!"
@@ -212,30 +212,6 @@
               </div>
             </div>
 
-            <div
-              class="flex! items-center! gap-3! p-3! bg-slate-50! border! border-slate-100! rounded-xl!"
-            >
-              <div
-                class="w-10! h-10! rounded-full! bg-amber-500! text-white! flex! items-center! justify-center! shrink-0!"
-              >
-                <font-awesome-icon icon="clipboard-check" />
-              </div>
-              <div class="flex-1! min-w-0!">
-                <p class="text-sm! font-bold! text-slate-800!">Hasil Survey Tersedia</p>
-                <p class="text-[11px]! text-slate-500!">
-                  {{ customer.surveyInfo.distance_to_pipe_m }}m dari pipa utama ·
-                  {{ customer.surveyInfo.surveyor_name || '-' }}
-                </p>
-              </div>
-              <button
-                @click="openSurveyDetail"
-                class="px-3! py-1.5! bg-amber-500! hover:bg-amber-600! text-white! text-xs! font-bold! rounded-lg! flex! items-center! gap-1.5! transition-all! active:scale-95! shrink-0!"
-              >
-                <font-awesome-icon icon="eye" />
-                Lihat Detail
-              </button>
-            </div>
-
             <button
               @click="handleAdvance"
               :disabled="!customer.ticketId || isAdvancing"
@@ -247,9 +223,6 @@
               />
               {{ isAdvancing ? 'Memproses...' : 'Lanjut ke Tahap Berikutnya' }}
             </button>
-          </div>
-          <div v-else class="text-center! py-6! text-xs! text-slate-400!">
-            Belum ada data survey.
           </div>
         </div>
 
@@ -432,7 +405,10 @@
             <button
               @click="submitInstallationResult"
               :disabled="
-                !installForm.initial_meter_reading || !installForm.photoFile || isSubmittingInstall
+                installForm.initial_meter_reading === '' ||
+                installForm.initial_meter_reading === null ||
+                !installForm.photoFile ||
+                isSubmittingInstall
               "
               class="w-full! flex! items-center! justify-center! gap-2! bg-gradient-to-r! from-sky-500! to-blue-600! hover:from-sky-600! hover:to-blue-700! text-white! font-bold! py-2.5! rounded-xl! shadow-lg! shadow-sky-200/50! transition-all! active:scale-95! disabled:opacity-50! disabled:cursor-not-allowed!"
             >
@@ -453,7 +429,6 @@
       </ContentCard>
     </div>
 
-    <DetailSurveyModal :show="showSurveyModal" :survey="currentSurvey" @close="closeSurveyModal" />
     <CameraModal
       :show="showCameraModal"
       @close="showCameraModal = false"
@@ -471,7 +446,6 @@ import { useInstalasiActions } from '@/composables/useInstalasiActions'
 import { useUiStore } from '@/stores/uiStore'
 import ContentCard from '@/presentations/components/ui/ContentCard.vue'
 import CameraModal from '@/presentations/components/ui/CameraModal.vue'
-import DetailSurveyModal from './DetailSurveyModal.vue'
 import ticketService from '@/services/ticket.service'
 import cameraUtils from '@/utils/camera'
 import Swal from 'sweetalert2'
@@ -500,9 +474,7 @@ const id = decodeId(String(route.params.id))
 
 const isAdvancing = ref(false)
 const isSubmittingInstall = ref(false)
-const showSurveyModal = ref(false)
 const showCameraModal = ref(false)
-const currentSurvey = ref(null)
 const installGalleryInput = ref(null)
 
 const installForm = reactive({
@@ -515,18 +487,6 @@ const installForm = reactive({
 const installationResult = computed(() => {
   return customer.value?.rawData?.installation_result || null
 })
-
-const openSurveyDetail = () => {
-  if (customer.value.surveyInfo) {
-    currentSurvey.value = customer.value.surveyInfo
-    showSurveyModal.value = true
-  }
-}
-
-const closeSurveyModal = () => {
-  showSurveyModal.value = false
-  currentSurvey.value = null
-}
 
 const triggerInstallCamera = () => {
   showCameraModal.value = true
@@ -545,7 +505,7 @@ const handleCameraCapture = async (file) => {
     installForm.photoPreview = URL.createObjectURL(compressed)
     installForm.photoSource = 'camera'
     uiStore.success('Foto berhasil ditangkap.')
-  } catch (err) {
+  } catch {
     uiStore.error('Gagal memproses foto.')
   } finally {
     uiStore.setLoading(false)
@@ -562,7 +522,7 @@ const onInstallFileChange = async (e) => {
     installForm.photoPreview = URL.createObjectURL(compressedBlob)
     installForm.photoSource = 'gallery'
     uiStore.success('Foto berhasil dipilih.')
-  } catch (err) {
+  } catch {
     uiStore.error('Gagal memproses gambar.')
   } finally {
     uiStore.setLoading(false)
@@ -581,8 +541,13 @@ const submitInstallationResult = async () => {
     Swal.fire('Gagal', 'ID Tiket tidak ditemukan.', 'error')
     return
   }
-  if (!installForm.initial_meter_reading) {
+  const meterValue = installForm.initial_meter_reading
+  if (meterValue === '' || meterValue === null || meterValue === undefined) {
     Swal.fire('Meter kosong', 'Masukkan angka meter awal.', 'warning')
+    return
+  }
+  if (Number.isNaN(Number(meterValue)) || Number(meterValue) < 0) {
+    Swal.fire('Meter tidak valid', 'Angka meter awal tidak boleh negatif.', 'warning')
     return
   }
   if (!installForm.photoFile) {
@@ -649,7 +614,6 @@ const customer = computed(() => {
       ticketId: null,
       rawStatus: null,
       paymentInfo: null,
-      surveyInfo: null,
       rawData: null,
     }
 
@@ -682,7 +646,6 @@ const customer = computed(() => {
     ticketId: found.ticketId,
     rawStatus: found.rawStatus,
     rawData: found.rawData,
-    surveyInfo: found.surveyInfo || null,
     paymentInfo: {
       total_fee: totalFee,
       paid: paid,
@@ -696,7 +659,7 @@ const customer = computed(() => {
 const statusBadge = computed(() => {
   switch (customer.value.rawStatus) {
     case 'surveyed':
-      return { label: 'Disurvei', class: 'bg-amber-100! text-amber-700!' }
+      return { label: 'Terverifikasi', class: 'bg-amber-100! text-amber-700!' }
     case 'unpaid':
       return { label: 'Belum Bayar', class: 'bg-orange-100! text-orange-700!' }
     case 'processing':
@@ -737,7 +700,7 @@ const stagePanel = computed(() => {
   switch (customer.value.rawStatus) {
     case 'surveyed':
       return {
-        title: 'Hasil Survey Lapangan',
+        title: 'Verifikasi Permohonan',
         icon: 'clipboard-check',
         iconBg: 'bg-amber-100!',
         iconColor: 'text-amber-600!',
@@ -770,7 +733,7 @@ const steps = computed(() => {
   const order = ['surveyed', 'unpaid', 'processing']
   const currentIdx = order.indexOf(customer.value.rawStatus)
   const stepDefs = [
-    { key: 'surveyed', label: 'Disurvei', icon: 'clipboard-check' },
+    { key: 'surveyed', label: 'Verifikasi', icon: 'clipboard-check' },
     { key: 'unpaid', label: 'Pembayaran', icon: 'money-bill-wave' },
     { key: 'processing', label: 'Pemasangan', icon: 'tools' },
   ]

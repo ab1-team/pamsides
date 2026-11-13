@@ -1,7 +1,7 @@
 <template>
-  <div class="max-w-6xl! mx-auto grid! grid-cols-1! lg:grid-cols-5! gap-6!">
-    <div class="lg:col-span-3! flex! flex-col! gap-6!">
-      <ContentCard variant="bordered" padding="normal" rounded="2xl">
+  <div class="max-w-6xl! mx-auto grid! grid-cols-1! lg:grid-cols-5! gap-6! items-stretch!">
+    <div class="lg:col-span-3! lg:row-start-1!">
+      <ContentCard variant="bordered" padding="normal" rounded="2xl" class="h-full!">
         <div class="flex! items-center! gap-3!">
           <div
             class="w-12! h-12! rounded-full! flex! items-center! justify-center! text-white! text-sm! font-bold! shrink-0! shadow-sm!"
@@ -27,7 +27,7 @@
           </span>
         </div>
 
-        <div class="grid! grid-cols-2! gap-2! mt-4! pt-4! border-t! border-slate-100!">
+        <div class="grid! grid-cols-2! lg:grid-cols-3! gap-2! mt-4! pt-4! border-t! border-slate-100!">
           <div class="info-item">
             <span class="info-label">No. Induk</span>
             <span class="info-value">{{ customer.noInduk }}</span>
@@ -54,108 +54,9 @@
           </div>
         </div>
       </ContentCard>
-
-
-      <ContentCard variant="bordered" padding="normal" rounded="2xl">
-        <div class="flex! items-center! gap-2! mb-3!">
-          <div class="w-7! h-7! rounded-lg! bg-orange-100! flex! items-center! justify-center!">
-            <font-awesome-icon icon="clipboard-check" class="text-orange-600! text-xs!" />
-          </div>
-          <h3 class="text-sm! font-bold! text-slate-800!">Hasil Survey</h3>
-        </div>
-
-        <div v-if="loadingSurvey" class="text-center! py-4! text-xs! text-slate-400!">
-          Memuat data survey...
-        </div>
-        <div v-else-if="surveys.length === 0" class="text-center! py-4! text-xs! text-slate-400!">
-          Belum ada data survey untuk pelanggan ini.
-        </div>
-        <div v-else class="space-y-2!">
-          <div
-            v-for="(s, idx) in surveys"
-            :key="idx"
-            class="flex! items-center! justify-between! gap-3! px-3! py-2! rounded-lg! bg-slate-50! border! border-slate-100!"
-          >
-            <div class="flex! items-center! gap-3! min-w-0! flex-1!">
-              <img
-                v-if="s.photo_url"
-                :src="resolvePhotoUrl(s.photo_url)"
-                alt="Foto Survey"
-                class="w-12! h-12! rounded-lg! object-cover! border! border-slate-200! shrink-0!"
-                @error="(e) => (e.target.style.display = 'none')"
-              />
-              <div
-                v-else
-                class="w-12! h-12! rounded-lg! bg-orange-100! flex! items-center! justify-center! shrink-0!"
-              >
-                <font-awesome-icon icon="camera" class="text-orange-500! text-sm!" />
-              </div>
-              <div class="min-w-0! flex-1!">
-                <div class="flex! items-center! gap-2!">
-                  <span class="text-[11px]! font-bold! text-slate-700!">
-                    {{ s.distance_to_pipe_m || 0 }} m
-                  </span>
-                  <span class="text-[10px]! text-slate-400!">•</span>
-                  <span class="text-[10px]! text-slate-500!">{{ formatDate(s.surveyed_at) }}</span>
-                </div>
-                <p class="text-[10px]! text-slate-500! truncate! mt-0.5!">
-                  {{ s.surveyor?.name || 'Tanpa surveyor' }}
-                </p>
-                <p v-if="s.material_notes" class="text-[10px]! text-slate-400! truncate! mt-0.5!">
-                  {{ s.material_notes }}
-                </p>
-              </div>
-            </div>
-            <button
-              @click="openEditSurvey(s)"
-              class="w-8! h-8! flex! items-center! justify-center! rounded-lg! border! border-slate-100! hover:border-orange-200! hover:bg-orange-50! text-slate-600! hover:text-orange-600! shrink-0!"
-              title="Edit Survey"
-            >
-              <font-awesome-icon icon="edit" class="text-xs!" />
-            </button>
-          </div>
-        </div>
-      </ContentCard>
-
-      <ContentCard variant="bordered" padding="normal" rounded="2xl">
-        <div class="flex! items-center! gap-2! mb-3!">
-          <div class="w-7! h-7! rounded-lg! bg-cyan-100! flex! items-center! justify-center!">
-            <font-awesome-icon icon="history" class="text-cyan-600! text-xs!" />
-          </div>
-          <h3 class="text-sm! font-bold! text-slate-800!">Riwayat Pencatatan Meter</h3>
-        </div>
-
-        <div v-if="customer.readings.length === 0" class="text-center! py-4! text-xs! text-slate-400!">
-          Belum ada pencatatan meter.
-        </div>
-        <div v-else class="space-y-2!">
-          <div
-            v-for="(r, idx) in customer.readings"
-            :key="idx"
-            class="flex! items-center! justify-between! px-3! py-2! rounded-lg! bg-slate-50! border! border-slate-100!"
-          >
-            <div class="flex! items-center! gap-2!">
-              <div
-                class="w-7! h-7! rounded-full! bg-white! border! border-slate-200! flex! items-center! justify-center! text-[10px]! font-bold! text-slate-600!"
-              >
-                {{ r.label }}
-              </div>
-              <div>
-                <div class="text-[11px]! font-bold! text-slate-700!">
-                  {{ formatMeter(r.meter_value) }} m³
-                </div>
-                <div class="text-[10px]! text-slate-400!">{{ r.date }}</div>
-              </div>
-            </div>
-            <span class="text-[10px]! font-bold! text-slate-500!">
-              {{ r.usage > 0 ? `+${formatMeter(r.usage)} m³` : '—' }}
-            </span>
-          </div>
-        </div>
-      </ContentCard>
     </div>
 
-    <div class="lg:col-span-2! flex! flex-col! gap-6!">
+    <div class="lg:col-span-2! lg:row-start-1! flex! flex-col! gap-6!">
       <ContentCard variant="bordered" padding="normal" rounded="2xl">
         <div class="flex! items-center! gap-2! mb-3!">
           <div class="w-7! h-7! bg-sky-100! rounded-lg! flex! items-center! justify-center!">
@@ -227,7 +128,7 @@
         </div>
       </ContentCard>
 
-      <ContentCard variant="bordered" padding="normal" rounded="2xl">
+      <ContentCard variant="bordered" padding="normal" rounded="2xl" class="flex-1!">
         <div class="flex! items-center! gap-2! mb-3!">
           <div class="w-7! h-7! bg-violet-100! rounded-lg! flex! items-center! justify-center!">
             <font-awesome-icon icon="water" class="text-violet-600! text-xs!" />
@@ -258,8 +159,49 @@
           </div>
         </div>
       </ContentCard>
+    </div>
 
-      <ContentCard variant="bordered" padding="normal" rounded="2xl">
+    <div class="lg:col-span-3! lg:row-start-2!">
+      <ContentCard variant="bordered" padding="normal" rounded="2xl" class="h-full!">
+        <div class="flex! items-center! gap-2! mb-3!">
+          <div class="w-7! h-7! rounded-lg! bg-cyan-100! flex! items-center! justify-center!">
+            <font-awesome-icon icon="history" class="text-cyan-600! text-xs!" />
+          </div>
+          <h3 class="text-sm! font-bold! text-slate-800!">Riwayat Pencatatan Meter</h3>
+        </div>
+
+        <div v-if="customer.readings.length === 0" class="text-center! py-4! text-xs! text-slate-400!">
+          Belum ada pencatatan meter.
+        </div>
+        <div v-else class="space-y-2!">
+          <div
+            v-for="(r, idx) in customer.readings"
+            :key="idx"
+            class="flex! items-center! justify-between! px-3! py-2! rounded-lg! bg-slate-50! border! border-slate-100!"
+          >
+            <div class="flex! items-center! gap-2!">
+              <div
+                class="w-7! h-7! rounded-full! bg-white! border! border-slate-200! flex! items-center! justify-center! text-[10px]! font-bold! text-slate-600!"
+              >
+                {{ r.label }}
+              </div>
+              <div>
+                <div class="text-[11px]! font-bold! text-slate-700!">
+                  {{ formatMeter(r.meter_value) }} m³
+                </div>
+                <div class="text-[10px]! text-slate-400!">{{ r.date }}</div>
+              </div>
+            </div>
+            <span class="text-[10px]! font-bold! text-slate-500!">
+              {{ r.usage > 0 ? `+${formatMeter(r.usage)} m³` : '—' }}
+            </span>
+          </div>
+        </div>
+      </ContentCard>
+    </div>
+
+    <div class="lg:col-span-2! lg:row-start-2!">
+      <ContentCard variant="bordered" padding="normal" rounded="2xl" class="h-full!">
         <div class="flex! items-center! gap-2! mb-3!">
           <div class="w-7! h-7! bg-emerald-100! rounded-lg! flex! items-center! justify-center!">
             <font-awesome-icon icon="cog" class="text-emerald-500! text-xs!" />
@@ -302,100 +244,23 @@
         </div>
       </ContentCard>
     </div>
-
-    <EditSurveyModal
-      :show="showEditSurvey"
-      :survey="selectedSurvey"
-      @close="showEditSurvey = false"
-      @save="handleSaveSurvey"
-    />
   </div>
 </template>
 
 <script setup>
 defineOptions({ name: 'AktifDetail' })
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useInstalasiStatus } from '@/composables/useInstalasiStatus'
 import { useInstalasiActions } from '@/composables/useInstalasiActions'
 import { storageUrl } from '@/utils/storage'
-import { useUiStore } from '@/stores/uiStore'
-import ticketService from '@/services/ticket.service'
 import ContentCard from '@/presentations/components/ui/ContentCard.vue'
-import EditSurveyModal from './EditSurveyModal.vue'
 
 const route = useRoute()
 const router = useRouter()
-const uiStore = useUiStore()
 const { dataMap, fetchData } = useInstalasiStatus()
 const { transitionStatus, printDetail } = useInstalasiActions()
 const id = decodeURIComponent(route.params.id)
-
-const surveys = ref([])
-const loadingSurvey = ref(false)
-const showEditSurvey = ref(false)
-const selectedSurvey = ref(null)
-
-const resolvePhotoUrl = (url) => {
-  if (!url) return null
-  if (/^https?:\/\//i.test(url)) return url
-  return storageUrl(`storage/survey-photos/${url}`)
-}
-
-const loadSurveys = async () => {
-  const ticketId = customer.value?.ticketId
-  if (!ticketId) {
-    surveys.value = []
-    return
-  }
-  loadingSurvey.value = true
-  try {
-    const res = await ticketService.getSurveyResults({
-      ticket_id: ticketId,
-      per_page: 100,
-    })
-    const list = res?.data?.data
-    surveys.value = Array.isArray(list) ? list : []
-  } catch (err) {
-    surveys.value = []
-  } finally {
-    loadingSurvey.value = false
-  }
-}
-
-const openEditSurvey = (s) => {
-  selectedSurvey.value = {
-    id: s.id,
-    ticket_id: s.ticket_id,
-    ticket: s.ticket,
-    surveyor: s.surveyor,
-    distance_to_pipe_m: s.distance_to_pipe_m || 0,
-    material_notes: s.material_notes || '',
-    photo_url: s.photo_url,
-  }
-  showEditSurvey.value = true
-}
-
-const handleSaveSurvey = async (updatedData) => {
-  try {
-    uiStore.setLoading(true)
-    const formData = new FormData()
-    formData.append('distance_to_pipe_m', updatedData.distance_to_pipe_m)
-    formData.append('material_notes', updatedData.material_notes)
-    formData.append('_method', 'PUT')
-    if (updatedData.photo) {
-      formData.append('photo', updatedData.photo)
-    }
-    await ticketService.updateSurvey(updatedData.id, formData)
-    uiStore.success('Survey berhasil diupdate')
-    showEditSurvey.value = false
-    await loadSurveys()
-  } catch (err) {
-    uiStore.error('Gagal update survey')
-  } finally {
-    uiStore.setLoading(false)
-  }
-}
 
 const MONTHS_ID = [
   'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
@@ -609,13 +474,7 @@ const handlePrint = () => {
 
 onMounted(async () => {
   await fetchData()
-  await loadSurveys()
 })
-
-watch(
-  () => customer.value?.ticketId,
-  () => loadSurveys(),
-)
 </script>
 
 <style scoped>

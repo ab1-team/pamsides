@@ -246,7 +246,7 @@ class MonthlyBillController extends Controller
 
         $query = Customer::with(['user', 'ticket.package', 'ticket.village', 'ticket.user'])
             ->whereHas('ticket', function ($q) use ($userId) {
-                $q->whereIn('status', ['surveyed', 'unpaid', 'processing', 'completed', 'suspended']);
+                $q->whereIn('status', ['pending', 'surveyed', 'unpaid', 'processing', 'completed', 'suspended']);
                 if (! empty($userId)) {
                     $q->where('user_id', $userId);
                 }
