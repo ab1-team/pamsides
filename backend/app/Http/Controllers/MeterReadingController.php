@@ -101,7 +101,7 @@ class MeterReadingController extends Controller
             // pencatatan meter. (MonthlyBillController::usage() sudah pakai
             // daftar status yang sama ΓÇö disamakan di sini.)
             ->whereHas('ticket', function ($query) {
-                $query->whereIn('status', ['surveyed', 'unpaid', 'processing', 'completed', 'suspended']);
+                $query->whereIn('status', ['pending', 'surveyed', 'unpaid', 'processing', 'completed', 'suspended']);
             })
             ->where(function ($query) use ($bulan, $tahun) {
                 // Belum ada bacaan meter periode ini.
