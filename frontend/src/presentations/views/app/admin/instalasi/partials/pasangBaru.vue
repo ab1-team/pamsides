@@ -128,7 +128,14 @@
         </div>
       </ContentCard>
 
-      <ContentCard variant="bordered" padding="normal" rounded="2xl" class="flex-1!">
+      <ContentCard
+        variant="bordered"
+        padding="normal"
+        rounded="2xl"
+        :class="
+          customer.rawStatus === 'processing' ? '' : 'stage-card flex-1! flex! flex-col!'
+        "
+      >
         <div class="flex! items-center! gap-2! mb-4!">
           <div
             class="w-7! h-7! rounded-lg! flex! items-center! justify-center!"
@@ -143,8 +150,8 @@
           <h3 class="text-sm! font-bold! text-slate-800!">{{ stagePanel.title }}</h3>
         </div>
 
-        <div v-if="customer.rawStatus === 'surveyed'">
-          <div class="space-y-3!">
+        <div v-if="customer.rawStatus === 'surveyed'" class="flex! flex-col! flex-1!">
+          <div class="space-y-3! flex! flex-col! flex-1!">
             <div
               v-if="customer.paymentInfo"
               class="rounded-xl! border! border-slate-200! bg-slate-50! p-3! space-y-2!"
@@ -215,7 +222,7 @@
             <button
               @click="handleAdvance"
               :disabled="!customer.ticketId || isAdvancing"
-              class="w-full! flex! items-center! justify-center! gap-2! bg-gradient-to-r! from-sky-500! to-blue-600! hover:from-sky-600! hover:to-blue-700! text-white! font-bold! py-2.5! rounded-xl! shadow-lg! shadow-sky-200/50! transition-all! active:scale-95! disabled:opacity-50! disabled:cursor-not-allowed!"
+              class="mt-auto! w-full! flex! items-center! justify-center! gap-2! bg-gradient-to-r! from-sky-500! to-blue-600! hover:from-sky-600! hover:to-blue-700! text-white! font-bold! py-2.5! rounded-xl! shadow-lg! shadow-sky-200/50! transition-all! active:scale-95! disabled:opacity-50! disabled:cursor-not-allowed!"
             >
               <font-awesome-icon
                 :icon="isAdvancing ? 'spinner' : 'arrow-right'"
@@ -335,105 +342,33 @@
               </div>
             </div>
 
-            <div>
-              <label
-                class="text-[10px]! font-bold! text-slate-500! uppercase! tracking-wide! block! mb-2!"
+            <div class="flex! justify-end!">
+              <button
+                @click="submitInstallationResult"
+                :disabled="
+                  installForm.initial_meter_reading === '' ||
+                  installForm.initial_meter_reading === null ||
+                  isSubmittingInstall
+                "
+                class="flex! items-center! justify-center! gap-2! bg-gradient-to-r! from-sky-500! to-blue-600! hover:from-sky-600! hover:to-blue-700! text-white! font-bold! text-xs! px-4! py-2! rounded-lg! shadow-lg! shadow-sky-200/50! transition-all! active:scale-95! disabled:opacity-50! disabled:cursor-not-allowed! whitespace-nowrap!"
               >
-                Foto Meteran
-              </label>
-              <div class="photo-uploader">
-                <div class="grid! grid-cols-2! gap-3!">
-                  <template v-if="installForm.photoPreview && installForm.photoSource === 'camera'">
-                    <div class="preview-slot">
-                      <img :src="installForm.photoPreview" class="preview-img" />
-                      <button @click="clearInstallPhoto" class="remove-btn">
-                        <font-awesome-icon icon="times" />
-                      </button>
-                      <div class="source-tag">
-                        <font-awesome-icon icon="camera" />
-                        <span>Kamera</span>
-                      </div>
-                    </div>
-                  </template>
-                  <template v-else>
-                    <div
-                      class="preview-slot border-sky-300 flex flex-col items-center justify-center gap-1"
-                      @click="triggerInstallCamera"
-                    >
-                      <font-awesome-icon icon="camera" class="text-sky-400 text-lg" />
-                      <span class="text-[9px] font-bold text-slate-500">Kamera</span>
-                    </div>
-                  </template>
-
-                  <template
-                    v-if="installForm.photoPreview && installForm.photoSource === 'gallery'"
-                  >
-                    <div class="preview-slot">
-                      <img :src="installForm.photoPreview" class="preview-img" />
-                      <button @click="clearInstallPhoto" class="remove-btn">
-                        <font-awesome-icon icon="times" />
-                      </button>
-                      <div class="source-tag">
-                        <font-awesome-icon icon="images" />
-                        <span>Galeri</span>
-                      </div>
-                    </div>
-                  </template>
-                  <template v-else>
-                    <div
-                      class="preview-slot border-sky-300 flex flex-col items-center justify-center gap-1"
-                      @click="triggerInstallGallery"
-                    >
-                      <font-awesome-icon icon="images" class="text-sky-400 text-lg" />
-                      <span class="text-[9px] font-bold text-slate-500">Galeri</span>
-                    </div>
-                  </template>
-                </div>
-
-                <div class="hidden!">
-                  <input
-                    ref="installGalleryInput"
-                    type="file"
-                    accept="image/*"
-                    class="hidden!"
-                    @change="onInstallFileChange"
-                  />
-                </div>
-              </div>
+                <font-awesome-icon
+                  :icon="isSubmittingInstall ? 'spinner' : 'save'"
+                  :class="isSubmittingInstall ? 'animate-spin!' : ''"
+                />
+                {{
+                  isSubmittingInstall
+                    ? 'Menyimpan...'
+                    : installationResult
+                      ? 'Update Hasil Pemasangan'
+                      : 'Aktifkan Pemasangan'
+                }}
+              </button>
             </div>
-
-            <button
-              @click="submitInstallationResult"
-              :disabled="
-                installForm.initial_meter_reading === '' ||
-                installForm.initial_meter_reading === null ||
-                !installForm.photoFile ||
-                isSubmittingInstall
-              "
-              class="w-full! flex! items-center! justify-center! gap-2! bg-gradient-to-r! from-sky-500! to-blue-600! hover:from-sky-600! hover:to-blue-700! text-white! font-bold! py-2.5! rounded-xl! shadow-lg! shadow-sky-200/50! transition-all! active:scale-95! disabled:opacity-50! disabled:cursor-not-allowed!"
-            >
-              <font-awesome-icon
-                :icon="isSubmittingInstall ? 'spinner' : 'save'"
-                :class="isSubmittingInstall ? 'animate-spin!' : ''"
-              />
-              {{
-                isSubmittingInstall
-                  ? 'Menyimpan...'
-                  : installationResult
-                    ? 'Update Hasil Pemasangan'
-                    : 'Aktifkan Pemasangan'
-              }}
-            </button>
           </div>
         </div>
       </ContentCard>
     </div>
-
-    <CameraModal
-      :show="showCameraModal"
-      @close="showCameraModal = false"
-      @capture="handleCameraCapture"
-    />
   </div>
 </template>
 
@@ -443,16 +378,12 @@ import { ref, reactive, computed, watch, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useInstalasiStatus } from '@/composables/useInstalasiStatus'
 import { useInstalasiActions } from '@/composables/useInstalasiActions'
-import { useUiStore } from '@/stores/uiStore'
 import ContentCard from '@/presentations/components/ui/ContentCard.vue'
-import CameraModal from '@/presentations/components/ui/CameraModal.vue'
 import ticketService from '@/services/ticket.service'
-import cameraUtils from '@/utils/camera'
 import Swal from 'sweetalert2'
 
 const route = useRoute()
 const router = useRouter()
-const uiStore = useUiStore()
 const { dataMap, fetchData } = useInstalasiStatus()
 const { printDetail } = useInstalasiActions()
 
@@ -474,67 +405,14 @@ const id = decodeId(String(route.params.id))
 
 const isAdvancing = ref(false)
 const isSubmittingInstall = ref(false)
-const showCameraModal = ref(false)
-const installGalleryInput = ref(null)
 
 const installForm = reactive({
   initial_meter_reading: '',
-  photoFile: null,
-  photoPreview: null,
-  photoSource: null,
 })
 
 const installationResult = computed(() => {
   return customer.value?.rawData?.installation_result || null
 })
-
-const triggerInstallCamera = () => {
-  showCameraModal.value = true
-}
-
-const triggerInstallGallery = () => {
-  installGalleryInput.value?.click()
-}
-
-const handleCameraCapture = async (file) => {
-  try {
-    showCameraModal.value = false
-    uiStore.setLoading(true)
-    const compressed = await cameraUtils.compressImage(file)
-    installForm.photoFile = compressed
-    installForm.photoPreview = URL.createObjectURL(compressed)
-    installForm.photoSource = 'camera'
-    uiStore.success('Foto berhasil ditangkap.')
-  } catch {
-    uiStore.error('Gagal memproses foto.')
-  } finally {
-    uiStore.setLoading(false)
-  }
-}
-
-const onInstallFileChange = async (e) => {
-  const file = e.target.files?.[0]
-  if (!file) return
-  try {
-    uiStore.setLoading(true)
-    const compressedBlob = await cameraUtils.compressImage(file)
-    installForm.photoFile = compressedBlob
-    installForm.photoPreview = URL.createObjectURL(compressedBlob)
-    installForm.photoSource = 'gallery'
-    uiStore.success('Foto berhasil dipilih.')
-  } catch {
-    uiStore.error('Gagal memproses gambar.')
-  } finally {
-    uiStore.setLoading(false)
-  }
-}
-
-const clearInstallPhoto = () => {
-  installForm.photoFile = null
-  installForm.photoPreview = null
-  installForm.photoSource = null
-  if (installGalleryInput.value) installGalleryInput.value.value = ''
-}
 
 const submitInstallationResult = async () => {
   if (!customer.value.ticketId) {
@@ -550,15 +428,10 @@ const submitInstallationResult = async () => {
     Swal.fire('Meter tidak valid', 'Angka meter awal tidak boleh negatif.', 'warning')
     return
   }
-  if (!installForm.photoFile) {
-    Swal.fire('Foto kosong', 'Ambil foto meteran via Kamera atau Galeri.', 'warning')
-    return
-  }
   isSubmittingInstall.value = true
   try {
     const fd = new FormData()
     fd.append('initial_meter_reading', installForm.initial_meter_reading)
-    fd.append('photo', installForm.photoFile)
     const res = await ticketService.submitInstallationResult(customer.value.ticketId, fd)
     if (res?.success) {
       const customerCode = res?.customer_code || res?.data?.customer_code
@@ -802,19 +675,9 @@ onMounted(async () => {
   @apply text-[12px] font-bold text-slate-800 truncate;
 }
 
-.preview-slot {
-  @apply relative overflow-hidden rounded-xl border-2 border-dashed border-sky-300 bg-slate-50 h-40;
-}
-
-.preview-img {
-  @apply w-full h-full object-cover;
-}
-
-.remove-btn {
-  @apply absolute top-2 right-2 w-7 h-7 bg-black/40 hover:bg-red-500 text-white rounded-full flex items-center justify-center transition-all text-xs;
-}
-
-.source-tag {
-  @apply absolute bottom-2 left-2 flex items-center gap-1.5 bg-sky-600 text-white px-2.5 py-1 rounded-lg text-[10px] font-bold;
+.stage-card :deep([class*='content-card__body']) {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
 }
 </style>

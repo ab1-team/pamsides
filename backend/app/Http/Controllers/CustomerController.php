@@ -57,6 +57,33 @@ class CustomerController extends Controller
     }
 
     /**
+     * User akun pelanggan yang sebenarnya.
+     *
+     * PENTING: `installation_tickets.user_id` menyimpan TEKNISI/cater yang
+     * menangani tiket (lihat ImportLegacyCustomersCommand), BUKAN akun login
+     * pelanggan. Akun pelanggan tersimpan di `customers.user_id`.
+     *
+     * Untuk tiket draft hasil form Tambah, record `customers` belum ada dan
+     * user pelanggan ditempatkan di `installation_tickets.user_id`.
+     *
+     * Jangan pernah mengembalikan user ber-role teknisi: form Ubah dulu memakai
+     * `$ticket->user`, sehingga menyimpan edit pelanggan justru mengganti nama
+     * teknisi yang menangani tiket tersebut.
+     */
+    private function pelangganUser(InstallationTicket $ticket): ?User
+    {
+        $customer = $ticket->customer()->first();
+
+        if ($customer && $customer->user && $customer->user->role === 'pelanggan') {
+            return $customer->user;
+        }
+
+        $ticketUser = $ticket->user;
+
+        return $ticketUser && $ticketUser->role === 'pelanggan' ? $ticketUser : null;
+    }
+
+    /**
      * Daftar pelanggan untuk halaman /app/data-pelanggan.
      *
      * Paginasi dilakukan di SERVER (satu halaman per request). usePelanggan.js
@@ -85,6 +112,7 @@ class CustomerController extends Controller
                 'id',
                 'applicant_name',
                 'nik',
+                'rt',
                 'phone',
                 'address',
                 'status',
@@ -118,6 +146,7 @@ class CustomerController extends Controller
             $query->where(function ($sub) use ($like) {
                 $sub->where('applicant_name', 'like', $like)
                     ->orWhere('nik', 'like', $like)
+                    ->orWhere('rt', 'like', $like)
                     ->orWhere('phone', 'like', $like)
                     ->orWhere('address', 'like', $like)
                     // Kolom "ID" di UI menampilkan customer_code, jadi kode
@@ -143,6 +172,7 @@ class CustomerController extends Controller
             'id' => $t->id,
             'name' => $t->applicant_name,
             'nik' => $t->nik,
+            'rt' => $t->rt ?: '-',
             'no_telp' => $t->phone ?? '-',
             'address' => $t->address ?? '-',
             'status' => $t->status,
@@ -362,29 +392,36 @@ class CustomerController extends Controller
             abort(404, 'Data pelanggan tidak ditemukan');
         }
 
+        $pelangganUser = $this->pelangganUser($ticket);
+
         $request->validate([
             'nik' => [
-                'required', 'string', 'max:20',
+                'nullable', 'string', 'max:20',
                 Rule::unique('installation_tickets', 'nik')->ignore($ticket->id),
             ],
             'nama_lengkap' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email,'.$ticket->user_id,
+            'email' => [
+                'required', 'email',
+                Rule::unique('users', 'email')->ignore($pelangganUser?->id),
+            ],
             'jenis_kelamin' => 'nullable|in:Laki-laki,Perempuan',
         ], [
             'nik.unique' => 'NIK sudah digunakan oleh pelanggan lain',
             'jenis_kelamin.in' => 'Jenis kelamin tidak valid',
         ]);
 
-        DB::transaction(function () use ($request, $ticket) {
-            $ticket->user->update([
-                'name' => $request->nama_lengkap,
-                'email' => $request->email,
-                'password' => $request->password ? Hash::make($request->password) : $ticket->user->password,
-            ]);
+        DB::transaction(function () use ($request, $ticket, $pelangganUser) {
+            if ($pelangganUser) {
+                $pelangganUser->update([
+                    'name' => $request->nama_lengkap,
+                    'email' => $request->email,
+                    'password' => $request->password ? Hash::make($request->password) : $pelangganUser->password,
+                ]);
+            }
 
             $ticket->update([
                 'applicant_name' => $request->nama_lengkap,
-                'nik' => $request->nik,
+                'nik' => $this->blankToNull($request->nik),
                 'address' => $request->alamat_lengkap,
                 'phone' => $this->blankToNull($request->no_telp) ?? '0',
                 'gender' => $this->normalizeGender($request->jenis_kelamin),
@@ -407,12 +444,31 @@ class CustomerController extends Controller
             abort(404, 'Data pelanggan tidak ditemukan');
         }
 
+        // Pelanggan aktif sudah punya record `customers` + riwayat (tagihan,
+        // meter, dll). Jangan sampai terhapus: `customers.ticket_id` dan
+        // `monthly_bills.customer_id` memakai cascade, jadi menghapus tiket
+        // akan ikut menghapus tagihan pelanggan.
+        if ($ticket->customer()->exists()) {
+            return response()->json([
+                'success' => false,
+                'code' => 'TICKET_IN_USE',
+                'message' => 'Pelanggan aktif tidak dapat dihapus karena sudah memiliki data pelanggan/tagihan.',
+                'usage' => 'pelanggan',
+            ], 409);
+        }
+
         return $this->safeDelete(
             fn () => DB::transaction(function () use ($ticket) {
-                if ($ticket->user) {
-                    $ticket->user->delete();
-                }
+                $pelangganUser = $this->pelangganUser($ticket);
+
+                // Hapus tiket lebih dulu: `customers.ticket_id` memakai
+                // cascadeOnDelete, sehingga baris customers ikut terhapus.
+                // Kalau user dihapus duluan, FK customers.user_id menahannya.
                 $ticket->delete();
+
+                if ($pelangganUser) {
+                    $pelangganUser->delete();
+                }
             }),
             'TICKET_IN_USE',
             'Data tiket',
@@ -434,7 +490,7 @@ class CustomerController extends Controller
             'data' => [
                 'id' => $ticket->id,
                 'name' => $ticket->applicant_name,
-                'email' => optional($ticket->user)->email,
+                'email' => optional($this->pelangganUser($ticket))->email,
                 'nik' => $ticket->nik,
                 'phone' => $ticket->phone ?? '-',
                 'address' => $ticket->address ?? '-',
