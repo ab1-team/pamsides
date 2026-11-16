@@ -37,15 +37,20 @@ class LegacyMigrateFastCommand extends Command
     protected $description = 'Import legacy cepat: trigger OFF -> rantai import -> recompute amount set-based -> trigger ON.';
 
     /**
-     * Rantai import berurutan. `business` = true bila command mendukung --business.
+     * Rantai langkah berurutan. `business` = true bila command mendukung
+     * `--business` (diisi nilai opsi `--business` milik command ini). `extra`
+     * = opsi tambahan yang diteruskan apa adanya (mis. `--force` untuk
+     * `billing:recalc-penalty`, yang menolak jalan tanpa `--dry-run`/`--force`).
      *
-     * @var array<int,array{command:string,business:bool}>
+     * @var array<int,array{command:string,business:bool,extra?:array<string,mixed>}>
      */
     protected array $chain = [
         ['command' => 'import:villages',        'business' => false],
         ['command' => 'import:packages',        'business' => true],
         ['command' => 'import:accounts',        'business' => true],
-        ['command' => 'import:users',           'business' => false],
+        // users di-scope ke business yang dimigrasi; tanpa filter, user business
+        // lain (jabatan admin/teknisi) ikut ter-import dan bisa menumbuk email.
+        ['command' => 'import:users',           'business' => true],
         ['command' => 'import:tickets',         'business' => true],
         ['command' => 'import:customers',       'business' => true],
         ['command' => 'import:meter-readings',  'business' => true],
@@ -53,6 +58,9 @@ class LegacyMigrateFastCommand extends Command
         ['command' => 'import:bill-payments',   'business' => true],
         ['command' => 'import:transactions',    'business' => true],
         ['command' => 'import:payments',        'business' => true],
+        // Hitung denda SETELAH semua tagihan+pembayaran ter-import. Idempotent
+        // (hanya menyentuh baris unpaid; aturan sama dgn BillingService).
+        ['command' => 'billing:recalc-penalty', 'business' => true, 'extra' => ['--force' => true]],
     ];
 
     public function handle(): int
@@ -139,6 +147,9 @@ class LegacyMigrateFastCommand extends Command
                 $args = ['--force' => true];
                 if ($step['business']) {
                     $args['--business'] = $business;
+                }
+                if (! empty($step['extra'])) {
+                    $args = array_merge($args, $step['extra']);
                 }
 
                 $t0 = microtime(true);

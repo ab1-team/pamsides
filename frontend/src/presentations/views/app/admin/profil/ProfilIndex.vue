@@ -89,6 +89,18 @@
       </div>
     </ContentCard>
 
+    <ContentCard v-if="mustChangePassword" variant="bordered" padding="normal" rounded="xl">
+      <div class="flex! items-center! gap-3!">
+        <font-awesome-icon icon="key" class="text-slate-500!" />
+        <p class="text-sm! font-medium! text-slate-700!">
+          Anda wajib mengganti password terlebih dahulu.
+        </p>
+        <BaseButton variant="info" class="ml-auto! shrink-0!" icon="key" @click="openPasswordModal">
+          Ubah Password
+        </BaseButton>
+      </div>
+    </ContentCard>
+
     <ContentCard variant="bordered" padding="large" rounded="xl" hoverable>
       <template #header>
         <div class="flex! items-center! justify-between! mb-4!">
@@ -116,7 +128,7 @@
         <div
           class="flex! flex-col! sm:flex-row! justify-end! items-stretch! sm:items-center! gap-3! mt-8! pt-6! border-t! border-slate-100!"
         >
-          <BaseButton variant="info" @click="showModal = true" class="shadow-sm!" icon="key">
+          <BaseButton variant="info" @click="openPasswordModal" class="shadow-sm!" icon="key">
             Ubah Password
           </BaseButton>
           <BaseButton variant="secondary" @click="saveProfile" :loading="isSaving" icon="save">
@@ -231,6 +243,7 @@ import ContentCard from '@/presentations/components/ui/ContentCard.vue'
 import BaseInput from '@/presentations/components/ui/BaseInput.vue'
 import BaseButton from '@/presentations/components/ui/BaseButton.vue'
 import profileService from '@/services/profile.service'
+import { useUiStore } from '@/stores/uiStore'
 import { showSuccessToast, showErrorToast } from '@/utils/swal'
 import { storageUrl } from '@/utils/storage'
 
@@ -278,6 +291,9 @@ const ProfileField = {
 }
 
 const showModal = ref(false)
+const uiStore = useUiStore()
+// Diisi saat router mengarahkan paksa ke sini karena wajib ganti password.
+const mustChangePassword = computed(() => uiStore.mustChangePassword)
 const isSaving = ref(false)
 const isUpdatingPassword = ref(false)
 const isUploadingAvatar = ref(false)
@@ -335,6 +351,10 @@ const loadProfile = async () => {
     const data = res?.data || res
     if (!data) {
       return
+    }
+
+    if (typeof data.must_change_password === 'boolean') {
+      uiStore.setMustChangePassword(data.must_change_password)
     }
 
     form.name = data.name || ''
@@ -431,7 +451,14 @@ const resetPasswordForm = () => {
   passwordForm.new_password_confirmation = ''
 }
 
+const openPasswordModal = () => {
+  showModal.value = true
+}
+
+// Saat wajib ganti password, dialog password dibuka otomatis dan TIDAK bisa
+// ditutup — halaman ini satu-satunya jalan keluar dari 403 backend.
 const closeModal = () => {
+  if (mustChangePassword.value) return
   showModal.value = false
   resetPasswordForm()
 }
@@ -449,6 +476,8 @@ const changePassword = async () => {
   try {
     isUpdatingPassword.value = true
     await profileService.updatePassword({ ...passwordForm })
+    // Backend menyetel false; selaraskan store agar guard langsung meloloskan.
+    uiStore.setMustChangePassword(false)
     showSuccessToast('Password berhasil diperbarui')
     closeModal()
   } catch (error) {
@@ -460,6 +489,9 @@ const changePassword = async () => {
 
 onMounted(() => {
   loadProfile()
+  if (mustChangePassword.value) {
+    openPasswordModal()
+  }
 })
 </script>
 

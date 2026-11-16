@@ -36,6 +36,32 @@
         </div>
       </div>
 
+      <!-- Wajib ganti password: aksi langsung ke halaman profil. Guard router
+           normalnya sudah memindahkan user ke sana; banner ini menutup celah
+           bila flag baru aktif setelah halaman tampil. -->
+      <div
+        v-if="mustChangePassword"
+        class="mb-8! rounded-3xl! bg-amber-50! border! border-amber-200! p-4! lg:p-5! flex! flex-col! sm:flex-row! sm:items-center! justify-between! gap-3!"
+      >
+        <div class="flex! items-start! gap-3!">
+          <font-awesome-icon icon="key" class="text-amber-600! mt-0.5!" />
+          <div>
+            <p class="text-xs! font-black! text-amber-800!">
+              Anda wajib mengganti password terlebih dahulu.
+            </p>
+          </div>
+        </div>
+        <BaseButton
+          variant="warning"
+          block
+          icon="key"
+          class="sm:flex-shrink-0! sm:w-auto! rounded-full! bg-amber-500! text-white! font-black! h-11! px-7! text-xs! hover:bg-amber-600! shadow-lg! transition-all!"
+          @click="goToProfil"
+        >
+          Ganti Password Sekarang
+        </BaseButton>
+      </div>
+
       <!-- Error: jangan tampilkan "Rp 0 / LUNAS" sebagai nilai default saat gagal -->
       <div
         v-if="loadError"
@@ -586,12 +612,20 @@
 <script setup>
 import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
+import { useUiStore } from '@/stores/uiStore'
 import ContentCard from '@/presentations/components/ui/ContentCard.vue'
 import BaseButton from '@/presentations/components/ui/BaseButton.vue'
 import pelangganService from '@/services/pelanggan.service'
 import Swal from 'sweetalert2'
 
 const router = useRouter()
+const uiStore = useUiStore()
+
+const mustChangePassword = computed(() => uiStore.mustChangePassword)
+
+const goToProfil = () => {
+  router.push({ name: 'profil' })
+}
 
 const goToBillDetail = () => {
   const billId = dashboardData.value.latest_bill?.id

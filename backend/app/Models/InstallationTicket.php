@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class InstallationTicket extends Model
 {
     protected $fillable = [
+        'legacy_installation_id',
         'package_id',
         'user_id',
         'applicant_name',

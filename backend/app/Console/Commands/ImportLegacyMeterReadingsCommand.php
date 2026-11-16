@@ -2,7 +2,7 @@
 
 namespace App\Console\Commands;
 
-use App\Models\Customer;
+use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 
@@ -19,20 +19,40 @@ class ImportLegacyMeterReadingsCommand extends Command
     public function handle(): int
     {
         $isDryRun = (bool) $this->option('dry-run');
-        $isForce  = (bool) $this->option('force');
+        $isForce = (bool) $this->option('force');
         $bizFilter = $this->option('business');
         $chunkSize = max(1, (int) $this->option('chunk'));
 
         if (! $isDryRun && ! $isForce) {
             $this->error('Wajib --dry-run atau --force');
+
             return self::FAILURE;
         }
         $this->warn($isDryRun ? 'DRY-RUN' : 'FORCE MODE');
-        if ($bizFilter) $this->info("Filter: hanya business_id={$bizFilter} di DB lama.");
+        if ($bizFilter) {
+            $this->info("Filter: hanya business_id={$bizFilter} di DB lama.");
+        }
 
-        // 1. Build mapping: legacy_inst_id → new_ticket_id (via ticket.applicant_name|village|package)
-        //    plus: legacy_inst_id → new_customer_id (via ticket_id)
+        // 1. Build mapping: legacy_inst_id → new_ticket_id
+        //
+        // ANCHOR IDENTITAS: `installation_tickets.legacy_installation_id`
+        // (lihat docs/database.md §4). Heuristik triple nama|desa|paket hanya
+        // dipakai sebagai CADANGAN untuk instalasi yang belum punya anchor;
+        // tiket yang sudah diklaim anchor tidak boleh dipakai jalur cadangan.
         $this->info('Building ticket map...');
+
+        $instToTicket = [];
+        foreach (DB::table('installation_tickets')
+            ->whereNotNull('legacy_installation_id')
+            ->orderBy('id')
+            ->get(['id', 'legacy_installation_id']) as $t) {
+            $legacyInstId = (int) $t->legacy_installation_id;
+            if (! isset($instToTicket[$legacyInstId])) {
+                $instToTicket[$legacyInstId] = (int) $t->id;
+            }
+        }
+        $anchoredCount = count($instToTicket);
+        $anchoredTicketIds = array_flip($instToTicket);
 
         // packageMap legacy → new
         $packageMap = [];
@@ -41,7 +61,7 @@ class ImportLegacyMeterReadingsCommand extends Command
         $newPkgs = DB::table('installation_packages')->get();
         foreach ($legacyPkgs as $lp) {
             $wantSuffixed = "{$lp->kelas} (B{$lp->business_id})";
-            $wantPlain    = $lp->kelas;
+            $wantPlain = $lp->kelas;
             foreach ($newPkgs as $np) {
                 if (strcasecmp($np->name, $wantSuffixed) === 0 || strcasecmp($np->name, $wantPlain) === 0) {
                     $packageMap[(int) $lp->id] = (int) $np->id;
@@ -88,11 +108,17 @@ class ImportLegacyMeterReadingsCommand extends Command
         $byTriple = [];
         foreach ($rows as $li) {
             $cust = $customersById[(int) $li->customer_id] ?? null;
-            if (! $cust) continue;
+            if (! $cust) {
+                continue;
+            }
             $name = strtolower(trim((string) ($cust->nama ?? '')));
-            if ($name === '') continue;
+            if ($name === '') {
+                continue;
+            }
             $newVillage = $villageMap[(int) $li->desa] ?? null;
-            if ($newVillage === null) continue;
+            if ($newVillage === null) {
+                continue;
+            }
             $key = $name.'|'.$newVillage.'|'.((int) $li->package_id);
             if (! isset($byTriple[$key])) {
                 $byTriple[$key] = [];
@@ -113,24 +139,40 @@ class ImportLegacyMeterReadingsCommand extends Command
         }
         $this->info('newByTriple size: '.count($newByTriple));
 
-        // Map: legacy_inst_id → new_ticket_id
-        $instToTicket = [];
+        // CADANGAN: legacy_inst_id → new_ticket_id lewat triple
+        // (nama|desa|paket) untuk instalasi yang belum punya anchor. Anchor
+        // selalu menang; tiket yang sudah diklaim anchor tidak dipakai.
+        $tripleMapped = 0;
         foreach ($byTriple as $key => $instIds) {
             $parts = explode('|', $key);
             $name = $parts[0];
             $village = $parts[1];
             $legacyPkg = $parts[2];
             $newPkg = $packageMap[(int) $legacyPkg] ?? null;
-            if ($newPkg === null) continue;
+            if ($newPkg === null) {
+                continue;
+            }
             $newKey = $name.'|'.$village.'|'.$newPkg;
-            if (isset($newByTriple[$newKey])) {
-                $ticketId = $newByTriple[$newKey];
-                foreach ($instIds as $iid) {
-                    $instToTicket[(int) $iid] = $ticketId;
+            if (! isset($newByTriple[$newKey])) {
+                continue;
+            }
+            $ticketId = $newByTriple[$newKey];
+            if (isset($anchoredTicketIds[$ticketId])) {
+                continue;
+            }
+            foreach ($instIds as $iid) {
+                $iid = (int) $iid;
+                if (isset($instToTicket[$iid])) {
+                    continue;
                 }
+                $instToTicket[$iid] = $ticketId;
+                $tripleMapped++;
             }
         }
-        $this->info('Mapped '.count($instToTicket).' legacy inst → ticket');
+        $this->info(sprintf(
+            'Mapped %d via legacy_installation_id, %d via triple fallback, total %d',
+            $anchoredCount, $tripleMapped, count($instToTicket)
+        ));
 
         // ticket_id → customer_id (dari customers.ticket_id)
         $ticketToCustomer = DB::table('customers')
@@ -188,7 +230,7 @@ class ImportLegacyMeterReadingsCommand extends Command
             'failed' => 0,
         ];
         $skipped = [];
-        $failed  = [];
+        $failed = [];
 
         $batchSize = 500;
         $batch = [];
@@ -205,34 +247,48 @@ class ImportLegacyMeterReadingsCommand extends Command
                 $ticketId = $instToTicket[$legacyInstId] ?? null;
                 if (! $ticketId) {
                     $stats['skipped']++;
-                    if (count($skipped) < 50) $skipped[] = ['usage_id' => $u->id, 'reason' => 'no inst→ticket mapping'];
+                    if (count($skipped) < 50) {
+                        $skipped[] = ['usage_id' => $u->id, 'reason' => 'no inst→ticket mapping'];
+                    }
+
                     continue;
                 }
                 $customerId = $ticketToCustomer[$ticketId] ?? null;
                 if (! $customerId) {
                     $stats['skipped']++;
-                    if (count($skipped) < 50) $skipped[] = ['usage_id' => $u->id, 'reason' => 'no customer row for ticket_id='.$ticketId];
+                    if (count($skipped) < 50) {
+                        $skipped[] = ['usage_id' => $u->id, 'reason' => 'no customer row for ticket_id='.$ticketId];
+                    }
+
                     continue;
                 }
 
                 $tgl = trim((string) ($u->tgl_pemakaian ?? ''));
                 if ($tgl === '' || strlen($tgl) < 8) {
                     $stats['skipped']++;
-                    if (count($skipped) < 50) $skipped[] = ['usage_id' => $u->id, 'reason' => 'tgl_pemakaian kosong'];
+                    if (count($skipped) < 50) {
+                        $skipped[] = ['usage_id' => $u->id, 'reason' => 'tgl_pemakaian kosong'];
+                    }
+
                     continue;
                 }
                 try {
-                    $date = \Carbon\Carbon::parse($tgl);
+                    $date = Carbon::parse($tgl);
                 } catch (\Throwable) {
                     $stats['skipped']++;
-                    if (count($skipped) < 50) $skipped[] = ['usage_id' => $u->id, 'reason' => 'tgl_pemakaian invalid'];
+                    if (count($skipped) < 50) {
+                        $skipped[] = ['usage_id' => $u->id, 'reason' => 'tgl_pemakaian invalid'];
+                    }
+
                     continue;
                 }
-                $year  = (int) $date->year;
+                $year = (int) $date->year;
                 $month = (int) $date->month;
 
                 $meterValue = (int) filter_var((string) ($u->akhir ?? '0'), FILTER_SANITIZE_NUMBER_INT);
-                if ($meterValue < 0) $meterValue = 0;
+                if ($meterValue < 0) {
+                    $meterValue = 0;
+                }
 
                 $cater = (int) ($u->cater ?? 0);
                 $recordedBy = $userMap[$cater] ?? null;
@@ -260,15 +316,15 @@ class ImportLegacyMeterReadingsCommand extends Command
                     $stats['updated']++;
                 } else {
                     $batch[] = [
-                        'customer_id'   => (int) $customerId,
-                        'recorded_by'   => (int) $recordedBy,
-                        'reading_year'  => $year,
+                        'customer_id' => (int) $customerId,
+                        'recorded_by' => (int) $recordedBy,
+                        'reading_year' => $year,
                         'reading_month' => $month,
-                        'meter_value'   => $meterValue,
-                        'photo_url'     => null,
-                        'recorded_at'   => $date->toDateTimeString(),
-                        'created_at'    => $now,
-                        'updated_at'    => $now,
+                        'meter_value' => $meterValue,
+                        'photo_url' => null,
+                        'recorded_at' => $date->toDateTimeString(),
+                        'created_at' => $now,
+                        'updated_at' => $now,
                     ];
                     $existingMR[$key] = true;
                     $stats['created']++;
@@ -286,7 +342,9 @@ class ImportLegacyMeterReadingsCommand extends Command
                 }
             } catch (\Throwable $e) {
                 $stats['failed']++;
-                if (count($failed) < 50) $failed[] = ['usage_id' => $u->id, 'error' => $e->getMessage()];
+                if (count($failed) < 50) {
+                    $failed[] = ['usage_id' => $u->id, 'error' => $e->getMessage()];
+                }
             }
         }
 
@@ -300,16 +358,22 @@ class ImportLegacyMeterReadingsCommand extends Command
 
         $this->line('');
         $this->info('Ringkasan:');
-        foreach ($stats as $k => $v) $this->line("  $k : $v");
+        foreach ($stats as $k => $v) {
+            $this->line("  $k : $v");
+        }
         if (! empty($skipped)) {
             $this->line('');
             $this->warn('Skipped (10):');
-            foreach (array_slice($skipped, 0, 10) as $s) $this->line('  '.json_encode($s, JSON_UNESCAPED_UNICODE));
+            foreach (array_slice($skipped, 0, 10) as $s) {
+                $this->line('  '.json_encode($s, JSON_UNESCAPED_UNICODE));
+            }
         }
         if (! empty($failed)) {
             $this->line('');
             $this->error('Failed (10):');
-            foreach (array_slice($failed, 0, 10) as $f) $this->line('  '.json_encode($f, JSON_UNESCAPED_UNICODE));
+            foreach (array_slice($failed, 0, 10) as $f) {
+                $this->line('  '.json_encode($f, JSON_UNESCAPED_UNICODE));
+            }
         }
 
         return self::SUCCESS;

@@ -14,6 +14,10 @@ export const useUiStore = defineStore('ui', () => {
 // admin sebelum guard yang menyusun ulang redirect.
 const userRole = ref(localStorage.getItem('user_role') || '')
   const userData = ref(JSON.parse(localStorage.getItem('user_data')) || null)
+  // Wajib ganti password (kontrak backend B3, `data.must_change_password`).
+  // Disimpan persis seperti token/role/user: di localStorage, agar guard
+  // router tetap tahu setelah halaman di-refresh.
+  const mustChangePassword = ref(localStorage.getItem('must_change_password') === 'true')
   const lembagaName = ref('')
   const settingsVersion = ref(0)
 
@@ -59,6 +63,15 @@ const userRole = ref(localStorage.getItem('user_role') || '')
     localStorage.setItem('user_data', JSON.stringify(data))
   }
 
+  const setMustChangePassword = (value) => {
+    mustChangePassword.value = value === true
+    if (mustChangePassword.value) {
+      localStorage.setItem('must_change_password', 'true')
+    } else {
+      localStorage.removeItem('must_change_password')
+    }
+  }
+
   const setLembagaName = (name) => {
     lembagaName.value = name || ''
   }
@@ -80,6 +93,8 @@ const userRole = ref(localStorage.getItem('user_role') || '')
     setUserRole,
     userData,
     setUserData,
+    mustChangePassword,
+    setMustChangePassword,
     lembagaName,
     setLembagaName,
     settingsVersion,

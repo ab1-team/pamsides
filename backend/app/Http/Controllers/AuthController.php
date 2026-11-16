@@ -38,6 +38,7 @@ class AuthController extends Controller
                     'role' => $user->role,
                 ],
                 'token' => $token,
+                'must_change_password' => (bool) $user->must_change_password,
             ],
         ]);
 
@@ -79,6 +80,7 @@ class AuthController extends Controller
                 'name' => $user->name,
                 'email' => $user->email,
                 'role' => $user->role,
+                'must_change_password' => (bool) $user->must_change_password,
                 'phone' => $user->phone ?? null,
                 'avatar_url' => $user->avatar_path ?: null,
                 'identity' => $customer ? [
@@ -108,6 +110,7 @@ class AuthController extends Controller
 
             $user->update([
                 'password' => Hash::make($request->new_password),
+                'must_change_password' => false,
             ]);
 
             return response()->json([
