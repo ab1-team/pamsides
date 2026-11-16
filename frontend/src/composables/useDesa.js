@@ -20,7 +20,8 @@ export function useDesa(router) {
         alamat: item.address,
         telepon: item.phone,
       }))
-    } catch (err) {
+    } catch {
+      tableData.value = []
     }
   }
 

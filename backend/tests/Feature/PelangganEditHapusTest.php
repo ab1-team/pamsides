@@ -198,4 +198,59 @@ class PelangganEditHapusTest extends TestCase
             'Tanggal lahir kosong tersimpan sebagai epoch/1970 — data yang tidak ada jadi terlihat terisi.'
         );
     }
+
+    /**
+     * `installation_tickets.user_id` adalah TEKNISI/cater, sedangkan akun
+     * pelanggan ada di `customers.user_id`. Form Ubah dulu memakai
+     * `$ticket->user`, jadi menyimpan edit pelanggan justru mengganti nama
+     * teknisi yang menangani tiket (dan `show()` menampilkan email teknisi).
+     */
+    #[Test]
+    public function ubah_pelanggan_tidak_mengganti_nama_dan_email_teknisi(): void
+    {
+        Sanctum::actingAs($this->admin(), ['*']);
+
+        $ticket = $this->pelangganAktif();
+        $pelanggan = Customer::where('ticket_id', $ticket->id)->first()->user;
+
+        $teknisi = User::create([
+            'name' => 'Teknisi Lapangan',
+            'email' => 'teknisi-lapangan@pdam.test',
+            'password' => Hash::make('rahasia123'),
+            'role' => 'teknisi',
+        ]);
+
+        // Data riil: user tiket = teknisi, user pelanggan = customers.user_id.
+        $ticket->update(['user_id' => $teknisi->id]);
+
+        $detail = $this->getJson('/api/customers/'.$ticket->id)->assertOk();
+        $this->assertSame(
+            $pelanggan->email,
+            $detail->json('data.email'),
+            'Form Ubah menampilkan email teknisi, bukan email pelanggan.'
+        );
+
+        $this->putJson('/api/customers/'.$ticket->id, [
+            'nik' => $ticket->nik,
+            'nama_lengkap' => 'Nama Pelanggan Baru',
+            'email' => $pelanggan->email,
+            'password' => '',
+            'tempat_lahir' => 'Bandung',
+            'tgl_lahir' => '1990-05-06',
+            'jenis_kelamin' => 'Laki-laki',
+            'no_telp' => '081200000001',
+            'alamat_lengkap' => 'Jl. Aktif No. 1',
+        ])->assertOk();
+
+        $this->assertSame(
+            'Teknisi Lapangan',
+            $teknisi->fresh()->name,
+            'Edit pelanggan mengubah nama teknisi — user tiket dipakai sebagai akun pelanggan.'
+        );
+        $this->assertSame(
+            'Nama Pelanggan Baru',
+            $pelanggan->fresh()->name,
+            'Nama pelanggan tidak ikut diperbarui.'
+        );
+    }
 }
