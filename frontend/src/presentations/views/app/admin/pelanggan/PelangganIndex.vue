@@ -118,6 +118,11 @@ const tableColumns = [
     tdClass: '',
   },
   {
+    key: 'rt',
+    title: 'RT',
+    tdClass: '',
+  },
+  {
     key: 'alamat',
     title: 'ALAMAT',
     tdClass: '',

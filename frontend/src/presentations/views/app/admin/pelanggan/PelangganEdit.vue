@@ -203,8 +203,7 @@ onMounted(async () => {
 
       alamat_lengkap: data.address || '',
     }
-  } catch (error) {
-
+  } catch {
     Swal.fire({
       title: 'Gagal!',
       text: 'Tidak dapat mengambil data pelanggan.',
@@ -220,11 +219,12 @@ const handleSave = async () => {
     ...form.value,
   }
 
-  // Simple validation
-  if (!finalData.nik || !finalData.nama_lengkap) {
+  // NIK boleh kosong untuk data legacy (banyak pelanggan lama tidak punya NIK).
+  // Yang wajib hanya Nama Lengkap.
+  if (!finalData.nama_lengkap) {
     Swal.fire({
       title: 'Peringatan!',
-      text: 'NIK dan Nama Lengkap wajib diisi.',
+      text: 'Nama Lengkap wajib diisi.',
       icon: 'warning',
     })
     return
@@ -232,7 +232,11 @@ const handleSave = async () => {
 
   Object.keys(finalData).forEach((key) => {
     if (!finalData[key] || finalData[key].toString().trim() === '') {
-      if (['nik', 'no_telp'].includes(key)) {
+      // NIK kosong dikirim sebagai string kosong → backend menyimpannya NULL
+      // (jangan diisi '0'/'-' agar tidak bentrok dengan NIK pelanggan lain).
+      if (key === 'nik') {
+        finalData[key] = ''
+      } else if (key === 'no_telp') {
         finalData[key] = '0'
       } else {
         finalData[key] = '-'
@@ -246,7 +250,7 @@ const handleSave = async () => {
 
     uiStore.success('Data pelanggan berhasil diperbarui')
     router.push('/app/data-pelanggan')
-  } catch (error) {
+  } catch {
     // Error handled globally
   } finally {
     isLoading.value = false
