@@ -250,8 +250,23 @@ const handleSave = async () => {
 
     uiStore.success('Data pelanggan berhasil diperbarui')
     router.push('/app/data-pelanggan')
-  } catch {
-    // Error handled globally
+  } catch (error) {
+    // Tampilkan pesan dari backend. Sebelumnya error ditelan diam-diam,
+    // sehingga kegagalan validasi (mis. NIK duplikat) hanya terlihat sebagai
+    // spinner yang berhenti tanpa notifikasi apa pun.
+    const response = error.response?.data
+    const firstValidationError = response?.errors
+      ? Object.values(response.errors)?.[0]?.[0]
+      : null
+
+    Swal.fire({
+      title: 'Gagal!',
+      text:
+        firstValidationError ||
+        response?.message ||
+        'Terjadi kesalahan saat menyimpan data pelanggan.',
+      icon: 'error',
+    })
   } finally {
     isLoading.value = false
   }
