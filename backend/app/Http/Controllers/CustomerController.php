@@ -328,7 +328,10 @@ class CustomerController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'nik' => ['required', 'string', 'max:20', Rule::unique('installation_tickets', 'nik')],
+            // NIK tidak unik: satu orang boleh memasang beberapa sambungan,
+            // masing-masing punya customer_code sendiri. Aturan unique di sini
+            // dulu menolak pemasangan kedua untuk NIK yang sama.
+            'nik' => ['required', 'string', 'max:20'],
             'nama_lengkap' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
             'password' => 'required|min:6',
@@ -337,7 +340,6 @@ class CustomerController extends Controller
             'jenis_kelamin' => 'nullable|in:Laki-laki,Perempuan',
         ], [
             'nik.required' => 'NIK wajib diisi',
-            'nik.unique' => 'NIK sudah digunakan oleh pelanggan lain',
             'nama_lengkap.required' => 'Nama lengkap wajib diisi',
             'email.required' => 'Email wajib diisi',
             'email.email' => 'Format email tidak valid',
@@ -399,10 +401,12 @@ class CustomerController extends Controller
         $pelangganUser = $this->pelangganUser($ticket);
 
         $request->validate([
-            'nik' => [
-                'nullable', 'string', 'max:20',
-                Rule::unique('installation_tickets', 'nik')->ignore($ticket->id),
-            ],
+            // NIK TIDAK divalidasi unik saat edit. Data legacy memang menyimpan
+            // banyak NIK duplikat (tiket ganda untuk orang yang sama / hasil
+            // impor), sehingga aturan unique membuat edit gagal 422 dan — karena
+            // error-nya dulu tidak ditampilkan — tombol simpan seperti berputar
+            // tanpa hasil. NIK tetap wajib berupa teks maksimal 20 karakter.
+            'nik' => ['nullable', 'string', 'max:20'],
             'nama_lengkap' => 'required|string|max:255',
             'email' => [
                 'required', 'email',
@@ -410,7 +414,6 @@ class CustomerController extends Controller
             ],
             'jenis_kelamin' => 'nullable|in:Laki-laki,Perempuan',
         ], [
-            'nik.unique' => 'NIK sudah digunakan oleh pelanggan lain',
             'jenis_kelamin.in' => 'Jenis kelamin tidak valid',
         ]);
 

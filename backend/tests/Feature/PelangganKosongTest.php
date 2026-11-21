@@ -76,12 +76,12 @@ class PelangganKosongTest extends TestCase
     }
 
     /**
-     * Dua pelanggan dengan NIK sama berarti ambiguous di mana-mana: daftar,
-     * pencarian tagihan, dan pengecekan NIK di form Tambah. Yang kedua harus
-     * ditolak, bukan diam-diam dibuatkan.
+     * Satu orang boleh memiliki beberapa sambungan. NIK-nya sama, tetapi
+     * setiap pemasangan punya tiket (dan customer_code) sendiri. Karena itu
+     * NIK ganda harus DITERIMA, bukan ditolak.
      */
     #[Test]
-    public function nik_ganda_ditolak_dengan_pesan_yang_jelas(): void
+    public function nik_ganda_diizinkan_untuk_pemasangan_berbeda(): void
     {
         Sanctum::actingAs($this->admin(), ['*']);
 
@@ -98,8 +98,7 @@ class PelangganKosongTest extends TestCase
         ];
 
         // Catatan: pakai array_merge, BUKAN operator `+`. `+` tidak
-        // menimpa key yang sudah ada, jadi email kedua diam-diam tetap sama
-        // dan penolakan datang dari unique:users,email — bukan dari NIK.
+        // menimpa key yang sudah ada, jadi email kedua diam-diam tetap sama.
         $this->postJson('/api/customers', array_merge($payload, [
             'nik' => '3273010101010099',
             'email' => 'nik-kembar-1@pdam.test',
@@ -110,22 +109,21 @@ class PelangganKosongTest extends TestCase
             'email' => 'nik-kembar-2@pdam.test',
         ]));
 
-        $response->assertStatus(422, 'NIK ganda harus ditolak, bukan dibuatkan pelanggan kedua.');
+        $response->assertCreated();
 
         $this->assertSame(
-            1,
+            2,
             InstallationTicket::where('nik', '3273010101010099')->count(),
-            'Terdapat lebih dari satu tiket dengan NIK yang sama.'
+            'Pemasangan kedua dengan NIK yang sama harus tetap dibuatkan tiket.'
         );
     }
 
     /**
-     * Form Tambah menampilkan "NIK sudah digunakan" lalu mengisi data lama
-     * dari pelanggan tersebut. Kalau NIK ganda tetap bisa disimpan lewat
-     * API, cek itu hanya hiasan.
+     * Form Tambah boleh memakai ulang NIK pelanggan lama untuk sambungan
+     * baru. Yang tidak boleh berubah adalah data tiket lama.
      */
     #[Test]
-    public function nik_yang_sudah_ada_tidak_bisa_dipakai_ulang(): void
+    public function nik_yang_sudah_ada_bisa_dipakai_untuk_sambungan_baru(): void
     {
         Sanctum::actingAs($this->admin(), ['*']);
 
@@ -155,13 +153,20 @@ class PelangganKosongTest extends TestCase
             'no_telp' => '081200000004',
             'alamat_lengkap' => 'Jl. Palsu No. 2',
             'package_id' => $packageId,
-        ])->assertStatus(422);
+        ])->assertCreated();
 
-        // Pelanggan pertama tidak boleh ikut berubah.
+        // Tiket pertama tidak boleh ikut berubah.
         $this->assertDatabaseHas('installation_tickets', [
             'nik' => '3273010101010088',
             'applicant_name' => 'Pemilik NIK',
+            'address' => 'Jl. Asli No. 1',
         ]);
+
+        $this->assertSame(
+            2,
+            InstallationTicket::where('nik', '3273010101010088')->count(),
+            'Sambungan baru dengan NIK yang sama harus dibuatkan tiket kedua.'
+        );
     }
 
     /**
