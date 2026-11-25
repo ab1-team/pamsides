@@ -107,6 +107,22 @@ const settingsStore = useSettingsStore()
 
 const PAGE_CONFIG = { paper_size: 'A4', orientation: 'portrait' }
 
+// Nilai urut RT: angka pertama yang ditemukan (mendukung "03", "001", "RT 3").
+// RT kosong / "-" ditaruh paling akhir.
+const rtSortValue = (row) => {
+  const match = String(row?.rt ?? '').match(/\d+/)
+  return match ? parseInt(match[0], 10) : Number.POSITIVE_INFINITY
+}
+
+// Urutkan berdasarkan RT terkecil saja (urutan lain dibiarkan seperti aslinya).
+const sortByRt = (rows) =>
+  [...rows].sort((a, b) => {
+    const ra = rtSortValue(a)
+    const rb = rtSortValue(b)
+    if (ra === rb) return 0
+    return ra - rb
+  })
+
 const isLoading = ref(true)
 const errorMsg = ref('')
 const pages = ref([])
@@ -168,7 +184,7 @@ const buildPages = () => {
     .map(([dusun, members]) => {
       let filtered = members.filter((m) => m.jatuhTempo != null)
       if (ids) filtered = filtered.filter((m) => ids.has(String(m.id)))
-      return [dusun, filtered]
+      return [dusun, sortByRt(filtered)]
     })
     .filter(([, members]) => members.length > 0)
 

@@ -114,6 +114,22 @@ const {
 
 const PAGE_CONFIG = { paper_size: 'A4', orientation: 'portrait' }
 
+// Nilai urut RT: angka pertama yang ditemukan (mendukung "03", "001", "RT 3").
+// RT kosong / "-" ditaruh paling akhir.
+const rtSortValue = (row) => {
+  const match = String(row?.rt ?? '').match(/\d+/)
+  return match ? parseInt(match[0], 10) : Number.POSITIVE_INFINITY
+}
+
+// Urutkan berdasarkan RT terkecil saja (urutan lain dibiarkan seperti aslinya).
+const sortByRt = (rows) =>
+  [...rows].sort((a, b) => {
+    const ra = rtSortValue(a)
+    const rb = rtSortValue(b)
+    if (ra === rb) return 0
+    return ra - rb
+  })
+
 /**
  * Nama teknisi di kop cetakan.
  *
@@ -196,7 +212,8 @@ const selectedIdsParam = computed(() => {
 const buildPages = () => {
   const all = flatCustomers.value
   const allowed = selectedIdsParam.value
-  const customers = allowed && allowed.length ? all.filter((c) => allowed.includes(String(c.id))) : all
+  const filtered = allowed && allowed.length ? all.filter((c) => allowed.includes(String(c.id))) : all
+  const customers = sortByRt(filtered)
 
   if (customers.length === 0) {
     pages.value = []

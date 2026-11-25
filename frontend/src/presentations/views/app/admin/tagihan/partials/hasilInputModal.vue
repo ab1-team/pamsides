@@ -276,6 +276,22 @@ const selectedSegment = ref(SEGMENT_LAMA)
 
 const allRows = computed(() => Object.values(props.groupedData || {}).flat())
 
+// Nilai urut RT: angka pertama yang ditemukan (mendukung "03", "001", "RT 3").
+// RT kosong / "-" ditaruh paling akhir.
+const rtSortValue = (row) => {
+  const match = String(row?.rt ?? '').match(/\d+/)
+  return match ? parseInt(match[0], 10) : Number.POSITIVE_INFINITY
+}
+
+// Urutkan berdasarkan RT terkecil saja (urutan lain dibiarkan seperti aslinya).
+const sortByRt = (rows) =>
+  [...rows].sort((a, b) => {
+    const ra = rtSortValue(a)
+    const rb = rtSortValue(b)
+    if (ra === rb) return 0
+    return ra - rb
+  })
+
 // Select segmen hanya muncul kalau ada pelanggan yang reset meter pada
 // periode ini (untuk teknisi yang dipilih). Kalau tidak ada reset, Hasil
 // Input tampil normal tanpa pilihan segmen.
@@ -355,7 +371,7 @@ const filteredGroups = computed(() => {
       )
     }
     if (filtered.length > 0) {
-      result[dusun] = filtered
+      result[dusun] = sortByRt(filtered)
     }
   })
 
