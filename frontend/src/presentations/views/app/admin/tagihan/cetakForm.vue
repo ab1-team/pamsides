@@ -181,10 +181,26 @@ const defaultLembaga = () => ({
   alamat_kab: 'KABUPATEN GUNUNGKIDUL',
 })
 
+// Nilai urut RT: angka pertama yang ditemukan (mendukung "03", "001", "RT 3").
+// RT kosong / "-" ditaruh paling akhir.
+const rtSortValue = (row) => {
+  const match = String(row?.rt ?? '').match(/\d+/)
+  return match ? parseInt(match[0], 10) : Number.POSITIVE_INFINITY
+}
+
+// Urutkan berdasarkan RT terkecil saja (urutan lain dibiarkan seperti aslinya).
+const sortByRt = (rows) =>
+  [...rows].sort((a, b) => {
+    const ra = rtSortValue(a)
+    const rb = rtSortValue(b)
+    if (ra === rb) return 0
+    return ra - rb
+  })
+
 const buildPages = () => {
   const groups = groupedData.value || {}
   const entries = Object.entries(groups)
-    .map(([dusun, members]) => [dusun, members])
+    .map(([dusun, members]) => [dusun, sortByRt(members)])
     .filter(([, members]) => members.length > 0)
 
   if (entries.length === 0) {
@@ -286,9 +302,10 @@ const buildPages = () => {
     }
 
     Object.entries(resetByDusun).forEach(([dusun, rows]) => {
+      const sortedRows = sortByRt(rows)
       // Satu halaman "Meter Rusak" untuk SEMUA pelanggan reset (apa pun
       // keterangannya: rusak, hilang, dll), memakai nilai meter lama.
-      const rusakItems = rows.map((row) => ({
+      const rusakItems = sortedRows.map((row) => ({
         ...row,
         meterAwal: row.resetLamaStart,
         meterAkhir: row.resetLamaEnd,
@@ -297,7 +314,7 @@ const buildPages = () => {
       pushSegPages(dusun, 'Meter Rusak', rusakItems, 'rusak')
 
       // Halaman meter baru untuk semua pelanggan reset.
-      const baruItems = rows.map((row) => ({
+      const baruItems = sortedRows.map((row) => ({
         ...row,
         meterAwal: row.resetBaruStart,
         meterAkhir: row.resetBaruEnd,
